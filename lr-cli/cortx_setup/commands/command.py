@@ -16,12 +16,19 @@
 #
 
 
+from ..log import Log
+
+
 class Command(object):
     logger = None
     _args = None
 
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self):
+        if Log.logger:
+            self.logger = Log.logger
+        else:
+            Log._get_logger("nodecli", "INFO", "/var/log/seagate/provisioner/")
+            self.logger = Log.logger
 
     def get_args(self):
         return self._args

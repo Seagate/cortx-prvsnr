@@ -25,7 +25,7 @@ from . import commands
 def handle_parser(subparsers, name, cls_name):
     parser = subparsers.add_parser(name)
     cls = getattr(commands, cls_name)
-    args = cls(logger=Log.logger).get_args()
+    args = cls().get_args()
     for arg, value in args.items():
         cmd = arg
         if value['optional']:
@@ -62,7 +62,7 @@ def main():
     args = vars(args)
     cls_name = args.pop('command')
     cls = getattr(commands, cls_name)
-    cls(logger=Log.logger).run(**args)
+    cls().run(**args)
 
 
 if __name__ == '__main__':
