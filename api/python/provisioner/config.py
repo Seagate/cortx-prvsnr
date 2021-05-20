@@ -589,3 +589,18 @@ class LockMetaDataFields(Enum):
 
     PID = "pid"
     SOURCE_TARGET = "source_target"
+
+
+class HareStatus(Enum):
+    """Hare output statuses"""
+
+    FAILED = 'Failed'
+    SUCCEEDED = 'Succeeded'
+    IN_PROGRESS = 'InProgress'
+
+
+class SWUpgradeInfoFields(Enum):
+    """Named fields for meta information about SW upgrade repository"""
+
+    VERSION = "version"
+    VERSION_CONSTRAINT = "version_constraint"

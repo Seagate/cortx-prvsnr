@@ -14,15 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-from .set_swupgrade_repo import SetSWUpgradeRepo
-from .sw_upgrade import SWUpgrade
-from .remove_swupgrade_repo import RemoveSWUpgradeRepo
-from .get_swupgrade_info import GetSWUpgradeInfo
-
-__all__ = [
-    "SetSWUpgradeRepo",
-    "SWUpgrade",
-    "RemoveSWUpgradeRepo",
-    "GetSWUpgradeInfo"
-]

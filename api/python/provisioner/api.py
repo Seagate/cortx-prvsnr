@@ -391,6 +391,25 @@ def sw_upgrade(targets=ALL_MINIONS, nowait=False):
     return _api_call('sw_upgrade', targets=targets, nowait=nowait)
 
 
+def get_swupgrade_info(release: str = None, nowait=False):
+    """
+    Return information about CORTX packages and their versions.
+
+    Parameters
+    ----------
+    release:
+        (optional) SW Upgrade repository release version
+    nowait: bool
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    None
+
+    """
+    return _api_call('get_swupgrade_info', release=release, nowait=nowait)
+
+
 def fw_update(source, dry_run=False, nowait=False):
     r"""Runs firmware update logic.
 

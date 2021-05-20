@@ -15,14 +15,27 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .set_swupgrade_repo import SetSWUpgradeRepo
-from .sw_upgrade import SWUpgrade
-from .remove_swupgrade_repo import RemoveSWUpgradeRepo
-from .get_swupgrade_info import GetSWUpgradeInfo
+from setuptools import setup
 
-__all__ = [
-    "SetSWUpgradeRepo",
-    "SWUpgrade",
-    "RemoveSWUpgradeRepo",
-    "GetSWUpgradeInfo"
-]
+setup(
+    name='cortx_setup',
+    version='2.0.0',
+    author='Seagate',
+    author_email='support@seagate.com',
+    maintainer='Seagate',
+    maintainer_email=f'{"maintainer"}',
+    url='https://github.com/Seagate/cortx-prvsnr',
+    description='cortx_setup API',
+    long_description=f'{"description"}',
+    download_url=f'{"url"}',
+    license='Seagate',
+    classifiers=[
+        "Programming Language :: Python :: 3.6"
+    ],
+    keywords='cortx_setup API',
+    package_dir={'cortx_setup': 'cortx_setup'},
+    include_package_data=True,
+    install_requires=[
+        'cortx-prvsnr >= 2.0.42'
+    ],
+)
