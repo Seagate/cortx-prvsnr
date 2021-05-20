@@ -16,10 +16,10 @@
 #
 
 from pathlib import Path
-from log import Log
+from .log import Log
 import argparse
 import yaml
-import commands
+from . import commands
 
 
 def handle_parser(subparsers, name, cls_name):
