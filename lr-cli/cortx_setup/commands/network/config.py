@@ -20,7 +20,6 @@ from ..command import Command
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id, function_run
-from provisioner.config import LOCAL_MINION
 
 prvsnr_cluster_path = Path(
     '/opt/seagate/cortx_configs/provisioner_cluster.json'
@@ -66,11 +65,11 @@ class NetworkConfig(Command):
         }
     }
 
-    def get_machine_id(self, targets=LOCAL_MINION):
+    def get_machine_id(self, targets):
         try:
             result = function_run('grains.get', fun_args=['machine_id'],
                                 targets=targets)
-            _machine_id = result['srvnode-1']
+            _machine_id = result[f'{targets}']
         except Exception as exc:
             raise exc
         return _machine_id
