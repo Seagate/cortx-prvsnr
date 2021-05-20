@@ -28,11 +28,11 @@ Stop kafka:
 
 Ensure kafka has stopped:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 0 -eq $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
     # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
         attempts: 10
-        until: False
+        until: True
         interval: 2
     - require:
       - Stop kafka
@@ -54,11 +54,11 @@ Stop zookeeper:
 
 Ensure kafka-zookeeper has stopped:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 0 -eq $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
     # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
         attempts: 10
-        until: False
+        until: True
         interval: 2
     - require:
       - Stop zookeeper
