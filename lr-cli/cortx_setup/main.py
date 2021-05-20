@@ -55,7 +55,7 @@ def main():
     parent = Path(__file__).resolve().parent
     pa = Path(parent / 'api_spec.yaml')
     apis = yaml.safe_load(pa.read_text())
-    parser = argparse.ArgumentParser(prog='Provisioner CLI ')
+    parser = argparse.ArgumentParser(prog='cortx_setup CLI ')
     handle_apis(parser, apis)
 
     args = parser.parse_args()
