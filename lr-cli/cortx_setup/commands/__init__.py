@@ -17,9 +17,11 @@
 
 from .hostname import Hostname
 from .network.config import NetworkConfig
+from .node.initialize import NodeInitalize
 
 
 __all__ = [
     'Hostname',
-    'NetworkConfig'
+    'NetworkConfig',
+    'NodeInitalize'
  ]
