@@ -1,0 +1,97 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com."
+#
+
+# Cortx Setup API for LR-Node Stamping Signature operations
+
+
+import subprocess  # noqa
+from pathlib import Path
+
+from ..command import Command
+
+# CORTX package
+from cortx.utils.conf_store import Conf
+
+
+class SetSignature(Command):
+    _args = {
+        'key': {
+            'type': str,
+            'default': None,
+            'optional': False,
+            'help': 'Sets the given signature key to ConfStore'
+        },
+        'value': {
+            'type': str,
+            'default': None,
+            'optional': False,
+            'help': 'Sets the given signature value to ConfStore'
+        }
+    }
+
+    def run(self, key=None, value=None):
+        """signature set command execution method.
+
+        (Specific only to current(given) node.)
+        Sets LR signature.
+
+        Execution:
+        `cortx_setup signature set --key 'key' --value 'value'`
+
+        """
+        try:
+            lr_sign_file = Path("/etc/node-signature.yaml")
+            index = "signature"
+
+            if not (key and value):
+                user_msg = ("A valid signature is mandatory to set for stamping. "
+                    "Expected Signature format: \"--key 'key' --value 'value' \"."
+                )
+                self.logger.error(user_msg)
+                raise Exception(user_msg)
+
+            if not (lr_sign_file.exists() and
+                lr_sign_file.stat().st_size != 0
+            ):
+                self.logger.warning("Node Signature was never set "
+                               "in ConfStore. Setting now.")
+
+            else:
+                # Immutable file. Make it editable first.
+                _cmd = f"chattr -i {lr_sign_file}"
+                subprocess.Popen(_cmd, shell=True)     # nosec
+
+            Conf.load(index, f'yaml://{lr_sign_file}')
+
+            Conf.set(index, f'signature>{key}', f'{value}')
+            Conf.save(index)
+
+            # TODO: With refined approach, check if this signature data
+            # should be written to grains. If yes, what format?
+
+            # Make the file immutable for further editing
+            _cmd = f"chattr +i {lr_sign_file} && lsattr {lr_sign_file}"
+            subprocess.Popen(_cmd, shell=True)     # nosec
+
+            self.logger.info("LR-Signature Stamping done for current node")
+
+            return "Success: Stamping done for current node and ConfStore updated."
+
+        except Exception as exc:
+            raise ValueError(
+              "Failed: SET LR signature to ConfStore: %s" % str(exc)
+            )
