@@ -91,11 +91,9 @@ Transitions list is discovered automatically.
 
 #### Environment Preparation
 
-Setup docker and python environment as described
-[here](https://github.com/Seagate/cortx-prvsnr/blob/pre-cortx-1.0/docs/testing.md).
+Setup docker and python environment as described [testing.md](testing.md).
 
-Create docker containers (please check
-[testing.md](docs/Development/testing.md) for the details):
+Create docker containers (please check [testing.md](testing.md) for the details):
 
 ```bash
 pytest test/build_helpers -k test_build_setup_env -s [--docker-mount-dev] --nodes-num 3
@@ -143,7 +141,7 @@ Notes:
 
 *   `PATH-TO-BUNDLE` is path to a single repo image used currently for deployment.
     You can either use one provided by Seagate or build a mock as descibed in
-    [testing.md](docs/Development/testing.md)
+    [testing.md](testing.md).
 *   `--dist-type cortx` is also supported and implies a flat yum repository with
     only cortx packages inside
 
