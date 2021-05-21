@@ -193,12 +193,14 @@ The above command will build a docker container and run remark with all the argu
 ./test/tools/remark <input-path> -o
 ```
 
-So you can commit your changes, call the above command (in-place) and check the git diff.
+So you can commit your changes, call the above command (in-place one) and
+check the git diff.
 
 **Example 2** generate a title for a markdown
 
-**Note.** it requires `## Table of Contents` h2 header as a placeholder
-inside a markdown.
+**Note.** it requires `Table of Contents` header as a placeholder
+inside a markdown (please check [remark-toc plugin](https://github.com/remarkjs/remark-toc)
+docs for the details).
 
 ```bash
 ./test/tools/remark <input-path> --use toc -o
