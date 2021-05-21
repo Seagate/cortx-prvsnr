@@ -1,10 +1,28 @@
 # Provisioner Resource Base Approach of System Configuration
 
-**Table of Contents**
-
 The current document explains modular based approach when each SW/HW component
 is a "resource" with a set possible states and configuration parameters
 per state.
+
+## Table of Contents
+
+*   [Overview](#overview)
+
+*   [The Classes](#the-classes)
+
+    *   [Base Abstractions](#base-abstractions)
+
+    *   [Supported Resources](#supported-resources)
+
+    *   [Resource Managers](#resource-managers)
+
+        *   [SaltStack Manager](#saltstack-manager)
+
+    *   [CLI Interfaces (Examples of Usage)](#cli-interfaces-examples-of-usage)
+
+        *   [Environment Preparation](#environment-preparation)
+        *   [Cortx Repos setup](#cortx-repos-setup)
+        *   [SaltStack cluster setup](#saltstack-cluster-setup)
 
 ## Overview
 
