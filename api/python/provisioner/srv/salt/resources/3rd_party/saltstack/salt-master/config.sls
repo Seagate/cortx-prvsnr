@@ -15,8 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-FROM node:14
+{% set onchanges = salt['pillar.get']('inline:salt-master:onchanges') %}
+{% set updated_keys = salt['pillar.get']('inline:salt-master:updated_keys', []) %}
 
-RUN npm install --global remark-cli remark-toc
+{% from './macros.sls' import salt_master_configured with context %}
 
-ENTRYPOINT [ "remark" ]
+{{ salt_master_configured(updated_keys, onchanges) }}

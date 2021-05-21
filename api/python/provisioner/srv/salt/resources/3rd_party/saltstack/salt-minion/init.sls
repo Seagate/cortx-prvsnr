@@ -15,8 +15,5 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-FROM node:14
-
-RUN npm install --global remark-cli remark-toc
-
-ENTRYPOINT [ "remark" ]
+include:
+  - .install

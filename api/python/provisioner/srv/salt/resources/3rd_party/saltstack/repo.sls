@@ -15,8 +15,27 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-FROM node:14
+setup_yum_salt_repo:
+  file.managed:
+    - name: /etc/yum.repos.d/saltstack.repo
+    - source: salt://cortx_repos/files/etc/yum.repos.d/saltstack.repo
+    - keep_source: True
+    - backup: minion
+    - onchanges_in:
+      - clean_yum_salt_repo_metadata
+      - import_yum_salt_repo_key
 
-RUN npm install --global remark-cli remark-toc
+# TODO IMPROVE look for specific salt module instead of cmd.run
+clean_yum_salt_repo_metadata:
+  cmd.run:
+    - name: yum --disablerepo="*" --enablerepo="saltstack" clean metadata
 
-ENTRYPOINT [ "remark" ]
+epel_release_installed:
+  pkg.installed:
+    - name: epel-release
+
+# TODO IMPROVE look for specific salt module instead of cmd.run
+# (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+import_yum_salt_repo_key:
+  cmd.run:
+    - name: rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/3002.2/SALTSTACK-GPG-KEY.pub

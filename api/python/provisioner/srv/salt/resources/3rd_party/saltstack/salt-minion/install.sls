@@ -15,8 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-FROM node:14
+# TODO IMPROVE EOS-8473 salt version from pillar
 
-RUN npm install --global remark-cli remark-toc
+# TODO IMPROVE EOS-8473 is it needed ???
+# Remove any older saltstack if any.
+# systemctl stop salt-minion salt-master || true
+# yum remove -y salt-minion salt-master
 
-ENTRYPOINT [ "remark" ]
+
+# TODO TEST EOS-8473
+saltstack_installed:
+  pkg.installed:
+    - pkgs:
+      - salt-minion
+
+
+# TODO consider to switch to python3-pygit2 as salt recommends
+#      once it would be availble better for target platforms
+gitfs_fileserver_deps_installed:
+  pkg.installed:
+    - name: GitPython   # FIXME JBOD
+    - onlyif: yum info GitPython

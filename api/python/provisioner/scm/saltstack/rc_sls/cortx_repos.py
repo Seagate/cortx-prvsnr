@@ -17,7 +17,7 @@
 
 import logging
 
-from .base import ResourceSLS
+from .base import ResourceMiscSLS
 
 from provisioner.resources import cortx_repos
 from provisioner import config
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # XXX validation after setup
-class CortxReposSetupSLS(ResourceSLS):
+class CortxReposSetupSLS(ResourceMiscSLS):
     sls = 'repos'
     state_t = cortx_repos.CortxReposSetup
 
@@ -171,7 +171,7 @@ class CortxReposSetupSLS(ResourceSLS):
         # TODO EOS-12076 IMPROVE hard-coded
         # do not copy ISO for the node where we are now already
 
-#    def run(self):
+#    def _run(self):
 #        if (
 #            self.field_setup
 #            and self.source == 'iso'

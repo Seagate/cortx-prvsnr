@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,8 +18,32 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-FROM node:14
+---
+salt-cluster:
+  masters:
+    - host1
+    # ...
 
-RUN npm install --global remark-cli remark-toc
+salt-minion:
+  grains:
+    roles: []           # list of roles
+    node_id:            # UUID for node
+    cluster_id:         # UUID for the cluster
+    hostnamectl_status: # result of `hostnamectl status` command
+  config:
+    master:             # ordered list of masters,
+                        # might include 127.0.0.1 so differs
+                        # from salt-cluster/masters
+      - host1
+      # ...
 
-ENTRYPOINT [ "remark" ]
+# inline pillar
+inline:
+  salt-master:
+    onchanges: restart  # or null
+    updated_keys:
+      - <minion_id1>
+    # - ...
+
+  salt-minion:
+    onchanges: restart  # or 'stop' or null
