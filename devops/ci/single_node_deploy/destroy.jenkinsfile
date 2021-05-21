@@ -23,7 +23,7 @@ node {
             password(description: 'root user password for the target node.', name: 'PASSWORD')
         ])
     ])
-    
+
     def remote = [:]
     remote.name = "srvnode-1"
     remote.host = HOST_NAME
@@ -63,35 +63,36 @@ node {
             }
 
             stage("Teardown: Foundation") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states utils || true
             """
             echo "Successful teardown: Foundation"
             }
 
             stage("Teardown: 3rd_Party") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
             """
             echo "Successful teardown: 3rd-Party"
             }
 
             stage("Teardown: Platform") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states system || true
             """
             echo "Successful teardown: Platform"
             }
 
             stage("Teardown: Provisioner Bootstrap") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
             """
             echo "Successful teardown: Bootstrap"
             }
 
             stage("Storage reclaim") {
-                sshCommand remote: remote, command: """ 
+                sshCommand remote: remote, command: """
+                    systemctl status lnet >/dev/null && systemctl stop lnet || true
                     # Wipe the MBR of metadata volume
                     for vggroup in \$(vgdisplay | egrep "vg_srvnode-"|tr -s ' '|cut -d' ' -f 4); do
                         echo "Removing volume group \${vggroup}"

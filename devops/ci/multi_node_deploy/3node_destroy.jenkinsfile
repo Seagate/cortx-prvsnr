@@ -110,7 +110,8 @@ node {
 
         for (remote in remotes.reverse()) {
             stage("${remote.name}: Storage reclaim") {
-                sshCommand remote: remote, command: """ 
+                sshCommand remote: remote, command: """
+                    systemctl status lnet >/dev/null && systemctl stop lnet || true
                     # Wipe the MBR of metadata volume
                     for vggroup in \$(vgdisplay | egrep "vg_srvnode-"|tr -s ' '|cut -d' ' -f 4); do
                         echo "Removing volume group \${vggroup}"
