@@ -102,7 +102,7 @@ class ResourceTransition(ABC):
 
 @attr.s(auto_attribs=True)
 class ResourceManager:
-    """Base class for resource state transitions."""
+    """Base class for a resource manager."""
     engine_t: ClassVar[Optional[Type[ResourceManagerT]]] = None
 
     transitions: Dict[
@@ -123,7 +123,7 @@ class ResourceManager:
         """Apply state on specified targets."""
 
         try:
-            transition_t = self.transitions[type(state)]  # pylint: disable=unsubscriptable-object
+            transition_t = self.transitions[type(state)]  # noqa: E501, pylint: disable=unsubscriptable-object
         except KeyError:
             raise TypeError(f'unsupported state type {type(state)}')
 
