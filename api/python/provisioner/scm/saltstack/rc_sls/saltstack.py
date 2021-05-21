@@ -29,7 +29,7 @@ from provisioner import errors
 from provisioner.attr_gen import attr_ib
 from provisioner.values import UNCHANGED, MISSED
 from provisioner.resources import saltstack
-from provisioner.salt_minion import ensure_salt_minions_are_ready
+# from provisioner.salt_minion import ensure_salt_minions_are_ready
 from provisioner.pillar import PillarKey, PillarResolverNew
 from provisioner.node import Node, NodeGrains
 
