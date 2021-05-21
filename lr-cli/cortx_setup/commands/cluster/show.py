@@ -15,19 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .hostname import Hostname
-from .network.config import NetworkConfig
-from .node.initialize import NodeInitalize
-from .cluster.create import ClusterCreate
-from .cluster.show import ClusterShow
-from .cluster.config.network import ClusterNetworkConfig
+from provisioner.salt import local_minion_id, cmd_run
+from ..command import Command
+import json
 
 
-__all__ = [
-    'Hostname',
-    'NetworkConfig',
-    'NodeInitalize',
-    'ClusterCreate',
-    'ClusterNetworkConfig',
-    'ClusterShow'
- ]
+class ClusterShow(Command):
+    _args = {}
+
+    def run(self):
+        res = cmd_run('salt-key -L --out=json')
+        res = json.loads(res[local_minion_id()])
+        result = {}
+        result['cluster_nodes'] = res.get('minions')
+        result['non_cluster_nodes'] = res.get('minions_pre')
+        return result

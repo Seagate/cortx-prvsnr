@@ -25,4 +25,11 @@ node:
     NodeInitalize
 hostname:
   Hostname
-   
+cluster:
+  create:
+    ClusterCreate
+  show:
+    ClusterShow
+  config:
+    network:
+      ClusterNetworkConfig
