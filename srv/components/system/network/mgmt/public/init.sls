@@ -53,23 +53,3 @@ Public management network configuration:
 {%- endif -%}
 {% endif -%}
 
-{% set mgmt_vip = pillar['cluster']['mgmt_vip'] -%}
-{% if mgmt_vip %}
-IP alias of mgmt_vip with {{ mgmt_if }}:
-  network.managed:
-    - name: {{ mgmt_if }}:0
-    - device: {{ mgmt_if }}:0
-    - type: eth
-    - enabled: True
-    - nm_controlled: no
-    - userctl: no
-    - defroute: yes
-    - proto: static
-    - ipaddr: {{ mgmt_vip }}
-{% if pillar['cluster'][node]['network']['mgmt']['netmask'] %}
-    - netmask: {{ pillar['cluster'][node]['network']['mgmt']['netmask'] }}
-{%- endif %}
-{% if pillar['cluster'][node]['network']['mgmt']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['mgmt']['gateway'] }}
-{% endif %}
-{% endif %}
