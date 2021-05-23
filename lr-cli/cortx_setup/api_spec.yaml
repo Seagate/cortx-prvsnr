@@ -25,4 +25,7 @@ node:
     NodeInitalize
 hostname:
   Hostname
-   
+storage:
+  StorageEnclosureConfig
+  controller:
+    StorageControllerConfig
