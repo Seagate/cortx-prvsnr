@@ -25,7 +25,7 @@ from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
 from provisioner.pillar import PillarResolver, PillarKey
 
 from provisioner.salt import local_minion_id, cmd_run
-from provisioner.commands import CommandParserFillerMixin
+from provisioner.commands import CommandParserFillerMixin, commands
 from provisioner.vendor import attr
 
 
@@ -134,7 +134,10 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
         if iso_path is not None:
             # if the `iso_path` is set up, we ignore the `release` parameter
-            return SetSWUpgradeRepo().run(iso_path, dry_run=True)
+            # NOTE: get `SetSWUpgradeRepo` from list of commands since all
+            #  objects are correctly defined (post- and pre- states)
+            set_swupgrade_repo_obj = commands['set_swupgrade_repo']
+            return set_swupgrade_repo_obj.run(iso_path, dry_run=True)
 
         if release is None:
             # NOTE: take the latest release from SW upgrade repositories

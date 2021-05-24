@@ -415,7 +415,7 @@ class Set(CommandParserFillerMixin):
     def _run(self, params, targets, local):
         self._apply(params, targets=targets, local=local)
 
-    def dynamic_validation(self, params, targets, dry_run: bool = False):
+    def dynamic_validation(self, params, targets: str, dry_run: bool = False):
         pass
 
     # TODO

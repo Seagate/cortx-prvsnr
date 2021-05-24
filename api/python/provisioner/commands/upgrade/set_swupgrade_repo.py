@@ -235,39 +235,27 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         return hash_info
 
-    def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str,
-                           dry_run: bool = False):  # noqa: C901, E501
+    def _pre_repo_validation(self, params: inputs.SWUpgradeRepo,
+                             dry_run: bool = False):
         """
-        Validate single SW upgrade ISO structure.
+        SW upgrade repository pre-validation.
 
         Parameters
         ----------
         params: inputs.SWUpgradeRepo
             Input repository parameters
-        targets: str
-            Salt target to perform base mount and validation logic
         dry_run: bool
-            if this parameter is set to `True` this method skips all
+            If this parameter is set to `True` this method skips some
             validations and returns only SW upgrade ISO bundle metadata
             (content of RELEASE.INFO).
 
-        Returns
-        -------
+        Raises
+        ------
+        SWUpdateRepoSourceError:
+            Raise this exception if candidate repository validation fails
 
         """
-        repo = params
-
-        if repo.is_special():
-            logger.info("Skipping update repo validation for special value: "
-                        f"{repo.source}")
-            return
-
-        logger.info(f"Validating upgrade repo: release {repo.release}, "
-                    f"source {repo.source}")
-
-        candidate_repo = inputs.SWUpgradeRepo(repo.source, REPO_CANDIDATE_NAME)
-
-        if not candidate_repo.is_remote():
+        if not params.is_remote():
             if params.hash:
                 logger.info("`hash` parameter is setup. Start checksum "
                             "validation for the whole ISO file")
@@ -277,11 +265,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     hash_type=hash_info.hash_type)
 
                 try:
-                    upgrade_bundle_hash_validator.validate(repo.source)
+                    upgrade_bundle_hash_validator.validate(params.source)
                 except ValidationError as e:
-                    logger.debug("Check sum validation error occurred: {e}")
+                    logger.debug(f"Check sum validation error occurred: {e}")
                     raise SWUpdateRepoSourceError(
-                        str(repo.source),
+                        str(params.source),
                         f"Catalog structure validation error occurred:{e}"
                     ) from e
         # TODO IMPROVE VALIDATION EOS-14350
@@ -293,13 +281,171 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # NOTE: yum repoinfo supports the wildcards in the name of a searching
         #  repository
         if not dry_run and self._does_repo_exist(
-                    f'sw_upgrade_*_{candidate_repo.release}'):
+                    f'sw_upgrade_*_{params.release}'):
             logger.warning(
               'other repo candidate was found, proceeding with force removal'
             )
         # TODO IMPROVE: it is not enough it may lead to locks when
         #  provisioner doesn't unmount `sw_update_candidate` repo
         # raise SWUpdateError(reason="Other repo candidate was found")
+
+    @staticmethod
+    def _base_repo_validation(candidate_repo: inputs.SWUpgradeRepo,
+                              base_dir: Path,
+                              dry_run: bool = False) -> dict:
+        """
+        Base SW upgrade repository validation.
+
+        Parameters
+        ----------
+        candidate_repo: inputs.SWUpgradeRepo
+            Candidate SW upgrade repository parameters
+        base_dir: Path
+            Path to base SW upgrade directory
+        dry_run: bool
+            If this parameter is set to `True` this method skips some
+            validations and returns only SW upgrade ISO bundle metadata
+            (content of RELEASE.INFO).
+
+        Returns
+        -------
+        dict:
+            return SW upgrade candidate metadata
+
+        Raises
+        -------
+        SWUpdateRepoSourceError:
+            Raise this exception if candidate repository validation fails
+
+        """
+        if not candidate_repo.is_remote():
+            iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
+
+            if not dry_run:
+                sw_upgrade_bundle_validator = FileSchemeValidator(
+                    SW_UPGRADE_BUNDLE_SCHEME
+                )
+
+                try:
+                    sw_upgrade_bundle_validator.validate(iso_mount_dir)
+                except ValidationError as e:
+                    logger.debug(
+                        f"Catalog structure validation error occurred: {e}"
+                    )
+                    raise SWUpdateRepoSourceError(
+                        str(candidate_repo.source),
+                        f"Catalog structure validation error occurred:{e}"
+                    ) from e
+                else:
+                    logger.info("Catalog structure validation succeeded")
+
+            release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                            f'{RELEASE_INFO_FILE}')
+            try:
+                metadata = load_yaml(release_file)
+            except Exception as exc:
+                raise SWUpdateRepoSourceError(
+                    str(candidate_repo.source),
+                    f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
+                )
+        else:
+            release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
+                            f'{RELEASE_INFO_FILE}')
+            r = requests.get(release_file)
+
+            try:
+                metadata = load_yaml_str(r.content.decode("utf-8"))
+            except Exception as exc:
+                raise SWUpdateRepoSourceError(
+                    str(candidate_repo.source),
+                    f"Failed to load '{RELEASE_INFO_FILE}' "
+                    f"file from remote URL: {exc}"
+                )
+
+        return metadata
+
+    def _post_repo_validation(self, candidate_repo: inputs.SWUpgradeRepo,
+                              base_dir: Path, dry_run: bool = False):
+        """
+        Post validation of SW upgrade repository.
+
+        Parameters
+        ----------
+        candidate_repo: inputs.SWUpgradeRepo
+            Candidate SW upgrade repository parameters
+        base_dir: Path
+            Path to base SW upgrade directory
+        dry_run: bool
+            If this parameter is set to `True` this method skips some
+            validations and returns only SW upgrade ISO bundle metadata
+            (content of RELEASE.INFO).
+
+        Raises
+        ------
+        SWUpdateRepoSourceError:
+            Raise this exception if candidate repository validation fails
+
+        """
+        iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
+        if not dry_run and not candidate_repo.is_remote():
+            # NOTE: this block only for local SW upgrade ISO bundles
+            repo_map = candidate_repo.pillar_value
+            for dir_entry in (entry for entry in
+                              Path(iso_mount_dir).iterdir() if
+                              entry.is_dir()):
+                repo_info = repo_map.get(dir_entry.name, None)
+
+                if repo_info is None:
+                    raise SWUpdateRepoSourceError(
+                        str(candidate_repo.source),
+                        "Unexpected repository in single ISO: "
+                        f"{dir_entry.name}")
+                if repo_info[IS_REPO_KEY]:
+                    self._single_repo_validation(candidate_repo.release,
+                                                 dir_entry.name)
+                elif dir_entry.name == CORTX_PYTHON_ISO_DIR:
+                    self._validate_python_index(dir_entry)
+
+    def dynamic_validation(self, params, targets: str, dry_run: bool = False):  # noqa: C901, E501
+        """
+        Validate single SW upgrade ISO structure.
+
+        Parameters
+        ----------
+        params: inputs.SWUpgradeRepo
+            Input repository parameters
+        targets: str
+            Salt target to perform base mount and validation logic
+        dry_run: bool
+            If this parameter is set to `True` this method skips some
+            validations and returns only SW upgrade ISO bundle metadata
+            (content of RELEASE.INFO).
+
+        Returns
+        -------
+        dict:
+            return SW upgrade candidate metadata
+
+        Raises
+        ------
+        SWUpdateRepoSourceError:
+            Raise this exception if candidate repository validation fails
+
+        """
+        repo = params
+        base_dir = None
+
+        if repo.is_special():
+            logger.info("Skipping update repo validation for special value: "
+                        f"{repo.source}")
+            return
+
+        logger.info(f"Validating upgrade repo: release {repo.release}, "
+                    f"source {repo.source}")
+
+        candidate_repo = inputs.SWUpgradeRepo(repo.source, REPO_CANDIDATE_NAME)
+
+        self._pre_repo_validation(params, dry_run)
 
         try:
             logger.debug("Configuring upgrade candidate repo for validation")
@@ -317,49 +463,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             self._apply(candidate_repo, targets=targets, local=False)
 
-            if not candidate_repo.is_remote():
-                iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
-
-                if not dry_run:
-                    sw_upgrade_bundle_validator = FileSchemeValidator(
-                        SW_UPGRADE_BUNDLE_SCHEME
-                    )
-
-                    try:
-                        sw_upgrade_bundle_validator.validate(iso_mount_dir)
-                    except ValidationError as e:
-                        logger.debug(
-                            f"Catalog structure validation error occurred: {e}"
-                        )
-                        raise SWUpdateRepoSourceError(
-                            str(repo.source),
-                            f"Catalog structure validation error occurred:{e}"
-                        ) from e
-                    else:
-                        logger.info("Catalog structure validation succeeded")
-
-                release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
-                                f'{RELEASE_INFO_FILE}')
-                try:
-                    metadata = load_yaml(release_file)
-                except Exception as exc:
-                    raise SWUpdateRepoSourceError(
-                        str(repo.source),
-                        f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
-                    )
-            else:
-                release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
-                                f'{RELEASE_INFO_FILE}')
-                r = requests.get(release_file)
-
-                try:
-                    metadata = load_yaml_str(r.content.decode("utf-8"))
-                except Exception as exc:
-                    raise SWUpdateRepoSourceError(
-                        str(repo.source),
-                        f"Failed to load '{RELEASE_INFO_FILE}' "
-                        f"file from remote URL: {exc}"
-                    )
+            metadata = self._base_repo_validation(candidate_repo,
+                                                  base_dir,
+                                                  dry_run)
 
             repo.metadata = metadata
             logger.debug(f"Resolved metadata {metadata}")
@@ -368,6 +474,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
             #  well formed
             release = metadata.get(ReleaseInfo.RELEASE.value, None)
+
             if release is None:
                 try:
                     release = (
@@ -380,23 +487,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                             f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
-            if not dry_run and not candidate_repo.is_remote():
-                # NOTE: this block only for local SW upgrade ISO bundles
-                repo_map = candidate_repo.pillar_value
-                for dir_entry in (entry for entry in
-                                  Path(iso_mount_dir).iterdir() if
-                                  entry.is_dir()):
-                    repo_info = repo_map.get(dir_entry.name, None)
+            candidate_repo.release = release
 
-                    if repo_info is None:
-                        raise SWUpdateRepoSourceError(
-                                        str(repo.source),
-                                        "Unexpected repository in single ISO: "
-                                        f"{dir_entry.name}")
-                    if repo_info[IS_REPO_KEY]:
-                        self._single_repo_validation(release, dir_entry.name)
-                    elif dir_entry.name == CORTX_PYTHON_ISO_DIR:
-                        self._validate_python_index(dir_entry)
+            self._post_repo_validation(candidate_repo, base_dir, dry_run)
 
             repo.release = release
 
@@ -418,9 +511,6 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         ----------
         repo: inputs.SWUpgradeRepo
             SW upgrade repository parameters
-
-        Returns
-        -------
 
         """
         iso_mount_dir = repo.target_build / repo.release
