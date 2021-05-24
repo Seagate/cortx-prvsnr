@@ -1,28 +1,45 @@
 # Provisioner Testing Approaches
 
-**Table of Contents**
+## Table of Contents
 
 *   [Python environment preparation](#python-environment-preparation)
+
 *   [Static validation](#static-validation)
+
     *   [Python code](#python-code)
+
         *   [flake8](#flake8)
+
         *   [Codacy tools](#codacy-tools)
+
             *   [Bandit](#bandit)
             *   [Prospector](#prospector)
             *   [Pylint](#pylint)
             *   [Radon](#radon)
+            *   [Remarklint](#remarklint)
+
 *   [Unit testing](#unit-testing)
+
 *   [Integration testing](#integration-testing)
-    *   [Testing with Docker](#testing-with-Docker)
+
+    *   [Testing with Docker](#testing-with-docker)
+
         *   [Docker configuration](#docker-configuration)
-        *   [Docker on Fedora 32/33](#docker-on-fedora-33)
-        *   [Docker test helpers](#Docker-test-helpers)
-            *   [Docker environment creation](#docker-environment-creation)
+
+        *   [Docker on Fedora 33](#docker-on-fedora-33)
+
+        *   [Docker test helpers](#docker-test-helpers)
+
             *   [Building provisioner packages](#building-provisioner-packages)
             *   [Building testing bundles](#building-testing-bundles)
-        *   [Integration test cases](#Integration-test-cases)
-            *   [Provisioner setup](#Provisioner-setup)
+            *   [Docker environment creation](#docker-environment-creation)
+
+        *   [Integration test cases](#integration-test-cases)
+
+            *   [Provisioner setup](#provisioner-setup)
+
 *   [Appendix](#appendix)
+
     *   [Basic Docker commands](#basic-docker-commands)
 
 ## Python environment preparation
@@ -148,6 +165,46 @@ radon cc path/to/directory_or_file -a -nc
 ```
 
 More [examples](https://radon.readthedocs.io/en/latest/commandline.html#the-cc-command).
+
+##### Remarklint
+
+A plugin over [remark](https://github.com/remarkjs/remark) - very cool tool
+to lint, fix and improve a markdown docs.
+
+The tool (in particular
+[remark-cli](https://github.com/remarkjs/remark/tree/HEAD/packages/remark-cli))
+can be called using helper wrapper in the repository (**NOTE** that requires
+`docker` installed) as follows:
+
+```bash
+./test/tools/remark --help
+
+```
+
+The above command will build a docker container and run remark with all the arguments provided.
+
+**Example 1** rewrite a markdown file
+
+```bash
+./test/tools/remark <input-path> -o <output-path>
+
+# OR do that in-place
+
+./test/tools/remark <input-path> -o
+```
+
+So you can commit your changes, call the above command (in-place one) and
+check the git diff.
+
+**Example 2** generate a title for a markdown
+
+**Note.** it requires `Table of Contents` header as a placeholder
+inside a markdown (please check [remark-toc plugin](https://github.com/remarkjs/remark-toc)
+docs for the details).
+
+```bash
+./test/tools/remark <input-path> --use toc -o
+```
 
 ## Unit testing
 

@@ -110,7 +110,8 @@ node {
 
         for (remote in remotes.reverse()) {
             stage("${remote.name}: Storage reclaim") {
-                sshCommand remote: remote, command: """ 
+                sshCommand remote: remote, command: """
+                    systemctl status lnet >/dev/null && systemctl stop lnet || true
                     # Wipe the MBR of metadata volume
                     for vggroup in \$(vgdisplay | egrep "vg_srvnode-"|tr -s ' '|cut -d' ' -f 4); do
                         echo "Removing volume group \${vggroup}"
@@ -181,6 +182,7 @@ node {
                     test -e /opt/isos && rm -rf /opt/isos || true
                     test -e /root/.provisioner && rm -rf /root/.provisioner || true
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
+                    #test -e /etc/yum.repos.d && pushd /etc/yum.repos.d;rm -fv !("redhat.repo");popd || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
                 echo "Successfully removed file and directories."

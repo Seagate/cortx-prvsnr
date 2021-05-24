@@ -28,5 +28,6 @@ fi
 
 
 # FIXME remove later
+# XXX EOS-17600
 rm -rf /usr/lib/python3.6/site-packages/cortx_prvsnr*
 rm -rf /usr/lib/python3.6/site-packages/provisioner

@@ -73,7 +73,7 @@ class ConsulParams(UpgradeParams, VendorParamsMixin):
     )
     # TODO List[ip4, domain] ???
     retry_join: List[str] = attr_ib(
-        cli_spec='consul/retry_join', default=[]
+        cli_spec='consul/retry_join', default=attr.Factory(list)
     )
     version: Union[str, Version] = attr_ib(
         'version', cli_spec='consul/version', default=None,

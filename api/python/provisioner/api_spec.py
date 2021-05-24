@@ -20,12 +20,11 @@ import logging
 from typing import Dict
 from pathlib import Path
 
+from .config import API_SPEC_PATH, PARAMS_SPEC_PATH
 from .utils import load_yaml
 from provisioner import param
 
 MODULE_DIR = Path(__file__).resolve().parent
-API_SPEC_PATH = MODULE_DIR / 'api_spec.yaml'
-PARAMS_SPEC_PATH = MODULE_DIR / 'params_spec.yaml'
 
 PILLAR_PATH_KEY = '_path'
 PARAM_TYPE_KEY = '_type'

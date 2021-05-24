@@ -16,8 +16,4 @@
 #
 
 include:
-  - components.csm.usl.prepare
-  - components.csm.usl.config
-  - components.csm.usl.init_mod
-#  - components.csm.usl.sanity_check
-
+  - ..repo

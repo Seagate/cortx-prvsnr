@@ -45,6 +45,11 @@ PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'
 CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
 ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
 
+API_SPEC_PATH = CONFIG_MODULE_DIR / 'api_spec.yaml'
+PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'
+CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
+ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
+
 # TODO
 #  - rename to defaults.py or constants.py or ...
 #  - then rename base.py to config.py
@@ -558,6 +563,10 @@ class CortxResourceT(Enum):
 
     REPOS = "cortx_repos"
     CONSUL = "consul"
+    SALTSTACK = "saltstack"
+    SALT_MASTER = "salt-master"
+    SALT_MINION = "salt-minion"
+    SALT_CLUSTER = "salt-cluster"
 
 
 class ContentType(Enum):

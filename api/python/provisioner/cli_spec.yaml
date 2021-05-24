@@ -55,6 +55,25 @@ consul:
     bootstrap_expect:
       help: the number of expected servers in the Consul datacenter
       metavar: number
+salt_master:
+  lvm2_first: >-
+    install lvm2 before saltstack (workaround for GlusterFS in-docker setups)
+  updated_keys: list of minion ids which keys have been changed
+  onchanges:
+    help: action on salt-master configuration changes
+    choices: ['restart', 'nothing']
+salt_minion:
+  masters: list of salt-master hosts
+  cluster_uuid:
+    help: Cluster UUID
+    nargs: '+'
+    metavar: uuid
+  onchanges:
+    help: action on salt-minion configuration changes
+    choices: ['restart', 'stop', 'nothing']
+  rediscover: fetch host system information and connections
+salt_cluster:
+  regen_keys: re-generate old keys
 glusterfs:
   peers:
     help: gluster peer host (IP/domain)

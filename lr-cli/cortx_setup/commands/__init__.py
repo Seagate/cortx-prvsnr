@@ -15,32 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Post Install USL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:post_install')
-    - failhard: True
-
-Stage - Prepare USL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:prepare')
-    - failhard: True
-
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
-
-Generate TLS certs:
-  module.run:
-    - csm.generate_csm_tls: []
-
-{% else %}
-
-Copy TLS certs to minions:
-  file.recurse:
-    - source: salt://components/csm/files/tls/
-    - name: /var/csm/tls
-    - user: {{ pillar["cortx"]["software"]["csm"]["user"] }}
-    - group: {{ pillar["cortx"]["software"]["csm"]["user"] }}
-    - file_mode: 600
-
-{% endif %}
+from .hostname import Hostname
+from .network.config import NetworkConfig
+from .node.initialize import NodeInitalize
 
 
+__all__ = [
+    'Hostname',
+    'NetworkConfig',
+    'NodeInitalize'
+ ]
