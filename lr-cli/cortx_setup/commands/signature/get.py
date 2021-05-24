@@ -30,7 +30,7 @@ class GetSignature(Command):
         'key': {
             'type': str,
             'default': None,
-            'optional': False,
+            'optional': True,
             'help': 'Retrieves the given signature key from ConfStore'
         }
     }
@@ -49,26 +49,30 @@ class GetSignature(Command):
             lr_sign_file = Path("/etc/node-signature.yaml")
             index = "signature"
 
+            if not key:
+                raise Exception(
+                   "Invalid input. Expected Signature param format: --key 'key'."
+                )
+
             if not (lr_sign_file.exists() and
                     lr_sign_file.stat().st_size != 0):
 
-                self.logger.warning("Node Signature was never set in database. "
-                               "Set it first with `signature set` command.")
-                lr_sign = "No data found. Execute `signature set` command."
+                raise Exception(
+                   "Node Signature was never set in ConfStore. "
+                   "Set it first with `signature set` command."
+                )
 
-            else:
-                Conf.load(index, f'yaml://{lr_sign_file}')
-                lr_sign = Conf.get(index, f'signature>{key}')
+            Conf.load(index, f'yaml://{lr_sign_file}')
+            lr_sign = Conf.get(index, f'signature>{key}')
 
-                if not lr_sign:
-                    self.logger.warning(
-                       "Given key '%s' is possibly "
-                       "not found in Signature data." % key
-                    )
-                    lr_sign = Conf.get(index, 'signature')
+            if not lr_sign:
+                self.logger.warning(
+                   "Given key '%s' is possibly "
+                   "not found in following Signature data." % key
+                )
+                lr_sign = Conf.get(index, 'signature')
 
-            self.logger.info(f"LR Signature: {lr_sign}")
-            return f"LR Signature: {lr_sign}"
+            return lr_sign
 
         except ValueError as exc:
             raise ValueError(

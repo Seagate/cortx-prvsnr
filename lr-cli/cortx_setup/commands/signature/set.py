@@ -20,6 +20,7 @@
 
 import subprocess  # noqa
 from pathlib import Path
+from time import sleep
 
 from ..command import Command
 
@@ -32,13 +33,13 @@ class SetSignature(Command):
         'key': {
             'type': str,
             'default': None,
-            'optional': False,
+            'optional': True,
             'help': 'Sets the given signature key to ConfStore'
         },
         'value': {
             'type': str,
             'default': None,
-            'optional': False,
+            'optional': True,
             'help': 'Sets the given signature value to ConfStore'
         }
     }
@@ -58,38 +59,35 @@ class SetSignature(Command):
             index = "signature"
 
             if not (key and value):
-                user_msg = ("A valid signature is mandatory to set for stamping. "
-                    "Expected Signature format: \"--key 'key' --value 'value' \"."
+                raise Exception(
+                   "A valid signature is mandatory to set for stamping. "
+                   "Expected Signature params format: --key 'key' --value 'value'."
                 )
-                self.logger.error(user_msg)
-                raise Exception(user_msg)
 
             if not (lr_sign_file.exists() and
-                lr_sign_file.stat().st_size != 0
-            ):
+                    lr_sign_file.stat().st_size != 0):
                 self.logger.warning("Node Signature was never set "
-                               "in ConfStore. Setting now.")
+                                    "in ConfStore. Setting now.")
 
             else:
                 # Immutable file. Make it editable first.
                 _cmd = f"chattr -i {lr_sign_file}"
                 subprocess.Popen(_cmd, shell=True)     # nosec
+                sleep(1)
 
             Conf.load(index, f'yaml://{lr_sign_file}')
 
             Conf.set(index, f'signature>{key}', f'{value}')
             Conf.save(index)
 
-            # TODO: With refined approach, check if this signature data
-            # should be written to grains. If yes, what format?
+            # TODO: check if this signature data
+            # should be written to grains and in what format.
 
-            # Make the file immutable for further editing
+            # Make the file immutable to any editing
             _cmd = f"chattr +i {lr_sign_file} && lsattr {lr_sign_file}"
             subprocess.Popen(_cmd, shell=True)     # nosec
 
-            self.logger.info("LR-Signature Stamping done for current node")
-
-            return "Success: Stamping done for current node and ConfStore updated."
+            return "Success: LR Stamping done"
 
         except Exception as exc:
             raise ValueError(
