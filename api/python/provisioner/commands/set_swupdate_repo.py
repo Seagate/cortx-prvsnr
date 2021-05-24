@@ -199,7 +199,7 @@ class SetSWUpdateRepo(Set):
 
         salt_cmd_run(cmd, targets=LOCAL_MINION)
 
-    def dynamic_validation(self, params: inputs.SWUpdateRepo, targets: str):  # noqa: C901, E501
+    def dynamic_validation(self, params, targets: str, dry_run: bool = False):  # noqa: C901, E501
         repo = params
 
         if repo.is_special():

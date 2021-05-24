@@ -18,8 +18,8 @@ import logging
 from typing import Type
 
 from packaging import version
+
 from provisioner import inputs
-from provisioner.commands.upgrade import SetSWUpgradeRepo
 from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
                                 SWUpgradeInfoFields)
 from provisioner.pillar import PillarResolver, PillarKey
