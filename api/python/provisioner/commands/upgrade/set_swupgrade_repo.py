@@ -50,6 +50,8 @@ from ..validator import (DirValidator,
                          ReleaseInfoValidator,
                          YumRepoDataValidator,
                          HashSumValidator)
+from ...vendor import attr
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,7 @@ SW_UPGRADE_BUNDLE_SCHEME = {
 }
 
 
+@attr.s(auto_attribs=True)
 class SetSWUpgradeRepo(SetSWUpdateRepo):
 
     input_type: Type[inputs.SWUpgradeRepo] = inputs.SWUpgradeRepo
@@ -232,7 +235,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         return hash_info
 
-    def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str):  # noqa: C901, E501
+    def dynamic_validation(self, params: inputs.SWUpgradeRepo, targets: str,
+                           dry_run: bool = False):  # noqa: C901, E501
         """
         Validate single SW upgrade ISO structure.
 
@@ -242,6 +246,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             Input repository parameters
         targets: str
             Salt target to perform base mount and validation logic
+        dry_run: bool
+            if this parameter is set to `True` this method skips all
+            validations and returns only SW upgrade ISO bundle metadata
+            (content of RELEASE.INFO).
 
         Returns
         -------
@@ -284,7 +292,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #   - after first mount 'sw_update_candidate' listed in disabled repos
         # NOTE: yum repoinfo supports the wildcards in the name of a searching
         #  repository
-        if self._does_repo_exist(f'sw_upgrade_*_{candidate_repo.release}'):
+        if not dry_run and self._does_repo_exist(
+                    f'sw_upgrade_*_{candidate_repo.release}'):
             logger.warning(
               'other repo candidate was found, proceeding with force removal'
             )
@@ -311,21 +320,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             if not candidate_repo.is_remote():
                 iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
 
-                sw_upgrade_bundle_validator = FileSchemeValidator(
-                    SW_UPGRADE_BUNDLE_SCHEME
-                )
+                if not dry_run:
+                    sw_upgrade_bundle_validator = FileSchemeValidator(
+                        SW_UPGRADE_BUNDLE_SCHEME
+                    )
 
-                try:
-                    sw_upgrade_bundle_validator.validate(iso_mount_dir)
-                except ValidationError as e:
-                    logger.debug(
-                        f"Catalog structure validation error occurred: {e}")
-                    raise SWUpdateRepoSourceError(
+                    try:
+                        sw_upgrade_bundle_validator.validate(iso_mount_dir)
+                    except ValidationError as e:
+                        logger.debug(
+                            f"Catalog structure validation error occurred: {e}"
+                        )
+                        raise SWUpdateRepoSourceError(
                             str(repo.source),
                             f"Catalog structure validation error occurred:{e}"
-                    ) from e
-                else:
-                    logger.info("Catalog structure validation succeeded")
+                        ) from e
+                    else:
+                        logger.info("Catalog structure validation succeeded")
 
                 release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
                                 f'{RELEASE_INFO_FILE}')
@@ -369,7 +380,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                             f"No release data found in '{RELEASE_INFO_FILE}'"
                     )
 
-            if not candidate_repo.is_remote():
+            if not dry_run and not candidate_repo.is_remote():
                 # NOTE: this block only for local SW upgrade ISO bundles
                 repo_map = candidate_repo.pillar_value
                 for dir_entry in (entry for entry in

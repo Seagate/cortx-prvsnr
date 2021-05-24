@@ -19,6 +19,7 @@ from typing import Type
 
 from packaging import version
 from provisioner import inputs
+from provisioner.commands.upgrade import SetSWUpgradeRepo
 from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
                                 SWUpgradeInfoFields)
 from provisioner.pillar import PillarResolver, PillarKey
@@ -33,6 +34,14 @@ logger = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True)
 class GetSWUpgradeInfoArgs:
+    iso_path: str = attr.ib(
+        metadata={
+            inputs.METADATA_ARGPARSER: {
+                'help': "Path to SW upgrade single ISO bundle"
+            }
+        },
+        default=None
+    )
     release: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
@@ -103,13 +112,15 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
         return res
 
-    def run(self, release: str = None) -> dict:
+    def run(self, iso_path: str = None, release: str = None) -> dict:
         """
         Main function for Get SW Upgrade Repo command. Command returns
         information about CORTX packages and their versions.
 
         Parameters
         ----------
+        iso_path: str
+            Path to SW upgrade single ISO bundle
         release: str
             SW upgrade repository release version
 
@@ -120,6 +131,10 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
         """
         local_minion = local_minion_id()
+
+        if iso_path is not None:
+            # if the `iso_path` is set up, we ignore the `release` parameter
+            return SetSWUpgradeRepo().run(iso_path, dry_run=True)
 
         if release is None:
             # NOTE: take the latest release from SW upgrade repositories
