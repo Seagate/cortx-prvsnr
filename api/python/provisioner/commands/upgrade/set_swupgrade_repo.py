@@ -412,7 +412,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        params: inputs.SWUpgradeRepo
+        params
             Input repository parameters
         targets: str
             Salt target to perform base mount and validation logic
