@@ -26,6 +26,9 @@ node:
   prepare:
     server:
       NodePrepareServer
+    config:
+      server:
+        NodePrepareServerConfig
 
 hostname:
   Hostname

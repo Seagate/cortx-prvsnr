@@ -16,24 +16,34 @@
 #
 
 from pathlib import Path
-from ...command import Command
+
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from provisioner.utils import get_machine_id
+from provisioner.commands import GetClusterId
+
+from ...command import Command
 
 
-machine_id = get_machine_id()
+node = local_minion_id()
+machine_id = get_machine_id(node)
 node_id = local_minion_id()
-cluster_id = "" 
+cluster_id = GetClusterId()
 
 confstore_pillar_dict = {
-    'site_id': (f'server_node>{machine_id}>site_id',f'cluster/{node}/site_id'),
-    'rack_id': (f'server_node>{machine_id}>rack_id',f'cluster/{node}/rack_id'),
-    'node_id': (f'server_node>{machine_id}>node_id',f'cluster/{node}/node_id'),
-    'mgmt_vip': (f'cluster>{cluster_id}>network>management>virtual_host','cluster/mgmt_vip')
-
-}
+    'site_id': (
+        f'server_node>{machine_id}>site_id',
+        f'cluster/{node}/site_id'),
+    'rack_id': (
+        f'server_node>{machine_id}>rack_id',
+        f'cluster/{node}/rack_id'),
+    'node_id': (
+        f'server_node>{machine_id}>node_id',
+        f'cluster/{node}/node_id'),
+    'mgmt_vip': (
+        f'cluster>{cluster_id}>network>management>virtual_host',
+        'cluster/mgmt_vip')}
 
 
 prvsnr_cluster_path = Path(
@@ -73,7 +83,7 @@ class NodePrepareServerConfig(Command):
     }
 
     def run(self, **kwargs):
-        
+
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -87,7 +97,7 @@ class NodePrepareServerConfig(Command):
                 PillarSet().run(
                     confstore_pillar_dict[key][1],
                     value,
-                    targets=node_id,
+                    targets=node,
                     local=True
                 )
                 Conf.set(

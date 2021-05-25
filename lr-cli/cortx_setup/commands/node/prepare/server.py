@@ -17,31 +17,34 @@
 
 import os
 from provisioner.salt import (
-    local_minion_id, 
+    local_minion_id,
     StatesApplier
 )
 from .config import NodePrepareServerConfig
 
+
 class NodePrepareServer(NodePrepareServerConfig):
 
-    def _ip_not_pingable(ip: str):
+    def _ip_not_pingable(self, ip: str):
         res = os.system("ping -c 1 {ip}")
-        return not (res == 0)
+        return not res == 0
 
     def run(self, **kwargs):
+        node = local_minion_id()
         mgmt_vip = kwargs.get('mgmt_vip')
 
         try:
-            if _ip_not_pingable(mgmt_vip):
+            if self._ip_not_pingable(mgmt_vip):
+
                 states = [
-                    "components.system.network.mgmt.public.ip_alias"
+                    "components.system.network.mgmt.public.ip_alias",
+                    "provisioner.salt_minion.config",
+                    "provisioner.start_salt_minion"
                 ]
                 for state in states:
-                    self.logger.info(f"Applying {state} on {node_id}")
-                    StatesApplier.apply([state], local_minion_id())
+                    self.logger.info(f"Applying {state} on {node}")
+                    StatesApplier.apply([state], node)
             else:
                 raise Exception("The IP {mgmt_vip} is in use")
         except Exception as e:
             raise e
-
-                

@@ -35,12 +35,15 @@ import string
 from shlex import quote
 from pathlib import Path, PosixPath
 import yaml
-from . import config
+
+from provisioner.salt import local_minion_id
 
 from pillar import (
     PillarResolver,
     PillarKey
 )
+
+from . import config
 
 from .errors import (
     BadPillarDataError, ProvisionerError, SubprocessCmdError
@@ -524,9 +527,9 @@ def get_machine_id(node: str):
     machine_id: str
 
     """
-    key = f'cluster/'{node}'/machine_id'
+    key = f"cluster/{node}/machine_id"
     pillar_key = PillarKey(key)
-    pillar = PillarResolver(local_minion_id().get([pillar_key])
+    pillar = PillarResolver(local_minion_id().get([pillar_key]))
     pillar = next(iter(pillar.values()))
 
     return pillar[PillarKey(key)]
