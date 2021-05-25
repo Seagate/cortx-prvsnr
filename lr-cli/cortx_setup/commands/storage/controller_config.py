@@ -20,6 +20,7 @@ from ..command import Command
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id, function_run
+from .commons import Commons
 
 prvsnr_cluster_path = Path(
     '/opt/seagate/cortx_configs/provisioner_cluster.json'
@@ -74,23 +75,13 @@ class StorageControllerConfig(Command):
         }
     }
 
-    def get_enc_id(self, targets):
-        try:
-            result = function_run('grains.get', fun_args=['machine_id'],
-                                targets=targets)
-            _enc_id = result[f'{targets}']
-        except Exception as exc:
-            raise exc
-        return _enc_id
-
     def run(self, user=None, password=None, type=None, mode=None,
                 ip=None, port=None
     ):
         node_id = local_minion_id()
-        enc_num = "enclosure-1" #TODO: Generate this
-        enc_id = self.get_enc_id(target=node_id) #TODP: define this
+        enc_num = "enclosure-" + ((node_id).split('-'))[1]
+        enc_id = commons.get_enc_id(target=node_id)
 
-        #machine_id = self.get_machine_id(targets=node_id)
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -102,7 +93,7 @@ class StorageControllerConfig(Command):
             PillarSet().run(
                 f'storage/{node_id}/{enc_num}/controller/user',
                 f'{user}',
-                targets=node_id, #TODO: correct this
+                targets=node_id,
                 local=True
             )
             Conf.set(
@@ -117,7 +108,7 @@ class StorageControllerConfig(Command):
             PillarSet().run(
                 f'storage/{node_id}/{enc_num}/controller/secret',
                 f'{secret}',
-                targets=node_id, #TODO: correct this
+                targets=node_id,
                 local=True
             )
             Conf.set(
@@ -132,7 +123,7 @@ class StorageControllerConfig(Command):
             PillarSet().run(
                 f'storage/{node_id}/{enc_num}/controller/type',
                 f'{type}',
-                targets=node_id, #TODO: correct this
+                targets=node_id,
                 local=True
             )
             Conf.set(
@@ -154,7 +145,7 @@ class StorageControllerConfig(Command):
                 PillarSet().run(
                     f'storage/{node_id}/{enc_num}/controller/{mode}/ip',
                     f'{ip}',
-                    targets=node_id, #TODO: correct this
+                    targets=node_id,
                     local=True
                 )
                 Conf.set(
@@ -170,7 +161,7 @@ class StorageControllerConfig(Command):
                 PillarSet().run(
                     f'storage/{node_id}/{enc_num}/controller/{mode}/port',
                     f'{port}',
-                    targets=node_id, #TODO: correct this
+                    targets=node_id,
                     local=True
                 )
                 Conf.set(
