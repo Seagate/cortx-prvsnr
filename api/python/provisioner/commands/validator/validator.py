@@ -14,7 +14,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-import hashlib
 import logging
 from abc import abstractmethod, ABC
 from hmac import compare_digest
@@ -348,22 +347,11 @@ class HashSumValidator(FileValidator):
         """
         super().validate(path)
 
-        if self.hash_type.value not in hashlib.algorithms_available:
-            raise ValidationError(f"Hash type '{self.hash_type.value}' is not"
-                                  "supported by Python's `hashlib` module.")
+        hash_obj = utils.calc_hash(path, self.hash_type)
 
-        hash_method = getattr(hashlib, self.hash_type.value)()
-
-        with open(path, 'rb') as fh:
-            while True:
-                data = fh.read(4096)
-                if not data:
-                    break
-                hash_method.update(data)
-
-        if not compare_digest(hash_method.digest(), self.hash_sum):
+        if not compare_digest(hash_obj.digest(), self.hash_sum):
             raise ValidationError(
-                    f"Hash sum of file '{path}': '{hash_method.hexdigest()}' "
+                    f"Hash sum of file '{path}': '{hash_obj.hexdigest()}' "
                     f"mismatches the provided one '{self.hash_sum.hex()}'")
 
 

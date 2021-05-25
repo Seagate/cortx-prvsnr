@@ -17,6 +17,8 @@
 
 fileroot/[fileroot_prefix/]
 └── saltstack
+    ├── files
+    │   └── saltstack.repo
     ├── salt-cluster
     │   └── files
     │       └── pki

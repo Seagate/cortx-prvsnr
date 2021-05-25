@@ -23,8 +23,10 @@ from typing import (
     Type,
     Any,
     Callable,
-    Iterator
+    Iterator,
+    BinaryIO
 )
+import hashlib
 import configparser
 import json
 import logging
@@ -409,11 +411,12 @@ def generate_random_secret():
     """
 
     special_characters = '=+-_'
-    passwd_seed = random.sample(string.ascii_uppercase,
-                                4) + random.sample(string.digits,
-                                                   3) + random.sample(string.ascii_lowercase,
-                                                                      4) + random.sample(special_characters,
-                                                                                         3)
+    passwd_seed = (
+        random.sample(string.ascii_uppercase, 4)
+        + random.sample(string.digits, 3)
+        + random.sample(string.ascii_lowercase, 4)
+        + random.sample(special_characters, 3)
+    )
     random.shuffle(passwd_seed)
 
     return ''.join(passwd_seed)
@@ -504,3 +507,33 @@ def load_checksum_from_file(path: Path) -> HashInfo:
     # NOTE: at this moment we consider that all necessary information is only
     # in first-line
     return load_checksum_from_str(line)
+
+
+def calc_hash(
+    data: Union[bytes, BinaryIO, Path],
+    hash_type: config.HashType = config.HashType.SHA384
+):
+    if hash_type.value not in hashlib.algorithms_available:
+        raise ValueError(
+            f"Hash type '{hash_type.value}' is not"
+            "supported by Python's `hashlib` module."
+        )
+
+    hash_method = getattr(hashlib, hash_type.value)()
+
+    def _calc_io(fh):
+        while True:
+            _data = fh.read(4096)
+            if not _data:
+                break
+            hash_method.update(_data)
+
+    if isinstance(data, bytes):
+        hash_method.update(data)
+    elif isinstance(data, Path):
+        with open(data, 'rb') as fh:
+            _calc_io(fh)
+    else:   # BinaryIO TODO consider strict type check for that
+        _calc_io(data)
+
+    return hash_method
