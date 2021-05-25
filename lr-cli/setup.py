@@ -38,6 +38,8 @@ setup(
         'cortx_setup',
         'cortx_setup.commands',
         'cortx_setup.commands.network',
+        'cortx_setup.commands.security',
+        'cortx_setup.commands.resource',
         'cortx_setup.commands.node',
         'cortx_setup.commands.cluster',
         'cortx_setup.commands.cluster.config'

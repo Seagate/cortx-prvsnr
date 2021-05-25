@@ -15,26 +15,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .hostname import Hostname
-from .network.config import NetworkConfig
-from .node.initialize import NodeInitalize
-from .node.finalize import NodeFinalize
-from .cluster.create import ClusterCreate
-from .cluster.show import ClusterShow
-from .cluster.config.network import ClusterNetworkConfig
-from .security.config import SecurityConfig
-from .resource.show import ResourceShow
-from .resource.discover import ResourceDiscover
 
-__all__ = [
-    'Hostname',
-    'NetworkConfig',
-    'NodeInitalize',
-    'ClusterCreate',
-    'ClusterNetworkConfig',
-    'ClusterShow',
-    'NodeFinalize',
-    'SecurityConfig',
-    'ResourceShow',
-    'ResourceDiscover'
- ]
+from ..command import Command
+
+
+class ResourceShow(Command):
+    _args = {
+        'manefist': {
+            'type': str,
+            'default': None,
+            'optional': True,
+            'help': 'discover HW/SW Manifest for all resources'
+        },
+        'health': {
+            'type': str,
+            'default': None,
+            'optional': True,
+            'help': 'Health check for all the resources in the system'
+        }
+    }
+
+    def run(self, manefist=None, health=None):
+        if manefist:
+            self.logger.info("discover HW/SW Manifest for all resources")
+        if health:
+            self.logger.info("Health check for all resources in the system")
+        self.logger.info("Done")

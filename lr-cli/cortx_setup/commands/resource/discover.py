@@ -15,26 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .hostname import Hostname
-from .network.config import NetworkConfig
-from .node.initialize import NodeInitalize
-from .node.finalize import NodeFinalize
-from .cluster.create import ClusterCreate
-from .cluster.show import ClusterShow
-from .cluster.config.network import ClusterNetworkConfig
-from .security.config import SecurityConfig
-from .resource.show import ResourceShow
-from .resource.discover import ResourceDiscover
 
-__all__ = [
-    'Hostname',
-    'NetworkConfig',
-    'NodeInitalize',
-    'ClusterCreate',
-    'ClusterNetworkConfig',
-    'ClusterShow',
-    'NodeFinalize',
-    'SecurityConfig',
-    'ResourceShow',
-    'ResourceDiscover'
- ]
+from ..command import Command
+
+
+class ResourceDiscover(Command):
+    _args = {}
+
+    def run(self):
+        self.logger.info("Running resource discover command")
+        self.logger.info("Done")

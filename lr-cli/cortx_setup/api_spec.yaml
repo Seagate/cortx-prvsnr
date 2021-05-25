@@ -23,6 +23,8 @@ network:
 node:
   initialize:
     NodeInitalize
+  finalize:
+    NodeFinalize
 hostname:
   Hostname
 cluster:
@@ -33,3 +35,12 @@ cluster:
   config:
     network:
       ClusterNetworkConfig
+resource:
+  discorver:
+    ResourceDiscover
+  show:
+    ResourceShow
+security:
+  config:
+    SecurityConfig
+
