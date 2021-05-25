@@ -18,9 +18,19 @@
 from logging import exception
 from pathlib import Path
 from ..command import Command
+<<<<<<< HEAD
 from provisioner.salt import function_run
 from provisioner.salt import StatesApplier
 
+=======
+from provisioner.commands import PillarGet
+from provisioner.salt import local_minion_id, function_run
+from provisioner.salt import StatesApplier
+
+
+""" Common functions """
+
+>>>>>>> 07d7b0a9 (EOS-19896: Add support to fetch enclosure id.)
 class Commons(Command):
     '''
     Common functions

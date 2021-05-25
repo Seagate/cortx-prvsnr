@@ -20,6 +20,7 @@ from ..command import Command
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id, function_run
+from .commons import Commons
 
 prvsnr_cluster_path = Path(
     '/opt/seagate/cortx_configs/provisioner_cluster.json'
@@ -49,12 +50,12 @@ class StorageEnclosureConfig(command):
             'help': 'Enclosure type e.g {RBOD | JBOD | EBOD | virtual}'
         }
     }
+
     def run(self, name=None, type=None):
         node_id = local_minion_id()
-        enc_num = "enclosure-1" #TODO: Generate this
-        enc_id = self.get_enc_id(target=node_id) #TODP: define this
+        enc_num = "enclosure-" + ((node_id).split('-'))[1]
+        enc_id = commons.get_enc_id(target=node_id)
 
-        #machine_id = self.get_machine_id(targets=node_id)
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -66,7 +67,7 @@ class StorageEnclosureConfig(command):
             PillarSet().run(
                 f'storage/{node_id}/{enc_num}/name',
                 f'{name}',
-                targets=node_id, #TODO: correct this
+                targets=node_id,
                 local=True
             )
             Conf.set(
@@ -81,7 +82,7 @@ class StorageEnclosureConfig(command):
             PillarSet().run(
                 f'storage/{node_id}/{enc_num}/type',
                 f'{type}',
-                targets=node_id, #TODO: correct this
+                targets=node_id,
                 local=True
             )
             Conf.set(
