@@ -17,6 +17,9 @@
 #
 
 
+hostname:
+  Hostname
+
 network:
   config:
     NetworkConfig
@@ -35,8 +38,7 @@ node:
       NodePrepareTime
     network:
       NodePrepareNetwork
-hostname:
-  Hostname
+
 cluster:
   create:
     ClusterCreate
@@ -45,20 +47,33 @@ cluster:
   config:
     network:
       ClusterNetworkConfig
+
 resource:
   discover:
     ResourceDiscover
   show:
     ResourceShow
+
 security:
   config:
     SecurityConfig
+
 signature:
   get:
     GetSignature
   set:
     SetSignature
+
 storage:
   config:
     StorageEnclosureConfig
 
+storageset:
+  create:
+    CreateStorageSet
+  add:
+    node:
+      AddServerNode
+  config:
+    durability:
+      DurabilityConfig
