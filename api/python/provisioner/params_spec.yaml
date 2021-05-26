@@ -74,6 +74,7 @@ private_data_network:
   _path: cluster.sls
   data_private_ip: cluster/srvnode-0/network/data/private_ip
   data_private_interfaces: cluster/srvnode-0/network/data/private_interfaces
+  data_mtu: cluster/srvnode-0/network/data/mtu
 
   
 release:
