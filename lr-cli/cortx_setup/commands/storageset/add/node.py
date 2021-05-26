@@ -14,17 +14,15 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API for adding node to Storageset in Field
+
 
 from cortx_setup.commands.command import Command
-from pathlib import Path
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
-
-prvsnr_cluster_path = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
 
 
 class AddServerNode(Command):
@@ -49,7 +47,7 @@ class AddServerNode(Command):
 
         Conf.load(
             index,
-            f'json://{prvsnr_cluster_path}'
+            f'json://{CONFSTORE_CLUSTER_FILE}'
         )
         ss_name = Conf.get(index, 'cluster>storage_set>name')
         node_count = Conf.get(index, 'cluster>storage_set>count')

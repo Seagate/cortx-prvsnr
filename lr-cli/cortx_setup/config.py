@@ -14,8 +14,8 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-from pathlib import Path
 
+from pathlib import Path
 
 CONFSTORE_CLUSTER_FILE = Path(
     '/opt/seagate/cortx_configs/provisioner_cluster.json'

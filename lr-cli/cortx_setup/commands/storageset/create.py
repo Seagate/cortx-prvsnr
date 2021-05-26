@@ -14,18 +14,15 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API for Storageset creation in Field
+
 
 from ..command import Command
-from pathlib import Path
-# from ..config import CONFSTORE_CLUSTER_FILE
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
-
-prvsnr_cluster_path = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
 
 
 class CreateStorageSet(Command):
@@ -48,7 +45,7 @@ class CreateStorageSet(Command):
 
         Conf.load(
             index,
-            f'json://{prvsnr_cluster_path}'
+            f'json://{CONFSTORE_CLUSTER_FILE}'
         )
         for key, value in kwargs.items():
             if value:
