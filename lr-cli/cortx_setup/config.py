@@ -18,5 +18,5 @@ from pathlib import Path
 
 
 CONFSTORE_CLUSTER_FILE = Path(
-    '/opt/seagate/seagate/cortx_configs/provisioner_cluster.json'
+    '/opt/seagate/cortx_configs/provisioner_cluster.json'
 )
