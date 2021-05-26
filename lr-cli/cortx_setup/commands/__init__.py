@@ -23,5 +23,8 @@ from .node.initialize import NodeInitalize
 __all__ = [
     'Hostname',
     'NetworkConfig',
-    'NodeInitalize'
+    'NodeInitalize',
+    'StorageEnclosureConfig',
+    'StorageControllerConfig',
+    'Commons'
  ]
