@@ -25,5 +25,8 @@ __all__ = [
     'Hostname',
     'NetworkConfig',
     'NodeInitalize',
-    'NodePrepareFirewall'
+    'NodePrepareFirewall',
+    'StorageEnclosureConfig',
+    'StorageControllerConfig',
+    'Commons'
  ]
