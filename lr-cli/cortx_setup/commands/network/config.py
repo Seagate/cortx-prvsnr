@@ -88,7 +88,7 @@ class NetworkConfig(Command):
                 transport_type
             )
 
-        elif interface_type is not None:
+        if interface_type is not None:
             self.logger.info(
                 f"Updating interface type to {interface_type} in confstore"
                 )
@@ -104,7 +104,7 @@ class NetworkConfig(Command):
                 interface_type
             )
 
-        elif interfaces is not None:
+        if interfaces is not None:
             if network_type == 'data':
                 iface_key = (
                     'private_interfaces' if private else 'public_interfaces'

@@ -114,7 +114,7 @@ class NodePrepareNetwork(Command):
                     hostname
                 )
 
-            elif network_type is not None:
+            if network_type is not None:
                 config_method = 'Static' if ip_address else 'DHCP'
                 self.logger.info(
                     f"Configuring {network_type} network "
