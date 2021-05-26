@@ -16,7 +16,12 @@
 #
 
 from cortx_setup.commands.command import Command
-from provisioner import set_ntp
+from provisioner.api import grains_get
+from provisioner.commands import PillarSet
+from provisioner.salt import (
+    local_minion_id,
+    StatesApplier
+)
 
 
 class NodePrepareTime(Command):
@@ -33,6 +38,24 @@ class NodePrepareTime(Command):
             'optional': True
         }
     }
+    
+    def set_server_time(self):
+        """Sets time on the server"""
+        StatesApplier.apply(
+            [
+                "components.system.chrony.config",
+                "components.system.chrony.stop",
+                "components.system.chrony.start"
+            ],
+            local_minion_id()
+        )
+
+    def set_enclosure_time(self):
+        """Sets time on the enclosure"""
+        StatesApplier.apply(
+            [ "components.controller.ntp" ],
+            local_minion_id()
+        )
 
     def run(self, **kwargs):
         """Time configuration command execution method.
@@ -40,11 +63,32 @@ class NodePrepareTime(Command):
         Execution:
         `cortx_setup node prepare time --server <ntp-server> --timezone <timezone>`
         """
+
+        node_id = local_minion_id()
         ntp_server = kwargs.get('server')
         ntp_timezone = kwargs.get('timezone')
-        self.logger.info(f"Configuring Time")
+
+        PillarSet().run(
+            'system/ntp/time_server',
+            ntp_server,
+            targets=node_id,
+            local=True
+        )
+
+        PillarSet().run(
+            'system/ntp/time_zone',
+            ntp_timezone,
+            targets=node_id,
+            local=True
+        )
+
         try:
-            set_ntp(server=ntp_server, timezone=ntp_timezone)
+            self.logger.info("Configuring time on server")
+            self.set_server_time()
+            chassis = grains_get("hostname_status:Chassis")[node_id]["hostname_status:Chassis"]
+            if chassis == "server":
+                self.logger.info("Configuring time on enclosure")
+                self.set_enclosure_time()
             self.logger.info("Done")
         except Exception as e:
             print(e)
