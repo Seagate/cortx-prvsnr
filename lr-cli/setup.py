@@ -34,7 +34,17 @@ setup(
         "Programming Language :: Python :: 3.6"
     ],
     keywords='cortx_setup API',
+<<<<<<< HEAD
     packages=find_packages(),
+=======
+    packages=[
+        'cortx_setup',
+        'cortx_setup.commands',
+        'cortx_setup.commands.network',
+        'cortx_setup.commands.node',
+        'cortx_setup.commands.storage'
+    ],
+>>>>>>> 1c5200a9 (Fix bugs)
     package_dir={'cortx_setup': 'cortx_setup'},
     include_package_data=True,
     entry_points={
