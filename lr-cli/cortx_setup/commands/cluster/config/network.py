@@ -16,7 +16,7 @@
 #
 
 from pathlib import Path
-from ...command import Command
+from cortx_setup.commands.command import Command
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id

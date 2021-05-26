@@ -14,33 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-
-from setuptools import setup, find_packages
-
-setup(
-    name='cortx_setup',
-    version='2.0.0',
-    author='Seagate',
-    author_email='support@seagate.com',
-    maintainer='Seagate',
-    maintainer_email=f'{"maintainer"}',
-    url='https://github.com/Seagate/cortx-prvsnr',
-    description='cortx_setup API',
-    long_description=f'{"description"}',
-    download_url=f'{"url"}',
-    license='Seagate',
-    classifiers=[
-        "Programming Language :: Python :: 3.6"
-    ],
-    keywords='cortx_setup API',
-    packages=find_packages(),
-    package_dir={'cortx_setup': 'cortx_setup'},
-    include_package_data=True,
-    entry_points={
-        'console_scripts': ['cortx_setup=cortx_setup.main:main'],
-    },
-    install_requires=[
-        'cortx-prvsnr >= 2.0.42'
-    ],
-)
