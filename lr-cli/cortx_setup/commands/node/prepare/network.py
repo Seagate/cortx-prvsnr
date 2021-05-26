@@ -16,11 +16,17 @@
 #
 
 
-from ..command import Command
-from ..config import PRVSNR_CLUSTER_CONFSTORE
-from ..utils import get_machine_id
-from provisioner import set_hostname
+from cortx_setup.commands.command import Command
+from cortx_setup.config import PRVSNR_CLUSTER_CONFSTORE
+from cortx_setup import utils
+from provisioner import (
+    set_hostname,
+    set_mgmt_network,
+    set_public_data_network,
+    set_private_data_network
+)
 from provisioner.salt import local_minion_id
+from cortx.utils.conf_store import Conf
 
 """Cortx Setup API for setting up the network"""
 
@@ -32,72 +38,76 @@ class NodePrepareNetwork(Command):
     _args = {
         'hostname': {
             'type': str,
-            'default': None,
             'optional': True,
+            'default': None,
             'help': 'Hostname to be set'
         },
         'network_type': {
             'type': str,
-            'default': None,
             'optional': True,
-            'choices': ['data', 'mgmt']
+            'default': None,
+            'choices': ['data', 'mgmt'],
             'help': 'Network type to be configured'
         },
         'mode': {
             'type': str,
-            'default': None,
             'optional': True,
-            'choices': ['public', 'private']
+            'default': None,
+            'choices': ['public', 'private'],
             'help': 'Mode of network'
         },
         'gateway': {
             'type': str,
-            'default': None,
             'optional': True,
+            'default': "",
             'help': 'Gateway IP'
         },
         'netmask': {
             'type': str,
-            'default': None,
             'optional': True,
+            'default': "",
             'help': 'Netmask'
         },
         'ip_address': {
             'type': str,
-            'default': None,
             'optional': True,
+            'default': "",
             'help': 'IP address'
         },
         'interfaces': {
             'type': str,
             'nargs': '+',
             'optional': True,
+            'default': "",
             'help': 'List of interfaces for provided network_type '
                     'e.g eth1 eth2'
         }
     }
 
+    def update_network_confstore(self, network_type, key, value, target):
+        machine_id = utils.get_machine_id(target=target)
+        if value:
+            self.logger.info(f"Updating {key} for {network_type} in confstore")
+            Conf.set(
+                'node_prepare_index',
+                f'server_node>{machine_id}>network>{network_type}>{key}',
+                value
+            )
 
-    def __init__(self)
-        self.Conf.load(
+    def run(self, hostname=None, network_type=None, mode=None, gateway=None,
+        netmask=None, ip_address=None, interfaces=None
+    ):
+        node_id = local_minion_id()
+        machine_id = utils.get_machine_id(target=node_id)
+        Conf.load(
             'node_prepare_index',
             f'json://{PRVSNR_CLUSTER_CONFSTORE}'
         )
 
-    def update_network_confstore(self, key, value, target):
-        if value is not None:
-            self.logger.info("Updating {key} in confstore")
-            self.Conf.set('node_prepare_index' key, value)
-
-   def run(self, hostname=None, network_type=None, mode=None, gateway=None,
-        netmask=None, ip_address=None, interfaces=None
-    ):
-        node_id = local_minion_id()
-
         try:
             if hostname is not None:
                 self.logger.info(f"Setting up hostname to {hostname}")
-                set_hostname(hostname=hostname, targets=node_id)
+                set_hostname(hostname=hostname, targets=node_id, local=True)
                 Conf.set(
                     'node_prepare_index',
                     f'server_node>{machine_id}>hostname',
@@ -105,9 +115,10 @@ class NodePrepareNetwork(Command):
                 )
 
             elif network_type is not None:
-                config_method = 'Static' if ip_address is not None else 'DHCP'
+                config_method = 'Static' if ip_address else 'DHCP'
                 self.logger.info(
-                    f"Configuring {network_type} network through {config_method} method"
+                    f"Configuring {network_type} network "
+                    f"through {config_method} method"
                 )
 
                 if network_type == 'mgmt':
@@ -115,7 +126,7 @@ class NodePrepareNetwork(Command):
                     iface_key = 'interfaces'
                     set_mgmt_network(
                         mgmt_public_ip=ip_address,
-                        mgmt_netmask=netmask, 
+                        mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
                         mgmt_interfaces=interfaces,
                         local=True,
@@ -125,49 +136,58 @@ class NodePrepareNetwork(Command):
                     if mode == 'public':
                         iface_key = 'public_interfaces'
                         set_public_data_network(
-                            data_public_ip=ip_address, 
+                            data_public_ip=ip_address,
                             data_netmask=netmask,
-                            data_gateway=gateway, 
-                            data_interfaces=interfaces,
+                            data_gateway=gateway,
+                            data_public_interfaces=interfaces,
                             local=True,
                             targets=node_id
                         )
                     elif mode == 'private':
                         iface_key = 'private_interfaces'
                         set_private_data_network(
-                            data_private_ip=ip_address, 
+                            data_private_ip=ip_address,
                             data_private_interfaces=interfaces,
                             local=True,
                             targets=node_id
                         )
                     else:
-                        self.logger.error(f"Mode should be specified for {network_type} network")
+                        self.logger.error(
+                            "Mode should be specified for "
+                            f"{network_type} network"
+                        )
 
                 self.update_network_confstore(
                     network_type=network_type,
-                    key=f'{iface_key}',
-                    value=interfaces
+                    key=iface_key,
+                    value=interfaces,
+                    target=node_id
                 )
-                if config_method == 'dhcp':
+                if config_method == 'Static':
                     self.update_network_confstore(
                         network_type=network_type,
-                        key=f'{private_ip}' if mode == private else f'{public_ip}',
-                        ivalue=p_address
+                        key='private_ip' if mode == 'private' else 'public_ip',
+                        value=ip_address,
+                        target=node_id
                     )
                     self.update_network_confstore(
                         network_type=network_type,
                         key='netmask',
-                        value=netmask
+                        value=netmask,
+                        target=node_id
                     )
                     self.update_network_confstore(
                         network_type=network_type,
                         key='gateway',
-                        value=gateway
-                    )                                   
+                        value=gateway,
+                        target=node_id
+                    )
             else:
-                self.logger.error("No parameters provided to configure network")
+                self.logger.error(
+                    "No parameters provided to configure network"
+                )
         except Exception as ex:
             raise(ex)
 
-        self.Conf.save('node_prepare_index')
+        Conf.save('node_prepare_index')
         self.logger.info("Done")

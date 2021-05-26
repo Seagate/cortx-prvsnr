@@ -18,6 +18,7 @@
 
 from provisioner.salt import function_run
 
+
 def get_machine_id(target):
     try:
         result = function_run('grains.get', fun_args=['machine_id'],

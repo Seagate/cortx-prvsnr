@@ -15,12 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from pathlib import Path
-from ..command import Command
-from ..config import PRVSNR_CLUSTER_CONFSTORE
+from cortx_setup.commands.command import Command
+from cortx_setup.config import PRVSNR_CLUSTER_CONFSTORE
+from cortx_setup import utils
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id, function_run
+from provisioner.salt import local_minion_id
 
 
 """Cortx Setup API for configuring network"""
@@ -63,7 +63,8 @@ class NetworkConfig(Command):
     }
 
     def run(self, transport_type=None, interface_type=None, network_type=None,
-            interfaces=None, private=False):
+                interfaces=None, private=False
+    ):
         node_id = local_minion_id()
         machine_id = utils.get_machine_id(target=node_id)
         Conf.load(
@@ -81,7 +82,7 @@ class NetworkConfig(Command):
                 targets=node_id,
                 local=True
             )
-            self.Conf.set(
+            Conf.set(
                 'node_config_index',
                 f'server_node>{machine_id}>network>data>transport_type',
                 transport_type
@@ -97,7 +98,7 @@ class NetworkConfig(Command):
                 targets=node_id,
                 local=True
             )
-            self.Conf.set(
+            Conf.set(
                 'node_config_index',
                 f'server_node>{machine_id}>network>data>interface_type',
                 interface_type
@@ -118,7 +119,7 @@ class NetworkConfig(Command):
                     targets=node_id,
                     local=True
                 )
-                self.Conf.set(
+                Conf.set(
                     'node_config_index',
                     f'server_node>{machine_id}>network>data>{iface_key}',
                     interfaces
@@ -134,7 +135,7 @@ class NetworkConfig(Command):
                     targets=node_id,
                     local=True
                 )
-                self.Conf.set(
+                Conf.set(
                     'node_config_index',
                     f'server_node>{machine_id}>network>management>interfaces',
                     interfaces
@@ -145,5 +146,5 @@ class NetworkConfig(Command):
                 )
         else:
             self.logger.error("No parameters provided to configure network")
-        self.Conf.save('node_config_index')
+        Conf.save('node_config_index')
         self.logger.info("Done")
