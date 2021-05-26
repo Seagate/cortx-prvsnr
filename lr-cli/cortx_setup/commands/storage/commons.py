@@ -60,4 +60,3 @@ class Commons(Command):
                 return fetch_enc_id()
             except:
                 raise exception("Error generating the enclosure ID")
-        

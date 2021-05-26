@@ -39,5 +39,8 @@ __all__ = [
     'SecurityConfig',
     'ResourceShow',
     'ResourceDiscover',
-    'NodePrepareFirewall'
+    'NodePrepareFirewall',
+    'StorageEnclosureConfig',
+    'StorageControllerConfig',
+    'Commons'
  ]

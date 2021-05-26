@@ -30,7 +30,6 @@ node:
       NodePrepareFirewall
 hostname:
   Hostname
-<<<<<<< HEAD
 cluster:
   create:
     ClusterCreate
@@ -48,9 +47,7 @@ security:
   config:
     SecurityConfig
 
-=======
 storage:
   StorageEnclosureConfig
   controller:
     StorageControllerConfig
->>>>>>> ae7cbe11 (EOS-19896: Factory - Configure storage enclosure)
