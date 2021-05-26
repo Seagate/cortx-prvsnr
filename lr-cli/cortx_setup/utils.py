@@ -16,8 +16,13 @@
 #
 
 
-from pathlib import Path
+from provisioner.salt import function_run
 
-PRVSNR_CLUSTER_CONFSTORE = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
+def get_machine_id(target):
+    try:
+        result = function_run('grains.get', fun_args=['machine_id'],
+                            targets=target)
+        machine_id = result[f'{target}']
+    except Exception as exc:
+        raise exc
+    return machine_id
