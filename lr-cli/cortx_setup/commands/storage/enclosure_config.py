@@ -22,6 +22,7 @@ from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id, function_run
 from .commons import Commons
 
+#TODO: Add this path in the global config
 prvsnr_cluster_path = Path(
     '/opt/seagate/cortx_configs/provisioner_cluster.json'
 )
