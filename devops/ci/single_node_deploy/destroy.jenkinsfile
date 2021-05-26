@@ -41,6 +41,13 @@ node {
                 echo "Successfully connected to VM ${HOST_NAME}."
             }
 
+            stage("Stop Cluster Services") {
+            sshCommand remote: remote, command: """
+                command -v cortx &>/dev/null && cortx cluster stop || true
+            """
+            echo "Successfully stopped cluster services"
+            }
+
             stage("Teardown: HA") {
             sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states ha || true
