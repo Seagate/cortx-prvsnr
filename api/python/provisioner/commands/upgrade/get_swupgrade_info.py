@@ -25,11 +25,11 @@ from provisioner import inputs
 from provisioner.commands.upgrade.set_swupgrade_repo import CortxISOInfo, \
     SetSWUpgradeRepo
 from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
-                                SWUpgradeInfoFields, RELEASE_INFO_FILE)
+                                RELEASE_INFO_FILE)
 from provisioner.errors import SWUpdateRepoSourceError
 from provisioner.pillar import PillarResolver, PillarKey
 
-from provisioner.salt import local_minion_id, cmd_run
+from provisioner.salt import local_minion_id
 from provisioner.commands import CommandParserFillerMixin, commands
 from provisioner.vendor import attr
 
