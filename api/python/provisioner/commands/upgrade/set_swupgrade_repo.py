@@ -17,7 +17,7 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Type
+from typing import Type, Union
 import requests
 from configparser import ConfigParser
 
@@ -34,7 +34,8 @@ from ...config import (REPO_CANDIDATE_NAME,
                        CORTX_3RD_PARTY_ISO_DIR,
                        CORTX_PYTHON_ISO_DIR,
                        OS_ISO_DIR, HashType,
-                       PIP_CONFIG_FILE
+                       PIP_CONFIG_FILE,
+                       SWUpgradeInfoFields
                        )
 from ...errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                        ValidationError
@@ -82,6 +83,17 @@ SW_UPGRADE_BUNDLE_SCHEME = {
         },
         required=False)
 }
+
+
+@attr.s(auto_attribs=True)
+class CortxISOInfo:
+    """
+
+    """
+    _prvsnr_type_ = True
+
+    packages: dict = attr.ib(validator=attr.validators.instance_of(dict))
+    metadata: dict = attr.ib(validator=attr.validators.instance_of(dict))
 
 
 @attr.s(auto_attribs=True)
@@ -289,10 +301,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #  provisioner doesn't unmount `sw_update_candidate` repo
         # raise SWUpdateError(reason="Other repo candidate was found")
 
-    @staticmethod
-    def _base_repo_validation(candidate_repo: inputs.SWUpgradeRepo,
-                              base_dir: Path,
-                              dry_run: bool = False) -> dict:
+    def _base_repo_validation(self, candidate_repo: inputs.SWUpgradeRepo,
+                              base_dir: Path, dry_run: bool = False):
         """
         Base SW upgrade repository validation.
 
@@ -339,31 +349,6 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 else:
                     logger.info("Catalog structure validation succeeded")
 
-            release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
-                            f'{RELEASE_INFO_FILE}')
-            try:
-                metadata = load_yaml(release_file)
-            except Exception as exc:
-                raise SWUpdateRepoSourceError(
-                    str(candidate_repo.source),
-                    f"Failed to load '{RELEASE_INFO_FILE}' file: {exc}"
-                )
-        else:
-            release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
-                            f'{RELEASE_INFO_FILE}')
-            r = requests.get(release_file)
-
-            try:
-                metadata = load_yaml_str(r.content.decode("utf-8"))
-            except Exception as exc:
-                raise SWUpdateRepoSourceError(
-                    str(candidate_repo.source),
-                    f"Failed to load '{RELEASE_INFO_FILE}' "
-                    f"file from remote URL: {exc}"
-                )
-
-        return metadata
-
     def _post_repo_validation(self, candidate_repo: inputs.SWUpgradeRepo,
                               base_dir: Path, dry_run: bool = False):
         """
@@ -406,7 +391,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 elif dir_entry.name == CORTX_PYTHON_ISO_DIR:
                     self._validate_python_index(dir_entry)
 
-    def dynamic_validation(self, params, targets: str, dry_run: bool = False):  # noqa: C901, E501
+    def dynamic_validation(self, params, targets: str,
+                           dry_run: bool = False) -> Union[CortxISOInfo, None]:  # noqa: C901, E501
         """
         Validate single SW upgrade ISO structure.
 
@@ -423,8 +409,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Returns
         -------
-        dict:
-            return SW upgrade candidate metadata
+        CortxISOInfo:
+            return SW upgrade candidate metadata and version of packages or
+            None repo source is special provisioner value
 
         Raises
         ------
@@ -463,9 +450,18 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             self._apply(candidate_repo, targets=targets, local=False)
 
-            metadata = self._base_repo_validation(candidate_repo,
-                                                  base_dir,
-                                                  dry_run)
+            self._base_repo_validation(candidate_repo, base_dir, dry_run)
+
+            if candidate_repo.is_remote():
+                iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
+                release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                                f'{RELEASE_INFO_FILE}')
+            else:
+                release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
+                                f'{RELEASE_INFO_FILE}')
+
+            metadata = self.load_metadata(release_file,
+                                          candidate_repo.is_remote())
 
             repo.metadata = metadata
             logger.debug(f"Resolved metadata {metadata}")
@@ -493,6 +489,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             repo.release = release
 
+            packages = self.get_packages_version(REPO_CANDIDATE_NAME)
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
@@ -500,15 +497,15 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.info("Post-validation cleanup")
             self._apply(candidate_repo, targets, local=False)
 
-        return repo.metadata
+        return CortxISOInfo(packages=packages, metadata=repo.metadata)
 
     @staticmethod
     def _setup_python_index(repo: inputs.SWUpgradeRepo):
         """
         Setup Python index
 
-        Parameters
         ----------
+        Parameters
         repo: inputs.SWUpgradeRepo
             SW upgrade repository parameters
 
@@ -559,3 +556,85 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         self._apply(repo, targets, local=local)
         self._setup_python_index(repo)
         return repo.metadata
+
+    @staticmethod
+    def get_packages_version(release: str) -> dict:
+        """
+        Static method returns information about CORTX packages and
+        their versions. Public method.
+
+        Parameters
+        ----------
+        release : str
+            SW upgrade repository version
+
+        Returns
+        -------
+        dict
+            return dictionary with CORTX packages and their versions
+
+        """
+        repo = f"sw_upgrade_{CORTX_ISO_DIR}_{release}"
+
+        cmd = (f"yum repo-pkgs {repo} list 2>/dev/null | "
+               f"grep '{repo}' | awk '{{print $1\" \"$2}}'")
+
+        res = cmd_run(cmd, targets=local_minion_id(),
+                      fun_kwargs=dict(python_shell=True))
+
+        packages = res[local_minion_id()].strip().split('\n')
+
+        if packages:
+            logger.debug(f"List of packages in repository '{repo}':"
+                         f" {packages}")
+        else:
+            logger.debug(f"There are no packages in repository '{repo}'")
+
+        res = dict()
+        # NOTE: Format is following
+        # ```
+        #  {
+        #      'cortx-motr': {
+        #             'version': '2.0.0-277',
+        #          },
+        #  }
+        # ```
+        #
+        # TODO: EOS-20507: Along the with 'version', field we need to add
+        #  'constraint version' field to provide necessary information about
+        #  compatibility with old versions
+        for entry in packages:
+            pkg, ver = entry.split(" ")
+            res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
+
+        return res
+
+    @staticmethod
+    def load_metadata(release_file_path: str, remote: bool = False):
+        """
+
+        Parameters
+        ----------
+        release_file_path
+        remote
+
+        Returns
+        -------
+        dict:
+            dictionary with Cortx repository metadata (content of RELEASE.INFO
+            file)
+
+        """
+        try:
+            if remote:
+                r = requests.get(release_file_path)
+                metadata = load_yaml_str(r.content.decode("utf-8"))
+            else:
+                metadata = load_yaml(release_file_path)
+        except Exception as exc:
+            raise SWUpdateRepoSourceError(
+                        str(release_file_path),
+                        f"Failed to load '{release_file_path}' file: {exc}"
+                    )
+
+        return metadata
