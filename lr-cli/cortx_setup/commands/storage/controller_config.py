@@ -53,7 +53,7 @@ class StorageControllerConfig(Command):
         'type': {
             'type': str,
             'optional': True,
-            'help': 'Type of controller e.g {Gallium | Indium | virtual}'
+            'help': 'Type of controller e.g {gallium | indium | virtual}'
         },
         'mode': {
             'type': str,

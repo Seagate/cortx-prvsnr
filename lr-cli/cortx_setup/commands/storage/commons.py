@@ -30,36 +30,17 @@ class Commons(Command):
     Common functions
     '''
     _args = None
+    #TODO: Add this path in the global config
     enclosure_id_file_path = "/etc/enclosure-id"
 
-    def fetch_enc_id():
-        # Check if file /etc/enclosure-id has correct content:
-        # 1. has only one line and
-        # 2. has only one word - enclosure serial.
-
-        self.logger.info("Fetching the enclosure ID from {self._enclosure_id_file_path}")       
-        _enc_id_file = Path(self.enclosure_id_file_path)
-        _words = None
-        with open(_enc_id_file) as _fp:
-            _line_cnt = 0
-            for _line in _fp:
-                self.logger.info(f"content of line {_line_cnt}: {_line}")
-                _words = _line.strip()
-                _line_cnt += 1
-
-        if _words and (_line_cnt == 1):
-            _n_words = 1
-            for id in _words:
-                if id == " ":
-                    _n_words += 1
-            if _n_words == 1:
-                return id
-
-        msg = ("ERROR: The contents of {self.enclosure_id_file_path}"
-            "looks incorrect, failing"
-        )
-        self.logger.error(msg)
-        raise Exception(msg)
+    def fetch_enc_id(self, targets):
+        try:
+            result = function_run('grains.get', fun_args=['enclosure_id'],
+                                targets=targets)
+            _enc_id = result[f'{targets}']
+        except Exception as exc:
+            raise exc
+        return _enc_id
 
     def get_enc_id(self, targets):
 
