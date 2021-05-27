@@ -213,7 +213,7 @@ class StorageEnclosureConfig(Command):
                 )
                 Conf.set(
                     'node_info_index',
-                    f'storage_enclosure>{enc_id}>controller>{mode}/ip',
+                    f'storage_enclosure>{enc_id}>controller>{mode}>ip',
                     ip
                 )
                 set_ip = True
@@ -232,13 +232,16 @@ class StorageEnclosureConfig(Command):
                 )
                 Conf.set(
                     'node_info_index',
-                    f'storage_enclosure>{enc_id}>controller>{mode}/port',
+                    f'storage_enclosure>{enc_id}>controller>{mode}>port',
                     port
                 )
                 set_port = True
             if not set_ip and not set_port:
-                self.logger.error(
-                    f"Please provide correct options for {mode}"
+                self.logger.exception(
+                    f"Sub options for mode {mode} are missing"
                 )
+                raise RuntimeError('Please provide the correct'
+                    ' options for mode, exiting.')
+
         Conf.save('node_info_index')
         self.logger.info("Done")
