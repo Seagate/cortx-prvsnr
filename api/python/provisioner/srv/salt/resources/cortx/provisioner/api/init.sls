@@ -15,23 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Format notes:
-#   - top level keys are types of attributes
-#   - validators:
-#     - each type may have related validator as validator__<type>
-#     - if `validator` is specified explicitly as a key it overrides
-#   - converter: (the same as for validators)
-
-# TODO:
-# - optional support for validators
-# - None support for converters
-
-ipv4: {}
-nodes: {}
-path: {}
-path_resolved:
-  validator: path
-path_exists:
-  converter: path_resolved
-version: {}
-version_specifier: {}
+include:
+  - .prepare
+  - .install

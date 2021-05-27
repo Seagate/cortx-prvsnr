@@ -41,10 +41,6 @@ user_srv_pillar_dir="${user_srv_dir}/pillar"
 seagate_log_dir=/var/log/seagate
 prvsnr_log_dir="${seagate_log_dir}/provisioner"
 
-# XXX EOS-17600 remove
-user_srv_fileroot_dir_old=/opt/seagate/cortx/provisioner/srv_user   # FIXME deprecate that
-user_srv_pillar_dir_old=/opt/seagate/cortx/provisioner/pillar/user  # FIXME deprecate that
-
 echo "Creating group '$prvsnr_group'..."
 groupadd -f "$prvsnr_group"
 
@@ -54,9 +50,7 @@ for path in "$factory_profile_dir" \
             "$prvsnr_locks_dir" \
             "$user_srv_fileroot_dir" \
             "$user_srv_pillar_dir" \
-            "$prvsnr_log_dir" \
-            "$user_srv_fileroot_dir_old" \
-            "$user_srv_pillar_dir_old"; do
+            "$prvsnr_log_dir"; do
     mkdir -p "$path"
 done
 
@@ -64,9 +58,7 @@ for path in "$user_srv_dir" \
             "$factory_profile_dir" \
             "$prvsnr_locks_dir" \
             "$seagate_log_dir" \
-            "$prvsnr_log_dir" \
-            "$user_srv_fileroot_dir_old" \
-            "$user_srv_pillar_dir_old"; do
+            "$prvsnr_log_dir"; do
     if [[ "$path" == "$seagate_log_dir" ]]; then
         chmod o+rx "$path"
     else
