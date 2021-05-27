@@ -88,8 +88,6 @@ node {
                     network.mgmt.interfaces=eth0
                     bmc.user=None
                     bmc.secret=None
-                    storage.data_devices=\${device_list#*,}
-                    storage.metadata_devices=\${device_list%%,*}
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None

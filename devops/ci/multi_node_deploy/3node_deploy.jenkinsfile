@@ -108,7 +108,6 @@ node {
 
             stage("Prepare config.ini") {
                 sshCommand remote: remotes[0], command: """
-                    device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
                     echo \"\"\"
                     [cluster]
                     mgmt_vip=${MGMT_VIP}
@@ -128,15 +127,13 @@ node {
                     \"\"\" | sed -e 's/^[ \t]*//' > /root/config.ini
                 """
                 for (remote in remotes) {
-                    device_list = sshCommand remote: remote, command: "lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -"
+                    sshCommand remote: remote, command: "device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)"
                     if (remote.name.equals(remotes[0].name) ) {
                         sshCommand remote: remotes[0], command: """
                             echo \"\"\"
                             [${remote.name}]
                             hostname=${remote.host}
                             roles=primary,openldap_server,kafka_server
-                            storage.data_devices=\${device_list#*,}
-                            storage.metadata_devices=\${device_list%%,*}
                             storage.cvg.0.data_devices=\${device_list#*,}
                             storage.cvg.0.metadata_devices=\${device_list%%,*}
 
@@ -149,8 +146,6 @@ node {
                             [${remote.name}]
                             hostname=${remote.host}
                             roles=secondary,openldap_server,kafka_server
-                            storage.data_devices=\${device_list#*,}
-                            storage.metadata_devices=\${device_list%%,*}
                             storage.cvg.0.data_devices=\${device_list#*,}
                             storage.cvg.0.metadata_devices=\${device_list%%,*}
 
