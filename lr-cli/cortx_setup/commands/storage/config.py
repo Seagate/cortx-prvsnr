@@ -161,7 +161,7 @@ class StorageEnclosureConfig(Command):
             )
             PillarSet().run(
                 f'storage/{enc_num}/controller/secret',
-                f'{secret}',
+                f'{password}',
                 targets=node_id,
                 local=True
             )
@@ -171,7 +171,7 @@ class StorageEnclosureConfig(Command):
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>controller>secret',
-                secret
+                password
             )
         if controller_type is not None:
             self.logger.debug(
@@ -189,7 +189,7 @@ class StorageEnclosureConfig(Command):
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>controller>type',
-                ctrl_type
+                controller_type
             )
         if mode is not None:
             set_ip = False
