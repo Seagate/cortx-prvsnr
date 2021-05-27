@@ -64,7 +64,7 @@ class GetSignature(Command):
 
             Conf.load(index, f'yaml://{lr_sign_file}')
             lr_sign = Conf.get(index, f'signature>{key}')
-            self.logger.info(f"Signature value for '{key}': {lr_sign}")
+            self.logger.info("Signature value for '%s': %s" % (key,lr_sign))
 
             if not lr_sign:
                 lr_sign = Conf.get(index, 'signature')
@@ -73,8 +73,7 @@ class GetSignature(Command):
                    "in the following Signature data:\n%s" % (key,lr_sign)
                 )
 
-
         except ValueError as exc:
             raise ValueError(
-              "Failed: GET LR signature from ConfStore: %s" % str(exc)
+              "Failed to get node signature from ConfStore: %s" % str(exc)
             )

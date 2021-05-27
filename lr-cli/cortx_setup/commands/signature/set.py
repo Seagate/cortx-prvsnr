@@ -74,6 +74,7 @@ class SetSignature(Command):
                 # Immutable file. Make it editable first.
                 _cmd = f"chattr -i {lr_sign_file}"
                 subprocess.Popen(_cmd, shell=True)     # nosec
+                # This step takes a second to process.
                 sleep(1)
 
             Conf.load(index, f'yaml://{lr_sign_file}')
@@ -92,5 +93,5 @@ class SetSignature(Command):
 
         except Exception as exc:
             raise ValueError(
-              "Failed: SET LR signature to ConfStore: %s" % str(exc)
+              "Failed to set node signature: %s" % str(exc)
             )
