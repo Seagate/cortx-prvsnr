@@ -21,9 +21,6 @@ from ..command import Command
 from provisioner.salt import function_run
 from provisioner.salt import StatesApplier
 
-
-""" Common functions """
-
 class Commons(Command):
     '''
     Common functions
