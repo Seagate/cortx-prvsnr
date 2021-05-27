@@ -90,7 +90,7 @@ class StorageEnclosureConfig(Command):
     }
 
     def run(self, name=None, type=None,
-            user=None, password=None, ctrl_type=None, mode=None,
+            user=None, password=None, controller_type=None, mode=None,
             ip=None, port=None):
 
         node_id = local_minion_id()
@@ -173,13 +173,13 @@ class StorageEnclosureConfig(Command):
                 f'storage_enclosure>{enc_id}>controller>secret',
                 secret
             )
-        if ctrl_type is not None:
+        if controller_type is not None:
             self.logger.debug(
-                f"Updating controller type to {type} in pillar"
+                f"Updating controller type to {controller_type} in pillar"
             )
             PillarSet().run(
                 f'storage/{enc_num}/controller/type',
-                f'{ctrl_type}',
+                f'{controller_type}',
                 targets=node_id,
                 local=True
             )
