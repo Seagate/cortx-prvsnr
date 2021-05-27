@@ -26,6 +26,8 @@ from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
 from .node.prepare.firewall import NodePrepareFirewall
+from .storage.config import StorageEnclosureConfig
+from .storage.commons import Commons
 
 
 __all__ = [
