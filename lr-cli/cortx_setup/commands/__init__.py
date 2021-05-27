@@ -25,6 +25,5 @@ __all__ = [
     'NetworkConfig',
     'NodeInitalize',
     'StorageEnclosureConfig',
-    'StorageControllerConfig',
     'Commons'
  ]
