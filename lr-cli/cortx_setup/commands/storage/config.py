@@ -31,7 +31,6 @@ prvsnr_cluster_path = Path(
 """Cortx Setup API for configuring the storage enclosure """
 
 
-<<<<<<< HEAD
 class StorageEnclosureConfig(Command):
     '''
     $ cortx_setup storage config --name <enclosure-name>
@@ -39,13 +38,6 @@ class StorageEnclosureConfig(Command):
     $ cortx_setup storage config --user <user> --password <password>
     $ cortx_setup storage config --controller_type {gallium|indium|virtual}
     $ cortx_setup storage config --mode {primary|secondary} --ip <ip-address> --port <port-number>
-=======
-class StorageEnclosureConfig(command):
-    '''
-    $ cortx_setup storage --name <Enclosure name>
-
-    $ cortx_setup storage --type <Enclosure type>
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
     '''
     _args = {
         'name': {
@@ -54,11 +46,7 @@ class StorageEnclosureConfig(command):
             'optional': True,
             'help': 'Set name of the enclosure e.g enc1-r10'
         },
-<<<<<<< HEAD
         'storage_type': {
-=======
-        'type': {
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             'type': str,
             'default': None,
             'optional': True,
@@ -76,11 +64,7 @@ class StorageEnclosureConfig(command):
             'optional': True,
             'help': 'password for controller user'
         },
-<<<<<<< HEAD
         'controller_type': {
-=======
-        'type': {
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             'type': str,
             'optional': True,
             'help': 'Type of controller e.g {gallium | indium | virtual}'
@@ -99,67 +83,42 @@ class StorageEnclosureConfig(command):
         },
         'port': {
             'type': str,
-<<<<<<< HEAD
             'default': None,
-=======
-            'default': False,
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             'optional': True,
             'help': 'Port of the controller to connect to'
         }
     }
 
-<<<<<<< HEAD
     def run(self, name=None, storage_type=None,
             user=None, password=None, controller_type=None, mode=None,
-=======
-    def run(self, name=None, type=None,
-            user=None, password=None, type=None, mode=None,
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             ip=None, port=None):
 
         node_id = local_minion_id()
         enc_num = "enclosure-" + ((node_id).split('-'))[1]
-<<<<<<< HEAD
         enc_id = Commons().get_enc_id(node_id)
-=======
-        enc_id = commons.get_enc_id(target=node_id)
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
 
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
         )
         if name is not None:
-<<<<<<< HEAD
             self.logger.debug(
                 f"Updating storage enclosure name to {name} in pillar"
             )
             PillarSet().run(
                 f'storage/{enc_num}/name',
-=======
-            self.logger.info(
-                f"Updating storage enclosure name to {name} in confstore"
-            )
-            PillarSet().run(
-                f'storage/{node_id}/{enc_num}/name',
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
                 f'{name}',
                 targets=node_id,
                 local=True
             )
-<<<<<<< HEAD
             self.logger.info(
                 f"Updating storage enclosure name to {name} in Cortx ConfStor"
             )
-=======
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>name',
                 name
             )
-<<<<<<< HEAD
         if storage_type is not None:
             self.logger.debug(
                 f"Updating storage type to {storage_type} in pillar"
@@ -184,46 +143,19 @@ class StorageEnclosureConfig(command):
             )
             PillarSet().run(
                 f'storage/{enc_num}/controller/user',
-=======
-        if type is not None:
-            self.logger.info(
-                f"Updating storage enclosure type to {type} in confstore"
-            )
-            PillarSet().run(
-                f'storage/{node_id}/{enc_num}/type',
-                f'{type}',
-                targets=node_id,
-                local=True
-            )
-            Conf.set(
-                'node_info_index',
-                f'storage_enclosure>{enc_id}>type',
-                type
-            )
-        if user is not None:
-            self.logger.info(
-                f"Updating controller user to {user} in confstore"
-            )
-            PillarSet().run(
-                f'storage/{node_id}/{enc_num}/controller/user',
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
                 f'{user}',
                 targets=node_id,
                 local=True
             )
-<<<<<<< HEAD
             self.logger.info(
                 f"Updating controller user to {user} in Cortx ConfStor"
             )
-=======
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>controller>user',
                 user
             )
         if password is not None:
-<<<<<<< HEAD
             self.logger.debug(
                 f"Updating controller secret in pillar"
             )
@@ -258,42 +190,11 @@ class StorageEnclosureConfig(command):
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>controller>type',
                 controller_type
-=======
-            self.logger.info(
-                f"Updating controller secret in confstore"
-            )
-            PillarSet().run(
-                f'storage/{node_id}/{enc_num}/controller/secret',
-                f'{secret}',
-                targets=node_id,
-                local=True
-            )
-            Conf.set(
-                'node_info_index', #Is this correct?
-                f'storage_enclosure>{enc_id}>controller>secret',
-                secret
-            )
-        if type is not None:
-            self.logger.info(
-                f"Updating controller type in confstore"
-            )
-            PillarSet().run(
-                f'storage/{node_id}/{enc_num}/controller/type',
-                f'{type}',
-                targets=node_id,
-                local=True
-            )
-            Conf.set(
-                'node_info_index', #Is this correct?
-                f'storage_enclosure>{enc_id}>controller>type',
-                type
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
             )
         if mode is not None:
             set_ip = False
             set_port = False
 
-<<<<<<< HEAD
             self.logger.debug(
                 f"Updating {mode} controller IP/port in pillar"
             )
@@ -303,55 +204,29 @@ class StorageEnclosureConfig(command):
                 )
                 PillarSet().run(
                     f'storage/{enc_num}/controller/{mode}/ip',
-=======
-            self.logger.info(
-                f"Updating {mode} controller IP/port in confstore"
-            )
-            if ip is not None:
-                self.logger.info(
-                    f"Updating {mode} controller IP in confstore"
-                )
-                PillarSet().run(
-                    f'storage/{node_id}/{enc_num}/controller/{mode}/ip',
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
                     f'{ip}',
                     targets=node_id,
                     local=True
                 )
-<<<<<<< HEAD
                 self.logger.info(
                     f"Updating {mode} controller IP [{ip}] in Cortx ConfStor"
                 )
                 Conf.set(
                     'node_info_index',
                     f'storage_enclosure>{enc_id}>controller>{mode}>ip',
-=======
-                Conf.set(
-                    'node_info_index', #Is this correct?
-                    f'storage_enclosure>{enc_id}>controller>{mode}/ip',
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
                     ip
                 )
                 set_ip = True
             if port is not None:
-<<<<<<< HEAD
                 self.logger.debug(
                     f"Updating {mode} controller port in pillar"
                 )
                 PillarSet().run(
                     f'storage/{enc_num}/controller/{mode}/port',
-=======
-                self.logger.info(
-                    f"Updating {mode} controller port in confstore"
-                )
-                PillarSet().run(
-                    f'storage/{node_id}/{enc_num}/controller/{mode}/port',
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
                     f'{port}',
                     targets=node_id,
                     local=True
                 )
-<<<<<<< HEAD
                 self.logger.info(
                     f"Updating {mode} controller port in Cortx ConfStor"
                 )
@@ -370,15 +245,3 @@ class StorageEnclosureConfig(command):
 
         Conf.save('node_info_index')
         self.logger.info("Done")
-=======
-                Conf.set(
-                    'node_info_index', #Is this correct?
-                    f'storage_enclosure>{enc_id}>controller>{mode}/port',
-                    port
-                )
-                set_port = True
-            if not True in set_ip and set_port:
-                self.logger.info(
-                    f"Please provide correct options for {mode}"
-                ) 
->>>>>>> 2b94c3bf (Add missing file storage/config.py)
