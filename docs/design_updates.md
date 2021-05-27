@@ -72,7 +72,11 @@ Reference Confluence pages for the above design creation:
 2. [Field Deployment implementation](https://seagate-systems.atlassian.net/wiki/spaces/PRIVATECOR/pages/221642890/CORTX+Field+Deployment+Process)
 
 **Pre-req:**   
-`cortx_setup` API uses existing Salt functionalities and some provisioner utilities. So, for this new API to be available, provisioner rpm should be installed and present in the environment.
+`cortx_setup` API uses existing Salt functionalities and some provisioner utilities. So, for this new API to be available, provisioner rpm should be installed and present in the environment. Post that, install `cortx_setup` API,
+
+```
+pip3 install lr-cli/
+```
 
 **Implementation:**   
 This implementation is placed under LR directory, separate from Provisioner API design.

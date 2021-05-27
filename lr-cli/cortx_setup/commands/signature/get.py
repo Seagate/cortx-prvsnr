@@ -31,7 +31,7 @@ class GetSignature(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Retrieves the given signature key from ConfStore'
+            'help': 'Signature details to retrieve for this key'
         }
     }
 
@@ -42,7 +42,7 @@ class GetSignature(Command):
         Gets LR Signature.
 
         Execution:
-        `cortx_setup signature get --key 'key'`
+        `cortx_setup signature get --key key`
 
         """
         try:
@@ -64,15 +64,15 @@ class GetSignature(Command):
 
             Conf.load(index, f'yaml://{lr_sign_file}')
             lr_sign = Conf.get(index, f'signature>{key}')
+            self.logger.info(f"Signature value for '{key}': {lr_sign}")
 
             if not lr_sign:
-                self.logger.warning(
-                   "Given key '%s' is possibly "
-                   "not found in following Signature data." % key
-                )
                 lr_sign = Conf.get(index, 'signature')
+                self.logger.warning(
+                   "Given key '%s' is possibly not found "
+                   "in the following Signature data:\n%s" % (key,lr_sign)
+                )
 
-            return lr_sign
 
         except ValueError as exc:
             raise ValueError(

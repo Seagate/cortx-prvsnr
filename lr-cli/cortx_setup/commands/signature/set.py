@@ -34,13 +34,13 @@ class SetSignature(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Sets the given signature key to ConfStore'
+            'help': 'Signature key to set. e.g: {name|address}'
         },
         'value': {
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Sets the given signature value to ConfStore'
+            'help': 'Signature value to set. e.g: {node001}'
         }
     }
 
@@ -51,10 +51,11 @@ class SetSignature(Command):
         Sets LR signature.
 
         Execution:
-        `cortx_setup signature set --key 'key' --value 'value'`
+        `cortx_setup signature set --key key --value value`
 
         """
         try:
+            # Move this definition to common config file
             lr_sign_file = Path("/etc/node-signature.yaml")
             index = "signature"
 
@@ -87,7 +88,7 @@ class SetSignature(Command):
             _cmd = f"chattr +i {lr_sign_file} && lsattr {lr_sign_file}"
             subprocess.Popen(_cmd, shell=True)     # nosec
 
-            return "Success: LR Stamping done"
+            return f"Node Stamping done and '{key}' is set as '{value}' in Signature"
 
         except Exception as exc:
             raise ValueError(
