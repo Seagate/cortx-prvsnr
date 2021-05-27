@@ -33,9 +33,11 @@ prvsnr_cluster_path = Path(
 
 class StorageEnclosureConfig(command):
     '''
-    $ cortx_setup storage --name <Enclosure name>
-
-    $ cortx_setup storage --type <Enclosure type>
+    $ cortx_setup storage config --name <enclosure-name>
+    $ cortx_setup storage config --type {RBOD|JBOD|EBOD|virtual}
+    $ cortx_setup storage config --user <user> --password <password>
+    $ cortx_setup storage config --controller_type {gallium|indium|virtual}
+    $ cortx_setup storage config --mode {primary|secondary} --ip <ip-address> --port <port-number>
     '''
     _args = {
         'name': {
