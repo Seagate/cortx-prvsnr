@@ -34,7 +34,7 @@ prvsnr_cluster_path = Path(
 class StorageEnclosureConfig(Command):
     '''
     $ cortx_setup storage config --name <enclosure-name>
-    $ cortx_setup storage config --type {RBOD|JBOD|EBOD|virtual}
+    $ cortx_setup storage config --storage_type {RBOD|JBOD|EBOD|virtual}
     $ cortx_setup storage config --user <user> --password <password>
     $ cortx_setup storage config --controller_type {gallium|indium|virtual}
     $ cortx_setup storage config --mode {primary|secondary} --ip <ip-address> --port <port-number>
@@ -46,7 +46,7 @@ class StorageEnclosureConfig(Command):
             'optional': True,
             'help': 'Set name of the enclosure e.g enc1-r10'
         },
-        'type': {
+        'storage_type': {
             'type': str,
             'default': None,
             'optional': True,
@@ -89,7 +89,7 @@ class StorageEnclosureConfig(Command):
         }
     }
 
-    def run(self, name=None, type=None,
+    def run(self, name=None, storage_type=None,
             user=None, password=None, controller_type=None, mode=None,
             ip=None, port=None):
 
@@ -119,23 +119,23 @@ class StorageEnclosureConfig(Command):
                 f'storage_enclosure>{enc_id}>name',
                 name
             )
-        if type is not None:
+        if storage_type is not None:
             self.logger.debug(
-                f"Updating storage enclosure type to {type} in pillar"
+                f"Updating storage type to {storage_type} in pillar"
             )
             PillarSet().run(
                 f'storage/{enc_num}/type',
-                f'{type}',
+                f'{storage_type}',
                 targets=node_id,
                 local=True
             )
             self.logger.info(
-                f"Updating storage enclosure type to {type} in Cortx ConfStor"
+                f"Updating storage type to {storage_type} in Cortx ConfStor"
             )
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>type',
-                type
+                storage_type
             )
         if user is not None:
             self.logger.debug(
