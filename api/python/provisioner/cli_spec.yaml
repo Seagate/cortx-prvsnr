@@ -74,6 +74,23 @@ salt_minion:
   rediscover: fetch host system information and connections
 salt_cluster:
   regen_keys: re-generate old keys
+provisioner:
+  install_dir:
+    help: provisioner installation directory
+    metavar: path
+  repo:
+    tgz:
+      help: path to a repo archive, if defined 'path' and 'version'
+      metavar: path
+    path:
+      help: the path to local provisioner repo
+      metavar: path
+    version: Provisioner version to setup
+    update: re-install local repo
+  api:
+    distr:
+      help: type of API dirtibutive
+      choices: ['pip', 'package']
 glusterfs:
   peers:
     help: gluster peer host (IP/domain)

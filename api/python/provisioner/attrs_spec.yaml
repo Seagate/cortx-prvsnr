@@ -29,6 +29,8 @@
 ipv4: {}
 nodes: {}
 path: {}
+path_resolved:
+  validator: path
 path_exists:
   converter: path_resolved
 version: {}
