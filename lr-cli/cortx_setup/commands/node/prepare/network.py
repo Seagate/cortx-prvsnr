@@ -87,7 +87,9 @@ class NodePrepareNetwork(Command):
     def update_network_confstore(self, network_type, key, value, target):
         machine_id = utils.get_machine_id(target=target)
         if value:
-            self.logger.info(f"Updating {key} for {network_type} in confstore")
+            self.logger.info(
+                f"Updating {key} for {network_type} to {value} in confstore"
+            )
             Conf.set(
                 'node_prepare_index',
                 f'server_node>{machine_id}>network>{network_type}>{key}',

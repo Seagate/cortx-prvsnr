@@ -110,7 +110,7 @@ class NetworkConfig(Command):
                     'private_interfaces' if private else 'public_interfaces'
                 )
                 self.logger.info(
-                    f"Updating {iface_key} for data network "
+                    f"Updating {iface_key} to {interfaces} for data network "
                     "in confstore"
                 )
                 PillarSet().run(
@@ -126,8 +126,8 @@ class NetworkConfig(Command):
                 )
             elif network_type == 'mgmt':
                 self.logger.info(
-                    "Updating interfaces for management network "
-                    "in confstore"
+                    f"Updating interfaces to {interfaces} for management "
+                    "network in confstore"
                 )
                 PillarSet().run(
                     f'cluster/{node_id}/network/mgmt/interfaces',
