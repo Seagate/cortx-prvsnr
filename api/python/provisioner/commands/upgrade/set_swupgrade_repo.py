@@ -88,12 +88,16 @@ SW_UPGRADE_BUNDLE_SCHEME = {
 @attr.s(auto_attribs=True)
 class CortxISOInfo:
     """
-
+    Result class that aggregates information about Cortx repository and its
+    packages.
     """
     _prvsnr_type_ = True
 
     packages: dict = attr.ib(validator=attr.validators.instance_of(dict))
     metadata: dict = attr.ib(validator=attr.validators.instance_of(dict))
+
+    def __str__(self):
+        return f"{{'packages': {self.packages}, 'metadata': {self.metadata}}}"
 
 
 @attr.s(auto_attribs=True)
@@ -427,8 +431,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                         f"{repo.source}")
             return
 
-        logger.info(f"Validating upgrade repo: release {repo.release}, "
-                    f"source {repo.source}")
+        logger.info(f"Validating upgrade repo: release '{REPO_CANDIDATE_NAME}'"
+                    f", source {repo.source}")
 
         candidate_repo = inputs.SWUpgradeRepo(repo.source, REPO_CANDIDATE_NAME)
 
@@ -453,11 +457,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._base_repo_validation(candidate_repo, base_dir, dry_run)
 
             if candidate_repo.is_remote():
-                iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
-                release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
+                release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
                                 f'{RELEASE_INFO_FILE}')
             else:
-                release_file = (f'{candidate_repo.source}/{CORTX_ISO_DIR}/'
+                iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
+                release_file = (f'{iso_mount_dir}/{CORTX_ISO_DIR}/'
                                 f'{RELEASE_INFO_FILE}')
 
             metadata = self.load_metadata(release_file,

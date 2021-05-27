@@ -105,12 +105,13 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         if repo_uri is None:
             raise SWUpdateRepoSourceError(repo, 'baseurl is missed')
 
-        res = urlparse(f'{repo_uri}/{CORTX_ISO_DIR}/{RELEASE_INFO_FILE}')
+        res = urlparse(f'{repo_uri}/{RELEASE_INFO_FILE}')
 
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
 
-        return set_swupgrade_repo.load_metadata(unquote(res.path),
-                                                res.scheme == 'file')
+        return set_swupgrade_repo.load_metadata(
+                    release_file_path=unquote(res.path),
+                    remote=res.scheme != 'file')
 
     def run(self, iso_path: str = None, release: str = None) -> CortxISOInfo:
         """
