@@ -21,5 +21,7 @@ set -eux
 
 # 'ip' tool is necessary for testinfra to explore interfaces
 yum -y install iproute
+# e2fsprogs is needed for chattr util
+yum install -y e2fsprogs
 
 rm -rf /var/cache/yum

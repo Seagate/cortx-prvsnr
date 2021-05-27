@@ -14,9 +14,9 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+from pathlib import Path
 
-include:
-  - components.provisioner.teardown.remove_setup_files
-  - components.provisioner.teardown.package_remove
-  - components.provisioner.teardown.remove_repos
-  - components.provisioner.teardown.rsyslog
+
+CONFSTORE_CLUSTER_FILE = Path(
+    '/opt/seagate/cortx_configs/provisioner_cluster.json'
+)
