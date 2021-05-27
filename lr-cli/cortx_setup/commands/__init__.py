@@ -18,6 +18,8 @@
 from .hostname import Hostname
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
+from .storage.config import StorageEnclosureConfig
+from .storage.commons import Commons
 
 
 __all__ = [
