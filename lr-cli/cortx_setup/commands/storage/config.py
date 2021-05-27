@@ -236,9 +236,9 @@ class StorageEnclosureConfig(Command):
                     port
                 )
                 set_port = True
-            if not True in set_ip and set_port:
+            if not set_ip and not set_port:
                 self.logger.error(
                     f"Please provide correct options for {mode}"
-                ) 
+                )
         Conf.save('node_info_index')
         self.logger.info("Done")
