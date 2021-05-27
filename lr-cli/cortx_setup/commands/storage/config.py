@@ -64,7 +64,7 @@ class StorageEnclosureConfig(Command):
             'optional': True,
             'help': 'password for controller user'
         },
-        'type': {
+        'controller_type': {
             'type': str,
             'optional': True,
             'help': 'Type of controller e.g {gallium | indium | virtual}'
@@ -83,7 +83,7 @@ class StorageEnclosureConfig(Command):
         },
         'port': {
             'type': str,
-            'default': False,
+            'default': None,
             'optional': True,
             'help': 'Port of the controller to connect to'
         }
