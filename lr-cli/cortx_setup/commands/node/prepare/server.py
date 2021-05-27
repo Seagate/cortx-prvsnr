@@ -15,18 +15,20 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import os
 from provisioner.salt import (
+    cmd_run,
     local_minion_id,
+    StateFunExecuter,
     StatesApplier
 )
 from .config import NodePrepareServerConfig
+from .common_utils import get_pillar_data
 
 
 class NodePrepareServer(NodePrepareServerConfig):
 
     def _ip_not_pingable(self, ip: str):
-        res = os.system("ping -c 1 {ip}")
+        res = cmd_run(f"ping -c 1 {ip}")
         return not res == 0
 
     def run(self, **kwargs):
@@ -34,17 +36,30 @@ class NodePrepareServer(NodePrepareServerConfig):
         mgmt_vip = kwargs.get('mgmt_vip')
 
         try:
-            if self._ip_not_pingable(mgmt_vip):
-
-                states = [
-                    "components.system.network.mgmt.public.ip_alias",
-                    "provisioner.salt_minion.config",
-                    "provisioner.start_salt_minion"
-                ]
-                for state in states:
-                    self.logger.info(f"Applying {state} on {node}")
+            if "primary" in get_pillar_data(f"cluster/{node}/roles"):
+                if self._ip_not_pingable(mgmt_vip):
+                    self.logger.info(
+                        f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
+                    state = "components.system.network.mgmt.public.ip_alias"
+                    self.logger.debug(f"Applying {state} on {node}")
                     StatesApplier.apply([state], node)
-            else:
-                raise Exception("The IP {mgmt_vip} is in use")
+                else:
+                    raise Exception(f"The IP {mgmt_vip} is in use")
+
+            self.logger.info("Updating salt-minion file")
+            StateFunExecuter.execute(
+                'file.managed',
+                fun_kwargs=dict(
+                    name="/etc/salt/minion",
+                    source='salt://' +
+                    'srv/components/provisioner/salt_minion/files/minion_factory',
+                    template='jinja'
+                )
+            )
+            self.logger.info("Restarting salt-minion")
+            cmd_run(
+                "salt-call --local service.restart salt-minion",
+                targets=node)
+
         except Exception as e:
             raise e

@@ -20,16 +20,17 @@ from pathlib import Path
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
-from provisioner.utils import get_machine_id
-from provisioner.commands import GetClusterId
+from common_utils import (
+    get_machine_id,
+    get_cluster_id
+)
 
 from ...command import Command
 
 
 node = local_minion_id()
 machine_id = get_machine_id(node)
-node_id = local_minion_id()
-cluster_id = GetClusterId()
+cluster_id = get_cluster_id()
 
 confstore_pillar_dict = {
     'site_id': (

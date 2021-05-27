@@ -35,14 +35,6 @@ import string
 from shlex import quote
 from pathlib import Path, PosixPath
 import yaml
-
-from provisioner.salt import local_minion_id
-
-from pillar import (
-    PillarResolver,
-    PillarKey
-)
-
 from . import config
 
 from .errors import (
@@ -512,24 +504,3 @@ def load_checksum_from_file(path: Path) -> HashInfo:
     # NOTE: at this moment we consider that all necessary information is only
     # in first-line
     return load_checksum_from_str(line)
-
-def get_machine_id(node: str):
-    """
-    Returns the machine_id of the specified node
-
-    Parameters
-    ----------
-    node: str
-        nodename of the node
-
-    Returns
-    ---------
-    machine_id: str
-
-    """
-    key = f"cluster/{node}/machine_id"
-    pillar_key = PillarKey(key)
-    pillar = PillarResolver(local_minion_id().get([pillar_key]))
-    pillar = next(iter(pillar.values()))
-
-    return pillar[PillarKey(key)]

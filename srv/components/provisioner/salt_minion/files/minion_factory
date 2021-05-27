@@ -19,13 +19,20 @@
 #           -  jinja salt['config.get'] works intermittently
 #      - salt-call returns all items for grains
 #      - salt-call --local returns all items for config but only item without --local
-{% if salt['pillar.get']('setup:config:master') %}
+{% set master = salt['cmd.shell']("salt-call --local grains.get master --out=json") | load_json -%}
+{% if salt['pillar.get']('setup:config:master') -%}
 master: {{ salt['pillar.get']('setup:config:master') }}
-{% elif salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") %}
-master: {{ salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
-{% else %}
+{% elif master['local'] -%}
+{% if salt['pillar.get']('cluster:mgmt_vip') -%}
+{{ master['local'].append(salt['pillar.get']('cluster:mgmt_vip')) or '' -}}
+{% endif -%}
+master: {{ master['local'] }}
+{% else -%}
 master: srvnode-1
-{% endif %}
+{% endif -%}
+
+
+
 
 # Set http proxy information for the minion when doing requests
 #proxy_host:

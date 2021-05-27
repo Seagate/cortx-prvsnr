@@ -52,4 +52,3 @@ Public management network configuration:
     - proto: dhcp
 {%- endif -%}
 {% endif -%}
-

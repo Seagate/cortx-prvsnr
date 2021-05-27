@@ -15,17 +15,47 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% set node = grains['id'] %}
-{% set mgmt_if = pillar['cluster'][node]['network']['mgmt']['interfaces'][0] %}
-{% set mgmt_netmask = grains['ip4_netmask'][mgmt_if] %}
-{% set mgmt_vip = pillar['cluster']['mgmt_vip'] -%}
+from provisioner.salt import local_minion_id
+
+from provisioner.pillar import (
+    PillarResolver,
+    PillarKey
+)
 
 
-{% if mgmt_vip %}
+def get_pillar_data(key: str):
+    """
+    Get pillar_value for the specific key provided
 
-IP alias of mgmt_vip with {{ mgmt_if }}:
-    cmd.run:
-        name: ip a add {{mgmt_vip}}/{{mgmt_netmask}} dev {{mgmt_if}}
+    Parameters
+    ----------
+    key: str
+        keypath for which value to be fetched.
+        'key1/key2/key3'
 
-{% endif %}
+    """
+    pillar_key = PillarKey(key)
+    pillar = PillarResolver(local_minion_id().get([pillar_key]))
+    pillar = next(iter(pillar.values()))
+    return pillar[PillarKey(key)]
 
+
+def get_machine_id(node: str):
+    """
+    Get Machine_ID for the specific node
+
+    Parameters
+    ----------
+    node: str
+        minion_id for the node
+
+    """
+    return get_pillar_data(f'cluster/{node}/machine_id')
+
+
+def get_cluster_id():
+    """
+    Get Cluster_id
+
+    """
+    return get_pillar_data('cluster/cluster_id')
