@@ -31,22 +31,6 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-# TODO doc:
-#   Adding new resource:
-#     define a resource params (a set of configuration parameters
-#       that makes sense for a resource)
-#     define child classes of ResourceBase and ResourceBase
-#     define states as childs of ResourceState
-#         (makes sense to define common parent for all states)
-#     add classes per state with:
-#       - name
-#       - necessary attributes
-#     define SLS classes that implements the states:
-#       - setup_roots sets pillar and file roots
-#         - self.pillar_set() for pillars
-#         - self.pillar_inline dict for inline pillar
-#
-
 # SALT-STACK COMMON #
 
 @attr.s(auto_attribs=True)
@@ -68,7 +52,9 @@ class SaltStackRepo(SaltStackState):
 # SALT-MASTER #
 
 class SaltMasterParams(ResourceParams):
-    lvm2_first: bool = attr_ib(default=False)
+    lvm2_first: bool = attr_ib(
+        cli_spec='salt_master/lvm2_first', default=False
+    )
     updated_keys: List[str] = attr_ib(
         cli_spec='salt_master/onchanges', default=attr.Factory(list)
     )

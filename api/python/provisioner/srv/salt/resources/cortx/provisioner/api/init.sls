@@ -16,7 +16,5 @@
 #
 
 include:
-  - components.provisioner.teardown.remove_setup_files
-  - components.provisioner.teardown.package_remove
-  - components.provisioner.teardown.remove_repos
-  - components.provisioner.teardown.rsyslog
+  - .prepare
+  - .install

@@ -15,8 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.provisioner.teardown.remove_setup_files
-  - components.provisioner.teardown.package_remove
-  - components.provisioner.teardown.remove_repos
-  - components.provisioner.teardown.rsyslog
+Install cortx-prvsnr packages:
+  pkg.installed:
+    - pkgs:
+      - cortx-prvsnr
