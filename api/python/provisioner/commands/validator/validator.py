@@ -349,6 +349,9 @@ class HashSumValidator(FileValidator):
 
         hash_obj = utils.calc_hash(path, self.hash_type)
 
+        # hash_obj here is an object returned by `hashlib`
+        # python istandard library module so we compare against
+        # one provided by a caller
         if not compare_digest(hash_obj.digest(), self.hash_sum):
             raise ValidationError(
                     f"Hash sum of file '{path}': '{hash_obj.hexdigest()}' "

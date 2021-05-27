@@ -511,8 +511,26 @@ def load_checksum_from_file(path: Path) -> HashInfo:
 
 def calc_hash(
     data: Union[bytes, BinaryIO, Path],
-    hash_type: config.HashType = config.HashType.SHA384
+    hash_type: config.HashType = config.HashType.SHA512
 ):
+    """
+    Calculates a hash for provided data using specified algorithm.
+
+    Parameters
+    ----------
+    data: Union[bytes, BinaryIO, Path]
+        data to caclulate a hash for
+    hash_type: config.HashType
+        type of a hash algorithm to use, default is sha512
+
+    Returns
+    -------
+    hashlib object:
+        return an hash object provided by a `hashlib` module,
+        please consult https://docs.python.org/3/library/hashlib.html
+        for the details
+    """
+
     if hash_type.value not in hashlib.algorithms_available:
         raise ValueError(
             f"Hash type '{hash_type.value}' is not"
