@@ -83,13 +83,12 @@ class NodePrepareTime(Command):
         )
 
         try:
-            self.logger.info("Configuring time on server")
+            self.logger.info(f"Setting time on node with server={ntp_server} & timezone={ntp_timezone}")
             self.set_server_time()
             chassis = grains_get("hostname_status:Chassis")[node_id]["hostname_status:Chassis"]
             if chassis == "server":
-                self.logger.info("Configuring time on enclosure")
+                self.logger.info(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
                 self.set_enclosure_time()
-            self.logger.info("Done")
         except Exception as e:
             print(e)
             self.logger.error("Time configuration failed")
