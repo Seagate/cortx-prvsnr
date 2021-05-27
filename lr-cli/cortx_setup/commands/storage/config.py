@@ -95,21 +95,24 @@ class StorageEnclosureConfig(Command):
 
         node_id = local_minion_id()
         enc_num = "enclosure-" + ((node_id).split('-'))[1]
-        enc_id = commons.get_enc_id(target=node_id)
+        enc_id = Commons().get_enc_id(node_id)
 
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
         )
         if name is not None:
-            self.logger.info(
-                f"Updating storage enclosure name to {name} in confstore"
+            self.logger.debug(
+                f"Updating storage enclosure name to {name} in pillar"
             )
             PillarSet().run(
-                f'storage/{node_id}/{enc_num}/name',
+                f'storage/{enc_num}/name',
                 f'{name}',
                 targets=node_id,
                 local=True
+            )
+            self.logger.info(
+                f"Updating storage enclosure name to {name} in Cortx ConfStor"
             )
             Conf.set(
                 'node_info_index',
@@ -117,14 +120,17 @@ class StorageEnclosureConfig(Command):
                 name
             )
         if type is not None:
-            self.logger.info(
-                f"Updating storage enclosure type to {type} in confstore"
+            self.logger.debug(
+                f"Updating storage enclosure type to {type} in pillar"
             )
             PillarSet().run(
-                f'storage/{node_id}/{enc_num}/type',
+                f'storage/{enc_num}/type',
                 f'{type}',
                 targets=node_id,
                 local=True
+            )
+            self.logger.info(
+                f"Updating storage enclosure type to {type} in Cortx ConfStor"
             )
             Conf.set(
                 'node_info_index',
@@ -132,14 +138,17 @@ class StorageEnclosureConfig(Command):
                 type
             )
         if user is not None:
-            self.logger.info(
-                f"Updating controller user to {user} in confstore"
+            self.logger.debug(
+                f"Updating controller user to {user} in pillar"
             )
             PillarSet().run(
-                f'storage/{node_id}/{enc_num}/controller/user',
+                f'storage/{enc_num}/controller/user',
                 f'{user}',
                 targets=node_id,
                 local=True
+            )
+            self.logger.info(
+                f"Updating controller user to {user} in Cortx ConfStor"
             )
             Conf.set(
                 'node_info_index',
@@ -147,32 +156,38 @@ class StorageEnclosureConfig(Command):
                 user
             )
         if password is not None:
-            self.logger.info(
-                f"Updating controller secret in confstore"
+            self.logger.debug(
+                f"Updating controller secret in pillar"
             )
             PillarSet().run(
-                f'storage/{node_id}/{enc_num}/controller/secret',
+                f'storage/{enc_num}/controller/secret',
                 f'{secret}',
                 targets=node_id,
                 local=True
             )
+            self.logger.info(
+                f"Updating controller secret in Cortx ConfStor"
+            )
             Conf.set(
-                'node_info_index', #Is this correct?
+                'node_info_index',
                 f'storage_enclosure>{enc_id}>controller>secret',
                 secret
             )
         if ctrl_type is not None:
-            self.logger.info(
-                f"Updating controller type in confstore"
+            self.logger.debug(
+                f"Updating controller type to {type} in pillar"
             )
             PillarSet().run(
-                f'storage/{node_id}/{enc_num}/controller/type',
+                f'storage/{enc_num}/controller/type',
                 f'{ctrl_type}',
                 targets=node_id,
                 local=True
             )
+            self.logger.info(
+                f"Updating controller type to {type} in Cortx ConfStor"
+            )
             Conf.set(
-                'node_info_index', #Is this correct?
+                'node_info_index',
                 f'storage_enclosure>{enc_id}>controller>type',
                 ctrl_type
             )
@@ -180,42 +195,48 @@ class StorageEnclosureConfig(Command):
             set_ip = False
             set_port = False
 
-            self.logger.info(
-                f"Updating {mode} controller IP/port in confstore"
+            self.logger.debug(
+                f"Updating {mode} controller IP/port in pillar"
             )
             if ip is not None:
-                self.logger.info(
-                    f"Updating {mode} controller IP in confstore"
+                self.logger.debug(
+                    f"Updating {mode} controller IP [{ip}] in pillar"
                 )
                 PillarSet().run(
-                    f'storage/{node_id}/{enc_num}/controller/{mode}/ip',
+                    f'storage/{enc_num}/controller/{mode}/ip',
                     f'{ip}',
                     targets=node_id,
                     local=True
                 )
+                self.logger.info(
+                    f"Updating {mode} controller IP [{ip}] in Cortx ConfStor"
+                )
                 Conf.set(
-                    'node_info_index', #Is this correct?
+                    'node_info_index',
                     f'storage_enclosure>{enc_id}>controller>{mode}/ip',
                     ip
                 )
                 set_ip = True
             if port is not None:
-                self.logger.info(
-                    f"Updating {mode} controller port in confstore"
+                self.logger.debug(
+                    f"Updating {mode} controller port in pillar"
                 )
                 PillarSet().run(
-                    f'storage/{node_id}/{enc_num}/controller/{mode}/port',
+                    f'storage/{enc_num}/controller/{mode}/port',
                     f'{port}',
                     targets=node_id,
                     local=True
                 )
+                self.logger.info(
+                    f"Updating {mode} controller port in Cortx ConfStor"
+                )
                 Conf.set(
-                    'node_info_index', #Is this correct?
+                    'node_info_index',
                     f'storage_enclosure>{enc_id}>controller>{mode}/port',
                     port
                 )
                 set_port = True
             if not True in set_ip and set_port:
-                self.logger.info(
+                self.logger.error(
                     f"Please provide correct options for {mode}"
                 ) 

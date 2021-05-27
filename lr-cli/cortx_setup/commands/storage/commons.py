@@ -18,8 +18,7 @@
 from logging import exception
 from pathlib import Path
 from ..command import Command
-from provisioner.commands import PillarGet
-from provisioner.salt import local_minion_id, function_run
+from provisioner.salt import function_run
 from provisioner.salt import StatesApplier
 
 
@@ -31,9 +30,9 @@ class Commons(Command):
     '''
     _args = None
     #TODO: Add this path in the global config
-    enclosure_id_file_path = "/etc/enclosure-id"
+    _enclosure_id_file_path = "/etc/enclosure-id"
 
-    def fetch_enc_id(self, targets):
+    def fetch_enc_id(self, targets=None):
         try:
             result = function_run('grains.get', fun_args=['enclosure_id'],
                                 targets=targets)
@@ -42,21 +41,21 @@ class Commons(Command):
             raise exc
         return _enc_id
 
-    def get_enc_id(self, targets):
+    def get_enc_id(self, targets=None):
 
-        self.logger("Getting enclosure ID")
-        _enc_id_file = Path(self.enclosure_id_file_path)
+        self.logger.info("Getting enclosure ID")
+        _enc_id_file = Path(self._enclosure_id_file_path)
 
         if _enc_id_file.exists():
             self.logger.info(
             f"Enclosure ID is already generated at {self._enclosure_id_file_path}"
             )
-            return fetch_enc_id()
+            return self.fetch_enc_id(targets)
         else:
             self.logger.info("Generating the enclosure ID")
             try:
                 _set_enclosure_id_state = "components.system.storage.enclosure_id.config.set"
                 StatesApplier.apply(_set_enclosure_id_state, targets)
-                return fetch_enc_id()
+                return self.fetch_enc_id(targets)
             except:
                 raise exception("Error generating the enclosure ID")
