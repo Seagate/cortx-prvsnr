@@ -241,4 +241,4 @@ class StorageEnclosureConfig(Command):
                     f"Please provide correct options for {mode}"
                 ) 
         Conf.save('node_info_index')
-                self.logger.info("Done")
+        self.logger.info("Done")
