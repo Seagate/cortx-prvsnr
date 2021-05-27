@@ -48,6 +48,5 @@ security:
     SecurityConfig
 
 storage:
-  StorageEnclosureConfig
-  controller:
-    StorageControllerConfig
+  config:
+    StorageEnclosureConfig
