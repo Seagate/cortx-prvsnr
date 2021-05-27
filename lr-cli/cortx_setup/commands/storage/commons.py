@@ -48,7 +48,7 @@ class Commons(Command):
         _enc_id_file = Path(self.enclosure_id_file_path)
 
         if _enc_id_file.exists():
-            self.logger.info("
+            self.logger.info(
             f"Enclosure ID is already generated at {self._enclosure_id_file_path}"
             )
             return fetch_enc_id()

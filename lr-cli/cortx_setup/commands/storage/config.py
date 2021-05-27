@@ -31,7 +31,7 @@ prvsnr_cluster_path = Path(
 """Cortx Setup API for configuring the storage enclosure """
 
 
-class StorageEnclosureConfig(command):
+class StorageEnclosureConfig(Command):
     '''
     $ cortx_setup storage config --name <enclosure-name>
     $ cortx_setup storage config --type {RBOD|JBOD|EBOD|virtual}
@@ -90,7 +90,7 @@ class StorageEnclosureConfig(command):
     }
 
     def run(self, name=None, type=None,
-            user=None, password=None, type=None, mode=None,
+            user=None, password=None, ctrl_type=None, mode=None,
             ip=None, port=None):
 
         node_id = local_minion_id()
@@ -161,20 +161,20 @@ class StorageEnclosureConfig(command):
                 f'storage_enclosure>{enc_id}>controller>secret',
                 secret
             )
-        if type is not None:
+        if ctrl_type is not None:
             self.logger.info(
                 f"Updating controller type in confstore"
             )
             PillarSet().run(
                 f'storage/{node_id}/{enc_num}/controller/type',
-                f'{type}',
+                f'{ctrl_type}',
                 targets=node_id,
                 local=True
             )
             Conf.set(
                 'node_info_index', #Is this correct?
                 f'storage_enclosure>{enc_id}>controller>type',
-                type
+                ctrl_type
             )
         if mode is not None:
             set_ip = False
