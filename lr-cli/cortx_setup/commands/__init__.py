@@ -27,6 +27,5 @@ __all__ = [
     'NodeInitalize',
     'NodePrepareFirewall',
     'StorageEnclosureConfig',
-    'StorageControllerConfig',
     'Commons'
  ]

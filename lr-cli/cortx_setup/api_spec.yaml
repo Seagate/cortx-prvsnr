@@ -29,6 +29,5 @@ node:
 hostname:
   Hostname
 storage:
-  StorageEnclosureConfig
-  controller:
-    StorageControllerConfig
+  config:
+    StorageEnclosureConfig
