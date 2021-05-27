@@ -15,7 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Init USL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:init')
-    - failhard: True
+{% set onchanges = salt['pillar.get']('inline:salt-minion:onchanges') %}
+
+{% from './macros.sls' import salt_minion_configured with context %}
+
+{{ salt_minion_configured(onchanges) }}

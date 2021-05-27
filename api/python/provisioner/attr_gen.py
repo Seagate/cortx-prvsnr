@@ -18,11 +18,7 @@
 import sys
 import logging
 from typing import (
-    Tuple,
-    Union,
-    Type,
-    Any,
-    Callable
+    Tuple, Union, Type, Any, Callable, Optional, List
 )
 from ipaddress import IPv4Address
 from packaging.version import Version
@@ -75,6 +71,20 @@ def converter__ipv4(value) -> IPv4Address:
     return IPv4Address(value)
 
 
+def converter__special_values(
+    values: Union[Tuple, List],
+    orig_converter: Optional[Callable] = None
+) -> Callable:
+
+    def _f(value):
+        if (value in values) or (orig_converter is None):
+            return value
+        else:
+            return orig_converter(value)
+
+    return _f
+
+
 # VALIDATORS
 def validator__path(instance, attribute, value):
     utils.validator_path(instance, attribute, value)
@@ -122,14 +132,35 @@ def load_attrs_spec():
     return res
 
 
+def validator__special_values(
+    values: Union[Tuple, List],
+    orig_validator: Optional[Callable] = None
+) -> Callable:
+
+    def _f(instance, attribute, value):
+        if (value not in values) and orig_validator:
+            orig_validator(instance, attribute, value)
+
+    return _f
+
+
 attrs_spec = load_attrs_spec()
 
 
-def attr_ib(key: str = None, **kwargs):
+# key - a reference to prefedined attr spec
+# special_values - values that don't need default converter or validator
+def attr_ib(key: str = None, special_values: Optional[List] = None, **kwargs):
     _kwargs = {}
 
     if key:
         _kwargs = KeyPath(key).value(attrs_spec)
+        if special_values:
+            _kwargs[CONVERTER] = converter__special_values(
+                special_values, _kwargs.get(CONVERTER)
+            )
+            _kwargs[VALIDATOR] = validator__special_values(
+                special_values, _kwargs.get(VALIDATOR)
+            )
 
     _kwargs.update(kwargs)
 

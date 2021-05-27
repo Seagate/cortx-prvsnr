@@ -17,6 +17,6 @@
 
 FROM node:14
 
-RUN npm install --global remark-cli
+RUN npm install --global remark-cli remark-toc
 
 ENTRYPOINT [ "remark" ]

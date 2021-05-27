@@ -134,16 +134,31 @@ def test_check_cluster(mocker):
 
 def test_ensure_cluster_is_stopped(monkeypatch):
 
-    stopped = True
+    stopped = None
+    _fun = None
+    _tries = None
+    _wait = None
 
     def cluster_stop():
         nonlocal stopped
         stopped = True
 
+    def ensure(fun, tries, wait):
+        nonlocal _fun, _tries, _wait
+        _fun = fun
+        _tries = tries
+        _wait = wait
+
+    fun_expected = hare.check_cluster_is_offline
+
     monkeypatch.setattr(hare, 'cluster_stop', mock_fun_result(cluster_stop))
-    hare.ensure_cluster_is_stopped()
+    monkeypatch.setattr(hare, 'ensure', mock_fun_result(ensure))
+    hare.ensure_cluster_is_stopped(1, 2)
 
     assert stopped
+    assert _fun == fun_expected
+    assert _tries == 1
+    assert _wait == 2
 
 
 def test_ensure_cluster_is_started(monkeypatch):

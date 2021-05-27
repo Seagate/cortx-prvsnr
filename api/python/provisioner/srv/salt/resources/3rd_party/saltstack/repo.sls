@@ -15,32 +15,27 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Post Install USL:
+setup_yum_salt_repo:
+  file.managed:
+    - name: /etc/yum.repos.d/saltstack.repo
+    - source: salt://cortx_repos/files/etc/yum.repos.d/saltstack.repo
+    - keep_source: True
+    - backup: minion
+    - onchanges_in:
+      - clean_yum_salt_repo_metadata
+      - import_yum_salt_repo_key
+
+# TODO IMPROVE look for specific salt module instead of cmd.run
+clean_yum_salt_repo_metadata:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:post_install')
-    - failhard: True
+    - name: yum --disablerepo="*" --enablerepo="saltstack" clean metadata
 
-Stage - Prepare USL:
+epel_release_installed:
+  pkg.installed:
+    - name: epel-release
+
+# TODO IMPROVE look for specific salt module instead of cmd.run
+# (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
+import_yum_salt_repo_key:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:prepare')
-    - failhard: True
-
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] -%}
-
-Generate TLS certs:
-  module.run:
-    - csm.generate_csm_tls: []
-
-{% else %}
-
-Copy TLS certs to minions:
-  file.recurse:
-    - source: salt://components/csm/files/tls/
-    - name: /var/csm/tls
-    - user: {{ pillar["cortx"]["software"]["csm"]["user"] }}
-    - group: {{ pillar["cortx"]["software"]["csm"]["user"] }}
-    - file_mode: 600
-
-{% endif %}
-
-
+    - name: rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/3002.2/SALTSTACK-GPG-KEY.pub
