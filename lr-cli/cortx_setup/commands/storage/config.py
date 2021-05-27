@@ -240,3 +240,5 @@ class StorageEnclosureConfig(Command):
                 self.logger.error(
                     f"Please provide correct options for {mode}"
                 ) 
+        Conf.save('node_info_index')
+                self.logger.info("Done")
