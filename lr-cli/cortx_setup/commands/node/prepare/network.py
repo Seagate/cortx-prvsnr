@@ -52,7 +52,7 @@ class NodePrepareNetwork(Command):
         'mode': {
             'type': str,
             'optional': True,
-            'default': None,
+            'default': 'public',
             'choices': ['public', 'private'],
             'help': 'Mode of network'
         },
@@ -104,90 +104,76 @@ class NodePrepareNetwork(Command):
             f'json://{PRVSNR_CLUSTER_CONFSTORE}'
         )
 
-        try:
-            if hostname is not None:
-                self.logger.info(f"Setting up hostname to {hostname}")
-                set_hostname(hostname=hostname, targets=node_id, local=True)
-                Conf.set(
-                    'node_prepare_index',
-                    f'server_node>{machine_id}>hostname',
-                    hostname
-                )
+        if hostname is not None:
+            self.logger.info(f"Setting up hostname to {hostname}")
+            set_hostname(hostname=hostname, targets=node_id, local=True)
+            Conf.set(
+                'node_prepare_index',
+                f'server_node>{machine_id}>hostname',
+                hostname
+            )
 
-            if network_type is not None:
-                config_method = 'Static' if ip_address else 'DHCP'
-                self.logger.info(
-                    f"Configuring {network_type} network "
-                    f"through {config_method} method"
-                )
+        if network_type is not None:
+            config_method = 'Static' if ip_address else 'DHCP'
+            self.logger.info(
+                f"Configuring {network_type} network "
+                f"through {config_method} method"
+            )
 
-                if network_type == 'mgmt':
-                    network_type = 'management'
-                    iface_key = 'interfaces'
-                    set_mgmt_network(
-                        mgmt_public_ip=ip_address,
-                        mgmt_netmask=netmask,
-                        mgmt_gateway=gateway,
-                        mgmt_interfaces=interfaces,
+            if network_type == 'mgmt':
+                network_type = 'management'
+                iface_key = 'interfaces'
+                set_mgmt_network(
+                    mgmt_public_ip=ip_address,
+                    mgmt_netmask=netmask,
+                    mgmt_gateway=gateway,
+                    mgmt_interfaces=interfaces,
+                    local=True,
+                    targets=node_id
+                )
+            elif network_type == 'data':
+                if mode == 'public':
+                    iface_key = 'public_interfaces'
+                    set_public_data_network(
+                        data_public_ip=ip_address,
+                        data_netmask=netmask,
+                        data_gateway=gateway,
+                        data_public_interfaces=interfaces,
                         local=True,
                         targets=node_id
                     )
-                elif network_type == 'data':
-                    if mode == 'public':
-                        iface_key = 'public_interfaces'
-                        set_public_data_network(
-                            data_public_ip=ip_address,
-                            data_netmask=netmask,
-                            data_gateway=gateway,
-                            data_public_interfaces=interfaces,
-                            local=True,
-                            targets=node_id
-                        )
-                    elif mode == 'private':
-                        iface_key = 'private_interfaces'
-                        set_private_data_network(
-                            data_private_ip=ip_address,
-                            data_private_interfaces=interfaces,
-                            local=True,
-                            targets=node_id
-                        )
-                    else:
-                        self.logger.error(
-                            "Mode should be specified for "
-                            f"{network_type} network"
-                        )
-
+                elif mode == 'private':
+                    iface_key = 'private_interfaces'
+                    set_private_data_network(
+                        data_private_ip=ip_address,
+                        data_private_interfaces=interfaces,
+                        local=True,
+                        targets=node_id
+                    )
+            self.update_network_confstore(
+                network_type=network_type,
+                key=iface_key,
+                value=interfaces,
+                target=node_id
+            )
+            if config_method == 'Static':
                 self.update_network_confstore(
                     network_type=network_type,
-                    key=iface_key,
-                    value=interfaces,
+                    key='private_ip' if mode == 'private' else 'public_ip',
+                    value=ip_address,
                     target=node_id
                 )
-                if config_method == 'Static':
-                    self.update_network_confstore(
-                        network_type=network_type,
-                        key='private_ip' if mode == 'private' else 'public_ip',
-                        value=ip_address,
-                        target=node_id
-                    )
-                    self.update_network_confstore(
-                        network_type=network_type,
-                        key='netmask',
-                        value=netmask,
-                        target=node_id
-                    )
-                    self.update_network_confstore(
-                        network_type=network_type,
-                        key='gateway',
-                        value=gateway,
-                        target=node_id
-                    )
-            else:
-                self.logger.error(
-                    "No parameters provided to configure network"
+                self.update_network_confstore(
+                    network_type=network_type,
+                    key='netmask',
+                    value=netmask,
+                    target=node_id
                 )
-        except Exception as ex:
-            raise(ex)
-
+                self.update_network_confstore(
+                    network_type=network_type,
+                    key='gateway',
+                    value=gateway,
+                    target=node_id
+                )
         Conf.save('node_prepare_index')
         self.logger.info("Done")

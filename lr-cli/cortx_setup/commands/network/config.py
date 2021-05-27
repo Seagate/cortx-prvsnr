@@ -144,7 +144,5 @@ class NetworkConfig(Command):
                 self.logger.error(
                     "Network type should specified for provided interfaces"
                 )
-        else:
-            self.logger.error("No parameters provided to configure network")
         Conf.save('node_config_index')
         self.logger.info("Done")
