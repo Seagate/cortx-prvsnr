@@ -38,7 +38,7 @@ class NodePrepareTime(Command):
             'optional': True
         }
     }
-    
+
     def set_server_time(self):
         """Sets time on the server"""
         StatesApplier.apply(
@@ -83,12 +83,13 @@ class NodePrepareTime(Command):
         )
 
         try:
-            self.logger.info(f"Setting time on node with server={ntp_server} & timezone={ntp_timezone}")
+            self.logger.debug(f"Setting time on node with server={ntp_server} & timezone={ntp_timezone}")
             self.set_server_time()
-            chassis = grains_get("hostname_status:Chassis")[node_id]["hostname_status:Chassis"]
-            if chassis == "server":
-                self.logger.info(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
+            machine_id = grains_get("machine_id")[node_id]["machine_id"]
+            enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
+            if not machine_id in enclosure_id:
+                self.logger.debug(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
                 self.set_enclosure_time()
         except Exception as e:
-            print(e)
+            self.logger.exception(e)
             self.logger.error("Time configuration failed")
