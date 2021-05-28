@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import sys
 from cortx_setup.commands.command import Command
 from provisioner.api import grains_get
 from provisioner.commands import PillarSet
@@ -92,5 +91,5 @@ class NodePrepareTime(Command):
                 self.logger.debug(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
                 self.set_enclosure_time()
         except Exception as e:
-            self.logger.exception("Time configuration failed\n" + str(e))
-            sys.exit(1)
+            self.logger.error(f"Time configuration failed\n {str(e)}")
+            raise e
