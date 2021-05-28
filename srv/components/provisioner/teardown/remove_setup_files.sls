@@ -16,16 +16,15 @@
 #
 
 
-cluster-id immutable:
-  cmd.run:
-    - name: 'chattr -i /etc/cluster-id'
+{% set files = ['/etc/cluster-id', '/etc/node-signature.yaml'] -%}
+{% for setup_file in files %}
+{% if salt['file.file_exists'](setup_file) -%}
 
-{% if salt['file.file_exists']('/etc/node-signature.yaml') -%}
-
-node-signature file immutable:
+{{ setup_file }} immutable:
   cmd.run:
-    - name: 'chattr -i /etc/node-signature.yaml'
+    - name: 'chattr -i {{ setup_file }}'
 {%- endif %}
+{% endfor %}
 
 {% for filename in [
    '/etc/cluster-id',

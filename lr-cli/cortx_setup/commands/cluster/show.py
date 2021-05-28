@@ -15,17 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .command import Command
+from provisioner.salt import local_minion_id, cmd_run
+from ..command import Command
+import json
 
 
-class Hostname(Command):
-    _args = {
-        'hostname': {
-            'type': str,
-            'default': 'seagate.com',
-            'choices': ['seagate.com', 'ssc-vm.seagate.com'],
-            'optional': False}
-    }
+class ClusterShow(Command):
+    _args = {}
 
-    def run(self, **kwargs):
-        self.logger.debug(f"This is hostname API {kwargs}")
+    def run(self):
+        res = cmd_run('salt-key -L --out=json')
+        res = json.loads(res[local_minion_id()])
+        result = {}
+        result['cluster_nodes'] = res.get('minions')
+        result['non_cluster_nodes'] = res.get('minions_pre')
+        return result
