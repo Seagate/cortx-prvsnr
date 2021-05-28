@@ -40,7 +40,7 @@ class NodePrepareNetwork(Command):
             'type': str,
             'optional': True,
             'default': None,
-            'dest': 'network_type'
+            'dest': 'network_type',
             'choices': ['data', 'mgmt'],
             'help': 'Network type to be configured'
         },
@@ -148,26 +148,26 @@ class NodePrepareNetwork(Command):
                         targets=node_id
                     )
             self.update_network_confstore(
-                type=network_type,
+                network_type=network_type,
                 key=iface_key,
                 value=interfaces,
                 target=node_id
             )
             if config_method == 'Static':
                 self.update_network_confstore(
-                    type=network_type,
+                    network_type=network_type,
                     key='private_ip' if mode == 'private' else 'public_ip',
                     value=ip_address,
                     target=node_id
                 )
                 self.update_network_confstore(
-                    type=network_type,
+                    network_type=network_type,
                     key='netmask',
                     value=netmask,
                     target=node_id
                 )
                 self.update_network_confstore(
-                    type=network_type,
+                    network_type=network_type,
                     key='gateway',
                     value=gateway,
                     target=node_id
