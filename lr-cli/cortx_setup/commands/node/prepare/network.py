@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
 from cortx_setup.commands.command import Command
 from cortx_setup.config import PRVSNR_CLUSTER_CONFSTORE
 from cortx_setup import utils
@@ -28,13 +27,11 @@ from provisioner import (
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
+
 """Cortx Setup API for setting up the network"""
 
 
 class NodePrepareNetwork(Command):
-
-    """Set management and public network on node"""
-
     _args = {
         'hostname': {
             'type': str,
