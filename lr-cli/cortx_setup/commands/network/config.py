@@ -16,7 +16,7 @@
 #
 
 from cortx_setup.commands.command import Command
-from cortx_setup.config import PRVSNR_CLUSTER_CONFSTORE
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup import utils
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
@@ -70,7 +70,7 @@ class NetworkConfig(Command):
         machine_id = utils.get_machine_id(target=node_id)
         Conf.load(
             'node_config_index',
-            f'json://{PRVSNR_CLUSTER_CONFSTORE}'
+            f'json://{CONFSTORE_CLUSTER_FILE}'
         )
 
         if transport_type is not None:

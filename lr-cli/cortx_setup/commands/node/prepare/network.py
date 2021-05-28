@@ -16,7 +16,7 @@
 #
 
 from cortx_setup.commands.command import Command
-from cortx_setup.config import PRVSNR_CLUSTER_CONFSTORE
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup import utils
 from provisioner import (
     set_hostname,
@@ -98,7 +98,7 @@ class NodePrepareNetwork(Command):
         machine_id = utils.get_machine_id(target=node_id)
         Conf.load(
             'node_prepare_index',
-            f'json://{PRVSNR_CLUSTER_CONFSTORE}'
+            f'json://{CONFSTORE_CLUSTER_FILE}'
         )
 
         if hostname is not None:
