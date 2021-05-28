@@ -21,7 +21,6 @@ include:
   - components.csm.config
   - components.csm.start
 #  - components.csm.sanity_check
-  - components.csm.usl
 
 Generate csm checkpoint flag:
   file.managed:

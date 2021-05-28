@@ -25,6 +25,8 @@ from .cluster.config.network import ClusterNetworkConfig
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
+from .node.prepare.firewall import NodePrepareFirewall
+
 
 __all__ = [
     'Hostname',
@@ -36,5 +38,7 @@ __all__ = [
     'NodeFinalize',
     'SecurityConfig',
     'ResourceShow',
-    'ResourceDiscover'
+    'ResourceDiscover',
+    'NodePrepareFirewall'
+>>>>>>> ed52c80b0ddf36719f8899bf1e0407e2aa89c0e6
  ]

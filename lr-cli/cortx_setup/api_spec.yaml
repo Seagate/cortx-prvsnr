@@ -25,6 +25,9 @@ node:
     NodeInitalize
   finalize:
     NodeFinalize
+  prepare:
+    firewall:
+      NodePrepareFirewall
 hostname:
   Hostname
 cluster:

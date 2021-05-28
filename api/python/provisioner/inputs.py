@@ -25,6 +25,7 @@ import argparse
 import importlib
 from enum import Enum
 
+from . import config, utils
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
@@ -37,8 +38,6 @@ from .values import (
     is_special
 )
 from .serialize import PrvsnrType, loads
-
-from . import config, utils
 
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
