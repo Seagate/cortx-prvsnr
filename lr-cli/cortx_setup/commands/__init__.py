@@ -27,23 +27,13 @@ from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
 from .node.prepare.firewall import NodePrepareFirewall
-<<<<<<< HEAD
+from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
 from .signature.get import GetSignature
 from .signature.set import SetSignature
 
 
 __all__ = [
-=======
-from .node.prepare.network import NodePrepareNetwork
-
-
-__all__ = [
-    'Hostname',
-    'NetworkConfig',
-    'NodeInitalize',
-<<<<<<< HEAD
->>>>>>> 781a740e... EOS-20664: Field Prepare: Network-Configuration
     'ClusterCreate',
     'ClusterNetworkConfig',
     'ClusterShow',
@@ -53,16 +43,10 @@ __all__ = [
     'NodeInitalize',
     'NodeFinalize',
     'NodePrepareFirewall',
+    'NodePrepareNetwork',
     'NodePrepareTime',
     'ResourceShow',
     'ResourceDiscover',
-<<<<<<< HEAD
     'SecurityConfig',
     'SetSignature'
-=======
-    'NodePrepareFirewall'
-=======
-    'NodePrepareNetwork'
->>>>>>> 5ba29b16... EOS-20664: Field Prepare: Network-Configuration
->>>>>>> 781a740e... EOS-20664: Field Prepare: Network-Configuration
  ]
