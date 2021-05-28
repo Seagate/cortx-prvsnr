@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
+from .. import config
 from ..log import Log
 
 
@@ -29,6 +29,8 @@ class Command(object):
         else:
             Log._get_logger("nodecli", "INFO", "/var/log/seagate/provisioner/")
             self.logger = Log.logger
+        parent_dir = config.CONFSTORE_CLUSTER_FILE.parent
+        parent_dir.mkdir(parents=True, exist_ok=True)
 
     def get_args(self):
         return self._args

@@ -14,8 +14,9 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+from pathlib import Path
 
-Stage - Init USL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:init')
-    - failhard: True
+
+CONFSTORE_CLUSTER_FILE = Path(
+    '/opt/seagate/cortx_configs/provisioner_cluster.json'
+)

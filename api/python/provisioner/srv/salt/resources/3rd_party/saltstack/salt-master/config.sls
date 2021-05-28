@@ -15,11 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stage - Reset USL:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'usl:reset')
+{% set onchanges = salt['pillar.get']('inline:salt-master:onchanges') %}
+{% set updated_keys = salt['pillar.get']('inline:salt-master:updated_keys', []) %}
 
-Remove tls certs:
-  file.absent:
-    - name: /var/csm/tls
+{% from './macros.sls' import salt_master_configured with context %}
 
+{{ salt_master_configured(updated_keys, onchanges) }}

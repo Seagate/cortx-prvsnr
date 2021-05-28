@@ -29,7 +29,8 @@ node:
     config:
       server:
         NodePrepareServerConfig
-
+    firewall:
+      NodePrepareFirewall
 hostname:
   Hostname
    

@@ -23,7 +23,7 @@ node {
             password(description: 'root user password for the target node.', name: 'PASSWORD')
         ])
     ])
-    
+
     def remote = [:]
     remote.name = "srvnode-1"
     remote.host = HOST_NAME
@@ -39,6 +39,13 @@ node {
                 }
                 sshCommand remote: remote, command: "exit"
                 echo "Successfully connected to VM ${HOST_NAME}."
+            }
+
+            stage("Stop Cluster Services") {
+            sshCommand remote: remote, command: """
+                command -v cortx &>/dev/null && cortx cluster stop || true
+            """
+            echo "Successfully stopped cluster services"
             }
 
             stage("Teardown: HA") {
@@ -63,35 +70,36 @@ node {
             }
 
             stage("Teardown: Foundation") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states utils || true
             """
             echo "Successful teardown: Foundation"
             }
 
             stage("Teardown: 3rd_Party") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
             """
             echo "Successful teardown: 3rd-Party"
             }
 
             stage("Teardown: Platform") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states system || true
             """
             echo "Successful teardown: Platform"
             }
 
             stage("Teardown: Provisioner Bootstrap") {
-            sshCommand remote: remote, command: """ 
+            sshCommand remote: remote, command: """
                 command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
             """
             echo "Successful teardown: Bootstrap"
             }
 
             stage("Storage reclaim") {
-                sshCommand remote: remote, command: """ 
+                sshCommand remote: remote, command: """
+                    systemctl status lnet >/dev/null && systemctl stop lnet || true
                     # Wipe the MBR of metadata volume
                     for vggroup in \$(vgdisplay | egrep "vg_srvnode-"|tr -s ' '|cut -d' ' -f 4); do
                         echo "Removing volume group \${vggroup}"
@@ -157,11 +165,11 @@ node {
                     # Cleanup Salt
                     test -e /var/cache/salt && rm -rf /var/cache/salt
                     test -e /etc/salt && rm -rf /etc/salt
-                    test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO
                     # Cleanup Provisioner profile directory
                     test -e /opt/isos && rm -rf /opt/isos || true
                     test -e /root/.provisioner && rm -rf /root/.provisioner || true
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
+                    #test -e /etc/yum.repos.d && pushd /etc/yum.repos.d;rm -fv !("redhat.repo");popd || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
                 """
                 echo "Successfully removed."

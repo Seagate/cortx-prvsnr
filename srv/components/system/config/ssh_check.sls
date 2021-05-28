@@ -20,7 +20,7 @@
 {% if "srvnode-" in node -%}
 {% do server_nodes.append(node)-%}
 {% endif -%}
-{% endfor -%}
+{% endfor -%} 
 
 {%- for node in server_nodes %}
 

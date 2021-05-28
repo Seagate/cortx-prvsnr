@@ -19,11 +19,13 @@ from .hostname import Hostname
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
 from .node.prepare.server import NodePrepareServer
+from .node.prepare.firewall import NodePrepareFirewall
 
 
 __all__ = [
     'Hostname',
     'NetworkConfig',
     'NodeInitalize',
-    'NodePrepareServer'
+    'NodePrepareServer',
+    'NodePrepareFirewall'
  ]
