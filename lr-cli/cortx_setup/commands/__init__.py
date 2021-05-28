@@ -40,5 +40,4 @@ __all__ = [
     'ResourceShow',
     'ResourceDiscover',
     'NodePrepareFirewall'
->>>>>>> ed52c80b0ddf36719f8899bf1e0407e2aa89c0e6
  ]
