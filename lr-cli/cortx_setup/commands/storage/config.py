@@ -97,6 +97,10 @@ class StorageEnclosureConfig(Command):
         enc_num = "enclosure-" + ((node_id).split('-'))[1]
         enc_id = Commons().get_enc_id(node_id)
 
+        # This is to avoid the conflict with Python's internal
+        # object- 'type'.
+        storage_type = type 
+
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -119,23 +123,23 @@ class StorageEnclosureConfig(Command):
                 f'storage_enclosure>{enc_id}>name',
                 name
             )
-        if type is not None:
+        if storage_type is not None:
             self.logger.debug(
-                f"Updating storage type to {type} in pillar"
+                f"Updating storage type to {storage_type} in pillar"
             )
             PillarSet().run(
                 f'storage/{enc_num}/type',
-                f'{type}',
+                f'{storage_type}',
                 targets=node_id,
                 local=True
             )
             self.logger.info(
-                f"Updating storage type to {type} in Cortx ConfStor"
+                f"Updating storage type to {storage_type} in Cortx ConfStor"
             )
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>{enc_id}>type',
-                type
+                storage_type
             )
         if user is not None:
             self.logger.debug(
