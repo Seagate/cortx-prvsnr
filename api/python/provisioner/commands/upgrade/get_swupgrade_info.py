@@ -16,17 +16,16 @@
 #
 import logging
 from configparser import ConfigParser
-from typing import Type
+from typing import Type, Union
 from urllib.parse import urlparse, unquote
 
 from packaging import version
 
 from provisioner import inputs
-from provisioner.commands.upgrade.set_swupgrade_repo import CortxISOInfo, \
-    SetSWUpgradeRepo
+from provisioner.commands.upgrade.set_swupgrade_repo import (CortxISOInfo,
+                                                             SetSWUpgradeRepo)
 from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
                                 RELEASE_INFO_FILE)
-from provisioner.errors import SWUpdateRepoSourceError
 from provisioner.pillar import PillarResolver, PillarKey
 
 from provisioner.salt import local_minion_id
@@ -100,10 +99,11 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
         config = ConfigParser()
         config.read(f'/etc/yum.repos.d/{repo}.repo')
-        repo_uri = config[repo].get('baseurl', None)
+        repo_uri = config.get(repo, 'baseurl', fallback=None)
 
         if repo_uri is None:
-            raise SWUpdateRepoSourceError(repo, 'baseurl is missed')
+            logger.warning(f"'baseurl' option is missed for repo: '{repo}'")
+            return dict()
 
         res = urlparse(f'{repo_uri}/{RELEASE_INFO_FILE}')
 
@@ -113,7 +113,8 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
                     release_file_path=unquote(res.path),
                     remote=res.scheme != 'file')
 
-    def run(self, iso_path: str = None, release: str = None) -> CortxISOInfo:
+    def run(self, iso_path: str = None,
+            release: str = None) -> Union[CortxISOInfo, None]:
         """
         Main function for Get SW Upgrade Repo command. Command returns
         information about CORTX packages and their versions.
@@ -154,6 +155,10 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
                 PillarKey(pillar_path)].keys())
 
             upgrade_releases.remove(REPO_CANDIDATE_NAME)
+
+            if not upgrade_releases:
+                logger.warning("There are no set up SW upgrade repositories")
+                return None
 
             # NOTE: Assumption: we expect that SW Upgrade release version
             # is formatted according to PEP-440

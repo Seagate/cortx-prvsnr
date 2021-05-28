@@ -29,7 +29,8 @@ class RemoveSWUpgradeRepo(SetSWUpgradeRepo):
 
     input_type: Type[inputs.SWUpgradeRemoveRepo] = inputs.SWUpgradeRemoveRepo
 
-    def run(self, *args, targets=ALL_MINIONS, dry_run=False, **kwargs):
+    def run(self, *args, targets=ALL_MINIONS, dry_run=False,
+            local=False, **kwargs):
         # static validation
         if len(args) == 1 and isinstance(args[0], self.input_type):
             params = args[0]
@@ -48,7 +49,7 @@ class RemoveSWUpgradeRepo(SetSWUpgradeRepo):
         logger.info("Start removing SW upgrade repo of release "
                     f"'{params.release}'")
 
-        self._apply(params, targets=targets)
+        self._apply(params, targets=targets, local=local)
 
         logger.info(f"SW upgrade repo of release '{params.release}' "
                     f"was successfully removed")
