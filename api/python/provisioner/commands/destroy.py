@@ -263,6 +263,10 @@ class DestroyNode(Deploy):
         temp_dir = config.PRVSNR_TMP_DIR
         temp_dir.mkdir(parents=True, exist_ok=True)
 
+        # hide cache logs for salt-ssh
+        salt_logger = logging.getLogger('salt.fileclient')
+        salt_logger.setLevel(logging.WARNING)
+
         salt_config_master = str(
             '/etc/salt/master'
         )
