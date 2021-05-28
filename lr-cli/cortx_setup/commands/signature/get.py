@@ -64,14 +64,16 @@ class GetSignature(Command):
 
             Conf.load(index, f'yaml://{lr_sign_file}')
             lr_sign = Conf.get(index, f'signature>{key}')
-            self.logger.info("Signature value for '%s': %s" % (key,lr_sign))
+            self.logger.debug(f"Signature value for '{key}' : {lr_sign}")
 
             if not lr_sign:
-                lr_sign = Conf.get(index, 'signature')
                 self.logger.warning(
-                   "Given key '%s' is possibly not found "
-                   "in the following Signature data:\n%s" % (key,lr_sign)
+                   f"Given key '{key}' is possibly not found "
+                   "in the following Signature data: "
                 )
+                lr_sign = Conf.get(index, 'signature')
+
+            return f"Signature value : {lr_sign}"
 
         except ValueError as exc:
             raise ValueError(
