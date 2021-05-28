@@ -40,7 +40,7 @@ class NetworkConfig(Command):
             'optional': True,
             'help': 'Interface type for network e.g {tcp|o2ib}'
         },
-        'network_type': {
+        'type': {
             'type': str,
             'default': None,
             'optional': True,
@@ -51,7 +51,7 @@ class NetworkConfig(Command):
             'type': str,
             'nargs': '+',
             'optional': True,
-            'help': 'List of interfaces for provided network_type '
+            'help': 'List of interfaces for provided type '
                     'e.g eth1 eth2'
         },
         'private': {
@@ -62,7 +62,7 @@ class NetworkConfig(Command):
         }
     }
 
-    def run(self, transport_type=None, interface_type=None, network_type=None,
+    def run(self, transport_type=None, interface_type=None, type=None,
                 interfaces=None, private=False
     ):
         node_id = local_minion_id()
@@ -73,7 +73,7 @@ class NetworkConfig(Command):
         )
 
         if transport_type is not None:
-            self.logger.info(
+            self.logger.debug(
                 f"Updating transport type to {transport_type} in confstore"
             )
             PillarSet().run(
@@ -89,7 +89,7 @@ class NetworkConfig(Command):
             )
 
         if interface_type is not None:
-            self.logger.info(
+            self.logger.debug(
                 f"Updating interface type to {interface_type} in confstore"
                 )
             PillarSet().run(
@@ -105,11 +105,11 @@ class NetworkConfig(Command):
             )
 
         if interfaces is not None:
-            if network_type == 'data':
+            if type == 'data':
                 iface_key = (
                     'private_interfaces' if private else 'public_interfaces'
                 )
-                self.logger.info(
+                self.logger.debug(
                     f"Updating {iface_key} to {interfaces} for data network "
                     "in confstore"
                 )
@@ -124,8 +124,8 @@ class NetworkConfig(Command):
                     f'server_node>{machine_id}>network>data>{iface_key}',
                     interfaces
                 )
-            elif network_type == 'mgmt':
-                self.logger.info(
+            elif type == 'mgmt':
+                self.logger.debug(
                     f"Updating interfaces to {interfaces} for management "
                     "network in confstore"
                 )
@@ -145,4 +145,4 @@ class NetworkConfig(Command):
                     "Network type should specified for provided interfaces"
                 )
         Conf.save('node_config_index')
-        self.logger.info("Done")
+        self.logger.debug("Done")
