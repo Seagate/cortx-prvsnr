@@ -16,7 +16,7 @@
 #
 
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='cortx_setup',
@@ -34,13 +34,7 @@ setup(
         "Programming Language :: Python :: 3.6"
     ],
     keywords='cortx_setup API',
-    packages=[
-        'cortx_setup',
-        'cortx_setup.commands',
-        'cortx_setup.commands.network',
-        'cortx_setup.commands.node',
-        'cortx_setup.commands.node.prepare'
-    ],
+    packages=find_packages(),
     package_dir={'cortx_setup': 'cortx_setup'},
     include_package_data=True,
     entry_points={

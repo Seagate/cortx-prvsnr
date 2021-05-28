@@ -15,17 +15,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .command import Command
+
+from ..command import Command
 
 
-class Hostname(Command):
+class ResourceShow(Command):
     _args = {
-        'hostname': {
+        'manefist': {
             'type': str,
-            'default': 'seagate.com',
-            'choices': ['seagate.com', 'ssc-vm.seagate.com'],
-            'optional': False}
+            'default': None,
+            'optional': True,
+            'help': 'discover HW/SW Manifest for all resources'
+        },
+        'health': {
+            'type': str,
+            'default': None,
+            'optional': True,
+            'help': 'Health check for all the resources in the system'
+        }
     }
 
-    def run(self, **kwargs):
-        self.logger.debug(f"This is hostname API {kwargs}")
+    def run(self, manefist=None, health=None):
+        if manefist:
+            self.logger.debug("discover HW/SW Manifest for all resources")
+        if health:
+            self.logger.debug("Health check for all resources in the system")
+        self.logger.debug("Done")

@@ -15,17 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .command import Command
+
+from ..command import Command
 
 
-class Hostname(Command):
+class SecurityConfig(Command):
     _args = {
-        'hostname': {
-            'type': str,
-            'default': 'seagate.com',
-            'choices': ['seagate.com', 'ssc-vm.seagate.com'],
-            'optional': False}
+        'certificate': {
+            'optional': False,
+            'help': 'Install security certificate'
+        }
     }
 
-    def run(self, **kwargs):
-        self.logger.debug(f"This is hostname API {kwargs}")
+    def run(self, certificate):
+        self.logger.debug("Running security config command")
+        self.logger.debug(f"Ceritifact path: {certificate}")
+        self.logger.debug("Done")

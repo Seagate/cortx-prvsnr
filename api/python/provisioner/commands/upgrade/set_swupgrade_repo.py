@@ -586,7 +586,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         res = cmd_run(cmd, targets=local_minion_id(),
                       fun_kwargs=dict(python_shell=True))
 
-        packages = res[local_minion_id()].strip().split('\n')
+        packages = res[local_minion_id()].strip()
 
         if packages:
             logger.debug(f"List of packages in repository '{repo}':"
@@ -594,6 +594,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         else:
             logger.debug(f"There are no packages in repository '{repo}'")
 
+            return dict()
+
+        packages = packages.split('\n')
         res = dict()
         # NOTE: Format is following
         # ```
