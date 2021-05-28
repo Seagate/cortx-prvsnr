@@ -15,8 +15,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.provisioner.teardown.remove_setup_files
-  - components.provisioner.teardown.package_remove
-  - components.provisioner.teardown.remove_repos
-  - components.provisioner.teardown.rsyslog
+
+cluster-id immutable:
+  cmd.run:
+    - name: 'chattr -i /etc/cluster-id'
+
+{% if salt['file.file_exists']('/etc/node-signature.yaml') -%}
+
+node-signature file immutable:
+  cmd.run:
+    - name: 'chattr -i /etc/node-signature.yaml'
+{%- endif %}
+
+{% for filename in [
+   '/etc/cluster-id',
+   '/etc/machine-id',
+   '/etc/enclosure-id',
+   '/etc/node-signature.yaml'
+ ]
+%}
+
+Delete {{ filename }}:
+  file.absent:
+    - name: {{ filename }}
+
+{% endfor %}
+

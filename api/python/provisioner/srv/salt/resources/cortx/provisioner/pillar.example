@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,8 +18,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.provisioner.teardown.remove_setup_files
-  - components.provisioner.teardown.package_remove
-  - components.provisioner.teardown.remove_repos
-  - components.provisioner.teardown.rsyslog
+---
+provisioner:
+  install_dir: /opt/seagate/cortx/provisioner
+  repo:
+    tgz:
+      hash:
+
+# inline pillar
+inline:
+  fileroot_prefix:  # fileroot prefix if provisioner formula is not on the root level
+
+  provisioner:
+    api:
+      distr: pip    # possible values: pip, package

@@ -391,14 +391,17 @@ def sw_upgrade(targets=ALL_MINIONS, nowait=False):
     return _api_call('sw_upgrade', targets=targets, nowait=nowait)
 
 
-def get_swupgrade_info(release: str = None, nowait=False):
+def get_swupgrade_info(release: str = None, iso_path: str = None,
+                       nowait=False):
     """
     Return information about CORTX packages and their versions.
 
     Parameters
     ----------
-    release:
+    release: str
         (optional) SW Upgrade repository release version
+    iso_path: str
+        (optional) Path to SW upgrade single ISO bundle
     nowait: bool
         (optional) Run asynchronously. Default: False
 
@@ -407,7 +410,8 @@ def get_swupgrade_info(release: str = None, nowait=False):
     None
 
     """
-    return _api_call('get_swupgrade_info', release=release, nowait=nowait)
+    return _api_call('get_swupgrade_info', release=release, iso_path=iso_path,
+                     nowait=nowait)
 
 
 def fw_update(source, dry_run=False, nowait=False):

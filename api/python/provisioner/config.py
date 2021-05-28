@@ -567,6 +567,8 @@ class CortxResourceT(Enum):
     SALT_MASTER = "salt-master"
     SALT_MINION = "salt-minion"
     SALT_CLUSTER = "salt-cluster"
+    PROVISIONER = "provisioner"
+    PROVISIONER_API = "provisioner-api"
 
 
 class ContentType(Enum):
@@ -583,6 +585,7 @@ class HashType(Enum):
 
     MD5 = "md5"
     SHA256 = "sha256"
+    SHA384 = "sha384"
     SHA512 = "sha512"
 
 

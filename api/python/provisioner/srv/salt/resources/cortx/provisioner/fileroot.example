@@ -15,8 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.provisioner.teardown.remove_setup_files
-  - components.provisioner.teardown.package_remove
-  - components.provisioner.teardown.remove_repos
-  - components.provisioner.teardown.rsyslog
+fileroot/[fileroot_prefix/]
+└── provisioner
+    ├── core
+    │   └── files
+    │       └── repo.tgz  # local repo archive for 'local' setup mode
+    └── api
+        └── files
+            └── post_setup.sh   # default script is presented

@@ -18,11 +18,14 @@ per state.
 
         *   [SaltStack Manager](#saltstack-manager)
 
+    *   [New Resource Implementation](#new-resource-implementation)
+
     *   [CLI Interfaces (Examples of Usage)](#cli-interfaces-examples-of-usage)
 
         *   [Environment Preparation](#environment-preparation)
         *   [Cortx Repos setup](#cortx-repos-setup)
         *   [SaltStack cluster setup](#saltstack-cluster-setup)
+        *   [Provisioner setup](#provisioner-setup)
 
 ## Overview
 
@@ -77,6 +80,9 @@ The following resource are available:
     *   `SaltCluster` - implements logic of Salt cluster configuration
         over salt-minions and salt-masters
 *   `Consul`
+*   group of Provisioner resources:
+    *   `Provisioner`
+    *   `ProvisionerAPI`
 
 ### Resource Managers
 
@@ -86,6 +92,29 @@ The following resource are available:
     supports for the moment.
 
 Transitions list is discovered automatically.
+
+### New Resource Implementation
+
+*   define a resource params (a set of configuration parameters
+    *   that makes sense for a resource)
+*   define child classes of ResourceBase and ResourceBase
+*   define states as childs of ResourceState
+    (makes sense to define common parent for all states)
+*   add classes per state with:
+    *   name
+    *   necessary attributes
+*   define SLS classes that implements the states:
+    *   `setup_roots` sets pillar and file roots, available helper methods:
+        *   pillars:
+            *   `pillar`
+            *   `pillar_set()`
+            *   `pillar_inline` dict for inline pillar
+        *   file roots:
+            *   `fileroot`
+            *   `fileroot_path()`
+            *   `fileroot_read()`
+            *   `fileroot_write()`
+            *   `fileroot_copy()`
 
 ### CLI Interfaces (Examples of Usage)
 
@@ -213,4 +242,42 @@ Verify minions are connected to all the masters:
 ```bash
 provisioner salt ssh --profile-name myprofile cmd.run \
     --fun-args 'salt-run manage.up' --out json
+```
+
+#### Provisioner setup
+
+Install core Provisioner part from a system package (production case):
+
+```bash
+provisioner resource provisioner install --salt-client-type ssh \
+    --salt-ssh-profile-name myprofile
+```
+
+Install core Provisioner part from a local source:
+
+```bash
+provisioner resource provisioner install-local --salt-client-type ssh \
+    --salt-ssh-profile-name myprofile
+
+# OR using custom version of a local repo
+provisioner resource provisioner install-local --repo-version pre-cortx-1.0 \
+    --salt-client-type ssh --salt-ssh-profile-name myprofile
+
+# OR using an existent repo archive
+provisioner resource provisioner install-local --repo-tgz <path-to-archive> \
+    --salt-client-type ssh --salt-ssh-profile-name myprofile
+```
+
+Install Provisioner api from a system package (production case):
+
+```bash
+provisioner resource provisioner-api install \
+    --salt-client-type ssh --salt-ssh-profile-name myprofile
+```
+
+Install Provisioner api from `/opt/seagate/...` using pip:
+
+```bash
+provisioner resource provisioner-api install --api-distr pip \
+    --salt-client-type ssh --salt-ssh-profile-name myprofile
 ```
