@@ -35,7 +35,7 @@ def get_pillar_data(key: str):
 
     """
     pillar_key = PillarKey(key)
-    pillar = PillarResolver(local_minion_id().get([pillar_key]))
+    pillar = PillarResolver(local_minion_id()).get([pillar_key])
     pillar = next(iter(pillar.values()))
     return pillar[PillarKey(key)]
 

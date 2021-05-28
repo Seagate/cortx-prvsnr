@@ -15,48 +15,51 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import os
 from provisioner.salt import (
     cmd_run,
     local_minion_id,
     StateFunExecuter,
     StatesApplier
 )
+from provisioner.config import PRVSNR_ROOT_DIR
 from .config import NodePrepareServerConfig
-from .common_utils import get_pillar_data
+from ...common_utils import get_pillar_data
 
 
 class NodePrepareServer(NodePrepareServerConfig):
 
     def _ip_not_pingable(self, ip: str):
-        res = cmd_run(f"ping -c 1 {ip}")
+        res = os.system(f"ping -c 1 {ip}")
         return not res == 0
 
     def run(self, **kwargs):
+        super().run(**kwargs)
         node = local_minion_id()
         mgmt_vip = kwargs.get('mgmt_vip')
 
         try:
             if "primary" in get_pillar_data(f"cluster/{node}/roles"):
                 if self._ip_not_pingable(mgmt_vip):
-                    self.logger.info(
+                    self.logger.debug(
                         f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
-                    state = "components.system.network.mgmt.public.ip_alias"
+                    state = "components.system.network.mgmt.ip_alias"
                     self.logger.debug(f"Applying {state} on {node}")
                     StatesApplier.apply([state], node)
                 else:
                     raise Exception(f"The IP {mgmt_vip} is in use")
 
-            self.logger.info("Updating salt-minion file")
+            self.logger.debug("Updating salt-minion file")
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
                     name="/etc/salt/minion",
-                    source='salt://' +
+                    source=str(PRVSNR_ROOT_DIR) +
                     'srv/components/provisioner/salt_minion/files/minion_factory',
                     template='jinja'
                 )
             )
-            self.logger.info("Restarting salt-minion")
+            self.logger.debug("Restarting salt-minion")
             cmd_run(
                 "salt-call --local service.restart salt-minion",
                 targets=node)

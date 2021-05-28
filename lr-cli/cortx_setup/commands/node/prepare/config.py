@@ -15,17 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from pathlib import Path
-
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
-from common_utils import (
+from ...common_utils import (
     get_machine_id,
     get_cluster_id
 )
 
 from ...command import Command
+from ....config import CONFSTORE_CLUSTER_FILE
 
 
 node = local_minion_id()
@@ -47,10 +46,6 @@ confstore_pillar_dict = {
         'cluster/mgmt_vip')}
 
 
-prvsnr_cluster_path = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
-
 """Cortx Setup API for configuring Node Prepare Server"""
 
 
@@ -64,19 +59,19 @@ class NodePrepareServerConfig(Command):
         },
         'rack_id': {
             'type': str,
-            'nargs': '+',
+            'default': None,
             'optional': True,
             'help': 'Rack ID'
         },
         'node_id': {
             'type': str,
-            'nargs': '+',
+            'default': None,
             'optional': True,
             'help': 'Node ID'
         },
         'mgmt_vip': {
             'type': str,
-            'nargs': '+',
+            'default': None,
             'optional': True,
             'help': 'Management VIP'
         }
@@ -84,15 +79,14 @@ class NodePrepareServerConfig(Command):
     }
 
     def run(self, **kwargs):
-
         Conf.load(
             'node_info_index',
-            f'json://{prvsnr_cluster_path}'
+            f'json://{CONFSTORE_CLUSTER_FILE}'
         )
 
         for key, value in kwargs.items():
             if value:
-                self.logger.info(
+                self.logger.debug(
                     f"Updating {key} to {value} in confstore"
                 )
                 PillarSet().run(
@@ -108,4 +102,4 @@ class NodePrepareServerConfig(Command):
                 )
 
         Conf.save('node_info_index')
-        self.logger.info("Done")
+        self.logger.debug("Done")

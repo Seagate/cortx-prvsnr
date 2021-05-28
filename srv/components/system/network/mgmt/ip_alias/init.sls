@@ -24,8 +24,8 @@
 {% if mgmt_vip %}
 
 IP alias of mgmt_vip with {{ mgmt_if }}:
-    cmd.run:
-        name: ip a add {{mgmt_vip}}/{{mgmt_netmask}} dev {{mgmt_if}}
+  cmd.run:
+    - name: ip a add {{mgmt_vip}}/{{mgmt_netmask}} dev {{mgmt_if}}
 
 {% endif %}
 
