@@ -18,13 +18,13 @@
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
-from ...common_utils import (
+from cortx_setup.commands.common_utils import (
     get_machine_id,
     get_cluster_id
 )
 
-from ...command import Command
-from ....config import CONFSTORE_CLUSTER_FILE
+from cortx_setup.commands.command import Command
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 
 
 node = local_minion_id()

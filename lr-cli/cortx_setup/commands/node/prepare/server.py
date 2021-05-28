@@ -24,7 +24,7 @@ from provisioner.salt import (
 )
 from provisioner.config import PRVSNR_ROOT_DIR
 from .config import NodePrepareServerConfig
-from ...common_utils import get_pillar_data
+from cortx_setup.commands.common_utils import get_pillar_data
 
 
 class NodePrepareServer(NodePrepareServerConfig):
@@ -61,7 +61,7 @@ class NodePrepareServer(NodePrepareServerConfig):
             )
             self.logger.debug("Restarting salt-minion")
             cmd_run(
-                "salt-call --local service.restart salt-minion",
+                "salt-call --local service.restart salt-minion", background=True,
                 targets=node)
 
         except Exception as e:
