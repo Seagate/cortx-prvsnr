@@ -37,7 +37,7 @@ class ResourceShow(Command):
 
     def run(self, manefist=None, health=None):
         if manefist:
-            self.logger.info("discover HW/SW Manifest for all resources")
+            self.logger.debug("discover HW/SW Manifest for all resources")
         if health:
-            self.logger.info("Health check for all resources in the system")
-        self.logger.info("Done")
+            self.logger.debug("Health check for all resources in the system")
+        self.logger.debug("Done")

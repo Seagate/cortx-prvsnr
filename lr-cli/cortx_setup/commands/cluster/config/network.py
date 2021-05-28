@@ -60,7 +60,7 @@ class ClusterNetworkConfig(Command):
         )
         for key, value in kwargs.items():
             if value:
-                self.logger.info(
+                self.logger.debug(
                     f"Updating {key} to {value} in confstore"
                 )
                 PillarSet().run(
@@ -76,4 +76,4 @@ class ClusterNetworkConfig(Command):
                 )
 
         Conf.save('node_info_index')
-        self.logger.info("Done")
+        self.logger.debug("Done")

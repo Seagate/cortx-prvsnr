@@ -28,5 +28,4 @@ class Hostname(Command):
     }
 
     def run(self, **kwargs):
-        self.logger.info("This is hostname API")
-        print(f"running hostname {kwargs}")
+        self.logger.debug(f"This is hostname API {kwargs}")

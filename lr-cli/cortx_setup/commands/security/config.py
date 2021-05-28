@@ -28,6 +28,6 @@ class SecurityConfig(Command):
     }
 
     def run(self, certificate):
-        self.logger.info("Running security config command")
-        self.logger.info(f"Ceritifact path: {certificate}")
-        self.logger.info("Done")
+        self.logger.debug("Running security config command")
+        self.logger.debug(f"Ceritifact path: {certificate}")
+        self.logger.debug("Done")

@@ -31,7 +31,7 @@ class NodeFinalize(Command):
 
     def run(self, force=False):
         if force:
-            self.logger.info("Running node finalize command forcefully")
+            self.logger.debug("Running node finalize command forcefully")
         else:
-            self.logger.info("Running node finalize command")
-        self.logger.info("Done")
+            self.logger.debug("Running node finalize command")
+        self.logger.debug("Done")

@@ -23,5 +23,5 @@ class ResourceDiscover(Command):
     _args = {}
 
     def run(self):
-        self.logger.info("Running resource discover command")
-        self.logger.info("Done")
+        self.logger.debug("Running resource discover command")
+        self.logger.debug("Done")
