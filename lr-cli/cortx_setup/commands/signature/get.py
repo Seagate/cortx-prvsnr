@@ -69,7 +69,7 @@ class GetSignature(Command):
             if not lr_sign:
                 self.logger.warning(
                    f"Given key '{key}' is possibly not found "
-                   "in the following Signature data: "
+                   "in the following Signature data."
                 )
                 lr_sign = Conf.get(index, 'signature')
 
