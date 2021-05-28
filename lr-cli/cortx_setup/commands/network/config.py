@@ -68,15 +68,14 @@ class NetworkConfig(Command):
     def get_machine_id(self, targets):
         try:
             result = function_run('grains.get', fun_args=['machine_id'],
-                                targets=targets)
+                                  targets=targets)
             _machine_id = result[f'{targets}']
         except Exception as exc:
             raise exc
         return _machine_id
 
     def run(self, transport_type=None, interface_type=None, network_type=None,
-                interfaces=None, private=False
-    ):
+            interfaces=None, private=False):
         node_id = local_minion_id()
         machine_id = self.get_machine_id(targets=node_id)
         Conf.load(

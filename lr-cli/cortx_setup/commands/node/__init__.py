@@ -14,18 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-from .command import Command
-
-
-class Hostname(Command):
-    _args = {
-        'hostname': {
-            'type': str,
-            'default': 'seagate.com',
-            'choices': ['seagate.com', 'ssc-vm.seagate.com'],
-            'optional': False}
-    }
-
-    def run(self, **kwargs):
-        self.logger.debug(f"This is hostname API {kwargs}")

@@ -20,6 +20,7 @@ from .log import Log
 import argparse
 import yaml
 from . import commands
+import json
 
 
 def handle_parser(subparsers, name, cls_name):
@@ -62,7 +63,11 @@ def main():
     args = vars(args)
     cls_name = args.pop('command')
     cls = getattr(commands, cls_name)
-    cls().run(**args)
+    res = cls().run(**args)
+    if res:
+        res = json.dumps(res)
+        Log.logger.debug(f"CLI out {res}")
+        print(res)
 
 
 if __name__ == '__main__':
