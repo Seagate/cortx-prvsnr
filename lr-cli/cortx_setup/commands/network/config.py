@@ -44,6 +44,7 @@ class NetworkConfig(Command):
             'type': str,
             'default': None,
             'optional': True,
+            'dest': 'network_type',
             'choices': ['data', 'mgmt'],
             'help': 'Network type for provided interfaces'
         },
@@ -62,7 +63,7 @@ class NetworkConfig(Command):
         }
     }
 
-    def run(self, transport_type=None, interface_type=None, type=None,
+    def run(self, transport_type=None, interface_type=None, network_type=None,
                 interfaces=None, private=False
     ):
         node_id = local_minion_id()
@@ -105,7 +106,7 @@ class NetworkConfig(Command):
             )
 
         if interfaces is not None:
-            if type == 'data':
+            if network_type == 'data':
                 iface_key = (
                     'private_interfaces' if private else 'public_interfaces'
                 )
@@ -124,7 +125,7 @@ class NetworkConfig(Command):
                     f'server_node>{machine_id}>network>data>{iface_key}',
                     interfaces
                 )
-            elif type == 'mgmt':
+            elif network_type == 'mgmt':
                 self.logger.debug(
                     f"Updating interfaces to {interfaces} for management "
                     "network in confstore"

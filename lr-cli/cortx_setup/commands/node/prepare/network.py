@@ -40,6 +40,7 @@ class NodePrepareNetwork(Command):
             'type': str,
             'optional': True,
             'default': None,
+            'dest': 'network_type'
             'choices': ['data', 'mgmt'],
             'help': 'Network type to be configured'
         },
@@ -78,19 +79,19 @@ class NodePrepareNetwork(Command):
         }
     }
 
-    def update_network_confstore(self, type, key, value, target):
+    def update_network_confstore(self, network_type, key, value, target):
         machine_id = utils.get_machine_id(target=target)
         if value:
             self.logger.debug(
-                f"Updating {key} to {value} for {type} network in confstore"
+                f"Updating {key} to {value} for {network_type} network in confstore"
             )
             Conf.set(
                 'node_prepare_index',
-                f'server_node>{machine_id}>network>{type}>{key}',
+                f'server_node>{machine_id}>network>{network_type}>{key}',
                 value
             )
 
-    def run(self, hostname=None, type=None, mode=None, gateway=None,
+    def run(self, hostname=None, network_type=None, mode=None, gateway=None,
         netmask=None, ip_address=None, interfaces=None
     ):
         node_id = local_minion_id()
@@ -109,15 +110,15 @@ class NodePrepareNetwork(Command):
                 hostname
             )
 
-        if type is not None:
+        if network_type is not None:
             config_method = 'Static' if ip_address else 'DHCP'
             self.logger.debug(
-                f"Configuring {type} network "
+                f"Configuring {network_type} network "
                 f"through {config_method} method"
             )
 
-            if type == 'mgmt':
-                type = 'management'
+            if network_type == 'mgmt':
+                network_type = 'management'
                 iface_key = 'interfaces'
                 set_mgmt_network(
                     mgmt_public_ip=ip_address,
@@ -127,7 +128,7 @@ class NodePrepareNetwork(Command):
                     local=True,
                     targets=node_id
                 )
-            elif type == 'data':
+            elif network_type == 'data':
                 if mode == 'public':
                     iface_key = 'public_interfaces'
                     set_public_data_network(
@@ -147,26 +148,26 @@ class NodePrepareNetwork(Command):
                         targets=node_id
                     )
             self.update_network_confstore(
-                type=type,
+                type=network_type,
                 key=iface_key,
                 value=interfaces,
                 target=node_id
             )
             if config_method == 'Static':
                 self.update_network_confstore(
-                    type=type,
+                    type=network_type,
                     key='private_ip' if mode == 'private' else 'public_ip',
                     value=ip_address,
                     target=node_id
                 )
                 self.update_network_confstore(
-                    type=type,
+                    type=network_type,
                     key='netmask',
                     value=netmask,
                     target=node_id
                 )
                 self.update_network_confstore(
-                    type=type,
+                    type=network_type,
                     key='gateway',
                     value=gateway,
                     target=node_id
