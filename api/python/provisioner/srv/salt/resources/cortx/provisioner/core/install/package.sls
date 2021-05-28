@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,12 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
-set -eux
-
-# 'ip' tool is necessary for testinfra to explore interfaces
-yum -y install iproute
-# e2fsprogs is needed for chattr util
-yum install -y e2fsprogs
-
-rm -rf /var/cache/yum
+Install cortx-prvsnr packages:
+  pkg.installed:
+    - pkgs:
+      - cortx-prvsnr

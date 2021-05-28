@@ -1,4 +1,6 @@
-#!/bin/bash
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -16,12 +18,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+---
+provisioner:
+  install_dir: /opt/seagate/cortx/provisioner
+  repo:
+    tgz:
+      hash:
 
-set -eux
+# inline pillar
+inline:
+  fileroot_prefix:  # fileroot prefix if provisioner formula is not on the root level
 
-# 'ip' tool is necessary for testinfra to explore interfaces
-yum -y install iproute
-# e2fsprogs is needed for chattr util
-yum install -y e2fsprogs
-
-rm -rf /var/cache/yum
+  provisioner:
+    api:
+      distr: pip    # possible values: pip, package
