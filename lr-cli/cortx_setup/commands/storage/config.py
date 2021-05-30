@@ -99,7 +99,7 @@ class StorageEnclosureConfig(Command):
 
         # This is to avoid the conflict with Python's internal
         # object- 'type'.
-        storage_type = type 
+        storage_type = type
 
         Conf.load(
             'node_info_index',
