@@ -27,6 +27,7 @@ from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
 from .node.prepare.firewall import NodePrepareFirewall
+from .node.prepare.time import NodePrepareTime
 
 
 __all__ = [
@@ -41,5 +42,6 @@ __all__ = [
     'SecurityConfig',
     'ResourceShow',
     'ResourceDiscover',
-    'NodePrepareFirewall'
+    'NodePrepareFirewall',
+    'NodePrepareTime'
  ]

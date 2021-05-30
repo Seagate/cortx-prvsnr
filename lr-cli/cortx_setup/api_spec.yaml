@@ -30,6 +30,8 @@ node:
       NodePrepareServer
     firewall:
       NodePrepareFirewall
+    time:
+      NodePrepareTime
 hostname:
   Hostname
 cluster:
