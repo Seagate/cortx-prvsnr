@@ -248,8 +248,4 @@ class StorageEnclosureConfig(Command):
                     ' options for mode, exiting.')
 
         Conf.save('node_info_index')
-<<<<<<< HEAD
         self.logger.info("Done")
-=======
-        self.logger.info("Done")
->>>>>>> c4091ed9fea06b1eeae120c71e15f60de8ec1b80
