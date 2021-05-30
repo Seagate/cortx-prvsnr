@@ -51,6 +51,7 @@ __all__ = [
     'SetSignature',
     'NodePrepareFirewall',
     'NodePrepareTime',
+    'NodePrepareFirewall',
     'StorageEnclosureConfig',
     'Commons'
  ]
