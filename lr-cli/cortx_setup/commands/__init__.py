@@ -18,6 +18,7 @@
 from .hostname import Hostname
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
+from .node.prepare.server import NodePrepareServer
 from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
 from .cluster.show import ClusterShow
@@ -33,6 +34,7 @@ __all__ = [
     'Hostname',
     'NetworkConfig',
     'NodeInitalize',
+    'NodePrepareServer',
     'ClusterCreate',
     'ClusterNetworkConfig',
     'ClusterShow',
