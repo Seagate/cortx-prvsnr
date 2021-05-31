@@ -20,6 +20,7 @@
 network:
   config:
     NetworkConfig
+
 node:
   initialize:
     NodeInitalize
@@ -32,6 +33,8 @@ node:
       NodePrepareFirewall
     time:
       NodePrepareTime
+    network:
+      NodePrepareNetwork
 hostname:
   Hostname
 cluster:
@@ -50,4 +53,12 @@ resource:
 security:
   config:
     SecurityConfig
+signature:
+  get:
+    GetSignature
+  set:
+    SetSignature
+storage:
+  config:
+    StorageEnclosureConfig
 

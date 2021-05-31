@@ -63,7 +63,8 @@ from .api import (  # noqa: F401
     set_hostname,
     set_mgmt_network,
     setup_firewall,
-    set_data_network
+    set_public_data_network,
+    set_private_data_network
 )
 
 from .values import (  # noqa: F401
@@ -108,7 +109,8 @@ __all__ = [
     'set_hostname',
     'set_mgmt_network',
     'setup_firewall',
-    'set_data_network',
+    'set_public_data_network',
+    'set_private_data_network',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',

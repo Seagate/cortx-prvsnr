@@ -40,10 +40,10 @@ class NodePrepareFirewall(Command):
         node_id = local_minion_id()
         firewall_pillar_sls = Path(f"{PRVSNR_PILLAR_DIR}/components/firewall.sls")
 
-        self.logger.info(f"updating firewall config on {node_id}")
+        self.logger.debug(f"updating firewall config on {node_id}")
 
         try:
-            self.logger.info(f"loading firewall configuration")
+            self.logger.debug(f"loading firewall configuration")
             firewall_config_arg = kwargs.get('config')
             Conf.load('index1', firewall_config_arg)
             firewall_conf = {'firewall': Conf.get('index1','firewall') }
@@ -51,11 +51,11 @@ class NodePrepareFirewall(Command):
 
             function_run('saltutil.refresh_pillar', targets=node_id)
 
-            self.logger.info(f"Applying 'components.system.firewall' on {node_id}")
+            self.logger.debug(f"Applying 'components.system.firewall' on {node_id}")
             StatesApplier.apply(
                 ["components.system.firewall"],
                 local_minion_id()
             )
         except Exception as ex:
             raise ex
-        self.logger.info("Done")
+        self.logger.debug("Done")
