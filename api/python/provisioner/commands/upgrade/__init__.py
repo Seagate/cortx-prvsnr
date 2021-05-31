@@ -19,10 +19,12 @@ from .set_swupgrade_repo import SetSWUpgradeRepo
 from .sw_upgrade import SWUpgrade
 from .remove_swupgrade_repo import RemoveSWUpgradeRepo
 from .get_swupgrade_info import GetSWUpgradeInfo
+from .check_iso_authenticity import CheckISOAuthenticity
 
 __all__ = [
     "SetSWUpgradeRepo",
     "SWUpgrade",
     "RemoveSWUpgradeRepo",
-    "GetSWUpgradeInfo"
+    "GetSWUpgradeInfo",
+    "CheckISOAuthenticity"
 ]

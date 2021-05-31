@@ -414,6 +414,34 @@ def get_swupgrade_info(release: str = None, iso_path: str = None,
                      nowait=nowait)
 
 
+def check_iso_authenticity(iso_path: str, sig_file: str,
+                           gpg_pub_key: str = None,
+                           import_pub_key: bool = False, nowait=False):
+    """
+    Validate SW Upgrade single ISO authenticity using GPG tool.
+
+    Parameters
+    ----------
+    iso_path: str
+        Path to SW upgrade single ISO bundle
+    sig_file: str
+        Path to file with ISO signature
+    gpg_pub_key: str
+        (Optional) Path to the custom GPG public key
+    import_pub_key: bool
+        (Optional) Specifies whether to import a given GPG public key
+    nowait: bool
+        (Optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+
+    """
+    return _api_call('check_iso_authenticity', iso_path=iso_path,
+                     sig_file=sig_file, gpg_pub_key=gpg_pub_key,
+                     import_pub_key=import_pub_key, nowait=nowait)
+
+
 def fw_update(source, dry_run=False, nowait=False):
     r"""Runs firmware update logic.
 

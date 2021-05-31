@@ -20,6 +20,8 @@ from hmac import compare_digest
 from pathlib import Path
 from typing import Dict, Callable, Optional, Union, Type
 
+from provisioner.salt import local_minion_id, cmd_run
+
 from ... import utils
 from ...config import ContentType, HashType
 
@@ -567,3 +569,64 @@ class ReleaseInfoValidator(FileValidator):
         self.content_validator = ContentFileValidator(
                 scheme=ReleaseInfoContentScheme,
                 content_type=self.content_type)
+
+
+@attr.s(auto_attribs=True)
+class AuthenticityValidator(PathValidator):
+
+    """
+    Class for file authenticity validation using GPG tool
+
+    Attributes
+    ----------
+    signature: Union[str, Path]
+        if True validation raises an Exception if the file doesn't exist
+    gpg_public_key: Optional[Union[str, Path]]
+        callable object for file content validation.
+
+    """
+
+    signature: Union[str, Path] = attr.ib(
+        validator=utils.validator_path_exists,
+        converter=utils.converter_path_resolved
+    )
+    gpg_public_key: Optional[Union[str, Path]] = attr.ib(
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
+        default=None
+    )
+
+    def validate(self, path: Path):
+        """
+        Validate the file by a given path has a correct signature
+
+        Parameters
+        ----------
+        path: Path
+            path for the file authenticity validation
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+
+        """
+        logger.debug(f"Start '{path}' file authenticity validation")
+
+        if self.gpg_public_key is not None:
+            cmd = (f"gpg --no-default-keyring --keyring {self.gpg_public_key} "
+                   f"--verify {self.signature} {path}")
+        else:
+            cmd = f"gpg --verify {self.signature} {path}"
+
+        try:
+            cmd_run(cmd, targets=local_minion_id(),
+                    fun_kwargs=dict(python_shell=True))
+        except Exception as e:
+            logger.debug(f'Authenticity check is failed: "{e}"')
+            raise ValidationError(
+                f'Authenticity check is failed: "{e}"') from e
