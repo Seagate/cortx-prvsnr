@@ -865,7 +865,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 node_pillar_dir / 'setup.sls'
             )
 
-            enclosure_id = "enc_id"
 
             if run_args.rediscover or not setup_pillar_path.exists():
                 data = {
@@ -881,7 +880,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                             ]},
                             {'cluster_id': cluster_uuid},
                             {'node_id': node_uuid},
-                            {'enclosure_id': enclosure_id},
                             {'hostname_status': hostnamectl_status},
                         ]
                     }
@@ -1781,11 +1779,12 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
             (
-                "salt-call state.apply components.provisioner.config "
+                "salt-call state.apply components.provisioner.config ",
                 f"{pillar}"
             ),
             targets=ALL_MINIONS
         )
+        ssh_client.cmd_run("salt-call saltutil.refresh_pillar")
 
         logger.info("Configuring provisioner for future updates")
         for node in run_args.nodes:

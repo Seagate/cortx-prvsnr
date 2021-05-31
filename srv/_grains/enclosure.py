@@ -15,27 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "physical" in grains['virtual'] %}
+from pathlib import Path
 
-Get enclosure_id for {{ grains['id'] }}:
-  module.run:
-    - controller_cli.fetch_enclosure_serial: []
+FILENAME="/etc/enclosure-id"
 
-{% else %}
 
-# VM
-  {% if grains['machine_id'] %}
-    {% set machine_id = grains['machine_id'] %}
-Get enclosure_id for {{ grains['id'] }}:
-  cmd.run:
-    - name: echo "enc_{{ machine_id }}" > /etc/enclosure-id
-  {% else %}
-Get enclosure_id for {{ grains['id'] }}:
-   test.fail_without_changes:
-    - comment : "Can't not set the enclosure id on VM as there is not machine id set on {{ grains['id'] }}"
-  {% endif %}
-{% endif %}
+def enclosure_id():
+    """Populates enclosure_id to grains."""
+    grains = {"enclosure_id": None}
 
-Sync grains data after refresh enclosure_id:
-  module.run:
-    - saltutil.refresh_grains: []
+    id_file = Path(FILENAME)
+    if id_file.is_file():
+        grains['enclosure_id'] = id_file.read_text()
+
+    return grains
