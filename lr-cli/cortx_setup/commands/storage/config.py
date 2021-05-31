@@ -89,16 +89,17 @@ class StorageEnclosureConfig(Command):
         }
     }
 
-    def run(self, name=None, type=None,
-            user=None, password=None, controller_type=None, mode=None,
-            ip=None, port=None):
-
+    def run(self, **kwargs):
         node_id = local_minion_id()
         enc_num = "enclosure-" + ((node_id).split('-'))[1]
         enc_id = Commons().get_enc_id(node_id)
 
-        # This is to make the Coday quiet
-        storage_type = type
+        name = kwargs.get('name')
+        storage_type = kwargs.get('type')
+        user = kwargs.get('user')
+        password = kwargs.get('password')
+        controller_type = kwargs.get('controller_type')
+        mode = kwargs.get('mode')
 
         Conf.load(
             'node_info_index',
@@ -195,8 +196,15 @@ class StorageEnclosureConfig(Command):
                 controller_type
             )
         if mode is not None:
-            set_ip = False
-            set_port = False
+            ip = kwargs.get('ip')
+            port = kwargs.get('port')
+
+            if ip is None and port is None:
+                self.logger.exception(
+                    f"Sub options for mode {mode} are missing"
+                )
+                raise RuntimeError('Please provide the correct'
+                    ' options for mode, exiting.')
 
             self.logger.debug(
                 f"Updating {mode} controller IP/port in pillar"
@@ -219,7 +227,6 @@ class StorageEnclosureConfig(Command):
                     f'storage_enclosure>{enc_id}>controller>{mode}>ip',
                     ip
                 )
-                set_ip = True
             if port is not None:
                 self.logger.debug(
                     f"Updating {mode} controller port in pillar"
@@ -238,13 +245,6 @@ class StorageEnclosureConfig(Command):
                     f'storage_enclosure>{enc_id}>controller>{mode}>port',
                     port
                 )
-                set_port = True
-            if not set_ip and not set_port:
-                self.logger.exception(
-                    f"Sub options for mode {mode} are missing"
-                )
-                raise RuntimeError('Please provide the correct'
-                    ' options for mode, exiting.')
 
         Conf.save('node_info_index')
         self.logger.info("Done")
