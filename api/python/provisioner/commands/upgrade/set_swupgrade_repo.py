@@ -21,7 +21,7 @@ from typing import Type, Union
 import requests
 from configparser import ConfigParser
 
-from provisioner.commands.validator import AuthenticityValidator
+from provisioner.commands.upgrade import CheckISOAuthenticity
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
 from ..set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
@@ -36,7 +36,9 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 CORTX_PYTHON_ISO_DIR,
                                 OS_ISO_DIR, HashType,
                                 PIP_CONFIG_FILE,
-                                SWUpgradeInfoFields
+                                SWUpgradeInfoFields,
+                                ISOValidationFields,
+                                CheckVerdict
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError
@@ -276,23 +278,29 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             if params.sig_file:
                 logger.info("File with ISO signature is specified. Start GPG "
                             "signature validation for the ISO")
-                auth_validator = AuthenticityValidator(
-                    signature=params.sig_file
-                )
 
-                try:
-                    auth_validator.validate(params.source)
-                except ValidationError as e:
+                # NOTE: We use CheckISOAuthenticity class instead of
+                #  AuthenticityValidator to import GPG public key if
+                #  `import_pub_key` is specified
+                auth_validator = CheckISOAuthenticity()
+                res = auth_validator.run(iso_path=params.source,
+                                         sig_file=params.sig_file,
+                                         gpg_pub_key=params.gpg_pub_key,
+                                         import_pub_key=params.import_pub_key)
+
+                if (res[ISOValidationFields.STATUS.value] ==
+                        CheckVerdict.FAIL.value):
                     logger.warning(f"ISO signature validation is failed: "
-                                   f"'{e}'")
+                                   f"'{res[ISOValidationFields.MSG.value]}'")
                     raise SWUpdateRepoSourceError(
                         str(params.source),
-                        f"ISO signature validation error occurred: '{e}'"
-                    ) from e
+                        "ISO signature validation error occurred: "
+                        f"'{res[ISOValidationFields.MSG.value]}'"
+                    )
                 else:
                     logger.info('ISO signature validation succeeded')
-
-            if params.hash:
+            elif params.hash:
+                logger.warning('Only integrity check is available.')
                 logger.info("`hash` parameter is setup. Start checksum "
                             "validation for the whole ISO file")
                 hash_info = self._get_hash_params(params)
@@ -310,6 +318,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     ) from e
                 else:
                     logger.info('Check sum validation succeeded')
+            else:
+                logger.warning('Neither authenticity nor integrity validation'
+                               'is available')
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other

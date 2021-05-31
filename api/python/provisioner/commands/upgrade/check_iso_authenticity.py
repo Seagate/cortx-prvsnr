@@ -50,6 +50,8 @@ class CheckISOAuthenticityArgs:
                 'help': "Path to the file with ISO signature"
             }
         },
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
         default=None
     )
     gpg_pub_key: str = attr.ib(
@@ -58,6 +60,8 @@ class CheckISOAuthenticityArgs:
                 'help': "(Optional) Path to the custom GPG public key"
             }
         },
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
         default=None
     )
     import_pub_key: bool = attr.ib(
@@ -118,6 +122,7 @@ class CheckISOAuthenticity(CommandParserFillerMixin):
         """
         if import_pub_key and gpg_pub_key is not None:
             self._import_gpg_public_key(gpg_pub_key)
+            gpg_pub_key = None  # NOTE: GPG public key is already imported
 
         auth_validator = AuthenticityValidator(signature=sig_file,
                                                gpg_public_key=gpg_pub_key)

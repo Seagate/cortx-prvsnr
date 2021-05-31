@@ -608,6 +608,7 @@ class HareStatus(Enum):
 
     FAILED = 'Failed'
     SUCCEEDED = 'Succeeded'
+    IN_PROGRESS = 'InProgress'
 
 
 class ISOValidationFields(Enum):
