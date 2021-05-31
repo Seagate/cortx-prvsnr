@@ -33,12 +33,20 @@ from .signature.get import GetSignature
 from .signature.set import SetSignature
 from .storage.config import StorageEnclosureConfig
 from .storage.commons import Commons
+from .storageset.create import CreateStorageSet
+from .storageset.add.node import AddServerNode
+from .storageset.add.enclosure import AddStorageEnclosure
+from .storageset.config.durability import DurabilityConfig
 
 
 __all__ = [
+    'AddServerNode',
+    'AddStorageEnclosure',
     'ClusterCreate',
     'ClusterNetworkConfig',
     'ClusterShow',
+    'CreateStorageSet',
+    'DurabilityConfig',
     'GetSignature',
     'Hostname',
     'NetworkConfig',

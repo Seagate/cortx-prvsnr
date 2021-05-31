@@ -50,14 +50,14 @@ class GetSignature(Command):
             index = "signature"
 
             if not key:
-                raise Exception(
+                raise ValueError(
                    "Invalid input. Expected Signature param format: --key 'key'."
                 )
 
             if not (lr_sign_file.exists() and
                     lr_sign_file.stat().st_size != 0):
 
-                raise Exception(
+                raise ValueError(
                    "Node Signature was never set in ConfStore. "
                    "Set it first with `signature set` command."
                 )
