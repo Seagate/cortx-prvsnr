@@ -14,14 +14,6 @@ salt_nodes = [
     "minion_id" => "srvnode-1"
   },
   {
-    "name"=> "srvnode-2",
-    "cpus"=> 2,
-    "memory"=> 2048,
-    "mgmt0" => "172.16.10.102",
-    "data0" => "172.19.10.102",
-    "minion_id" => "srvnode-2"
-  },
-  {
     "name"=> "s3client",
     "cpus"=> 2,
     "memory"=> 2048,
@@ -44,7 +36,7 @@ Vagrant.configure("2") do |config|
 
   salt_nodes.each do |node|
     config.vm.define node['name'] do |node_config|
-      
+
       node_config.vm.provider :hyperv do |hv, override|
         # Configure salt nodes
         # override.vm.box_url = "https://app.vagrantup.com/centos/boxes/7/versions/2004.01/providers/hyperv.box"
@@ -201,72 +193,33 @@ Vagrant.configure("2") do |config|
         rsync__verbose: true
 
       node_config.vm.provision "shell",
-        name: "Boootstrap VM",
-        run: "once",
-        path: './files/scripts/setup/bootstrap.sh',
-        privileged: true
-
-      node_config.vm.provision "shell",
         name: "Vagrant_override",
         #run: "once",
         inline: <<-SHELL
-          if [[ -d '/opt/seagate/cortx/provisioner' ]]; then
-            BASEDIR=/opt/seagate/cortx/provisioner
-          else
-            BASEDIR=/opt/seagate/cortx/provisioner
-          fi
+          BASEDIR=/opt/seagate/cortx/provisioner
 
           #Disable iptables-services
-          systemctl stop iptables && systemctl disable iptables && systemctl mask iptables
-          systemctl stop iptables6 && systemctl disable iptables6 && systemctl mask iptables6
-          systemctl stop ebtables && systemctl disable ebtables && systemctl mask ebtables
+          sudo systemctl stop iptables && sudo systemctl disable iptables && sudo systemctl mask iptables
+          sudo systemctl stop iptables6 && sudo systemctl disable iptables6 && sudo systemctl mask iptables6
+          sudo systemctl stop ebtables && sudo systemctl disable ebtables && sudo systemctl mask ebtables
 
           #Install and start firewalld
-          yum install -y firewalld
-          systemctl start firewalld
-          systemctl enable firewalld
+          sudo yum install -y firewalld
+          sudo systemctl start firewalld
+          sudo systemctl enable firewalld
 
-          # Open salt firewall ports
-          firewall-cmd --zone=public --add-port=4505-4506/tcp --permanent
-          firewall-cmd --reload
+          # Install Salt and Open firewall ports for Salt
+          # sudo yum install salt-minion
+          # sudo firewall-cmd --zone=public --add-port=4505-4506/tcp --permanent
+          # sudo firewall-cmd --reload
 
-          # Setup data0 network
-          sudo cp $BASEDIR/files/etc/sysconfig/network-scripts/ifcfg-data0 /etc/sysconfig/network-scripts/
-          echo IPADDR=#{node["data0"]}
-          sudo sed -i 's/IPADDR=/IPADDR=#{node["data0"]}/g' /etc/sysconfig/network-scripts/ifcfg-data0
-
-          touch /etc/salt/minion_id
-          echo #{node["minion_id"]} |tee /etc/salt/minion_id
-          [ '#{node["minion_id"]}' == 'srvnode-1' ] && salt-key -D -y
-          sudo systemctl restart salt-minion
-          sleep 2
-          sudo salt-key -A -y
-          sleep 2
-
-          #sudo salt srvnode-1 state.apply components.system
-          #sudo salt srvnode-1 state.apply components.system.storage
-          
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.build_ssl_cert_rpms
-          # HA component
-          #sudo salt srvnode-1 state.apply components.ha.corosync-pacemaker
-          #sudo salt srvnode-1 state.apply components.ha.haproxy
-          # Others
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.consul
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.elasticsearch
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.kibana
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.statsd
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.nodejs
-          #sudo salt srvnode-1 state.apply components.misc_pkgs.openldap
-          
-          # IP path components
-          #sudo salt srvnode-1 state.apply components.motr
-          #sudo salt srvnode-1 state.apply components.s3server
-          #sudo salt srvnode-1 state.apply components.hare
-
-          # Management path components
-          #sudo salt srvnode-1 state.apply components.sspl
-          #sudo salt srvnode-1 state.apply components.csm
-
+          # touch /etc/salt/minion_id
+          # echo #{node["minion_id"]} |tee /etc/salt/minion_id
+          # [ '#{node["minion_id"]}' == 'srvnode-1' ] && salt-key -D -y
+          # sudo systemctl restart salt-minion
+          # sleep 2
+          # sudo salt-key -A -y
+          # sleep 2
         SHELL
 
       #unless 's3client' == node['name']
