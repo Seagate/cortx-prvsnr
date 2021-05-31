@@ -18,9 +18,31 @@
 include:
   - k8s.kube.stop
 
+Reset kubeadm:
+  cmd.run:
+    - name: kubeadm reset
+    - watch_in:
+      - Stop kubelet service
+
+# Remove Calico by creating the necessary custom resource:
+#   cmd.run:
+#     - name: kubectl delete -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+
+# Remove the Tigera Calico operator and custom resource definitions:
+#   cmd.run:
+#     - name: kubectl delete -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+#     - require:
+#       - Remove Calico by creating the necessary custom resource
+#     - watch_in:
+#       - Stop kubelet service
+
 Remove CNI config:
   file.absent:
     - name: /etc/cni/net.d
+
+Remove kubeconfig file:
+  file.absent:
+    - name: ~/.kube/config
 
 Remove kube packages:
   pkg.purged:

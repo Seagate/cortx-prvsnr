@@ -16,6 +16,6 @@
 #
 
 include:
-  - k8s.containerd.teardown
-  - k8s.docker.teardown
   - k8s.kube.teardown
+  - k8s.docker.teardown
+  - k8s.containerd.teardown
