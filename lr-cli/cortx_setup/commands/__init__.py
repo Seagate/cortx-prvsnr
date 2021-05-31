@@ -27,6 +27,7 @@ from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
 from .node.prepare.firewall import NodePrepareFirewall
+from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
 from .signature.get import GetSignature
 from .signature.set import SetSignature
@@ -44,6 +45,7 @@ __all__ = [
     'NodeInitalize',
     'NodeFinalize',
     'NodePrepareFirewall',
+    'NodePrepareNetwork',
     'NodePrepareTime',
     'ResourceShow',
     'ResourceDiscover',
