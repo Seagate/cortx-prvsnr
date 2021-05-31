@@ -691,7 +691,7 @@ def setup_firewall():
     return _api_call('setup_firewall')
 
 
-def set_data_network(local=False, **kwargs):
+def set_public_data_network(local=False, **kwargs):
     """
     Set data network for the system
 
@@ -700,6 +700,17 @@ def set_data_network(local=False, **kwargs):
     :param data_gateway: (optional) gateway for data interface
     :param data_public_interfaces: (optional) list of public data interfaces
 
+    :param local: (optional) set values in local pillar
+
+    :return:
+    """
+    return _api_call('set_public_data_network', local=local, **kwargs)
+
+
+def set_private_data_network(local=False, **kwargs):
+    """
+    Set data network for the system
+
     :param data_private_ip: (optional) ip address for private data interface
     :param data_private_interfaces: (optional) list of private data interfaces
 
@@ -707,4 +718,4 @@ def set_data_network(local=False, **kwargs):
 
     :return:
     """
-    return _api_call('set_data_network', local=local, **kwargs)
+    return _api_call('set_private_data_network', local=local, **kwargs)

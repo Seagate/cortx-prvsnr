@@ -646,8 +646,8 @@ class MgmtNetwork(ParamGroupInputBase):
 
 
 @attr.s(auto_attribs=True)
-class DataNetwork(ParamGroupInputBase):
-    _param_group = 'data_network'
+class PublicDataNetwork(ParamGroupInputBase):
+    _param_group = 'public_data_network'
     data_public_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node public data interface IP",
         validator=Validation.check_ip4
@@ -663,6 +663,15 @@ class DataNetwork(ParamGroupInputBase):
     data_public_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node public data network interfaces"
     )
+    data_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data network mtu",
+        default=1500
+    )
+
+
+@attr.s(auto_attribs=True)
+class PrivateDataNetwork(ParamGroupInputBase):
+    _param_group = 'private_data_network'
     data_private_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node private data interface IP",
         validator=Validation.check_ip4
