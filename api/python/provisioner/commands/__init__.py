@@ -398,7 +398,7 @@ class Set(CommandParserFillerMixin):
     def _run(self, params, targets, local):
         self._apply(params, targets=targets, local=local)
 
-    def dynamic_validation(self, params, targets):
+    def dynamic_validation(self, params, targets: str, dry_run: bool = False):
         pass
 
     # TODO
@@ -413,7 +413,7 @@ class Set(CommandParserFillerMixin):
         else:
             params = self.input_type.from_args(*args, **kwargs)
 
-        res = self.dynamic_validation(params, targets)
+        res = self.dynamic_validation(params, targets, dry_run)
 
         if dry_run:
             return res

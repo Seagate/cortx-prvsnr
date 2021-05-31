@@ -23,6 +23,31 @@ network:
 node:
   initialize:
     NodeInitalize
+  finalize:
+    NodeFinalize
+  prepare:
+    server:
+      NodePrepareServer
+    firewall:
+      NodePrepareFirewall
+    time:
+      NodePrepareTime
 hostname:
   Hostname
-   
+cluster:
+  create:
+    ClusterCreate
+  show:
+    ClusterShow
+  config:
+    network:
+      ClusterNetworkConfig
+resource:
+  discover:
+    ResourceDiscover
+  show:
+    ResourceShow
+security:
+  config:
+    SecurityConfig
+

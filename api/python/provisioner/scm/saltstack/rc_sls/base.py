@@ -147,18 +147,23 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     def fileroot_path(self, path: Union[str, Path]):
         return self.client.fileroot_path.path(self.rc_r_path(path))
 
+    @property
+    def fileroot(self):
+        return FileRoot(
+            self.client.fileroot_path,
+            local_runner_client=SaltRunnerClient(c_path=self.client.c_path)
+        )
+
     def fileroot_read(
         self,
         r_path: Union[str, Path],
         text: bool = True,
         yaml: bool = False
     ):
-        fileroot_writer = FileRoot(self.client.fileroot_path)
-
         if yaml:
-            return fileroot_writer.read_yaml(self.rc_r_path(r_path))
+            return self.fileroot.read_yaml(self.rc_r_path(r_path))
         else:
-            return fileroot_writer.read(self.rc_r_path(r_path), text=text)
+            return self.fileroot.read(self.rc_r_path(r_path), text=text)
 
     def fileroot_write(
         self,
@@ -167,22 +172,17 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
         text: bool = True,
         yaml: bool = False
     ):
-        fileroot_writer = FileRoot(self.client.fileroot_path)
         if yaml:
-            return fileroot_writer.write_yaml(self.rc_r_path(r_path), data)
+            return self.fileroot.write_yaml(self.rc_r_path(r_path), data)
         else:
-            return fileroot_writer.write(
+            return self.fileroot.write(
                 self.rc_r_path(r_path), data, text=text
             )
 
     def fileroot_copy(
         self, source: Union[str, Path], r_dest: Union[str, Path],
     ):
-        fileroot_writer = FileRoot(
-            self.client.fileroot_path,
-            local_runner_client=SaltRunnerClient(c_path=self.client.c_path)
-        )
-        return fileroot_writer.copy(source, self.rc_r_path(r_dest))
+        return self.fileroot.copy(source, self.rc_r_path(r_dest))
 
     def setup_roots(self):
         logger.info(

@@ -81,10 +81,3 @@ for path in "$user_srv_dir" \
         fi
     fi
 done
-
-
-# Provisioning cli directory
-test -e ${PWD}/api/python/setup.py && \
-  install_dir=${PWD} || \
-  install_dir=/opt/seagate/cortx/provisioner
-
