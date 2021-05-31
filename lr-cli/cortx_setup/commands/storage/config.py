@@ -97,8 +97,7 @@ class StorageEnclosureConfig(Command):
         enc_num = "enclosure-" + ((node_id).split('-'))[1]
         enc_id = Commons().get_enc_id(node_id)
 
-        # This is to avoid the conflict with Python's internal
-        # object- 'type'.
+        # This is to make the Coday quiet
         storage_type = type
 
         Conf.load(
@@ -188,7 +187,7 @@ class StorageEnclosureConfig(Command):
                 local=True
             )
             self.logger.info(
-                f"Updating controller type to {type} in Cortx ConfStor"
+                f"Updating controller type to {controller_type} in Cortx ConfStor"
             )
             Conf.set(
                 'node_info_index',
