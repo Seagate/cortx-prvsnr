@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 #
-# Cortx Setup API to add server nodes to storagesets
+# Cortx Setup API to add storage enclosures to storagesets
 
 
 from cortx_setup.commands.command import Command
@@ -30,7 +30,7 @@ from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
 
-class AddServerNode(Command):
+class AddStorageEnclosure(Command):
     _args = {
         'storage_set_name': {
             'type': str,
@@ -38,24 +38,25 @@ class AddServerNode(Command):
             'optional': False,
             'help': 'Storageset name'
         },
-        'server_node': {
+        'storage_enclosure': {
             'type': str,
             'nargs': '+',
             'optional': False,
-            'help': 'List of server node(s) to be added to storageset'
+            'help': 'List of storage enclosure(s) to be added to storageset'
         }
     }
 
-    def run(self, storage_set_name=None, server_node=None):
+    def run(self, storage_set_name=None, storage_enclosure=None):
         try:
             node_id = local_minion_id()
             index = 'storageset_index'
-            cluster_id = get_cluster_id()
 
             Conf.load(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
+            cluster_id = get_cluster_id()
+
             ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
             node_count = get_pillar_data("cluster/storage_set/count")
 
@@ -66,39 +67,39 @@ class AddServerNode(Command):
                    "First, set with `cortx_setup storageset create` command."
                 )
 
-            # TODO: Addnl validation needed. Change server_node from list
-            # to string and allow only one node to be updated at a time?
+            # TODO: This is Placeholder. Exact API not provided yet.
+            # Addnl validation needed. Change `storage_enclosure` from list
+            # to string and allow only one enclosure to be updated at a time?
 
-            input_nodes_count = len(server_node)
-
+            input_nodes_count = len(storage_enclosure)
             if input_nodes_count > node_count:
                 raise ValueError(
                    f"Invalid count: {input_nodes_count} number of nodes received. "
-                   f"Given Storageset can accept a maximum of {node_count} nodes. "
-                   "Update it with `cortx_setup storageset create` command."
+                   f"Given Storageset can accept a maximum of {node_count} enclosures. "
+                   "Update node count with `cortx_setup storageset create` command."
                 )
 
             self.logger.debug(
-                "Adding '{server_node}' to storageset "
+                "Adding '{storage_enclosure}' to storageset "
                 f"'{storage_set_name}' in ConfStore."
             )
 
             PillarSet().run(
-                'cluster/storage_set/server_nodes',
-                server_node,
+                'cluster/storage_set/storage_enclosures',
+                storage_enclosure,
                 targets=node_id,
                 local=True
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[0]>server_nodes',
-                server_node
+                f'cluster>{cluster_id}>storage_set[0]>storage_enclosures',
+                storage_enclosure
             )
 
             Conf.save(index)
-            self.logger.debug(f"Server nodes {server_node} added to Storageset")
+            self.logger.debug(f"Storage enclosure '{storage_enclosure}' added.")
 
         except ValueError as exc:
             raise ValueError(
-              f"Failed to add node to storageset. Reason: {str(exc)}"
+              f"Failed to add storage enclosure to storageset. Reason: {str(exc)}"
             )

@@ -74,6 +74,8 @@ storageset:
   add:
     node:
       AddServerNode
+    enclosure:
+      AddStorageEnclosure
   config:
     durability:
       DurabilityConfig

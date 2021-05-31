@@ -14,12 +14,15 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# Cortx Setup API for Storageset creation in Field
+#
+# Cortx Setup API to create a storageset
 
 
 from ..command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
-
+from cortx_setup.commands.common_utils import (
+    get_cluster_id
+)
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
@@ -28,41 +31,59 @@ from cortx.utils.conf_store import Conf
 class CreateStorageSet(Command):
     _args = {
         'name': {
-            'type': str,
-            'default': 'storage-set',
-            'optional': True
+          'type': str,
+          'default': 'storage-set-1',
+          'optional': True
         },
         'count': {
-            'type': int,
-            'default': 1,
-            'optional': True
+          'type': int,
+          'default': 1,
+          'optional': True
         }
     }
 
-    def run(self, **kwargs):
-        node_id = local_minion_id()
-        index = 'storageset_index'
+    def run(self, name=None, count=None):
+        try:
+            node_id = local_minion_id()
+            index = 'storageset_index'
 
-        Conf.load(
-            index,
-            f'json://{CONFSTORE_CLUSTER_FILE}'
-        )
-        for key, value in kwargs.items():
-            if value:
-                self.logger.info(
-                    f"Updating {key} as {value} in ConfStore"
-                )
-                PillarSet().run(
-                    f'cluster/storage_set/{key}',
-                    value,
-                    targets=node_id,
-                    local=True
-                )
-                Conf.set(
-                    index,
-                    f'cluster>storage_set>{key}',
-                    value
-                )
+            # TODO: Addnl validation needed. Support for updating
+            # values for multiple storagesets in a cluster.
 
-        Conf.save(index)
-        self.logger.info("Storageset created")
+            Conf.load(
+                index,
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
+            cluster_id = get_cluster_id()
+            self.logger.debug(
+                f"Updating storageset '{name}' with "
+                "node count '{count}' in ConfStore"
+            )
+
+            PillarSet().run(
+                'cluster/storage_set/name',
+                name,
+                targets=node_id,
+                local=True
+            )
+
+            # Not updating node count to Confstore
+            PillarSet().run(
+                'cluster/storage_set/count',
+                count,
+                targets=node_id,
+                local=True
+            )
+
+            Conf.set(
+                index,
+                f'cluster>{cluster_id}>storage_set[0]>name',
+                name
+            )
+
+            Conf.save(index)
+
+        except ValueError as exc:
+            raise ValueError(
+              f"Failed to create Storageset: {str(exc)}"
+            )

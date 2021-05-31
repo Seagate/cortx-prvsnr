@@ -14,11 +14,15 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# Cortx Setup API for configuring durability details for Storageset in Field
+#
+# Cortx Setup API to configure durability of a storageset
 
 
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
+from cortx_setup.commands.common_utils import (
+    get_cluster_id
+)
 
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
@@ -32,65 +36,82 @@ class DurabilityConfig(Command):
             'optional': False,
             'help': 'Storageset name'
         },
+        'type': {
+            'type': str,
+            'default': 'sns',
+            'optional': True,
+            'dest': 'durability_type',
+            'help': 'Storageset durability type. e.g: {sns|dix}'
+        },
         'data': {
             'type': int,
-            'default': None,
+            'default': 4,
             'optional': True,
             'help': 'Storageset durability data'
         },
         'parity': {
             'type': int,
-            'default': 1,
+            'default': 2,
             'optional': True,
             'help': 'Storageset durability parity value'
         },
         'spare': {
             'type': int,
-            'default': 1,
+            'default': 2,
             'optional': True,
             'help': 'Storageset durability spare'
         }
     }
 
     def run(self, **kwargs):
-        node_id = local_minion_id()
-        index = 'storageset_index'
+        try:
+            node_id = local_minion_id()
+            index = 'storageset_index'
+            storage_set_name = kwargs['storage_set_name']
+            durability_type = kwargs['durability_type']
+            cluster_id = get_cluster_id()
 
-        Conf.load(
-            index,
-            f'json://{CONFSTORE_CLUSTER_FILE}'
-        )
-        durability_type = "sns"  # Should we fetch this from Pillar?
-        ss_name = Conf.get(index, 'cluster>storage_set>name')
-
-        if ss_name != kwargs['storage_set_name']:
-            raise Exception(
-               "Invalid Storageset name provided: "
-               f"{kwargs['storage_set_name']} not found in ConfStore data. "
-               "First, set with `cortx_setup storageset create` command."
+            Conf.load(
+                index,
+                f'json://{CONFSTORE_CLUSTER_FILE}'
             )
 
-#        if 'storage_set_name' not in kwargs:
-#            raise Exception(
-#               "Valid Storageset name is mandatory to configure durability."
-#            )
+            ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
 
-        for key, value in kwargs.items():
-            if value and key != 'storage_set_name':
-                self.logger.info(
-                    f"Updating {key} as {value} in ConfStore"
-                )
-                PillarSet().run(
-                    f'cluster/storage_set/durability/{durability_type}/{key}',
-                    value,
-                    targets=node_id,
-                    local=True
-                )
-                Conf.set(
-                    index,
-                    f'cluster>storage_set>durability>{durability_type}>{key}',
-                    value
+            durability_dict = {durability_type: {}}
+
+            if ss_name != storage_set_name:
+                raise ValueError(
+                   "Invalid Storageset name provided: "
+                   f"'{storage_set_name}' not found in ConfStore data. "
+                   "First, set with `cortx_setup storageset create` command."
                 )
 
-        Conf.save(index)
-        self.logger.info("Storageset Durability configured")
+            for key, value in kwargs.items():
+                if key not in ['storage_set_name', 'durability_type']:
+                    self.logger.debug(
+                        f"Updating {key} as {value} in ConfStore"
+                    )
+                    durability_dict[durability_type].update({key: value})
+
+            PillarSet().run(
+                'cluster/storage_set/durability',
+                durability_dict,
+                targets=node_id,
+                local=True
+            )
+            Conf.set(
+                index,
+                f'cluster>{cluster_id}>storage_set[0]>durability',
+                durability_dict
+            )
+
+            Conf.save(index)
+            self.logger.debug(
+                f"Durability configured for Storageset '{storage_set_name}'"
+            )
+
+        except ValueError as exc:
+            raise ValueError(
+              f"Failed to configure durability. Reason: {str(exc)}"
+            )

@@ -60,7 +60,7 @@ class SetSignature(Command):
             index = "signature"
 
             if not (key and value):
-                raise Exception(
+                raise ValueError(
                    "A valid signature is mandatory to set for stamping. "
                    "Expected Signature params format: --key 'key' --value 'value'."
                 )
