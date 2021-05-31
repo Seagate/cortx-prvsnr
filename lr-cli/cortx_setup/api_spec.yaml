@@ -58,3 +58,7 @@ signature:
     GetSignature
   set:
     SetSignature
+storage:
+  config:
+    StorageEnclosureConfig
+

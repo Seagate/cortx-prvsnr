@@ -31,6 +31,8 @@ from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
 from .signature.get import GetSignature
 from .signature.set import SetSignature
+from .storage.config import StorageEnclosureConfig
+from .storage.commons import Commons
 
 
 __all__ = [
@@ -48,5 +50,7 @@ __all__ = [
     'ResourceShow',
     'ResourceDiscover',
     'SecurityConfig',
-    'SetSignature'
+    'SetSignature',
+    'StorageEnclosureConfig',
+    'Commons'
  ]
