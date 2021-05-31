@@ -22,7 +22,8 @@ from .validator import (FileValidator,
                         HashSumValidator,
                         ContentFileValidator,
                         ReleaseInfoContentScheme,
-                        ReleaseInfoValidator
+                        ReleaseInfoValidator,
+                        AuthenticityValidator
                         )
 
 from .network import NetworkParamsValidator
@@ -44,5 +45,6 @@ __all__ = [
     "NodeParamsValidator",
     "StorageEnclosureParamsValidator",
     "ReleaseParamsValidator",
-    "ConfigValidator"
+    "ConfigValidator",
+    "AuthenticityValidator"
 ]

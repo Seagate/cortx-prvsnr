@@ -611,6 +611,13 @@ class HareStatus(Enum):
     IN_PROGRESS = 'InProgress'
 
 
+class ISOValidationFields(Enum):
+    """Name of ISO validation fields."""
+
+    STATUS = "Status"
+    MSG = "msg"
+
+
 class SWUpgradeInfoFields(Enum):
     """Named fields for meta information about SW upgrade repository"""
 

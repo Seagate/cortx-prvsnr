@@ -1153,6 +1153,35 @@ class SWUpgradeRepo(SWUpdateRepo):
         default=None,
         converter=lambda x: x and config.HashType(str(x))
     )
+    sig_file: Optional[Union[str, Path]] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "Path to the file with ISO signature"
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists,
+        default=None
+    )
+    gpg_pub_key: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "(Optional) Path to the custom GPG public key"
+            }
+        },
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
+        default=None
+    )
+    import_pub_key: bool = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': ("(Optional) Specifies whether to import a given GPG "
+                         "public key or not")
+            }
+        },
+        default=False
+    )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade
     _target_build: str = attr.ib(default=None)
