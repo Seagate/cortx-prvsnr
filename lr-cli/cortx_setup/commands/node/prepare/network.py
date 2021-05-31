@@ -17,7 +17,7 @@
 
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
-from cortx_setup import utils
+from cortx_setup.commands.common_utils import get_machine_id
 from provisioner import (
     set_hostname,
     set_mgmt_network,
@@ -26,6 +26,9 @@ from provisioner import (
 )
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
+
+
+"""Cortx Setup API for setting up the network"""
 
 
 class NodePrepareNetwork(Command):
@@ -80,7 +83,7 @@ class NodePrepareNetwork(Command):
     }
 
     def update_network_confstore(self, network_type, key, value, target):
-        machine_id = utils.get_machine_id(target=target)
+        machine_id = get_machine_id(target)
         if value:
             self.logger.debug(
                 f"Updating {key} to {value} for {network_type} network in confstore"
@@ -95,7 +98,7 @@ class NodePrepareNetwork(Command):
         netmask=None, ip_address=None, interfaces=None
     ):
         node_id = local_minion_id()
-        machine_id = utils.get_machine_id(target=node_id)
+        machine_id = get_machine_id(node_id)
         Conf.load(
             'node_prepare_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'

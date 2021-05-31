@@ -17,7 +17,7 @@
 
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
-from cortx_setup import utils
+from cortx_setup.commands.common_utils import get_machine_id
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
@@ -67,7 +67,7 @@ class NetworkConfig(Command):
                 interfaces=None, private=False
     ):
         node_id = local_minion_id()
-        machine_id = utils.get_machine_id(target=node_id)
+        machine_id = get_machine_id(node_id)
         Conf.load(
             'node_config_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
