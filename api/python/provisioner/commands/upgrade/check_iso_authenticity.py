@@ -21,6 +21,7 @@ from typing import Type
 from provisioner import inputs, utils
 
 from provisioner.commands.validator import AuthenticityValidator
+from provisioner.config import ISOValidationFields, CheckVerdict
 
 from provisioner.errors import ValidationError
 
@@ -37,7 +38,7 @@ class CheckISOAuthenticityArgs:
     iso_path: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "Path to SW upgrade single ISO bundle"
+                'help': "Path to the SW upgrade single ISO bundle"
             }
         },
         converter=utils.converter_path_resolved,
@@ -46,7 +47,7 @@ class CheckISOAuthenticityArgs:
     sig_file: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': "Path to file with ISO signature"
+                'help': "Path to the file with ISO signature"
             }
         },
         default=None
@@ -102,9 +103,9 @@ class CheckISOAuthenticity(CommandParserFillerMixin):
         Parameters
         ----------
         iso_path: str
-            Path to SW upgrade single ISO bundle
+            Path to the SW upgrade single ISO bundle
         sig_file: str
-            Path to file with ISO signature
+            Path to the file with ISO signature
         gpg_pub_key: str
             (Optional) Path to the custom GPG public key
         import_pub_key: bool
@@ -122,10 +123,16 @@ class CheckISOAuthenticity(CommandParserFillerMixin):
                                                gpg_public_key=gpg_pub_key)
 
         try:
-            auth_validator.validate(iso_path)
+            output = auth_validator.validate(iso_path)
         except ValidationError as e:
             logger.warning(f"ISO authenticity check is failed: '{e}'")
-            return {'status': 'failed', 'msg': f'{e}'}
+            return {
+                ISOValidationFields.STATUS.value: CheckVerdict.FAIL.value,
+                ISOValidationFields.MSG.value: f'{e}'
+            }
         else:
             logger.info("ISO authenticity check succeeded")
-            return {'status': 'succeeded', 'msg': ''}
+            return {
+                ISOValidationFields.STATUS.value: CheckVerdict.PASSED.value,
+                ISOValidationFields.MSG.value: f'{output}'
+            }

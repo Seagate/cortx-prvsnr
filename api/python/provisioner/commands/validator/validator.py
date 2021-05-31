@@ -596,7 +596,7 @@ class AuthenticityValidator(PathValidator):
         default=None
     )
 
-    def validate(self, path: Path):
+    def validate(self, path: Path) -> str:
         """
         Validate the file by a given path has a correct signature
 
@@ -607,7 +607,8 @@ class AuthenticityValidator(PathValidator):
 
         Returns
         -------
-        None
+        str:
+            Comment message about GPG verification
 
         Raises
         ------
@@ -624,9 +625,11 @@ class AuthenticityValidator(PathValidator):
             cmd = f"gpg --verify {self.signature} {path}"
 
         try:
-            cmd_run(cmd, targets=local_minion_id(),
-                    fun_kwargs=dict(python_shell=True))
+            res = cmd_run(cmd, targets=local_minion_id(),
+                          fun_kwargs=dict(python_shell=True))
         except Exception as e:
             logger.debug(f'Authenticity check is failed: "{e}"')
             raise ValidationError(
                 f'Authenticity check is failed: "{e}"') from e
+
+        return res

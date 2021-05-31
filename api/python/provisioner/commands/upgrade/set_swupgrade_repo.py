@@ -21,6 +21,7 @@ from typing import Type, Union
 import requests
 from configparser import ConfigParser
 
+from provisioner.commands.validator import AuthenticityValidator
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
 from ..set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
@@ -272,6 +273,25 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         """
         if not params.is_remote():
+            if params.sig_file:
+                logger.info("File with ISO signature is specified. Start GPG "
+                            "signature validation for the ISO")
+                auth_validator = AuthenticityValidator(
+                    signature=params.sig_file
+                )
+
+                try:
+                    auth_validator.validate(params.source)
+                except ValidationError as e:
+                    logger.warning(f"ISO signature validation is failed: "
+                                   f"'{e}'")
+                    raise SWUpdateRepoSourceError(
+                        str(params.source),
+                        f"ISO signature validation error occurred: '{e}'"
+                    ) from e
+                else:
+                    logger.info('ISO signature validation succeeded')
+
             if params.hash:
                 logger.info("`hash` parameter is setup. Start checksum "
                             "validation for the whole ISO file")
@@ -283,11 +303,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 try:
                     upgrade_bundle_hash_validator.validate(params.source)
                 except ValidationError as e:
-                    logger.debug(f"Check sum validation error occurred: {e}")
+                    logger.warning(f"Check sum validation error occurred: {e}")
                     raise SWUpdateRepoSourceError(
                         str(params.source),
-                        f"Catalog structure validation error occurred:{e}"
+                        f"Check sum validation error occurred: '{e}'"
                     ) from e
+                else:
+                    logger.info('Check sum validation succeeded')
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other
@@ -305,7 +327,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #  provisioner doesn't unmount `sw_update_candidate` repo
         # raise SWUpdateError(reason="Other repo candidate was found")
 
-    def _base_repo_validation(self, candidate_repo: inputs.SWUpgradeRepo,
+    @staticmethod
+    def _base_repo_validation(candidate_repo: inputs.SWUpgradeRepo,
                               base_dir: Path, dry_run: bool = False):
         """
         Base SW upgrade repository validation.
