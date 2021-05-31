@@ -2,6 +2,8 @@
 configuration-as-code
 workflow-aggregator
 cloudbees-folder
+# This is how the plugin package is named
+# https://plugins.jenkins.io/ssh-slaves/#documentation
 ssh-slaves
 role-strategy
 ldap

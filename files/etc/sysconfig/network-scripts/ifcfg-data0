@@ -1,9 +1,0 @@
-DEVICE=data0
-BOOTPROTO=static
-ONBOOT=yes
-BONDING_OPTS="miimon=100 mode=802.3ad lacp_rate=1 xmit_hash_policy=1"
-NM_CONTROLLED=no
-USRCTL=no
-ONBOOT=yes
-MTU=9000
-IPADDR=
