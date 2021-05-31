@@ -16,6 +16,7 @@
 #
 
 import sys
+import tempfile
 from typing import Type
 import logging
 from pathlib import Path
@@ -98,8 +99,8 @@ class CreateUser(CommandParserFillerMixin):
             uname: str,
             passwd: str,
             sudo: bool = True,
-            group_list: list = [],
-            commands_list: list = [],
+            group_list: list = None,
+            commands_list: list = None,
             targets: str = ALL_MINIONS):
 
         if not SEAGATE_USER_HOME_DIR.exists():
@@ -299,7 +300,7 @@ class CreateUser(CommandParserFillerMixin):
             '/usr/bin/cortxcli',
             '/usr/bin/provisioner',
             '/var/log',
-            '/tmp',
+            tempfile.gettempdir(),
             '/usr/bin/lsscsi',
             '/usr/sbin/mdadm',
             '/usr/sbin/sfdisk',
