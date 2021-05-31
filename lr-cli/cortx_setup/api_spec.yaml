@@ -20,6 +20,7 @@
 network:
   config:
     NetworkConfig
+
 node:
   initialize:
     NodeInitalize
@@ -50,4 +51,8 @@ resource:
 security:
   config:
     SecurityConfig
-
+signature:
+  get:
+    GetSignature
+  set:
+    SetSignature
