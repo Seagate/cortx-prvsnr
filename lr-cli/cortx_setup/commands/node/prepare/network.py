@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Cortx Setup API for setting up the network
+
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import get_machine_id
@@ -26,9 +28,6 @@ from provisioner import (
 )
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
-
-
-"""Cortx Setup API for setting up the network"""
 
 
 class NodePrepareNetwork(Command):
@@ -83,6 +82,22 @@ class NodePrepareNetwork(Command):
     }
 
     def update_network_confstore(self, network_type, key, value, target):
+
+        """
+        Set network parameters in confstore
+
+        Parameters
+        ----------
+        network_type: str
+            Type of network
+        key: str
+            Confstore key to update
+        value: str
+            Value to set
+        target: str
+            Node id
+        """
+
         machine_id = get_machine_id(target)
         if value:
             self.logger.debug(
@@ -97,6 +112,16 @@ class NodePrepareNetwork(Command):
     def run(self, hostname=None, network_type=None, mode=None, gateway=None,
         netmask=None, ip_address=None, interfaces=None
     ):
+
+        """Network prepare execution method.
+
+        Execution:
+        `cortx_setup node prepare network --type mgmt --ip_address "10.230.241.109" --interfaces eth0`
+        `cortx_setup node prepare network --type data --ip_address "192.168.61.94" --interfaces eth1 eth2`
+        `cortx_setup node prepare network --type data --ip_address "192.168.93.197" --interfaces eth3 eth4 --mode private`
+
+        """
+
         node_id = local_minion_id()
         machine_id = get_machine_id(node_id)
         Conf.load(

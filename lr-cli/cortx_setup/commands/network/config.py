@@ -15,15 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+# Cortx Setup API for configuring network
+
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import get_machine_id
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
-
-
-"""Cortx Setup API for configuring network"""
 
 
 class NetworkConfig(Command):
@@ -66,6 +65,18 @@ class NetworkConfig(Command):
     def run(self, transport_type=None, interface_type=None, network_type=None,
                 interfaces=None, private=False
     ):
+
+        """Network config execution method.
+
+        Execution:
+        `cortx_setup network config --transport-type lent`
+        `cortx_setup network config --interface-type tcp`
+        `cortx_setup network config --type mgmt --interfaces eth0`
+        `cortx_setup network config --type data --interfaces eth1 eth2`
+        `cortx_setup network config --type data --interfaces eth3 eth4 --mode private`
+
+        """
+
         node_id = local_minion_id()
         machine_id = get_machine_id(node_id)
         Conf.load(
