@@ -450,6 +450,7 @@ class Checks(Enum):
     STORAGE_HBA = "storage_hba"
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
+    UPGRADE_ISO_VERSION = "upgrade_iso_version"
 
 
 class GroupChecks(Enum):
@@ -461,6 +462,7 @@ class GroupChecks(Enum):
     DEPLOY_POST_CHECKS = "deploy_post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
+    SWUPGRADE_CHECKS = "swupgrade_checks"
     UNBOXING_PRE_CHECKS = "unboxing_pre_checks"
     UNBOXING_POST_CHECKS = "unboxing_post_checks"
 
@@ -485,6 +487,17 @@ SWUPDATE_CHECKS = {
     Checks.CLUSTER_STATUS.value,
     Checks.LOGS_ARE_GOOD.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value
+}
+
+SWUPGRADE_CHECKS = {
+    Checks.NETWORK.value,
+    Checks.CONNECTIVITY.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.COMMUNICABILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.UPGRADE_ISO_VERSION.value
 }
 
 REPLACENODE_CHECKS = {

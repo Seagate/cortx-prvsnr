@@ -1239,6 +1239,45 @@ class Check(CommandParserFillerMixin):
                 nodes.append(key)
         return nodes
 
+    @staticmethod
+    def _upgrade_iso_version(*, args: str) -> CheckEntry:
+        """
+        Validate upgrade ISO version validation
+
+        Parameters
+        ----------
+        args: str
+            Upgrade ISO version validation specific arguments and parameters
+
+        Returns
+        -------
+        CheckEntry:
+            CheckEntry instance with validation result
+
+        """
+        # TODO: dynamic import is needed here to solve cross imports issues
+        #  between: `api/python/provisioner/commands/__init__.py` and
+        #  `api/python/provisioner/commands/upgrade/set_swupgrade_repo.py`:
+        #  SetSWUpgradeRepo imports Set class.
+        from provisioner.commands.upgrade import GetISOVersion
+
+        res: CheckEntry = CheckEntry(cfg.Checks.UPGRADE_ISO_VERSION.value)
+
+        try:
+            iso_version = GetISOVersion().run()
+        except Exception as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            if iso_version is None:
+                res.set_fail(checked_target=local_minion_id(),
+                             comment='Current release version is equal to SW '
+                                     'upgrade ISO version')
+            else:
+                res.set_passed(checked_target=local_minion_id())
+
+        return res
+
     def run(self, check_name: str = "",
             check_args: str = "") -> CheckResult:
         """
