@@ -104,7 +104,7 @@ class NodePrepareStorage(Command):
 
         if not _user_check or not _passwd_check:
             return False
-        
+
         return True
 
 
