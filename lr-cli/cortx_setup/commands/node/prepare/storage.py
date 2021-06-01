@@ -16,12 +16,14 @@
 #
 
 from cortx_setup.commands.command import Command
-from cortx_setup.commands.storage import Commons
+from cortx_setup.commands.storage.commons import Commons
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import get_pillar_data
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from provisioner.salt import function_run
+from cortx.utils.conf_store import Conf
+from cortx.utils.security.cipher import Cipher
 
 
 class NodePrepareStorage(Command):
@@ -39,7 +41,7 @@ class NodePrepareStorage(Command):
         }
     }
 
-    def validate_user_password(
+    def validate_credentials(
             self, targets=None, enc_num=None, user=None, passwd=None
     ):
 
@@ -92,13 +94,13 @@ class NodePrepareStorage(Command):
 
         if passwd != _ctrl_secret:
             self.logger.warning(
-                f"Password provided [{passwd} does not match"
-                " with the password in configuration]"
+                f"The password provided ({passwd}) does not match"
+                " with the password in configuration"
             )
             _passwd_check = False
         else:
             self.logger.debug(
-                f"Password provided [{passwd} matches with"
+                f"Password provided ({passwd}) matches with"
                 " the password in configuration"
             )
 
@@ -122,7 +124,7 @@ class NodePrepareStorage(Command):
 
  
         try:
-            validate_credentials(_node_id, _enc_num, _enc_user, _enc_passwd)
+            self.validate_credentials(_node_id, _enc_num, _enc_user, _enc_passwd)
 
             # Fetch enclosure id from the enclosure
             # This will use the user/password from pillar
@@ -163,7 +165,7 @@ class NodePrepareStorage(Command):
                 f"Updating the enclosure id {_enc_id_on_enc} in pillar"
             )
             PillarSet().run(
-                'storage/{_enc_num}/enclosure_id',
+                f'storage/{_enc_num}/enclosure_id',
                 _enc_id_on_enc,
                 targets=node_id,
                 local=True
