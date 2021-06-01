@@ -56,6 +56,7 @@ class GetSWUpgradeInfoArgs:
     )
 
 
+@attr.s(auto_attribs=True)
 class GetSWUpgradeInfo(CommandParserFillerMixin):
     """
     Base class that provides API for getting SW upgrade repository information.

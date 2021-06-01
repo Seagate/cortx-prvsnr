@@ -64,12 +64,17 @@ set_network:
       # - components.system.network.data.direct
       # - components.ha.corosync-pacemaker.config.cluster_ip
       # - components.ha.corosync-pacemaker.config.mgmt_vip
-set_data_network:
+set_public_data_network:
   type: Set
-  input_type: DataNetwork
+  input_type: PublicDataNetwork
   states:
     post:
       - components.system.network.data.public
+set_private_data_network:
+  type: Set
+  input_type: PrivateDataNetwork
+  states:
+    post:
       - components.system.network.data.direct
 set_hostname:
   type: Set
@@ -127,6 +132,8 @@ sw_upgrade:
   type: upgrade.SWUpgrade
 get_swupgrade_info:
   type: upgrade.GetSWUpgradeInfo
+check_iso_authenticity:
+  type: upgrade.CheckISOAuthenticity
 fw_update:
   type: FWUpdate
 sw_rollback:

@@ -15,12 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+from .check_iso_authenticity import CheckISOAuthenticity
 from .set_swupgrade_repo import SetSWUpgradeRepo
 from .sw_upgrade import SWUpgrade
 from .remove_swupgrade_repo import RemoveSWUpgradeRepo
 from .get_swupgrade_info import GetSWUpgradeInfo
 
+
 __all__ = [
+    "CheckISOAuthenticity",
     "SetSWUpgradeRepo",
     "SWUpgrade",
     "RemoveSWUpgradeRepo",

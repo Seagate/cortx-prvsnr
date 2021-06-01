@@ -17,6 +17,15 @@
 
 from pathlib import Path
 
-CONFSTORE_CLUSTER_FILE = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
+FILENAME="/etc/enclosure-id"
+
+
+def enclosure_id():
+    """Populates enclosure_id to grains."""
+    grains = {"enclosure_id": None}
+
+    id_file = Path(FILENAME)
+    if id_file.is_file():
+        grains['enclosure_id'] = id_file.read_text()
+
+    return grains
