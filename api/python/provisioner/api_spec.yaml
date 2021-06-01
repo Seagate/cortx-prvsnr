@@ -134,6 +134,8 @@ get_swupgrade_info:
   type: upgrade.GetSWUpgradeInfo
 check_iso_authenticity:
   type: upgrade.CheckISOAuthenticity
+get_iso_version:
+  type: upgrade.GetISOVersion
 fw_update:
   type: FWUpdate
 sw_rollback:
