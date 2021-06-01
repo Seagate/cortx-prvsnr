@@ -141,7 +141,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
         checker = Check()
         try:
-            check_res = checker.run(GroupChecks.SWUPDATE_CHECKS.value)
+            check_res = checker.run(GroupChecks.SWUPGRADE_CHECKS.value)
         except Exception as e:
             logger.warning("During pre-flight checks error happened: "
                            f"{str(e)}")
