@@ -83,7 +83,7 @@ def mock_system_cmds(hosts, request):
 # main goals:
 #   - verify delegation of orchestration to a new version
 #   - verify salt based call work fine (mini API)
-@pytest.mark.hosts_num(1)
+@pytest.mark.hosts_num(3)
 @pytest.mark.verified
 @pytest.mark.isolated
 def test_swupgrade_r2_offline(
