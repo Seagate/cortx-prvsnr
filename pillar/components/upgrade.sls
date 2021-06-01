@@ -17,27 +17,13 @@
 
 upgrade:
   sw_list:
-    motr:
-      sls: components.motr
-      mini: /opt/seagate/cortx/motr/conf/setup.yaml
-    s3server:
-      sls: components.s3server
-      mini: /opt/seagate/cortx/s3/conf/setup.yaml
-    hare:
-      sls: components.hare
-      mini: /opt/seagate/cortx/hare/conf/setup.yaml
-    ha:
-      sls: components.ha.cortx-ha
-      mini: /opt/seagate/cortx/ha/conf/setup.yaml
-    sspl:
-      sls: components.sspl
-      mini: /opt/seagate/cortx/sspl/conf/setup.yaml
-    uds:
-      sls: components.uds
-      mini: /opt/seagate/cortx/uds/conf/setup.yaml
-    csm:
-      sls: components.csm
-      mini: /opt/seagate/cortx/csm/conf/setup.yaml
+    - motr
+    - s3server
+    - hare
+    - ha
+    - sspl
+    - uds
+    - csm
   yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
                     # <cortx-version>:
                     #   <node-id>: <yum-txn-id>
