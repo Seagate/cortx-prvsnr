@@ -385,7 +385,9 @@ def repo_tgz(
             # ['--exclude-vcs-ignores'] +
             exclude +
             # that makes tar to produce the same hash if no changes
-            ['--sort', 'name'] +
+            ['--preserve-order'] +
+            # not available in older versions of tar
+            # ['--sort', 'name'] +
             ['-C', str(project_path)] +
             include_dirs
         )
