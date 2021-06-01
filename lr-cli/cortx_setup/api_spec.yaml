@@ -38,6 +38,8 @@ node:
       NodePrepareTime
     network:
       NodePrepareNetwork
+    storage:
+      NodePrepareStorage
 
 cluster:
   create:
