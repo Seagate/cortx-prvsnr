@@ -15,11 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-#Start zoopkeper:
-#  cmd.run:
-#    - name: ./bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
-#    - cwd: /opt/kafka
-#    - unless: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+
+Install nc:
+  pkg.installed:
+    - name: nmap-ncat
 
 Start zoopkeper:
   service.running:
@@ -38,18 +37,31 @@ Ensure kafka-zookeeper has started:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 10
-        interval: 2
+        attempts: 12
+        interval: 10
     - require:
       - Start zoopkeper
 
-# Start kafka:
-#  cmd.run:
-#    - name: ./bin/kafka-server-start.sh -daemon config/server.properties
-#    - cwd: /opt/kafka
-#    - unless: test 1 -le $(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1}' | wc -l)
-#    - require:
-#       - Ensure kafka-zookeeper has started
+{% for node in pillar['cluster'].keys() %}
+{% if "srvnode-" in node %}
+Ensure kafka-zookeeper is responsive for {{ node }}:
+  cmd.run:
+    - name: echo ruok|nc {{ node }} 2181|grep imok
+    - retry:
+        # Ref: https://docs.saltproject.io/en/3002/ref/states/requisites.html#retrying-states
+        # Until condition here is quite tricky, esp. in case of cmd.run.
+        # If you wonder why this case doesn't result in infinite loop before timing out, read further.
+        # Command test 0 -eq ${var} results in non-zero code for inequality.
+        # Non-zero value is True for Python. So in "Until", check results true; although shell interprets as false.
+        # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
+        # Note this when interpreting the next line.
+        until: True
+        attempts: 12
+        interval: 10
+    - require:
+      - Start zoopkeper
+{% endif %}
+{% endfor %}
 
 Start kafka:
   service.running:
@@ -70,7 +82,7 @@ Ensure kafka has started:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 10
-        interval: 2
+        attempts: 12
+        interval: 10
     - require:
       - Start kafka
