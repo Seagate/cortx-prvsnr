@@ -122,7 +122,7 @@ class NodePrepareStorage(Command):
         _enc_user = kwargs.get('user')
         _enc_passwd = kwargs.get('password')
 
- 
+
         try:
             self.validate_credentials(_node_id, _enc_num, _enc_user, _enc_passwd)
 
