@@ -206,12 +206,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         """
         logger.debug("Start Python index validation")
 
-        pkgs = [p for p in index_path.iterdir() if p.is_dir()]
-        if not pkgs:
+        pkgs = (p for p in index_path.iterdir() if p.is_dir())
+        try:
+            test_package_name = next(pkgs)
+        except StopIteration:
             logger.debug("Python index is empty, skip the validation")
             return
 
-        test_package_name = pkgs[0]
         with tempfile.TemporaryDirectory() as tmp_dir:
             cmd = (f"pip3 download {test_package_name} --dest={tmp_dir}/ "
                    f"--index-url file://{index_path.resolve()}")
@@ -560,7 +561,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         python_index_path = iso_mount_dir / CORTX_PYTHON_ISO_DIR
         if (
             python_index_path.exists()
-            and [p for p in python_index_path.iterdir() if p.is_dir()]
+            and any(p for p in python_index_path.iterdir() if p.is_dir())
         ):
             config = ConfigParser()
             config.read(PIP_CONFIG_FILE)

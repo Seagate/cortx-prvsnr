@@ -110,5 +110,6 @@ class SWUpgradeNode(CommandParserFillerMixin):
 
         except Exception as update_exc:
             # TODO TEST
+            # Note. rollback is not considered for R2
             logger.exception('SW Upgrade Node failed')
             raise SWUpdateError(update_exc) from update_exc

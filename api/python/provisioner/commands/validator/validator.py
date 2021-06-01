@@ -490,7 +490,7 @@ class ReleaseInfoContentScheme(ReleaseInfoCommonContentScheme):
 
 
 @attr.s(auto_attribs=True)
-class ThirdPartyReleaseInfoContentScheme(FileContentScheme):
+class ThirdPartyReleaseInfoContentScheme(ReleaseInfoCommonContentScheme):
 
     """
     RELEASE.INFO file content scheme.
