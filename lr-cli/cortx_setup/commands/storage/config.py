@@ -92,7 +92,7 @@ class StorageEnclosureConfig(Command):
     def run(self, **kwargs):
         node_id = local_minion_id()
         enc_num = "enclosure-" + ((node_id).split('-'))[1]
-        enc_id = Commons().get_enc_id(node_id)
+        enc_id = Commons().get_enc_id(node_id, False)
 
         name = kwargs.get('name')
         storage_type = kwargs.get('type')

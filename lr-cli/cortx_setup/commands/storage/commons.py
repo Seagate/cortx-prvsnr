@@ -38,12 +38,12 @@ class Commons(Command):
             raise exc
         return _enc_id
 
-    def get_enc_id(self, targets=None):
+    def get_enc_id(self, targets=None, force=False):
 
         self.logger.info("Getting enclosure ID")
         _enc_id_file = Path(self._enclosure_id_file_path)
 
-        if _enc_id_file.exists():
+        if _enc_id_file.exists() and force is False:
             self.logger.info(
             f"Enclosure ID is already generated at {self._enclosure_id_file_path}"
             )

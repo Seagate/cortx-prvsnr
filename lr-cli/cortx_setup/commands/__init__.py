@@ -55,6 +55,7 @@ __all__ = [
     'NodePrepareFirewall',
     'NodePrepareNetwork',
     'NodePrepareTime',
+    'NodePrepareStorage',
     'ResourceShow',
     'ResourceDiscover',
     'SecurityConfig',
