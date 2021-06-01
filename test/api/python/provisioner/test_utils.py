@@ -18,6 +18,7 @@ import pytest
 import subprocess
 import yaml
 
+from provisioner import config
 from provisioner import errors
 from provisioner import utils
 
@@ -174,7 +175,11 @@ def test_repo_tgz_happy_path_no_ver(mocker, tmpdir_function):
 
     run_m.assert_called_once_with(
         ['tar', '-czf', str(dest_dir)]
-        + ['--exclude-vcs', '--exclude-vcs-ignores', '--sort', 'name']
+        + [
+            '--exclude-vcs',
+            '--exclude-from', str(config.PROJECT_PATH / '.gitignore'),
+            '--sort', 'name'
+        ]
         + ['-C', project_path]
         + include_dirs
     )
