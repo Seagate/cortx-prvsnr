@@ -178,7 +178,8 @@ def test_repo_tgz_happy_path_no_ver(mocker, tmpdir_function):
         + [
             '--exclude-vcs',
             '--exclude-from', str(config.PROJECT_PATH / '.gitignore'),
-            '--sort', 'name'
+            '--preserve-order',
+            #'--sort', 'name'
         ]
         + ['-C', project_path]
         + include_dirs
