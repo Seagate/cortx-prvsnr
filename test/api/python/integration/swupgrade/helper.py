@@ -15,13 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import pytest
-from typing import List
 from enum import Enum
-
-
-from test.conftest import HostMeta
-
 from test.testapi import defs
 
 
@@ -32,6 +26,7 @@ class RunT(Enum):
     REMOTE_API = 'remote_api'       # via API
     ONTARGET_CLI = 'ontarget_cli'   # logic is run on a target system via CLI
     # ONTARGET_API = 'ontarget_api' # via API
+
 
 ScaleFactorT = defs.ScaleFactorT
 

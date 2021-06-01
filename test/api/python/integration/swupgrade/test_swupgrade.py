@@ -23,6 +23,7 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.fixture(scope='module')
 def env_level():
     return 'upgrade-env-ready'
@@ -71,7 +72,6 @@ fi
 '''
 
 
-
 @pytest.fixture
 def mock_system_cmds(hosts, request):
     request.applymarker(pytest.mark.mock_cmds(
@@ -97,7 +97,7 @@ def test_swupgrade_r2_offline(
     #   - TODO HA setup.yaml includes pre/post flag on cluster level
 
     # FIXME hard-coded
-    upgrade_iso='/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_2.1.0.iso'
+    upgrade_iso = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_2.1.0.iso'  # noqa: E501
     run_host = setup_hosts[0]
 
     # logic (HAPPY PATH):
@@ -112,7 +112,8 @@ def test_swupgrade_r2_offline(
     #    - after checks:
     #       - CLUSTER level:
     #           - new Cortx version is running
-    #           - new provisioner API vesion was called to manage the logic with --noprepare flag
+    #           - new provisioner API vesion was called to manage the logic
+    #             with --noprepare flag
     #           - node level logic was applied for all the nodes concurrently
     #           - cluster level logic:
     #               - HA standby
@@ -126,7 +127,8 @@ def test_swupgrade_r2_offline(
     #           - mini APIs: (TODO separate test for setup.yaml spec)
     #               - called on NODE level
     #               - HA: were called for CLUSTER level as well
-    #           - HA mini APIs were called for cluster level as well (separate test for setup.yaml spec)
+    #           - HA mini APIs were called for cluster level as well
+    #             (separate test for setup.yaml spec)
     #
     # XXX:
     #   - mini provisioner calls should be done on NODE level
@@ -134,4 +136,3 @@ def test_swupgrade_r2_offline(
     #   - pre-upgrade calls
     #   - migrate -> post-upgrade
     #
-    pass

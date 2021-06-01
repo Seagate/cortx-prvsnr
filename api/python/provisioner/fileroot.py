@@ -23,7 +23,7 @@ from .vendor import attr
 from .paths import FileRootPath, USER_SHARED_FILEROOT
 from .salt_api.base import SaltClientBase
 from .salt_api.runner import SaltRunnerClient
-from .salt_api.caller import SaltLocalCallerClient
+# from .salt_api.caller import SaltLocalCallerClient
 
 from . import utils
 
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class FileRoot:
     # TODO local client may require a separate parent class
     def_local_client_t: ClassVar[SaltClientBase] = (
-        #SaltLocalCallerClient
+        # SaltLocalCallerClient
         SaltRunnerClient
     )
 

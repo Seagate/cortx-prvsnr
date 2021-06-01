@@ -18,10 +18,10 @@
 
 set -eux
 
-cd ${PYTHON_PROJECT}
-pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply saltstack.repo
-pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply saltstack.salt-master.install
-pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply saltstack.salt-minion.install
+cd "${PYTHON_PROJECT}"
+pipenv run salt-run -c "${SALT_CONFIG}" salt.cmd state.apply saltstack.repo
+pipenv run salt-run -c "${SALT_CONFIG}" salt.cmd state.apply saltstack.salt-master.install
+pipenv run salt-run -c "${SALT_CONFIG}" salt.cmd state.apply saltstack.salt-minion.install
 
 which salt-master salt-minion
 salt-master --version

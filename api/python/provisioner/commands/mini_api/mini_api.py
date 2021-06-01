@@ -124,7 +124,8 @@ class SpecRenderer(CommandParserFillerMixin):
     def run(self):
         # EOS-20788 POC
         jinja_env = Environment(
-            loader=FileSystemLoader(str(self.spec.parent))
+            loader=FileSystemLoader(str(self.spec.parent)),
+            autoescape=True
         )
         template = jinja_env.get_template(self.spec.name)
         ctx = dict(flow=self.flow.value, level=self.level.value)
@@ -138,7 +139,7 @@ class SpecRenderer(CommandParserFillerMixin):
                     "multiple components on the top level:"
                     f" {list(config)}"
                 )
-            component, config = next(iter(config.items()))
+            _, config = next(iter(config.items()))
 
             if not isinstance(config, dict):
                 raise TypeError(

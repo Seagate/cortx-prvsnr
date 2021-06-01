@@ -105,7 +105,9 @@ class HostMeta:
         if self._tmpdir is None:
             tmpdir_function = self.request.getfixturevalue('tmpdir_function')
             # TODO non linux systems
-            self._tmpdir = Path('/tmp') / tmpdir_function.relative_to('/')  # noqa: E501, nosec
+            self._tmpdir = (
+                Path('/tmp') / tmpdir_function.relative_to('/')
+            )  # nosec
             self.host.check_output("mkdir -p {}".format(self._tmpdir))
         return self._tmpdir
 

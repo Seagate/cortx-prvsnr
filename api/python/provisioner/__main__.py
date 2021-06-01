@@ -36,15 +36,15 @@ from . import (
     serialize,
     _api,
     runner,
-    log
+    log,
+    cli_parser,
+    utils
 )
 from .commands import commands
 from .commands.setup_provisioner import (
     SetupCmdBase, RunArgsSetupProvisionerGeneric
 )
 from .base import prvsnr_config
-
-from . import cli_parser, utils, __version__
 
 logger = logging.getLogger(__name__)
 

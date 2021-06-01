@@ -16,18 +16,6 @@
 #
 
 import pytest
-from pathlib import Path
-from collections import defaultdict
-from copy import deepcopy
-from typing import Optional, Union
-
-from provisioner.vendor import attr
-from provisioner import inputs, utils
-
-from . helper import (
-    RunT, ScaleFactorT, SourceT,
-)
-
 
 
 @pytest.fixture

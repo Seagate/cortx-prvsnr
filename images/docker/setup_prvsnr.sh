@@ -18,12 +18,12 @@
 
 set -eux
 
-cd ${PYTHON_PROJECT}
-pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply provisioner.core.install.local
+cd "${PYTHON_PROJECT}"
+pipenv run salt-run -c "${SALT_CONFIG}" salt.cmd state.apply provisioner.core.install.local
 ls -la /opt/seagate/cortx/provisioner
 ls -la /opt/seagate/cortx/provisioner/srv_ext/repos
 
-pipenv run salt-run -c ${SALT_CONFIG} salt.cmd state.apply provisioner.api.install \
+pipenv run salt-run -c "${SALT_CONFIG}" salt.cmd state.apply provisioner.api.install \
     pillar='{"inline": {"provisioner": {"api": {"distr": "pip"}}}}'
 
 provisioner --version

@@ -59,7 +59,7 @@ __all__ = [
     'root_passwd',
     'hosts_num',
     'hosts_num_module',
-    'setup_hosts'
+    'setup_hosts',
     'setup_hosts_specs',
     'ssh_profile',
     'ensure_ready',
