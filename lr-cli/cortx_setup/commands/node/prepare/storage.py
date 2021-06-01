@@ -46,7 +46,7 @@ class NodePrepareStorage(Command):
     ):
 
         self.logger.debug(
-            f"Validating the provided credentials [{user}/{passwd}]"
+            f"Validating the provided credentials ({user}/{passwd})"
         )
         _ctrl_user = get_pillar_data(
             f'storage/{enc_num}/controller/user'
@@ -82,13 +82,13 @@ class NodePrepareStorage(Command):
 
         if user != _ctrl_user:
             self.logger.warning(
-                f"Username provided [{user} does not match"
-                " with the user name in configuration]"
+                f"Username provided {user} does not match"
+                " with the user name in configuration"
             )
             _user_check = False
         else:
             self.logger.debug(
-                f"Username provide [{user} matches with"
+                f"Username provide {user} matches with"
                 " the user name in configuration"
             )
 
