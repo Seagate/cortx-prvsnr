@@ -169,7 +169,7 @@ class SWUpgrade(CommandParserFillerMixin):
             logger.info(f"Upgrading nodes: '{group}'")
             # XXX ??? provisioner (orchestrator) have been already
             #         upgraded, do we need to upgrade them here?
-            SWUpgradeNode().run(targets=','.join(group))
+            SWUpgradeNode().run(targets=group)
 
         logger.info("Fire post-upgrade event (cluster level)")
         # FIXME post-upgrade calls

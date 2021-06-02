@@ -53,6 +53,9 @@ commons:
       uds-pyi: latest
       cortx-cli: latest
   sw_data:
+    provisioner:
+      base_sls: components.provisioner
+      mini: /opt/seagate/cortx/provisioner/conf/setup.yaml
     motr:
       base_sls: components.motr
       mini: /opt/seagate/cortx/motr/conf/setup.yaml

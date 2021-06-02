@@ -185,7 +185,7 @@ class SaltRunnerResult:
 class SaltClientArgsBase(SaltArgsMixin):
     _prvsnr_type_ = True
 
-    targets: str = attr.ib(converter=str)
+    targets: Union[str, list, tuple]
     fun: str = attr.ib(converter=str)
     fun_args: Tuple = attr.ib(
         converter=lambda v: () if v is None else v, default=None
@@ -195,6 +195,11 @@ class SaltClientArgsBase(SaltArgsMixin):
     )
     kw: Dict = attr.Factory(dict)
     secure: bool = False
+
+    def __attrs_post_init__(self):
+        if isinstance(self.targets, (list, tuple)):
+            self.targets = '|'.join(self.targets)
+            self.kw['tgt_type'] = 'pcre'
 
     @property
     def args(self):
