@@ -122,7 +122,7 @@ class SWUpgrade(CommandParserFillerMixin):
         # here we can use python API (SWUpgradeNode) since
         # old provisioner version would be called anyway
         logger.info('Upgrading Provisioner on all the nodes')
-        SWUpgradeNode().run(sw=['provisioner'])
+        SWUpgradeNode().run(sw=['provisioner'], no_events=True)
 
         # support for a separate orchestrator module
         # todo: can be a python API call if no changes for provisioner

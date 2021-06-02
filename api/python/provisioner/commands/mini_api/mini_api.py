@@ -62,7 +62,7 @@ class SpecRenderer(CommandParserFillerMixin):
         if defaults is None:
             defaults = {}
 
-        # FIXME hard-codede
+        # FIXME hard-coded
         for field in ('cmd', 'args', 'when'):
             res[field] = spec.get(field, defaults.get(field))
 

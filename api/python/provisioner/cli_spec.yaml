@@ -49,6 +49,8 @@ upgrade:
     sw:
       help: list of sw to be updated, if not specified - detected automatically
       nargs: +
+      metavar: SW
+    no_events: do not fire node level events or not
 consul:
     server: This flag is used to control if an agent is in server or client mode
     bind_addr:
