@@ -23,6 +23,7 @@ from .validator import (FileValidator,
                         ContentFileValidator,
                         ReleaseInfoContentScheme,
                         ReleaseInfoValidator,
+                        ThirdPartyReleaseInfoValidator,
                         AuthenticityValidator
                         )
 
@@ -41,6 +42,7 @@ __all__ = [
     "ContentFileValidator",
     "ReleaseInfoContentScheme",
     "ReleaseInfoValidator",
+    "ThirdPartyReleaseInfoValidator",
     "NetworkParamsValidator",
     "NodeParamsValidator",
     "StorageEnclosureParamsValidator",

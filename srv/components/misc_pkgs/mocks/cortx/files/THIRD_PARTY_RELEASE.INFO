@@ -1,0 +1,8 @@
+---
+NAME: CORTX
+VERSION: {{ VERSION }}
+BUILD: {{ BUILD }}
+OS: "CentOS Linux release 7.8.2003 (Core)"
+DATETIME: {{ DATE }}
+THIRD_PARTY_VERSION: "centos-7.8.2003-{{ VERSION }}-{{ BUILD }}"
+THIRD_PARTY_COMPONENTS: {}

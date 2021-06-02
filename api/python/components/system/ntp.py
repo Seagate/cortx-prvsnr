@@ -67,7 +67,7 @@ class _NTP(object):
                         raise Exception("ERROR: NTP restart failed, " + task['comment'])
 
         return True
-        
+
 
     def execute(self, time_dict: dict):
         # Stages

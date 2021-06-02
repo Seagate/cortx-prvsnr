@@ -39,6 +39,7 @@ salt-minion:
 
 # inline pillar
 inline:
+  fileroot_prefix:      # fileroot prefix if saltstack formula is not on the root level
   salt-master:
     onchanges: restart  # or null
     updated_keys:

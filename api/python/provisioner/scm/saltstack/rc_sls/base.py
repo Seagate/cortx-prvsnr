@@ -151,7 +151,9 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     def fileroot(self):
         return FileRoot(
             self.client.fileroot_path,
-            local_runner_client=SaltRunnerClient(c_path=self.client.c_path)
+            local_client=FileRoot.def_local_client_t(
+                c_path=self.client.c_path
+            )
         )
 
     def fileroot_read(

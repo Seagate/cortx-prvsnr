@@ -159,6 +159,7 @@ def test_rpm_prvsnr_depends_on_salt_3001(mhost):
     assert 'salt-minion = 3002\n' in depends
 
 
+@pytest.mark.outdated
 @pytest.mark.isolated
 @pytest.mark.env_level('salt-installed')
 def test_rpm_prvsnr_installation(mhost, mlocalhost):
@@ -169,6 +170,8 @@ def test_rpm_prvsnr_installation(mhost, mlocalhost):
     #       - resolve list of files/dirs dynamically
 
     # check paths that were installed
+    # FIXME OUTDATED REPO_BUILD_DIRS is not more used,
+    #       tar uses .gitignore instead
     excluded = ['-name "{}"'.format(e) for e in h.REPO_BUILD_DIRS]
     expected = mlocalhost.check_output(
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"
@@ -240,11 +243,14 @@ def test_rpm_prvsnr_cli_is_buildable(rpm_prvsnr_cli):
     pass
 
 
+@pytest.mark.outdated
 @pytest.mark.isolated
 @pytest.mark.env_level('base')
 def test_rpm_prvsnr_cli_installation(mhost, mlocalhost):
     mhost.check_output('yum install -y {}'.format(mhost.rpm_prvsnr_cli))
 
+    # FIXME OUTDATED REPO_BUILD_DIRS is not more used,
+    #       tar uses .gitignore instead
     excluded_dirs = ['-name "{}"'.format(d) for d in h.REPO_BUILD_DIRS]
     expected = mlocalhost.check_output(
         "cd {} && find {} \\( {} \\) -prune -o -type f -printf '%p\n'"

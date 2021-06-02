@@ -41,6 +41,8 @@ get_setup_info:
   type: GetSetupInfo
 check:
   type: Check
+mini_api:
+  type: mini_api.mini_api.MiniAPI
 
 # config commands
 pillar_set:
@@ -130,6 +132,8 @@ sw_update:
   type: SWUpdate
 sw_upgrade:
   type: upgrade.SWUpgrade
+sw_upgrade_node:
+  type: upgrade.SWUpgradeNode
 get_swupgrade_info:
   type: upgrade.GetSWUpgradeInfo
 check_iso_authenticity:

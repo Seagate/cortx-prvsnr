@@ -16,7 +16,7 @@
 #
 
 import sys
-from typing import List, Dict, Type, Union
+from typing import List, Dict, Type, Union, Optional
 from copy import deepcopy
 import logging
 from datetime import datetime
@@ -54,6 +54,8 @@ from ..config import (
     SSL_CERTS_FILE,
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
     GroupChecks,
+    ReleaseInfo,
+    REPO_CANDIDATE_NAME
 )
 from ..pillar import (
     KeyPath,
@@ -363,6 +365,8 @@ class Get(CommandParserFillerMixin):
 #   - update pillar related to some param(s)
 #   - call related states (before and after)
 #   - rollback if something goes wrong
+
+
 @attr.s(auto_attribs=True)
 class Set(CommandParserFillerMixin):
     # TODO at least either pre or post should be defined
@@ -471,7 +475,7 @@ def _pre_yum_rollback(
 
 
 def _update_component(component, targets=ALL_MINIONS):
-    state_name = "components.{}.update".format(component)
+    state_name = f"{component}.upgrade"
     try:
         logger.info(
             "Updating {} on {}".format(component, targets)
@@ -743,8 +747,10 @@ class FWUpdate(CommandParserFillerMixin):
         source = Path(source).resolve()
 
         if not source.is_file():
-            logger.error(f"Provided input '{source}' is not a file. "
-                         "Please provide a valid file to proceed with FW Update.")
+            logger.error(
+                f"Provided input '{source}' is not a file. "
+                "Please provide a valid file to proceed with FW Update."
+            )
             raise ValueError(f"{source} is not a file")
 
         script = (
@@ -835,6 +841,21 @@ class GetReleaseVersion(CommandParserFillerMixin):
     _run_args_type = RunArgsBase
     _installed_rpms: List = attr.ib(init=False, default=None)
 
+    @classmethod
+    def cortx_version(
+        cls, release_metadata: Optional[Union[str, dict]] = None
+    ):
+        if release_metadata is None:
+            release_metadata = cls().run(targets=local_minion_id())
+
+        if isinstance(release_metadata, str):
+            release_metadata = json.loads(release_metadata)
+
+        return (
+            f"{release_metadata[ReleaseInfo.VERSION.value]}-"
+            f"{release_metadata[ReleaseInfo.BUILD.value]}"
+        )
+
     @property
     def installed_rpms(self) -> List:
         if self._installed_rpms is None:
@@ -853,19 +874,21 @@ class GetReleaseVersion(CommandParserFillerMixin):
                 set(self.installed_rpms).issubset(release_rpms))
 
     def _get_release_info_path(self):
-        release_repo = ''
-        update_repo = PillarKey('release/update')
+        release_info = ''
+        update_repo = PillarKey('release/upgrade')
         pillar = PillarResolver(LOCAL_MINION).get([update_repo])
         pillar = next(iter(pillar.values()))
-        release = pillar[update_repo]
-        base_dir = Path(release['base_dir'])
-        repos = release['repos']
-        for release, source in reversed(list(repos.items())):
-            release_repo = base_dir / f'{release}/RELEASE.INFO'
-            if source == "iso":
-                release_rpms = self._get_rpms_from_release(release_repo)
+        upgrade_data = pillar[update_repo]
+        base_dir = Path(upgrade_data['base_dir'])
+        repos = upgrade_data['repos']
+        for version in reversed(list(repos)):
+            if version == REPO_CANDIDATE_NAME:
+                continue
+            release_info = base_dir / f'{version}/RELEASE.INFO'
+            if release_info.exists():
+                release_rpms = self._get_rpms_from_release(release_info)
                 if self._compare_rpms_info(release_rpms):
-                    return release_repo
+                    return release_info
 
     def run(self, targets):
         update_path = self._get_release_info_path()
@@ -1133,8 +1156,10 @@ class CreateUser(CommandParserFillerMixin):
     def run(self, uname, passwd, targets: str = ALL_MINIONS):
 
         if not SEAGATE_USER_HOME_DIR.exists():
-            raise ValueError("'/opt/seagate/users' directory missing. "
-                    "Ensure it is created before proceeding to create a new user.")
+            raise ValueError(
+                f"'{SEAGATE_USER_HOME_DIR}' directory missing. "
+                "Ensure it is created before proceeding to create a new user."
+            )
 
         logger.info(f"Creating new user: {uname}")
         home_dir = SEAGATE_USER_HOME_DIR / uname
@@ -1391,7 +1416,7 @@ for cmd_name, spec in api_spec.items():
         try:
             import_path = 'provisioner.commands'
             if cmd_module_path:
-                import_path = f'{import_path}.{cmd_module_path}.{cmd_name}'
+                import_path = f'{import_path}.{cmd_module_path}'
             else:
                 import_path = f'provisioner.commands.{cmd_name}'
 

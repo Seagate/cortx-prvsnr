@@ -843,6 +843,7 @@ def test_functions_install_provisioner(
 
 # TODO
 #  - remote case is better to test from within virtual env as well
+@pytest.mark.outdated
 @pytest.mark.isolated
 @pytest.mark.env_level('utils')
 @pytest.mark.parametrize("remote", [True, False], ids=['remote', 'local'])
@@ -878,6 +879,8 @@ def test_functions_install_provisioner_local(
 
     if version is None:
         # check that it installs the whole repository directory
+        # FIXME OUTDATED REPO_BUILD_DIRS is not more used,
+        #       tar uses .gitignore instead
         excluded_dirs = ['-name "{}"'.format(d) for d in h.REPO_BUILD_DIRS]
         expected = mlocalhost.check_output(
             "cd {} && find . \\( {} \\) -prune -o -type f -printf '%P\n'"

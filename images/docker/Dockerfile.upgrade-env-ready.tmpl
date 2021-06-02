@@ -1,0 +1,7 @@
+FROM {parent}
+
+ENV CORTX_UPGRADE_ISO=/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_2.1.0.iso
+
+COPY images/docker/setup_upgrade_env.sh /tmp/
+RUN bash /tmp/setup_upgrade_env.sh \
+    && rm -f /tmp/setup_upgrade_env.sh
