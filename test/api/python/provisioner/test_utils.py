@@ -184,7 +184,6 @@ def test_repo_tgz_happy_path_no_ver(mocker, tmpdir_function):
     run_m.assert_called_with(
         ['tar', '-czf', str(dest_dir)]
         + [
-            '--exclude-vcs',
             '--exclude-from', str(config.PROJECT_PATH / '.gitignore'),
             '--sort', 'name'
         ]
