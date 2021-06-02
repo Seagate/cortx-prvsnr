@@ -72,7 +72,7 @@ def iterate_dict(d, path: Path = None, filter_f=None) -> Iterator[DictLeaf]:
     for k in list(d):
         v = d[k]
         _path = (Path(str(k)) if path is None else (path / k))
-        if isinstance(v, dict):
+        if isinstance(v, dict) and v:
             yield from iterate_dict(v, _path, filter_f)
         else:
             leaf = DictLeaf(k, v, d, _path)
@@ -222,6 +222,27 @@ def load_yaml(path):
         raise BadPillarDataError(str(exc))
 
 
+def load_json_str(data: str):
+    """
+    JSON load helper. Loads JSON from a string
+
+    Parameters
+    ----------
+    data: str
+        JSON string to load
+
+    Returns
+    -------
+    Any:
+        returns JSON-deserialized object
+
+    Raises
+    ------
+    JSONDecodeError
+    """
+    return json.loads(data)
+
+
 def load_json(path: Union[Path, str]):
     """
     JSON load helper. Loads JSON from given `path`
@@ -240,7 +261,7 @@ def load_json(path: Union[Path, str]):
     ------
     JSONDecodeError
     """
-    return json.loads(Path(path).read_text())
+    return load_json_str(Path(path).read_text())
 
 
 # TODO streamed write
@@ -325,18 +346,12 @@ def run_subprocess_cmd(cmd, check=True, **kwargs):
         return res
 
 
-def get_repo_archive_exclusions():
-    exclude = []
-    for d in config.REPO_BUILD_DIRS + ['*.swp']:
-        exclude.extend(['--exclude', str(d)])
-    return exclude
-
-
 def repo_tgz(
     dest: Path,
     project_path: Optional[Path] = None,
-    version: str = None,
-    include_dirs: Optional[List] = None
+    version: str = config.REPO_VERSION_RAW,
+    include_dirs: Optional[List] = None,
+    exclude_dirs: Optional[List] = None
 ):
     if project_path is None:
         project_path = config.PROJECT_PATH
@@ -349,19 +364,30 @@ def repo_tgz(
 
     include_dirs = [str(d) for d in include_dirs]
 
-    # treat the version as git commit/branch/tag ...
-    if version:
+    exclude = []
+    for d in (exclude_dirs or []):
+        exclude.extend(['--exclude', str(d)])
+
+    if version != config.REPO_VERSION_RAW:
+        # treat the version as git commit/branch/tag ...
         cmd = (
             ['git', 'archive', '--format=tar.gz', version, '-o', str(dest)] +
             include_dirs
         )
-    # do raw archive with uncommitted/untracked changes otherwise
     else:
-        exclude = get_repo_archive_exclusions()
-
+        # do raw archive with uncommitted/untracked changes otherwise
         cmd = (
             ['tar', '-czf', str(dest)] +
+            ['--exclude-vcs'] +
+            ['--exclude-from', str(config.PROJECT_PATH / '.gitignore')] +
+            # not available in older versions of tar also doesn't seem to work
+            # in case multple targets e.g. not just '.'
+            # ['--exclude-vcs-ignores'] +
             exclude +
+            # that makes tar to produce the same hash if no changes
+            ['--preserve-order'] +
+            # not available in older versions of tar
+            # ['--sort', 'name'] +
             ['-C', str(project_path)] +
             include_dirs
         )
@@ -555,3 +581,10 @@ def calc_hash(
         _calc_io(data)
 
     return hash_method
+
+
+def make_salt_logs_quiet():
+    # TODO IMPROVE EOS-8473 better configuration way
+    salt_logger = logging.getLogger('salt.fileclient')
+    if salt_logger:
+        salt_logger.setLevel(logging.WARNING)

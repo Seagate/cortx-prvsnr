@@ -20,7 +20,7 @@ upgrade:
     - motr
     - s3server
     - hare
-    - ha.cortx-ha
+    - ha
     - sspl
     - uds
     - csm

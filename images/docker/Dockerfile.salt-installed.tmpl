@@ -1,7 +1,6 @@
 FROM {parent}
 
-# TODO populate .dockerignore
-COPY cli/src/common_utils/functions.sh /tmp/
-RUN bash -xec ". /tmp/functions.sh; install_salt '' '' '' true" \
-    && rm -f /tmp/functions.sh \
-    && rm -rf /var/cache/yum
+COPY api/python/provisioner/srv/salt/resources/3rd_party/saltstack ${{SALT_FILEROOT}}/saltstack
+COPY images/docker/setup_salt.sh /tmp/
+RUN bash /tmp/setup_salt.sh \
+    && rm -f /tmp/setup_salt.sh

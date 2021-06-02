@@ -348,7 +348,8 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     as 'cortx_version' and yum txn ids for each node
     upgrade:
       sw_list:
-        - motr
+        - motr:
+          sls: <base_sls_path>
         - s3server
         ...
       yum_snapshots:
@@ -440,6 +441,30 @@ def check_iso_authenticity(iso_path: str, sig_file: str,
     return _api_call('check_iso_authenticity', iso_path=iso_path,
                      sig_file=sig_file, gpg_pub_key=gpg_pub_key,
                      import_pub_key=import_pub_key, nowait=nowait)
+
+
+def get_iso_version(nowait=False):
+    """
+    Return latest available ISO version.
+
+    Parameters
+    ----------
+    nowait: bool
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    Union[str, None]:
+            Return string with SW upgrade ISO version if it is higher then
+            release version. Return None if SW upgrade ISO version is equal
+            to release version. Raise exception otherwise
+
+    Raises
+    ------
+    ProvisionerError:
+        If release version is greater than the upgrade version
+    """
+    return _api_call('get_iso_version', nowait=nowait)
 
 
 def fw_update(source, dry_run=False, nowait=False):

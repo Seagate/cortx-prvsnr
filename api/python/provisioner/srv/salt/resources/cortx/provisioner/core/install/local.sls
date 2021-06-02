@@ -19,12 +19,12 @@
 {% set install_dir = salt['pillar.get']('provisioner:install_dir', '/opt/seagate/cortx/provisioner') %}
 
 
-# TODO FIXME salt always extracts despite of source_hash & source_hash_update
 # TODO archive.extracted supports also https:// and local to a minion sources
 provisioner_archive_extracted:
   archive.extracted:
     - name: {{ install_dir.rstrip('/') }}
     - source: salt://{{ fileroot_prefix }}provisioner/core/files/repo.tgz
+    # TODO FIXME salt always extracts despite of source_hash & source_hash_update
     - source_hash: {{ salt['pillar.get']('provisioner:repo:tgz:hash') }}
     - source_hash_update: True
     - keep_source: True
@@ -39,3 +39,13 @@ cluster_sls_prepared:
     - name: {{ install_dir }}/pillar/components/cluster.sls
     - source: {{ install_dir }}/pillar/samples/dualnode.cluster.sls
     - keep_source: True
+
+
+srv_ext_fileroot_exists:
+  file.directory:
+    - name: /opt/seagate/cortx/provisioner/srv_ext
+
+repos_formula_linked:
+  file.symlink:
+    - name: {{ install_dir }}/srv_ext/repos
+    - target: {{ install_dir }}/api/python/provisioner/srv/salt/repos

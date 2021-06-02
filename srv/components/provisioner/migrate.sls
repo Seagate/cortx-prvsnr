@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - .install
-  - .config
+Stage - Migrate setup for Provisioner:
+  module.run:
+    - sync.migrate_files:
+      - component: provisioner

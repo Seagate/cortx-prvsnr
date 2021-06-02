@@ -29,7 +29,7 @@ import testinfra
 
 import logging
 
-from provisioner import inputs
+from provisioner import inputs, utils
 import test.helper as h
 from .helper import (
     fixture_builder,
@@ -80,8 +80,27 @@ ENV_LEVELS_HIERARCHY = {
             'docker': 'centos:8.2.2004'
         }
     },
+
+    # utility levels
+    'rpmbuild': 'base',
+    'fpm': 'base',
+    'utils': 'base',
+    'setup': 'utils',
+    'network-manager-installed': 'base',
+
+    'python-salt-installed': 'setup',
+    'salt-installed': 'python-salt-installed',
+    'prvsnr-installed': {
+        'parent': 'salt-installed',
+        'pre_scripts': [
+            # FIXME
+            "bash images/docker/pre_prvsnr_installed.sh"
+        ]
+    },
+    'cortx-mocks-deployed': 'prvsnr-installed',
+    'upgrade-env-ready': 'cortx-mocks-deployed',
+
     'repos-installed': 'base',
-    'salt-installed': 'repos-installed',
     'rsyslog-installed': 'salt-installed',
     'singlenode-prvsnr-installed': {
         'parent': 'salt-installed',
@@ -102,13 +121,6 @@ ENV_LEVELS_HIERARCHY = {
     },
     'singlenode-cortx-deployed': 'singlenode-deploy-ready',
     'singlenode-cortx-ready': 'singlenode-cortx-deployed',
-
-    # utility levels
-    'rpmbuild': 'base',
-    'fpm': 'base',
-    'utils': 'base',
-    'setup': 'utils',
-    'network-manager-installed': 'base',
 
     # bvt
     'singlenode-bvt-ready': {
@@ -205,6 +217,7 @@ def pytest_configure(config):
         "markers", "env_provider(string): mark test to be run "
                    "in the environment provided by the provider"
     )
+    # FIXME doesn't work now
     config.addinivalue_line(
         "markers", "env_level(string): mark test to be run "
                    "in the specific environment level"
@@ -540,12 +553,7 @@ def vbox_seed_machine(
 @pytest.fixture(scope='session')
 def repo_tgz(project_path, localhost, tmpdir_session):
     res = tmpdir_session / 'repo.tgz'
-    excluded_dirs = ['--exclude="{}"'.format(d) for d in h.REPO_BUILD_DIRS]
-    localhost.check_output(
-        'tar -czf "{}" {} -C "{}" .'
-        .format(res, ' '.join(excluded_dirs), project_path)
-    )
-    return res
+    return utils.repo_tgz(res, project_path=project_path)
 
 
 def _rpmbuild_mhost(
@@ -719,11 +727,13 @@ def build_docker_image_fixture(os_name, env_level):  # noqa: C901 FIXME
         env_spec = ENV_LEVELS_HIERARCHY[env_level]
         docker_spec = {}
         build_type = 'dockerfile'
+        pre_scripts = []
 
         if env_level == 'base':
             parent_env_level = None
         elif type(env_spec) is dict:
             parent_env_level = env_spec['parent']
+            pre_scripts = env_spec.get('pre_scripts', [])
             docker_spec = env_spec.get('docker', {})
             build_type = docker_spec.get('build_type', 'dockerfile')
         else:
@@ -771,6 +781,15 @@ def build_docker_image_fixture(os_name, env_level):  # noqa: C901 FIXME
             "Building docker env '{}' for base env '{}'"
             .format(env_level, os_name)
         )
+        if pre_scripts:
+            logger.info(
+                "Running pre-scripts of docker env '{}' for base env '{}'"
+                .format(env_level, os_name)
+            )
+            for script in pre_scripts:
+                logger.debug(f"Running script '{script}'")
+                utils.run_subprocess_cmd(script.split())
+
         if build_type == 'dockerfile':
             df_name = "Dockerfile.{}".format(env_level)
             dockerfile = project_path / 'images' / 'docker' / df_name
@@ -1153,32 +1172,35 @@ def hosts_meta():
 
 
 @pytest.fixture
-def mock_hosts(hosts, request, mlocalhost):
+def mock_hosts(setup_hosts, request, mlocalhost, tmpdir_function):
     mocked = defaultdict(list)
 
     marker = request.node.get_closest_marker('mock_cmds')
     if not marker:
         return
 
+    labels = {mhost.label: mhost for mhost in setup_hosts}
+
     try:
         for label, cmds in marker.args[0].items():
-            if label in hosts:
-                fixture_name = 'mhost' + label
-                mhost = request.getfixturevalue(fixture_name)
+            if label in labels:
+                mhost = labels[label]
                 assert mhost is not mlocalhost  # TODO more clever check
                 for cmd in cmds:
                     if type(cmd) is dict:
                         cmd, cmd_mock = next(iter(cmd.items()))
                     else:
                         cmd_mock = None
-                    mock_system_cmd(mhost.host, cmd, cmd_mock=cmd_mock)
-                    mocked[fixture_name].append(cmd)
+                    mock_system_cmd(
+                        mhost, cmd, cmd_mock=cmd_mock,
+                        tmpdir=tmpdir_function
+                    )
+                    mocked[mhost.label].append(cmd)
         yield
     finally:
-        for fixture_name, cmds in mocked.items():
-            mhost = request.getfixturevalue(fixture_name)
+        for label, cmds in mocked.items():
             for cmd in cmds:
-                restore_system_cmd(mhost.host, cmd)
+                restore_system_cmd(labels[label], cmd)
 
 
 @pytest.fixture

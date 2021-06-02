@@ -318,17 +318,25 @@ class SaltMinionConfigSLS(SaltMinionSLS):
             # (locally) prepare hostname info
             hostnamectl_status = _pillar.get(
                 'grains', {}
-            ).get('hostnamectl_status')
+            ).get('hostnamectl_status', MISSED)
 
-            if self.state.rediscover or not hostnamectl_status:
-                res = self.client.cmd_run(
-                    "hostnamectl status  | sed 's/^ *//g'",
-                    fun_kwargs=dict(python_shell=True),
-                    targets=node
-                )
-                # Note. output here is similar to yaml format
-                # ensure that it is yaml parseable
-                hostnamectl_status = utils.load_yaml_str(res[node])
+            # DEPRECATION looks like hostnamectl data is no more needed
+            if False:
+                # Note. in docker 'hostnamectl status' may return just nothing
+                #       so check only MISSED case to avoid re-run
+                #       of the command each time
+                if self.state.rediscover or hostnamectl_status is MISSED:
+                    res = self.client.cmd_run(
+                        "hostnamectl status  | sed 's/^ *//g'",
+                        fun_kwargs=dict(python_shell=True),
+                        targets=node
+                    )
+                    # Note. output here is similar to yaml format
+                    # ensure that it is yaml parseable
+                    hostnamectl_status = utils.load_yaml_str(res[node])
+
+            if hostnamectl_status in (None, MISSED):
+                hostnamectl_status = {}
 
             # prepare list of masters
             config_master = UNCHANGED

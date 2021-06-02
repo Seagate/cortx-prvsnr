@@ -133,14 +133,6 @@ def cli_log_args(
 
 
 @pytest.fixture
-def setup_hosts_specs(setup_hosts):
-    return [
-        f"srvnode-{i + 1}:{mhost.ssh_host}"
-        for i, mhost in enumerate(setup_hosts)
-    ]
-
-
-@pytest.fixture
 def cli_args(
     source, ha, cli_log_args, setup_hosts_specs, run_host, custom_opts
 ):

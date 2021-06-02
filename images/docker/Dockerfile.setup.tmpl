@@ -1,5 +1,28 @@
 FROM {parent}
 
+
 COPY images/docker/setup_setup.sh /tmp/
 RUN bash /tmp/setup_setup.sh \
     && rm -f /tmp/setup_setup.sh
+
+COPY images/docker/setup_rpmbuild.sh /tmp/
+RUN bash /tmp/setup_rpmbuild.sh \
+    && rm -f /tmp/setup_rpmbuild.sh
+
+ENV LC_ALL=en_US.utf8
+ENV LANG=en_US.utf8
+COPY images/docker/setup_pipenv.sh /tmp/
+RUN bash /tmp/setup_pipenv.sh \
+    && rm -f /tmp/setup_pipenv.sh
+
+ARG PYTHON_PROJECT
+ENV PYTHON_PROJECT=${{PYTHON_PROJECT:-/tmp/project}}
+
+RUN mkdir -p ${{PYTHON_PROJECT}} \
+    && cd ${{PYTHON_PROJECT}} \
+    && pipenv --three \
+    && pipenv --venv \
+    && pipenv --where \
+    && pipenv --py
+
+WORKDIR ${{PYTHON_PROJECT}}

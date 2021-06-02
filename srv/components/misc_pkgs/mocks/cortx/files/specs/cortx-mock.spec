@@ -1,6 +1,6 @@
 Name:           %{__NAME__}
 Version:        %{__VERSION__}
-Release:        1
+Release:        %{__BUILD__}
 Summary:        %{name} Mock RPM
 
 Group:          Testing environment

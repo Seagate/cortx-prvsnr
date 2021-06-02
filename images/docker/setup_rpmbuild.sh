@@ -18,6 +18,8 @@
 
 set -eux
 
+NO_YUM_CLEAN="${NO_YUM_CLEAN:-}"
+
 yum -y install  \
     git         \
     python36    \
@@ -30,3 +32,7 @@ yum -y install  \
 # Note. keep var cache here to speed up buildrpm.sh
 # (yum-builddep will update the cache if missed each time)
 # rm -rf /var/cache/yum
+
+if [[ -z "$NO_YUM_CLEAN" ]]; then
+    rm -rf /var/cache/yum
+fi

@@ -367,21 +367,7 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
     }
 
 
-# TODO IMPROVE EOS-8473 better name
-REPO_BUILD_DIRS = [
-    '.build',
-    'build',
-    '.boxes',
-    '.eggs',
-    '.vdisks',
-    '.vagrant',
-    '.pytest_cache',
-    f'{PROFILE_DIR_NAME}',
-    '__pycache__',
-    'packer_cache',
-    'tmp',
-    '*.iso'
-]
+REPO_VERSION_RAW = '__raw__'  # to not interfere with any reasonable git refs
 
 
 LOCALHOST_IP = '127.0.0.1'
@@ -450,6 +436,7 @@ class Checks(Enum):
     STORAGE_HBA = "storage_hba"
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
+    UPGRADE_ISO_VERSION = "upgrade_iso_version"
 
 
 class GroupChecks(Enum):
@@ -461,6 +448,7 @@ class GroupChecks(Enum):
     DEPLOY_POST_CHECKS = "deploy_post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
+    SWUPGRADE_CHECKS = "swupgrade_checks"
     UNBOXING_PRE_CHECKS = "unboxing_pre_checks"
     UNBOXING_POST_CHECKS = "unboxing_post_checks"
 
@@ -485,6 +473,17 @@ SWUPDATE_CHECKS = {
     Checks.CLUSTER_STATUS.value,
     Checks.LOGS_ARE_GOOD.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value
+}
+
+SWUPGRADE_CHECKS = {
+    Checks.NETWORK.value,
+    Checks.CONNECTIVITY.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.COMMUNICABILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.UPGRADE_ISO_VERSION.value
 }
 
 REPLACENODE_CHECKS = {
@@ -623,3 +622,44 @@ class SWUpgradeInfoFields(Enum):
 
     VERSION = "version"
     VERSION_CONSTRAINT = "version_constraint"
+
+
+class CortxFlows(Enum):
+
+    """Cortx configuration flows."""
+
+    DEPLOY = "deploy"
+    UPGRADE = "upgrade"
+    UPGRADE_OFFLINE = "upgrade-offline"
+
+
+class MiniAPILevels(Enum):
+
+    """Mini Provisioner API Levels."""
+
+    CLUSTER = "cluster"
+    NODE = "node"
+
+
+class MiniAPIHooks(Enum):
+
+    """Mini Provisioner API Hooks."""
+
+    POST_INSTALL = 'post_install'
+    PREPARE = 'prepare'
+    CONFIG = 'config'
+    INIT = 'init'
+    TEST = 'test'
+    UPGRADE = 'upgrade'
+    RESET = 'reset'
+    CLEANUP = 'cleanup'
+    BACKUP = 'backup'
+    RESTORE = 'restore'
+    SUPPORT_BUNDLE = 'support_bundle'
+
+class MiniAPIEvents(Enum):
+
+    """Mini Provisioner API Events."""
+
+    PRE = 'pre'
+    POST = 'post'

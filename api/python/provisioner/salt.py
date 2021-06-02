@@ -185,7 +185,7 @@ class SaltRunnerResult:
 class SaltClientArgsBase(SaltArgsMixin):
     _prvsnr_type_ = True
 
-    targets: str = attr.ib(converter=str)
+    targets: Union[str, list, tuple]
     fun: str = attr.ib(converter=str)
     fun_args: Tuple = attr.ib(
         converter=lambda v: () if v is None else v, default=None
@@ -195,6 +195,11 @@ class SaltClientArgsBase(SaltArgsMixin):
     )
     kw: Dict = attr.Factory(dict)
     secure: bool = False
+
+    def __attrs_post_init__(self):
+        if isinstance(self.targets, (list, tuple)):
+            self.targets = '|'.join(self.targets)
+            self.kw['tgt_type'] = 'pcre'
 
     @property
     def args(self):
@@ -1164,6 +1169,15 @@ def sls_exists(state, targets=ALL_MINIONS, summary_only=True, **kwargs):
         return set(res.values()) == {True}
     else:
         return res
+
+# TODO FIXME test
+def ping(targets=ALL_MINIONS, **kwargs):
+    return function_run('test.ping', targets=targets, **kwargs)
+
+
+# TODO FIXME test
+def list_minions(targets=ALL_MINIONS):
+    return list(ping(targets))
 
 
 # TODO TEST

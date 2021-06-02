@@ -42,6 +42,13 @@ upgrade:
   iteration: upgrade round number
   old_version: old version number
   new_version: new version number
+  orchestrator:
+    noprepare: skip preparation phase
+    offline: perform offline upgrade
+  provisioner:
+    sw:
+      help: list of sw to be updated, if not specified - detected automatically
+      nargs: +
 consul:
     server: This flag is used to control if an agent is in server or client mode
     bind_addr:
@@ -117,3 +124,14 @@ setup:
   ha: turn on high availability mode
   salt_master: domain name or IP of the salt-master
   vendored: The flag to use setup logic from a vendor
+mini_api:
+  spec:
+    help: mini provisioner spec file
+    metavar: path
+  flow:
+    help: CORTX configuration flow
+    choices: __py__:provisioner.config.CortxFlows
+  level:
+    help: mini provisioning level
+    choices: __py__:provisioner.config.MiniAPILevels
+  normalize: normalize spec

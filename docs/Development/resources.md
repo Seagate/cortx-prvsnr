@@ -1,4 +1,4 @@
-# Provisioner Resource Base Approach of System Configuration
+# Provisioner Resource Based Approach of System Configuration
 
 The current document explains modular based approach when each SW/HW component
 is a "resource" with a set possible states and configuration parameters
@@ -57,8 +57,6 @@ TBD component/classes diagram
 
 ### Base Abstractions
 
-The changes include implementation of the base abstractions
-
 *   `ResourceBase` - base class for a resource
 *   `ResourceParams` - base class for resource parameters
 *   `ResourceState` - base class for a resource state
@@ -75,7 +73,7 @@ The following resource are available:
 *   `CortxRepos` - Cortx deployment repositories
 *   group of SaltStack resources:
     *   `SaltMinion`
-    *   `SaltMater`
+    *   `SaltMaster`
     *   `SaltStack` - common logic
     *   `SaltCluster` - implements logic of Salt cluster configuration
         over salt-minions and salt-masters

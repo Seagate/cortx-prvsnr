@@ -1,0 +1,10 @@
+FROM {parent}
+
+COPY api/python/provisioner/srv/salt/resources/cortx/provisioner ${{SALT_FILEROOT}}/provisioner
+
+COPY .build/repo.tgz ${{SALT_FILEROOT}}/provisioner/core/files/repo.tgz
+
+COPY images/docker/setup_prvsnr.sh /tmp/
+RUN bash /tmp/setup_prvsnr.sh \
+    && rm -f /tmp/setup_prvsnr.sh \
+    && rm -f ${{SALT_FILEROOT}}/provisioner/core/files/repo.tgz

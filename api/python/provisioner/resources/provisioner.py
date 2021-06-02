@@ -53,6 +53,7 @@ class ProvisionerParams(ResourceParams):
     )
     repo_version: str = attr_ib(
         cli_spec='provisioner/repo/version',
+        converter=(lambda v: v if v else config.REPO_VERSION_RAW),
         default=None
     )
 

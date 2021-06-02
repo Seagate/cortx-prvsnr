@@ -184,6 +184,7 @@ def r2_check_cluster_health_status():
     ProvisionerError
         raise this exception if the number of tries was exceeded
     """
+    logger.debug("Checking the CORTX cluster health")
     ensure_cluster_is_healthy()
 
 
@@ -205,6 +206,7 @@ def r2_cluster_stop(tries: int = 30, wait: float = 10):
         raise this exception if the number of tries was exceeded
 
     """
+    logger.debug("Stopping the CORTX cluster")
     ensure_cluster_is_stopped(tries=tries, wait=wait)
 
 
@@ -226,4 +228,5 @@ def r2_cluster_start(tries: int = 30, wait: float = 10):
         raise this exception if the number of tries was exceeded
 
     """
+    logger.debug("Stopping the CORTX cluster health")
     ensure_cluster_is_started(tries=tries, wait=wait)

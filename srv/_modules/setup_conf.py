@@ -89,6 +89,7 @@ def conf_cmd(conf_file, conf_key):
                     cmd_as_list,
                     stdout=DEVNULL,
                     check=True
+                    # env=env EOS-20788 POC
                 )
             except CalledProcessError as cp_err:
                 logger.exception(f"Command {' '.join(cmd_as_list)} "

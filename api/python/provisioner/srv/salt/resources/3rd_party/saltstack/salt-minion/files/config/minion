@@ -17,6 +17,7 @@ file_roots:
     - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
     - /opt/seagate/cortx/provisioner/srv_user
     - /opt/seagate/cortx/provisioner/srv
+    - /opt/seagate/cortx/provisioner/srv_ext  # file root for salt extensions
 fileserver_backend:
   - roots
 pillar_roots:

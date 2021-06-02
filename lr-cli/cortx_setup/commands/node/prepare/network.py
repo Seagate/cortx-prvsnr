@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Cortx Setup API for setting up the network
+# Cortx Setup API for Preparing network in field
 
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
@@ -43,15 +43,8 @@ class NodePrepareNetwork(Command):
             'optional': True,
             'default': None,
             'dest': 'network_type',
-            'choices': ['data', 'mgmt'],
-            'help': 'Network type to be configured'
-        },
-        'mode': {
-            'type': str,
-            'optional': True,
-            'default': 'public',
-            'choices': ['public', 'private'],
-            'help': 'Mode of network'
+            'choices': ['data', 'private', 'management'],
+            'help': 'Type of network to prepare'
         },
         'gateway': {
             'type': str,
@@ -76,8 +69,7 @@ class NodePrepareNetwork(Command):
             'nargs': '+',
             'optional': True,
             'default': "",
-            'help': 'List of interfaces for provided type '
-                    'e.g eth1 eth2'
+            'help': 'List of interfaces e.g eth1 eth2'
         }
     }
 
@@ -85,7 +77,6 @@ class NodePrepareNetwork(Command):
 
         """
         Set network parameters in confstore
-
         Parameters
         ----------
         network_type: str
@@ -101,24 +92,30 @@ class NodePrepareNetwork(Command):
         machine_id = get_machine_id(target)
         if value:
             self.logger.debug(
-                f"Updating {key} to {value} for {network_type} network in confstore"
+                f"Set {network_type} network {key} to {value}"
             )
+            if network_type == 'private':
+                network_type = 'data'
             Conf.set(
                 'node_prepare_index',
                 f'server_node>{machine_id}>network>{network_type}>{key}',
                 value
             )
 
-    def run(self, hostname=None, network_type=None, mode=None, gateway=None,
-        netmask=None, ip_address=None, interfaces=None
+    def run(self, hostname=None, network_type=None, gateway=None, netmask=None,
+        ip_address=None, interfaces=None
     ):
 
         """Network prepare execution method.
 
         Execution:
-        `cortx_setup node prepare network --type mgmt --ip_address "10.230.241.109" --interfaces eth0`
-        `cortx_setup node prepare network --type data --ip_address "192.168.61.94" --interfaces eth1 eth2`
-        `cortx_setup node prepare network --type data --ip_address "192.168.93.197" --interfaces eth3 eth4 --mode private`
+        `cortx_setup node prepare network --hostname <hostname>`
+        `cortx_setup node prepare network --type <type> --ip_address <ip_address>
+                --interfaces <iface1> --netmask <netmask> --gateway <gateway>`
+        `cortx_setup node prepare network --type data --ip_address <ip_address>
+                --interfaces <iface1 iface2> --netmask <netmask> --gateway <gateway>`
+        `cortx_setup node prepare network --type private --ip_address <ip_address>
+                --interfaces <iface1 iface2> --netmask <netmask> --gateway <gateway>`
 
         """
 
@@ -130,34 +127,39 @@ class NodePrepareNetwork(Command):
         )
 
         if hostname is not None:
-            self.logger.debug(f"Setting up hostname to {hostname}")
-            set_hostname(hostname=hostname, targets=node_id, local=True)
-            Conf.set(
-                'node_prepare_index',
-                f'server_node>{machine_id}>hostname',
-                hostname
-            )
+            self.logger.debug(f"Setting up system hostname to {hostname}")
+            try:
+                set_hostname(hostname=hostname, targets=node_id, local=True)
+                Conf.set(
+                    'node_prepare_index',
+                    f'server_node>{machine_id}>hostname',
+                    hostname
+                )
+            except Exception as ex:
+                raise ex
 
         if network_type is not None:
+
+            if interfaces is None:
+                raise Exception("Interfaces should be provided")
+
             config_method = 'Static' if ip_address else 'DHCP'
             self.logger.debug(
-                f"Configuring {network_type} network "
-                f"through {config_method} method"
+                f"Configuring {network_type} network using {config_method} method"
             )
 
-            if network_type == 'mgmt':
-                network_type = 'management'
-                iface_key = 'interfaces'
-                set_mgmt_network(
-                    mgmt_public_ip=ip_address,
-                    mgmt_netmask=netmask,
-                    mgmt_gateway=gateway,
-                    mgmt_interfaces=interfaces,
-                    local=True,
-                    targets=node_id
-                )
-            elif network_type == 'data':
-                if mode == 'public':
+            try:
+                if network_type == 'management':
+                    iface_key = 'interfaces'
+                    set_mgmt_network(
+                        mgmt_public_ip=ip_address,
+                        mgmt_netmask=netmask,
+                        mgmt_gateway=gateway,
+                        mgmt_interfaces=interfaces,
+                        local=True,
+                        targets=node_id
+                    )
+                elif network_type == 'data':
                     iface_key = 'public_interfaces'
                     set_public_data_network(
                         data_public_ip=ip_address,
@@ -167,7 +169,7 @@ class NodePrepareNetwork(Command):
                         local=True,
                         targets=node_id
                     )
-                elif mode == 'private':
+                elif network_type == 'private':
                     iface_key = 'private_interfaces'
                     set_private_data_network(
                         data_private_ip=ip_address,
@@ -175,30 +177,24 @@ class NodePrepareNetwork(Command):
                         local=True,
                         targets=node_id
                     )
+            except Exception as ex:
+                raise ex
+
             self.update_network_confstore(
-                network_type=network_type,
-                key=iface_key,
-                value=interfaces,
-                target=node_id
+                network_type=network_type, key=iface_key, value=interfaces, target=node_id
             )
             if config_method == 'Static':
                 self.update_network_confstore(
                     network_type=network_type,
-                    key='private_ip' if mode == 'private' else 'public_ip',
-                    value=ip_address,
-                    target=node_id
+                    key='private_ip' if network_type == 'private' else 'public_ip',
+                    value=ip_address, target=node_id
                 )
                 self.update_network_confstore(
-                    network_type=network_type,
-                    key='netmask',
-                    value=netmask,
-                    target=node_id
+                    network_type=network_type, key='netmask', value=netmask, target=node_id
                 )
                 self.update_network_confstore(
-                    network_type=network_type,
-                    key='gateway',
-                    value=gateway,
-                    target=node_id
+                    network_type=network_type, key='gateway', value=gateway, target=node_id
                 )
+
         Conf.save('node_prepare_index')
         self.logger.debug("Done")

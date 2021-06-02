@@ -15,10 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set fileroot_prefix = salt['pillar.get']('inline:fileroot_prefix', '') %}
+
 setup_yum_salt_repo:
   file.managed:
     - name: /etc/yum.repos.d/saltstack.repo
-    - source: salt://cortx_repos/files/etc/yum.repos.d/saltstack.repo
+    - source: salt://{{ fileroot_prefix }}/saltstack/files/saltstack.repo
     - keep_source: True
     - backup: minion
     - onchanges_in:
@@ -38,4 +40,4 @@ epel_release_installed:
 # (https://repo.saltstack.com/#rhel, instructions for minor releases centos7 py3)
 import_yum_salt_repo_key:
   cmd.run:
-    - name: rpm --import https://repo.saltstack.com/py3/redhat/7/x86_64/archive/3002.2/SALTSTACK-GPG-KEY.pub
+    - name: rpm --import https://repo.saltproject.io/py3/redhat/7/x86_64/archive/3002.2/SALTSTACK-GPG-KEY.pub
