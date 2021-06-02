@@ -1,0 +1,4 @@
+PyYAML
+salt == 3002.2
+packaging >= 16.8
+requests >= 2.25.1
