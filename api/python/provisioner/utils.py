@@ -397,6 +397,7 @@ def repo_tgz(
         # do raw archive with uncommitted/untracked changes otherwise
         cmd = (
             ['tar', '-czf', str(dest)] +
+            ['--exclude-vcs'] +
             ['--exclude-from', str(config.PROJECT_PATH / '.gitignore')] +
             # not available in older versions of tar also doesn't seem to work
             # in case multple targets e.g. not just '.'
