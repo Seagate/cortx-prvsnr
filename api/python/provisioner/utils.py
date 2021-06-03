@@ -42,7 +42,7 @@ from packaging.version import Version
 from . import config
 
 from .errors import (
-    BadPillarDataError, ProvisionerError, SubprocessCmdError
+    BadPillarDataError, SubprocessCmdError, NoMoreTriesError
 )
 
 from .vendor import attr
@@ -320,7 +320,7 @@ def ensure(  # noqa: C901 FIXME
             if exc:
                 raise exc
             else:
-                raise ProvisionerError(f'no more tries for {name}')
+                raise NoMoreTriesError(f'no more tries for {name}')
 
 
 def run_subprocess_cmd(cmd, check=True, **kwargs):
