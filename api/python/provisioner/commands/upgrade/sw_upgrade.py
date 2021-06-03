@@ -153,10 +153,11 @@ class SWUpgrade(CommandParserFillerMixin):
         return res
 
     def stop_cluster(self):
-        # logger.info("Moving the Cortx cluster into standby mode")
-        # FIXME cluster_standby()
-        logger.info("Stopping the Cortx cluster")
-        cluster_stop()
+        logger.info("Moving the Cortx cluster into standby mode")
+        cluster_standby()
+        # the following needed only in case pacemaker is upgraded
+        # logger.info("Stopping the Cortx cluster")
+        # cluster_stop()
 
     def upgrade_cluster(self, planned_node_groups: List[List[str]]):
         logger.info("Fire pre-upgrade event (cluster level)")
