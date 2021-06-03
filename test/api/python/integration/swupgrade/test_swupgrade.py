@@ -20,6 +20,8 @@ import logging
 from copy import deepcopy
 from collections import defaultdict
 
+from provisioner.commands import GetReleaseVersion
+
 
 logger = logging.getLogger(__name__)
 
@@ -108,10 +110,17 @@ def test_swupgrade_r2_offline(
         "provisioner sw_upgrade --offline"
     )
 
-    # TODO
-    #    - after checks:
-    #       - CLUSTER level:
-    #           - new Cortx version is running
+    # CHECKS
+
+    # CLUSTER level
+
+    # new Cortx version is running
+    # FIXME hard-coded
+    metadata = run_host.check_output(
+        "provisioner get_release_version"
+    )
+    assert GetReleaseVersion.cortx_version(metadata) == '2.1.0-177'
+
     #           - new provisioner API vesion was called to manage the logic
     #             with --noprepare flag
     #           - node level logic was applied for all the nodes concurrently
