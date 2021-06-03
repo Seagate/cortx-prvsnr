@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from provisioner.salt import local_minion_id
+from provisioner.salt import local_minion_id, function_run
 
 from provisioner.pillar import (
     PillarResolver,
@@ -50,7 +50,9 @@ def get_machine_id(node: str):
         minion_id for the node
 
     """
-    return get_pillar_data(f'cluster/{node}/machine_id')
+    machine_id = function_run('grains.get', fun_args=['machine_id'],
+                                targets=node)[f'{node}']
+    return machine_id
 
 
 def get_cluster_id():
