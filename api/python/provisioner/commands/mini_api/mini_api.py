@@ -67,7 +67,7 @@ class SpecRenderer(CommandParserFillerMixin):
             res[field] = spec.get(field, defaults.get(field))
 
         res['when'] = bool(res['when'])
-        return res
+        return res if res['when'] else None
 
     def _normalize_hook(
         self, hook: str, hook_spec: Optional[Union[Dict, List]]
@@ -92,6 +92,8 @@ class SpecRenderer(CommandParserFillerMixin):
         main_spec = self._normalize_spec(
             hook_spec, {'when': default_when}
         )
+        if main_spec is None:
+            main_spec = {}
 
         events = {}
 
