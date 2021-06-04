@@ -95,7 +95,11 @@ class ClusterManagerPCS(ClusterManagerBase):
         try:
             ret = self.cluster_status()
         except errors.SaltCmdResultError as exc:
-            logger.warning(f"Cluster status failed: {exc}")
+            if (
+                'cluster is not currently running on this node'
+                not in str(exc.reason)
+            ):
+                logger.warning(f"Cluster status failed: {exc}")
             return True
         else:
             return self._check_offline(ret)
