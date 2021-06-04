@@ -37,8 +37,8 @@ Ensure kafka-zookeeper has started:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 12
-        interval: 10
+        attempts: 40
+        interval: 5
     - require:
       - Start zoopkeper
 
@@ -56,8 +56,8 @@ Ensure kafka-zookeeper is responsive for {{ node }}:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 12
-        interval: 10
+        attempts: 40
+        interval: 5
     - require:
       - Start zoopkeper
 {% endif %}
@@ -82,7 +82,7 @@ Ensure kafka has started:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 12
-        interval: 10
+        attempts: 40
+        interval: 5
     - require:
       - Start kafka

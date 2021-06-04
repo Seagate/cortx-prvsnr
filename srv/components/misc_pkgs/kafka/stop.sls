@@ -38,8 +38,8 @@ Ensure kafka has stopped:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 10
-        interval: 2
+        attempts: 40
+        interval: 5
     - require:
       - Stop kafka
 
@@ -70,7 +70,7 @@ Ensure kafka-zookeeper has stopped:
         # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
         # Note this when interpreting the next line.
         until: True
-        attempts: 10
-        interval: 2
+        attempts: 40
+        interval: 5
     - require:
       - Stop zookeeper
