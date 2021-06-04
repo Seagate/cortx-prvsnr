@@ -19,6 +19,6 @@
 # TODO DRY EOS-12076 it's a copy-paste
 #      of misc_pkgs/swupdate/repo from core
 
-{% from './_macros.sls' import setup_repos with context %}
+{% from tpldir + '/_macros.sls' import setup_repos with context %}
 
 {{ setup_repos(pillar['release']['base']['repos'], pillar['release']['base']['base_dir']) }}
