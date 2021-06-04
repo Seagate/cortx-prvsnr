@@ -33,6 +33,9 @@ class RunArgsSWUpgradeNode(RunArgsBase):
     sw: List = attr_ib(
         cli_spec='upgrade/provisioner/sw', default=None
     )
+    no_events: bool = attr_ib(
+        cli_spec='upgrade/provisioner/no_events', default=False
+    )
 
 
 @attr.s(auto_attribs=True)
@@ -73,7 +76,7 @@ class SWUpgradeNode(CommandParserFillerMixin):
         # FIXME return list of objects, e.g. SWData
         return sw_data
 
-    def backup(self):
+    def backup(self, no_events=False):
         # TODO node level backup
         # logger.info('SW Upgrade Node Backup (node level)')
         pass
@@ -83,18 +86,21 @@ class SWUpgradeNode(CommandParserFillerMixin):
         # FIXME hard-coded
         StatesApplier.apply([f"{sw_data['base_sls']}.install"], targets)
 
-    def upgrade(self, sw_data, targets=config.ALL_TARGETS):
-        logger.info("Fire pre-upgrade event (node level)")
-        # FIXME pre-upgrade calls
+    def upgrade(self, sw_data, no_events=False, targets=config.ALL_TARGETS):
+        if not no_events:
+            logger.info("Fire pre-upgrade event (node level)")
+            # FIXME pre-upgrade calls
+
         logger.info('SW Upgrade Node (node level)')
 
         for sw, data in sw_data.items():
             self.upgrade_sw(sw, data, targets)
 
-        logger.info("Fire post-upgrade event (node level)")
-        # FIXME post-upgrade calls
+        if not no_events:
+            logger.info("Fire post-upgrade event (node level)")
+            # FIXME post-upgrade calls
 
-    def run(self, sw=None, targets=config.ALL_TARGETS):
+    def run(self, sw=None, no_events=False, targets=config.ALL_TARGETS):
         try:
             # ASSUMPTIONS:
             #   - local minion has already upgraded version of provisioner
