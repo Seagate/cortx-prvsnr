@@ -1773,17 +1773,16 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 f"salt-call state.apply {state}",
                 targets=ALL_MINIONS
             )
-
+        ssh_client.cmd_run(
+            "salt-call saltutil.refresh_pillar",
+            targets=ALL_MINIONS
+        )
         pillar = f"pillar='{inline_pillar}'" if inline_pillar else ""
         ssh_client.cmd_run(
             (
                 "salt-call state.apply components.provisioner.config "
                 f"{pillar}"
             ),
-            targets=ALL_MINIONS
-        )
-        ssh_client.cmd_run(
-            "salt-call saltutil.refresh_pillar",
             targets=ALL_MINIONS
         )
 
