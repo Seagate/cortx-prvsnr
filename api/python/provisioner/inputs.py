@@ -68,8 +68,11 @@ def load_cli_spec():
 
         choices = getattr(module, attr_name)
 
-        if issubclass(choices, Enum):
-            choices = [i.value for i in choices]
+        try:
+            if issubclass(choices, Enum):
+                choices = [i.value for i in choices]
+        except TypeError:
+            pass  # not a class
 
         leaf.parent[leaf.key] = choices
 

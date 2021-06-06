@@ -18,6 +18,7 @@
 from enum import Enum
 from pathlib import Path
 import os
+import itertools
 from typing import Union, Dict, Optional
 
 CONFIG_MODULE_DIR = Path(__file__).resolve().parent
@@ -641,6 +642,24 @@ class MiniAPILevels(Enum):
     NODE = "node"
 
 
+class MiniAPISpecFields(Enum):
+
+    """Mini Provisioner API Events."""
+
+    DEFAULTS = '__defaults__'
+    EVENTS = '__events__'
+    CTX = '__context__'
+
+
+class MiniAPISpecHookFields(Enum):
+
+    """Mini Provisioner API Events."""
+
+    CMD = 'cmd'
+    ARGS = 'args'
+    WHEN = 'when'
+
+
 class MiniAPIHooks(Enum):
 
     """Mini Provisioner API Hooks."""
@@ -657,9 +676,18 @@ class MiniAPIHooks(Enum):
     RESTORE = 'restore'
     SUPPORT_BUNDLE = 'support_bundle'
 
+
 class MiniAPIEvents(Enum):
 
     """Mini Provisioner API Events."""
 
     PRE = 'pre'
     POST = 'post'
+
+
+def event_name(hook: MiniAPIHooks, event: MiniAPIEvents):
+    return f"{event.value}-{hook.value}"
+
+
+MINI_API_EVENTS = list(itertools.product(MiniAPIHooks, MiniAPIEvents))
+MINI_API_EVENT_NAMES = [event_name(*ev) for ev in MINI_API_EVENTS]

@@ -76,8 +76,10 @@ fi
 
 @pytest.fixture
 def mock_system_cmds(hosts, request):
-    request.applymarker(pytest.mark.mock_cmds(
-        {list(hosts)[0]: [{'cortx': cortx_mock_tmpl}]})
+    request.applymarker(
+        pytest.mark.mock_cmds({
+            list(hosts)[0]: [{'cortx': cortx_mock_tmpl}, 'pcs']
+        })
     )
     request.getfixturevalue('mock_hosts')
 
@@ -142,6 +144,5 @@ def test_swupgrade_r2_offline(
     # XXX:
     #   - mini provisioner calls should be done on NODE level
     #       - current implementation - SW level
-    #   - pre-upgrade calls
     #   - migrate -> post-upgrade
     #

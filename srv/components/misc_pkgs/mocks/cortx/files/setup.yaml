@@ -19,35 +19,40 @@
   post_install:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Post Install'
+      - '{{ component }}: post_install'
   config:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Config'
+      - '{{ component }}: config'
   init:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Init'
+      - '{{ component }}: init'
   test:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Test'
+      - '{{ component }}: test'
   reset:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Reset'
+      - '{{ component }}: reset'
   backup:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Backup'
+      - '{{ component }}: backup'
   restore:
     cmd: mock
     args:
-      - 'Stage: '
-      - '{{ component }}: Restore'
+      - '{{ component }}: restore'
+  upgrade:
+    cmd: mock
+    args:
+      - '{{ component }}: upgrade'
+    pre:
+      args:
+        - '{{ component }}: pre-upgrade'
+      when: true
+    pre:
+      args:
+        - '{{ component }}: post-upgrade'
+      when: true

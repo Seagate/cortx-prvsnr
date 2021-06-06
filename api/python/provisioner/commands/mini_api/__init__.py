@@ -14,3 +14,14 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+from .mini_api import (
+    SpecRenderer,
+    EventRaiser
+)
+
+
+__all__ = [
+    "SpecRenderer",
+    "EventRaiser"
+]

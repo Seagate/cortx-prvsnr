@@ -15,15 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from typing import Type, Union, Dict, Optional, List
 from pathlib import Path
 import logging
 import argparse
+
+from typing import Type, Union, Dict, Optional, List, Tuple, Any
 from jinja2 import Environment, FileSystemLoader
+from abc import ABC, abstractmethod
+from shlex import quote
 
 from provisioner.vendor import attr
 from provisioner import utils, inputs, config
 from provisioner.attr_gen import attr_ib
+from provisioner.salt import function_run
 
 from provisioner.commands._basic import (
     CommandParserFillerMixin
@@ -32,71 +36,166 @@ from provisioner.commands._basic import (
 logger = logging.getLogger(__name__)
 
 
+MINI_API_SPEC_HOOK_FIELDS = tuple(
+    [f.value for f in config.MiniAPISpecHookFields]
+)
+
+
+class HookSpec(ABC):
+
+    @property
+    @abstractmethod
+    def is_active(self) -> bool:
+        """Return whether the hook should be called or not."""
+
+    @property
+    def spec(self, normalize=False) -> Any:
+        """Return for the hook's spec ."""
+
+
+@attr.s(auto_attribs=True)
+class HookSpecCmd(HookSpec):
+    cmd: Optional[str] = None
+    args: Optional[Union[str, List[str], Tuple[str]]] = None
+    when: Optional[bool] = None
+    defaults: Optional['HookSpec'] = None
+
+    def __attrs_post_init__(self):
+        if self.args is None:
+            self.args = []
+        elif isinstance(self.args, str):
+            self.args = [self.args]
+        elif isinstance(self.args, (list, tuple)):
+            self.args = tuple(self.args)
+        else:
+            raise TypeError(
+                f"Unexpected 'args' type: {type(self.args)}"
+            )
+
+        # FIXME hard-coded
+        if self.defaults:
+            for field in config.MiniAPISpecHookFields:
+                if getattr(self, field.value) is None:
+                    setattr(
+                        self, field.value, getattr(self.defaults, field.value)
+                    )
+
+        self.when = bool(self.when)
+
+    @property
+    def is_active(self) -> bool:
+        return self.cmd and self.when
+
+    def spec(self, normalize=False) -> Optional[Any]:
+        if normalize:
+            if self.is_active:
+                cmd = self.cmd.split() + [quote(a) for a in self.args]
+                return ' '.join(cmd).strip()
+            else:
+                return None
+        else:
+            return attr.asdict(
+                self,
+                filter=lambda _attr, value: (
+                    _attr.name in MINI_API_SPEC_HOOK_FIELDS
+                )
+            )
+
+
+@attr.s(auto_attribs=True)
+class HookSpecSupportBundle(HookSpec):
+
+    files: Optional[List[Union[Path, str]]] = None
+
+    def __attrs_post_init__(self):
+        # TODO converter and validator
+        if self.files is None:
+            self.files = []
+        else:
+            self.files = [Path(str(p)) for p in self.files]
+
+    @property
+    def is_active(self) -> bool:
+        return bool(self.files)
+
+    def spec(self, normalize=False) -> Any:
+        return self.files
+
+
 @attr.s(auto_attribs=True)
 class SpecRenderer(CommandParserFillerMixin):
     description = (
-        "A helper to render  a provisioner mini spec template."
+        "A helper to render a provisioner mini spec template."
     )
 
     spec: Union[Path, str] = attr_ib(
         'path_exists', cli_spec='mini_api/spec'
     )
-    flow: Union[Path, str] = attr_ib(
+    flow: Union[config.CortxFlows, str] = attr_ib(
         cli_spec='mini_api/flow',
         validator=attr.validators.in_(config.CortxFlows),
         converter=config.CortxFlows
     )
-    level: Union[Path, str] = attr_ib(
+    level: Union[config.MiniAPILevels, str] = attr_ib(
         cli_spec='mini_api/level',
         validator=attr.validators.in_(config.MiniAPILevels),
         converter=config.MiniAPILevels
     )
+    confstore: str = attr_ib(
+        cli_spec='mini_api/confstore', default='""'
+    )
     normalize: bool = attr_ib(
         cli_spec='mini_api/normalize',
-        default=False,
+        default=False
     )
 
-    def _normalize_spec(self, spec: Dict, defaults: Optional[Dict] = None):
-        res = {}
+    @property
+    def default_defaults(self):
+        return dict(when=(self.level == config.MiniAPILevels.NODE))
 
-        if defaults is None:
-            defaults = {}
+    @property
+    def render_ctx(self):
+        return dict(
+            flow=self.flow.value,
+            level=self.level.value,
+            # TODO document it is available in the context
+            confstore=self.confstore
+        )
 
-        # FIXME hard-coded
-        for field in ('cmd', 'args', 'when'):
-            res[field] = spec.get(field, defaults.get(field))
+    def _parse_hook(
+        self,
+        hook: str,
+        hook_spec: Union[Dict, List],
+        defaults: Optional[HookSpec] = None
+    ) -> Tuple[HookSpec, Dict]:
 
-        res['when'] = bool(res['when'])
-        return res if res['when'] else None
-
-    def _normalize_hook(
-        self, hook: str, hook_spec: Optional[Union[Dict, List]]
-    ):
         hook = config.MiniAPIHooks(hook)
 
         if hook is config.MiniAPIHooks.SUPPORT_BUNDLE:
             if not (hook_spec is None or isinstance(hook_spec, list)):
                 raise TypeError(
-                    "an array of paths is expected for hook {hook.value},"
-                    f" provided {type(hook_spec)}"
+                    f"an array of paths is expected for hook '{hook.value}',"
+                    f" provided '{type(hook_spec)}'"
                 )
-            return hook_spec
+            return HookSpecSupportBundle(hook_spec), {}
 
-        if not (hook_spec is None or isinstance(hook_spec, dict)):
+        # case: shorthand for 'hook: cmd'
+        if isinstance(hook_spec, str):
+            hook_spec = dict(cmd=hook_spec)
+        elif not (hook_spec is None or isinstance(hook_spec, dict)):
             raise TypeError(
-                "a dictionary is expected for hook {hook.value},"
+                f"a dictionary is expected for hook '{hook.value}',"
                 f" provided {type(hook_spec)}"
             )
 
-        default_when = (self.level == config.MiniAPILevels.NODE)
-        main_spec = self._normalize_spec(
-            hook_spec, {'when': default_when}
-        )
-        if main_spec is None:
-            main_spec = {}
+        _hook_spec = {
+            f.value: hook_spec[f.value]
+            for f in config.MiniAPISpecHookFields
+            if f.value in hook_spec
+        }
+        main_spec = HookSpecCmd(defaults=defaults, **_hook_spec)
 
         events = {}
-
         # FIXME hard-coded
         for event in config.MiniAPIEvents:
             event_spec = hook_spec.get(event.value)
@@ -110,51 +209,112 @@ class SpecRenderer(CommandParserFillerMixin):
                 )
 
             if isinstance(event_spec, str):
-                event_spec = {'cmd': event_spec}
+                event_spec = {
+                    config.MiniAPISpecHookFields.CMD.value: event_spec
+                }
 
             if isinstance(event_spec, bool):
-                event_spec = main_spec if event_spec else None
+                event_spec = (
+                    main_spec.spec(normalize=False) if event_spec else None
+                )
 
             # it should be dict or None now
-            if isinstance(event_spec, dict):
-                event_spec = self._normalize_spec(event_spec, main_spec)
-            events[event.value] = event_spec
+            events[config.event_name(hook, event)] = (
+                HookSpecCmd() if event_spec is None else HookSpecCmd(
+                    defaults=main_spec, **event_spec
+                )
+            )
 
-        main_spec['events'] = events
-        return main_spec
+        return main_spec, events
 
-    def run(self):
-        # EOS-20788 POC
+    def render(self):
         jinja_env = Environment(
             loader=FileSystemLoader(str(self.spec.parent)),
             autoescape=True
         )
         template = jinja_env.get_template(self.spec.name)
-        ctx = dict(flow=self.flow.value, level=self.level.value)
+        res = template.render(**self.render_ctx)
+        # TODO deprecate that, legacy way of templating
+        return res.replace("$URL", self.confstore)
 
-        config_info_str = template.render(**ctx)
+    def _build_spec(self, sw_spec: Dict):
+        defaults = HookSpecCmd(
+            **sw_spec.pop(
+                config.MiniAPISpecFields.DEFAULTS.value,
+                self.default_defaults
+            )
+        )
 
-        if self.normalize:
-            config = utils.load_yaml_str(config_info_str)
-            if len(config) != 1:
-                raise ValueError(
-                    "multiple components on the top level:"
-                    f" {list(config)}"
-                )
-            _, config = next(iter(config.items()))
+        res = {
+            config.MiniAPISpecFields.DEFAULTS.value: {
+                config.MiniAPISpecHookFields.WHEN.value: True
+            }
+        }
 
-            if not isinstance(config, dict):
-                raise TypeError(
-                    "a dictionary is expected as a second level,"
-                    f" provided {type(config)}"
-                )
+        events = {}
+        for hook, hook_spec in list(sw_spec.items()):
+            _hook_spec, _events = self._parse_hook(
+                hook, hook_spec, defaults=defaults
+            )
+            if _hook_spec.is_active or not self.normalize:
+                res[hook] = _hook_spec.spec(normalize=self.normalize)
+            events.update({
+                ev: spec.spec(normalize=self.normalize)
+                for ev, spec in _events.items() if spec.is_active
+            })
 
-            for hook, hook_spec in list(config.items()):
-                config[hook] = self._normalize_hook(hook, hook_spec)
+        res[config.MiniAPISpecFields.EVENTS.value] = (
+            sw_spec.pop(config.MiniAPISpecFields.EVENTS.value, {})
+        )
+        res[config.MiniAPISpecFields.EVENTS.value].update(events)
 
-            config_info_str = utils.dump_yaml_str(dict(component=config))
+        return res
 
-        return config_info_str
+    def build(self):
+        res = {}
+
+        # render the template as a very first step
+        config_str = self.render()
+        # deserialize
+        config_spec = utils.load_yaml_str(config_str)
+        # verify that different rendering results are not mixed here
+        ctx = config_spec.pop(
+            config.MiniAPISpecFields.CTX.value, None
+        )
+        if ctx and (ctx != self.render_ctx):
+            raise ValueError(
+                f"the spec is already rendered for a different context: {ctx}"
+            )
+        # format validation: single top level key
+        if len(config_spec) != 1:
+            raise ValueError(
+                "multiple components on the top level:"
+                f" {list(config_spec)}"
+            )
+
+        sw, sw_spec = next(iter(config_spec.items()))
+
+        # format validation: top level value is a dict
+        if not isinstance(sw_spec, dict):
+            raise TypeError(
+                "a dictionary is expected as a top level value,"
+                f" provided {type(sw_spec)}"
+            )
+
+        # store the rendered ctx
+        res[config.MiniAPISpecFields.CTX.value] = self.render_ctx
+        # store the sw spec
+        res[sw] = self._build_spec(sw_spec)
+
+        return res
+
+    #     config_str = self.render()
+
+    #    if self.normalize:
+    #        config_str = utils.dump_yaml_str(dict(component=sw_spec))
+
+    def run(self):
+        return utils.dump_yaml_str(self.build())
 
         # TODO EOS-20788 POC how to set env
         # import subprocess, os
@@ -165,6 +325,42 @@ class SpecRenderer(CommandParserFillerMixin):
         # prvsnr_mini_env = dict(PRVSNR_MINI_LEVEL=level, ...)
         # env = os.environ.copy()
         # env.update(prvsnr_mini_env)
+
+
+@attr.s(auto_attribs=True)
+class EventRaiser(CommandParserFillerMixin):
+    description = (
+        "A mini API helper to call hooks and raise events."
+    )
+
+    event: str = attr_ib(
+        cli_spec='mini_api/event',
+        validator=attr.validators.in_(config.MINI_API_EVENT_NAMES)
+    )
+    flow: Union[config.CortxFlows, str] = attr_ib(
+        cli_spec='mini_api/flow',
+        validator=attr.validators.in_(config.CortxFlows),
+        converter=config.CortxFlows
+    )
+    level: Union[config.MiniAPILevels, str] = attr_ib(
+        cli_spec='mini_api/level',
+        validator=attr.validators.in_(config.MiniAPILevels),
+        converter=config.MiniAPILevels
+    )
+    fail_fast: bool = attr_ib(
+        cli_spec='mini_api/fail_fast',
+        default=False
+    )
+
+    def run(self):
+        return function_run(
+            'setup_conf.raise_event',
+            fun_kwargs=dict(
+                event=self.event,
+                flow=self.value,
+                level=self.level
+            )
+        )
 
 
 @attr.s(auto_attribs=True)

@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from typing import Type, List
+from typing import Type, List, Union
 
 from provisioner import inputs, config
 from provisioner.attr_gen import attr_ib
@@ -23,13 +23,24 @@ from provisioner.errors import SWUpdateError
 from provisioner.pillar import PillarKey, PillarResolver
 from provisioner.salt import StatesApplier, local_minion_id
 from provisioner.vendor import attr
-from provisioner.commands._basic import RunArgsBase, CommandParserFillerMixin
+from provisioner.commands._basic import (
+    RunArgs, RunArgsBase, CommandParserFillerMixin
+)
+from provisioner.commands.mini_api import (
+    EventRaiser
+)
 
 logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
 class RunArgsSWUpgradeNode(RunArgsBase):
+    flow: Union[config.CortxFlows, str] = attr_ib(
+        cli_spec='mini_api/flow',
+        validator=attr.validators.in_(config.CortxFlows),
+        converter=config.CortxFlows
+    )
+    targets: str = RunArgs.targets
     sw: List = attr_ib(
         cli_spec='upgrade/provisioner/sw', default=None
     )
@@ -86,10 +97,18 @@ class SWUpgradeNode(CommandParserFillerMixin):
         # FIXME hard-coded
         StatesApplier.apply([f"{sw_data['base_sls']}.install"], targets)
 
-    def upgrade(self, sw_data, no_events=False, targets=config.ALL_TARGETS):
+    def upgrade(
+        self, sw_data, flow, no_events=False, targets=config.ALL_TARGETS
+    ):
         if not no_events:
             logger.info("Fire pre-upgrade event (node level)")
-            # FIXME pre-upgrade calls
+            EventRaiser(
+                event=config.event_name(
+                    config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.PRE
+                ),
+                flow=flow,
+                level=config.MiniAPILevels.NODE
+            ).run()
 
         logger.info('SW Upgrade Node (node level)')
 
@@ -98,9 +117,15 @@ class SWUpgradeNode(CommandParserFillerMixin):
 
         if not no_events:
             logger.info("Fire post-upgrade event (node level)")
-            # FIXME post-upgrade calls
+            EventRaiser(
+                event=config.event_name(
+                    config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.POST
+                ),
+                flow=flow,
+                level=config.MiniAPILevels.NODE
+            ).run()
 
-    def run(self, sw=None, no_events=False, targets=config.ALL_TARGETS):
+    def run(self, flow, sw=None, no_events=False, targets=config.ALL_TARGETS):
         try:
             # ASSUMPTIONS:
             #   - local minion has already upgraded version of provisioner
@@ -112,7 +137,7 @@ class SWUpgradeNode(CommandParserFillerMixin):
 
             self.backup()
 
-            self.upgrade(sw_data, targets=targets)
+            self.upgrade(sw_data, flow, targets=targets)
 
         except Exception as update_exc:
             # TODO TEST

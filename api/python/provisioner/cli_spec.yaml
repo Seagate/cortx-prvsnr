@@ -127,6 +127,9 @@ setup:
   salt_master: domain name or IP of the salt-master
   vendored: The flag to use setup logic from a vendor
 mini_api:
+  event:
+    help: mini provisioner event name
+    choices: __py__:provisioner.config.MINI_API_EVENT_NAMES
   spec:
     help: mini provisioner spec file
     metavar: path
@@ -137,3 +140,7 @@ mini_api:
     help: mini provisioning level
     choices: __py__:provisioner.config.MiniAPILevels
   normalize: normalize spec
+  confstore:
+    help: ConfStore URL
+    metavar: URL
+  fail_fast: fail on first error
