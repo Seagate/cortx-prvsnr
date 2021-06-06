@@ -22,37 +22,36 @@ from setuptools import setup, find_packages
 
 # TODO check python version
 
-INSTALL_REQ_F_NAME = 'install.txt'
-TESTS_REQ_F_NAME = 'tests.txt'
-CODACY_REQ_F_NAME = 'codacy.txt'
-
 try:
     here = os.path.abspath(os.path.dirname(__file__))
 except NameError:
     # it can be the case when we are being run as script or frozen
     here = os.path.abspath(os.path.dirname(sys.argv[0]))
 
-
-def abs_path(*rel_to_here: str):
-    return os.path.join(here, *rel_to_here)
-
-
-metadata = {'__file__': abs_path('provisioner', '__metadata__.py')}
+metadata = {'__file__': os.path.join(here, 'provisioner', '__metadata__.py')}
 with open(metadata['__file__'], 'r') as f:
     exec(f.read(), metadata)
 
+tests_require = [
+    'pytest==5.1.1',
+    'testinfra==3.1.0',
+    'docker==4.0.2',
+    'flake8==3.7.8',
+    'pytest-xdist==1.29.0',
+    'pytest-timeout==1.3.4',
+    'pytest-mock==3.1.0',
+    'coverage==5.3.1',
+    'pytest-cov==2.11.0',
+]
 
-def parse_requirements_f(req_f_name):
-    res = []
-    with open(abs_path('requirements', req_f_name)) as f:
-        # naive logic for now
-        for line in f.readlines():
-            res.append(line.strip())
-    return res
-
-
-tests_require = parse_requirements_f(TESTS_REQ_F_NAME)
-codacy_require = parse_requirements_f(CODACY_REQ_F_NAME)
+codacy_require = [
+    'bandit==1.7.0',
+    'prospector==1.3.1',
+    'pylint==2.5.3',
+    'radon==4.3.2',
+    'pyflakes==2.1.1',
+    'pep257==0.7.0'
+]
 
 
 # requiring pytest-runner only when pytest is invoked
@@ -96,11 +95,15 @@ setup(
             'provisioner = provisioner.__main__:main',
         ],
     },
-    install_requires=parse_requirements_f(INSTALL_REQ_F_NAME),
+    install_requires=[
+        'PyYAML',
+        'salt == 3002.2',
+        'packaging >= 16.8',
+        'requests>=2.14.2'
+    ],  # TODO
     setup_requires=([] + pytest_runner),
     extras_require={
         'test': tests_require,
-        'tests': tests_require,
         'codacy': codacy_require,
     },
     tests_require=tests_require

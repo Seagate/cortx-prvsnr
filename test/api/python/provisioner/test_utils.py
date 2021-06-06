@@ -167,26 +167,19 @@ def test_repo_tgz_happy_path_no_ver(mocker, tmpdir_function):
     project_path = 'some-path'
     include_dirs = ['dir1', 'dir2']
 
-    class somecls:
-        pass
-
-    mock_ret = somecls()
-    mock_ret.stdout = 'tar (GNU tar) 1.30'
-
-    run_m = mocker.patch.object(
-        utils, 'run_subprocess_cmd', autospec=True, return_value=mock_ret
-    )
+    run_m = mocker.patch.object(utils, 'run_subprocess_cmd', autospec=True)
 
     assert utils.repo_tgz(
         dest_dir, project_path=project_path, include_dirs=include_dirs
     ) == dest_dir
 
-    run_m.assert_called_with(
+    run_m.assert_called_once_with(
         ['tar', '-czf', str(dest_dir)]
         + [
             '--exclude-vcs',
             '--exclude-from', str(config.PROJECT_PATH / '.gitignore'),
-            '--sort', 'name'
+            '--preserve-order',
+            #'--sort', 'name'
         ]
         + ['-C', project_path]
         + include_dirs
