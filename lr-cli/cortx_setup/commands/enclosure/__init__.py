@@ -14,18 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-from pathlib import Path
-
-ALL_MINIONS = '*'
-
-CONFSTORE_CLUSTER_FILE = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
-
-local_pillars  = ['cluster', 'storage', 'system', 'firewall']
-
-# Will be changed to confstore yaml path
-CONFIG_PATH = Path('/root/config.ini')
-
-ENCLOSURE_ID = Path('/etc/enclosure-id')
