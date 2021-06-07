@@ -70,47 +70,56 @@ node ('provisioning'){
 
         stage("Teardown: HA") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states ha || true
             """
             echo "Successful teardown: HA"
         }
 
         stage("Teardown: Control-Path") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states controlpath || true
             """
             echo "Successful teardown: Control-Path"
         }
 
         stage("Teardown: IO-Path") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states iopath || true
             """
             echo "Successful teardown: IO-Path"
         }
 
         stage("Teardown: Foundation") {
-            sshCommand remote: remotes[0], command: "provisioner destroy --states utils || true"
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states utils || true
+            """
             echo "Successful teardown: Foundation"
         }
 
         stage("Teardown: 3rd_Party") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states prereq || true
             """
             echo "Successful teardown: 3rd-Party"
         }
 
         stage("Teardown: Platform") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states system || true
             """
             echo "Successful teardown: Platform"
         }
 
         stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states bootstrap || true
             """
             echo "Successful teardown: Bootstrap"
         }
