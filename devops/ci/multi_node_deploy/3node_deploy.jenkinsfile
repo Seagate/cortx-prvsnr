@@ -76,7 +76,7 @@ node ('provisioning'){
                 sh label: '', returnStatus: true, script: 'test 200 == $(curl -ksI ${BUILD_URL}/RELEASE.INFO|grep "HTTP/1.1" | cut -d " " -f 2)'
             }
 
-            stage("SSH Connectivity Check") {
+            stage("SSH Connectivity") {
                 for (remote in remotes) {
                     sshCommand remote: remote, command: "exit"
                     echo "Successfully connected to VM ${remote.host}!"

@@ -57,6 +57,11 @@ node ('provisioning'){
         for ( remote in remotes.reverse() ) {
             stage("${remote.name}: SSH Connectivity Check") {
                 sshCommand remote: remote, command: "exit"
+                sshCommand remote: remote, command: """
+                    # Reduce TCP keepalive time to 15 mins from 2 hours
+                    # https://tldp.org/HOWTO/TCP-Keepalive-HOWTO/usingkeepalive.html
+                    echo 900 | tee /proc/sys/net/ipv4/tcp_keepalive_time
+                """
                 echo "Successful connected to VM ${remote.host}."
             }
         }
@@ -209,6 +214,13 @@ node ('provisioning'){
                     rm -rf /var/log/seagate
                 """
                 echo "Successfully removed logs from the node ${remote.host}."
+            }
+
+            stage("${remote.name}: Reset SSH") {
+                sshCommand remote: remote, command: """
+                    test -e /root/.ssh && rm -rf /root/.ssh || true
+                    echo 900 | tee /proc/sys/net/ipv4/tcp_keepalive_time
+                """
             }
         }
     }
