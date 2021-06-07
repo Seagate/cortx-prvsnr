@@ -128,10 +128,10 @@ node ('provisioning'){
                     \"\"\" | sed -e 's/^[ \t]*//' > /root/config.ini
                 """
                 for (remote in remotes) {
-                    node_device_list = sshCommand remote: remote, command: "=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)"
+                    node_device_list = sshCommand remote: remote, command: "lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -"
                     if (remote.name.equals(remotes[0].name) ) {
                         sshCommand remote: remotes[0], command: """
-                            device_list = ${node_device_list}
+                            device_list=${node_device_list}
                             echo \"\"\"
                             [${remote.name}]
                             hostname=${remote.host}
@@ -144,7 +144,7 @@ node ('provisioning'){
                         """
                     } else {
                         sshCommand remote: remotes[0], command: """
-                            device_list = ${node_device_list}
+                            device_list=${node_device_list}
                             echo \"\"\"
                             [${remote.name}]
                             hostname=${remote.host}
