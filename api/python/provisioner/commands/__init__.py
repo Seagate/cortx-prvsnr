@@ -55,8 +55,7 @@ from ..config import (
     SEAGATE_USER_HOME_DIR, SEAGATE_USER_FILEROOT_DIR_TMPL,
     GroupChecks,
     ReleaseInfo,
-    REPO_CANDIDATE_NAME,
-    CORTX_ISO_DIR
+    REPO_CANDIDATE_NAME
 )
 from ..pillar import (
     KeyPath,
@@ -886,11 +885,6 @@ class GetReleaseVersion(CommandParserFillerMixin):
             if version == REPO_CANDIDATE_NAME:
                 continue
             release_info = base_dir / f'{version}/RELEASE.INFO'
-            # FIXME upgrade iso now may lack release file on top level
-            if not release_info.exists():
-                release_info = (
-                    base_dir / f'{version}/{CORTX_ISO_DIR}/RELEASE.INFO'
-                )
             if release_info.exists():
                 release_rpms = self._get_rpms_from_release(release_info)
                 if self._compare_rpms_info(release_rpms):

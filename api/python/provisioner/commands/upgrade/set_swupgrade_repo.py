@@ -77,8 +77,7 @@ SW_UPGRADE_BUNDLE_SCHEME = {
         required=True),
     CORTX_PYTHON_ISO_DIR: DirValidator(
         {
-            # FIXME upgrade iso lacks that
-            "index.html": FileValidator(required=False)
+            "index.html": FileValidator(required=True)
         },
         required=False),
     OS_ISO_DIR: DirValidator(
@@ -429,16 +428,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 repo_info = repo_map.get(dir_entry.name, None)
 
                 if repo_info is None:
-                    # FIXME upgrade iso may includes something starange for now
-                    # raise SWUpdateRepoSourceError(
-                    #     str(candidate_repo.source),
-                    #     "Unexpected repository in single ISO: "
-                    #     f"{dir_entry.name}")
-                    logger.warning(
+                    raise SWUpdateRepoSourceError(
+                        str(candidate_repo.source),
                         "Unexpected repository in single ISO: "
-                        f"{dir_entry.name}"
-                    )
-                    continue
+                        f"{dir_entry.name}")
                 if repo_info[IS_REPO_KEY]:
                     self._single_repo_validation(candidate_repo.release,
                                                  dir_entry.name)
