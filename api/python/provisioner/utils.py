@@ -333,7 +333,7 @@ def run_subprocess_cmd(cmd, check=True, **kwargs):
 
     _kwargs.update(kwargs)
 
-    if isinstance(cmd, str):
+    if not _kwargs.get('shell', False) and isinstance(cmd, str):
         cmd = cmd.split()
 
     try:
