@@ -28,10 +28,14 @@ Public direct network:
     # - onboot: yes             # [WARNING ] The 'onboot' option is controlled by the 'enabled' option.
     - userctl: no
     - defroute: no
-    - mtu: 9000
 {% if pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['public_ip_addr'] }}
+    {% if "physical" in grains['virtual'] %}
+    - mtu: 9000
+    {% else %}
+    - mtu: 1500
+    {% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}
