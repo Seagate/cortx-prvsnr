@@ -76,6 +76,17 @@ node ('provisioning'){
                 }
             }
 
+            stage("Update Machine-ID") {
+                for (remote in remotes) {
+                    sshCommand remote: remote, command: """
+                        unalias rm
+                        rm -f /etc/machine-id
+                        systemd-machine-id-setup
+                        cat /etc/machine-id
+                    """
+                }
+            }
+
             stage("Prepare config.ini") {
                 sshCommand remote: remote, command: """
                     device_list=\$(lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -)
