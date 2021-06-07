@@ -2,4 +2,4 @@ salt == 3002.2
 PyYAML
 Jinja2
 packaging >= 16.8
-requests >= 2.25.1
+requests >= 2.14.2
