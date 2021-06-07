@@ -40,6 +40,8 @@ node:
       NodePrepareNetwork
     storage:
       NodePrepareStorage
+    cortx:
+      NodePrepare
 
 cluster:
   create:
