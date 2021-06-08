@@ -63,13 +63,6 @@ class NodePrepareNetwork(Command):
             'optional': True,
             'default': "",
             'help': 'IP address'
-        },
-        'interfaces': {
-            'type': str,
-            'nargs': '+',
-            'optional': True,
-            'default': "",
-            'help': 'List of interfaces e.g eth1 eth2'
         }
     }
 
@@ -103,7 +96,7 @@ class NodePrepareNetwork(Command):
             )
 
     def run(self, hostname=None, network_type=None, gateway=None, netmask=None,
-        ip_address=None, interfaces=None
+        ip_address=None
     ):
 
         """Network prepare execution method.
@@ -111,12 +104,7 @@ class NodePrepareNetwork(Command):
         Execution:
         `cortx_setup node prepare network --hostname <hostname>`
         `cortx_setup node prepare network --type <type> --ip_address <ip_address>
-                --interfaces <iface1> --netmask <netmask> --gateway <gateway>`
-        `cortx_setup node prepare network --type data --ip_address <ip_address>
-                --interfaces <iface1 iface2> --netmask <netmask> --gateway <gateway>`
-        `cortx_setup node prepare network --type private --ip_address <ip_address>
-                --interfaces <iface1 iface2> --netmask <netmask> --gateway <gateway>`
-
+                --netmask <netmask> --gateway <gateway>`
         """
 
         node_id = local_minion_id()
@@ -140,9 +128,6 @@ class NodePrepareNetwork(Command):
 
         if network_type is not None:
 
-            if interfaces is None:
-                raise Exception("Interfaces should be provided")
-
             config_method = 'Static' if ip_address else 'DHCP'
             self.logger.debug(
                 f"Configuring {network_type} network using {config_method} method"
@@ -150,39 +135,30 @@ class NodePrepareNetwork(Command):
 
             try:
                 if network_type == 'management':
-                    iface_key = 'interfaces'
                     set_mgmt_network(
                         mgmt_public_ip=ip_address,
                         mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
-                        mgmt_interfaces=interfaces,
                         local=True,
                         targets=node_id
                     )
                 elif network_type == 'data':
-                    iface_key = 'public_interfaces'
                     set_public_data_network(
                         data_public_ip=ip_address,
                         data_netmask=netmask,
                         data_gateway=gateway,
-                        data_public_interfaces=interfaces,
                         local=True,
                         targets=node_id
                     )
                 elif network_type == 'private':
-                    iface_key = 'private_interfaces'
                     set_private_data_network(
                         data_private_ip=ip_address,
-                        data_private_interfaces=interfaces,
                         local=True,
                         targets=node_id
                     )
             except Exception as ex:
                 raise ex
 
-            self.update_network_confstore(
-                network_type=network_type, key=iface_key, value=interfaces, target=node_id
-            )
             if config_method == 'Static':
                 self.update_network_confstore(
                     network_type=network_type,
