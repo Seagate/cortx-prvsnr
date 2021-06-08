@@ -6,7 +6,8 @@ firewall:
         - 443/tcp
       s3:
         - 9443/tcp
-{% if "physical" in grains['virtual'] %}
+{% if "physical" not in grains['virtual'] %}
+      # Applicable only in VM environment, esp. OVA
       www:
         - 80/tcp
 {% endif %}
@@ -39,7 +40,8 @@ firewall:
       uds:
         - 5000/tcp
         - 5000/udp
-{% if "physical" in grains['virtual'] %}
+{% if "physical" not in grains['virtual'] %}
+      # Applicable only in VM environment, esp. OVA
       www:
         - 80/tcp
       haproxy:
