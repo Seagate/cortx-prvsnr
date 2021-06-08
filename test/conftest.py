@@ -556,13 +556,6 @@ def repo_tgz(project_path, localhost, tmpdir_session):
     return utils.repo_tgz(res, project_path=project_path)
 
 
-@pytest.fixture(scope='session')
-def git_head_sha1(project_path):
-    return utils.run_subprocess_cmd(
-        ['git', '-C', str(project_path), 'rev-parse', '--short', 'HEAD']
-    ).stdout.strip()
-
-
 def _rpmbuild_mhost(
     request, env_provider=None, base_env=None, label=None
 ):
@@ -600,8 +593,8 @@ def _copy_to_local(mhost, host_path, tmpdir_local):
     return local_path
 
 
-def rpm_prvsnr_build(mhost, git_head_sha1, version=None, release_number=None):
-    cmd = ['devops/rpms/buildrpm.sh', '-g', git_head_sha1]
+def rpm_prvsnr_build(mhost, version=None, release_number=None):
+    cmd = ['devops/rpms/buildrpm.sh']
     if version:
         cmd.extend(['-e', str(version)])
     if release_number:
@@ -618,11 +611,9 @@ def rpm_prvsnr_build(mhost, git_head_sha1, version=None, release_number=None):
     )
 
 
-def rpm_prvsnr_cli_build(
-    mhost, git_head_sha1, version=None, release_number=None
-):
+def rpm_prvsnr_cli_build(mhost, version=None, release_number=None):
     # TODO IMPROVE DRY
-    cmd = ['cli/buildrpm.sh', '-g', git_head_sha1]
+    cmd = ['cli/buildrpm.sh']
     if version:
         cmd.extend(['-e', str(version)])
     if release_number:
@@ -639,7 +630,7 @@ def rpm_prvsnr_cli_build(
     )
 
 
-def rpm_prvsnr_api_build(mhost, git_head_sha1, pkg_version=None):
+def rpm_prvsnr_api_build(mhost, pkg_version=None):
     build_dir = 'rpmbuild'
     cmd = [
         'devops/rpms/api/build_python_api.sh',
@@ -663,7 +654,7 @@ def rpm_prvsnr_api_build(mhost, git_head_sha1, pkg_version=None):
 
 
 @pytest.fixture(scope='session')
-def rpm_build(git_head_sha1):
+def rpm_build():
     def _f(
         request, tmpdir_local,
         rpm_type='core', mhost_init_cb=None,
@@ -684,10 +675,6 @@ def rpm_build(git_head_sha1):
         mhost = _rpmbuild_mhost(
             request, env_provider=env_provider, base_env=base_env, label=label
         )
-
-        if 'git_head_sha1' not in kwargs:
-            kwargs['git_head_sha1'] = git_head_sha1
-
         # TODO DOCS : example how to run machine out of fixture scope
         with mhost.remote as _:
             if mhost_init_cb:

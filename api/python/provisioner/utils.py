@@ -37,21 +37,15 @@ import string
 from shlex import quote
 from pathlib import Path, PosixPath
 import yaml
-from packaging.version import Version
-
 from . import config
 
 from .errors import (
-    BadPillarDataError, SubprocessCmdError, NoMoreTriesError
+    BadPillarDataError, ProvisionerError, SubprocessCmdError
 )
 
 from .vendor import attr
 
 logger = logging.getLogger(__name__)
-
-
-# https://www.gnu.org/software/tar/
-TAR_VER_WITH_SORT_OPT = '1.28'
 
 
 HashInfo = attr.make_class(
@@ -320,7 +314,7 @@ def ensure(  # noqa: C901 FIXME
             if exc:
                 raise exc
             else:
-                raise NoMoreTriesError(f'no more tries for {name}')
+                raise ProvisionerError(f'no more tries for {name}')
 
 
 def run_subprocess_cmd(cmd, check=True, **kwargs):
@@ -333,7 +327,7 @@ def run_subprocess_cmd(cmd, check=True, **kwargs):
 
     _kwargs.update(kwargs)
 
-    if not _kwargs.get('shell', False) and isinstance(cmd, str):
+    if isinstance(cmd, str):
         cmd = cmd.split()
 
     try:
@@ -381,19 +375,6 @@ def repo_tgz(
             include_dirs
         )
     else:
-        # TODO based on some assumptions regarding tar --version output format
-        tar_version = run_subprocess_cmd(
-            ['tar', '--version']
-        ).stdout.split()[3]
-
-        # that makes tar to produce the same hash if no changes
-        # but it works good only for --sort opt
-        sort_opts = (
-            ['--sort', 'name']
-            if (Version(tar_version) >= Version(TAR_VER_WITH_SORT_OPT))
-            else []
-        )
-
         # do raw archive with uncommitted/untracked changes otherwise
         cmd = (
             ['tar', '-czf', str(dest)] +
@@ -403,7 +384,10 @@ def repo_tgz(
             # in case multple targets e.g. not just '.'
             # ['--exclude-vcs-ignores'] +
             exclude +
-            sort_opts +
+            # that makes tar to produce the same hash if no changes
+            ['--preserve-order'] +
+            # not available in older versions of tar
+            # ['--sort', 'name'] +
             ['-C', str(project_path)] +
             include_dirs
         )

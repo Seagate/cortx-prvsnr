@@ -25,9 +25,4 @@ RUN mkdir -p ${{PYTHON_PROJECT}} \
     && pipenv --where \
     && pipenv --py
 
-# warm up python env for provisioner
-COPY api/python/requirements/install.txt /tmp/
-RUN /usr/bin/pip3 install -r /tmp/install.txt \
-    && rm -f /tmp/install.txt
-
 WORKDIR ${{PYTHON_PROJECT}}

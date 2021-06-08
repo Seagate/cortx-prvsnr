@@ -62,12 +62,12 @@ class SpecRenderer(CommandParserFillerMixin):
         if defaults is None:
             defaults = {}
 
-        # FIXME hard-coded
+        # FIXME hard-codede
         for field in ('cmd', 'args', 'when'):
             res[field] = spec.get(field, defaults.get(field))
 
         res['when'] = bool(res['when'])
-        return res if res['when'] else None
+        return res
 
     def _normalize_hook(
         self, hook: str, hook_spec: Optional[Union[Dict, List]]
@@ -92,8 +92,6 @@ class SpecRenderer(CommandParserFillerMixin):
         main_spec = self._normalize_spec(
             hook_spec, {'when': default_when}
         )
-        if main_spec is None:
-            main_spec = {}
 
         events = {}
 

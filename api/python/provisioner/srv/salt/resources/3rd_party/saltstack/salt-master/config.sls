@@ -19,6 +19,61 @@
 {% set updated_keys = salt['pillar.get']('inline:salt-master:updated_keys', []) %}
 
 
-{% from tpldir + '/macros.sls' import salt_master_configured with context %}
+# FIXME that fails intermittently with
+#       Relative path "./macros.sls" cannot be resolved without an environment
+#{ % from './macros.sls' import salt_master_configured with context % }
 
-{{ salt_master_configured(updated_keys, onchanges) }}
+#{ { salt_master_configured(updated_keys, onchanges) } }
+
+{% set fileroot_prefix = salt['pillar.get']('inline:fileroot_prefix', '') %}
+
+{% for id in (updated_keys or []) %}
+salt_minion_{{ id }}_key_deleted:
+  cmd.run:
+    - name: salt-key -d {{ id }} -y
+{% endfor %}
+
+salt_master_pki_set:
+  file.recurse:
+    - name: /etc/salt/pki/master/
+    - source: salt://{{ fileroot_prefix }}saltstack/salt-cluster/files/pki/master
+    - clean: False
+    - keep_source: True
+    - maxdepth: 1
+    - onchanges_in:
+      - file: salt_master_onchanges
+
+salt_master_configured:
+  file.managed:
+    - name: /etc/salt/master
+    - source: salt://{{ fileroot_prefix }}saltstack/salt-master/files/config/master
+    - keep_source: True
+    - backup: minion
+
+salt_master_config_is_good:
+  cmd.run:
+    - name: 'salt-run salt.cmd test.true > /dev/null'
+    - onchanges:
+      - file: salt_master_configured
+
+salt_master_enabled:
+  service.enabled:
+    - name: salt-master.service
+    - require:
+      - salt_master_configured
+
+{% if onchanges == 'restart' %}
+
+salt_master_onchanges:
+  cmd.run:
+    # 1. test.true will prevent restart of salt-master if the config is malformed
+    # 2. --local is required if salt-master is actually not running,
+    #    since state might be called by salt-run as well
+    - name: 'salt-run salt.cmd test.true > /dev/null && salt-call --local service.restart salt-master > /dev/null '
+    - bg: True
+    - require:
+      - salt_master_config_is_good
+    - onchanges:
+      - file: salt_master_configured
+
+{% endif %}

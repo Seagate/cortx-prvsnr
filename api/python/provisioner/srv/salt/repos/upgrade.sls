@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% from tpldir + '/_macros.sls' import setup_repos with context %}
+{% from './_macros.sls' import setup_repos with context %}
 
 {% set base_dir = pillar['release']['upgrade']['base_dir'] %}
 
