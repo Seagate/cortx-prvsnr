@@ -18,115 +18,144 @@
 # Cortx Setup API to execute complete cluster config
 
 
+import os
+import socket
 from cortx_setup.commands.command import Command
-# from ..common_utils import call_provisioner_cmd
-
 from cortx_setup.commands.enclosure.refresh import (
     RefreshEnclosureId
 )
 from cortx_setup.commands.cluster.encrypt import (
     EncryptPillar
 )
-
 from cortx_setup.config import (
-    CONFSTORE_CLUSTER_FILE,
     ALL_MINIONS
 )
-from cortx.utils.conf_store import Conf
 
 from provisioner.commands import (
     bootstrap_provisioner,
-    post_provisioner,
     cluster_id,
     create_service_user,
     reset_machine_id,
     confstore_export
 )
-from provisioner.salt import (
-    cmd_run,
-    StateFunExecuter
-)
+from provisioner.salt import StatesApplier
 
 
-class ClusterConfig(Command):
+class CortxClusterConfig(Command):
 
-    # TODO: test and finalise args
+    # TODO: changes needed in API logic to finalise args
     _args = {
-        'node': {
+        'nodes': {
             'type': str,
             'nargs': '+',
+            'optional': False,
+            'help': ('List of FQDN of node(s) to be clustered and '
+                     'bootstrapped, primary node given first.')
+        },
+        'config_path': {
+            'type': str,
             'optional': True,
-            'help': 'List of node(s) to be clustered and bootstrapped'
+            'default': '/root/config.ini',
+            'help': 'Config file path for bootstrap.'
         },
         'source': {
             'type': str,
             'optional': True,
-            'help': 'Source of build to use for bootstrap'
+            'default': 'rpm',
+            'help': ('Source of build to use for bootstrap. '
+                     'e.g: {local|rpm|iso}')
         },
         'dist_type': {
             'type': str,
             'optional': True,
+            'default': 'bundle',
             'help': 'Distribution type of build'
         },
         'target_build': {
             'type': str,
             'optional': True,
             'help': 'Target build to bootstrap'
-        }
+        },
+        'iso_cortx': {
+            'type': str,
+            'optional': True,
+            'help': 'iso file path, for iso-source deployment'
+        },
+        'iso_os': {
+            'type': str,
+            'optional': True,
+            'help': ('iso os path, for iso-source deployment. '
+                     'e.g: {/opt/isos/cortx-os-1.0.0-23.iso}')
+        },
 
     }
 
-    def run(self, node=None, source=None,
-            dist_type=None, target_build=None):
+    def run(self, **kwargs):
 
         try:
-            index = 'bootstrap_index'
-
-            config_path = CONFSTORE_CLUSTER_FILE
-            loaded_config = Conf.load(
-                index,
-                f'json://{CONFSTORE_CLUSTER_FILE}'
+            self.logger.debug(
+              "Checking for basic details in place."
             )
+            local_fqdn = socket.gethostname()
+            nodes = kwargs['nodes']
+            target_build = kwargs['target_build']
+
+            # Parsing nodes
+            for idx, node in enumerate(nodes):
+                if node == local_fqdn:
+                    nodes[idx] = f"srvnode-1:{node}"
+                else:
+                    nodes[idx] = f"srvnode-{idx+1}:{node}"
+
+            # Build validation
+            if not target_build:
+                target_build = os.environ.get('CORTX_RELEASE_REPO')
+                if not target_build:
+                    raise ValueError("'target_build' is mandatory to bootstrap. "
+                                     "Please provide valid build URL in command.")
+
+            # ISO files validation
+            if kwargs['source'] == 'iso':
+                if not (kwargs['iso_cortx'] or kwargs['iso_os']):
+                    raise ValueError(
+                         "iso single file and iso os file paths are mandatory "
+                         "to bootstrap. Please provide valid paths in command.")
 
             self.logger.debug(
-              "Starting bootstrap process for node(s): '{node}' now.."
+              f"Checks done. Starting bootstrap process for node(s): '{nodes}' now.."
             )
-            # Common method needed?
-            # bootstrap = call_provisioner_cmd(bootstrap_provisioner, nodes)
+            bootstrap_provisioner.BootstrapProvisioner()._run(**kwargs)
 
-            bootstrap_provisioner.BootstrapProvisioner._run(
-                nodes, source, dist_type, config_path, target_build
-            )
+#            # Currently, some changes are needed for this step
+#            post_provisioner.PostProvisioner().run(**kwargs)
 
             self.logger.debug(
-              "Bootstrap done.. Starting with prepare environment now.."
+              "Starting with preparing environment. "
+              "Creating service user now."
             )
-            post_provisioner.PostProvisioner.run(
-                nodes, source, dist_type, config_path, target_build
-            )
-
-            self.logger.debug(
-              "Post-bootstrap steps done. Creating service user now.."
-            )
-            # get `user` from confstore data
-            create_service_user.CreateServiceUser.run(user)
+            create_service_user.CreateServiceUser.run(user="cortxub")
 
             self.logger.debug("Refreshing machine id on the system")
-            reset_machine_id.ResetMachineId.run("force")
+            reset_machine_id.ResetMachineId.run()
 
             self.logger.debug("Refreshing enclosure id on the system")
             RefreshEnclosureId.run(self)
 
+            self.logger.debug("Generating cluster")
+            StatesApplier.apply(
+                  ["components.provisioner.config"], targets=ALL_MINIONS
+            )
+
             self.logger.debug("Setting up Cluster ID on the system")
-            cluster_id.ClusterId.run()
+            cluster_id.ClusterId().run()
 
             self.logger.debug("Encrypting config data")
             EncryptPillar.run(self)
 
             self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport.run()
+            confstore_export.ConfStoreExport().run()
 
-            return f"Bootstrap done for node(s): '{node}'"
+            return f"Bootstrap done for node(s): '{nodes}'"
 
         except ValueError as exc:
             raise ValueError(
