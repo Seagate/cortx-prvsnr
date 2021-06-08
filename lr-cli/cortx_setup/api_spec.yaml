@@ -52,6 +52,8 @@ cluster:
   config:
     network:
       ClusterNetworkConfig
+    cortx:
+      CortxClusterConfig
 
 resource:
   discover:
