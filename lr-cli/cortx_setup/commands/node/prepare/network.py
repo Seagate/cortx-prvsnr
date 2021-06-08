@@ -139,22 +139,22 @@ class NodePrepareNetwork(Command):
                         mgmt_public_ip=ip_address,
                         mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
-                        local=True,
-                        targets=node_id
+                        mgmt_interfaces=interfaces,
+                        local=True
                     )
                 elif network_type == 'data':
                     set_public_data_network(
                         data_public_ip=ip_address,
                         data_netmask=netmask,
                         data_gateway=gateway,
-                        local=True,
-                        targets=node_id
+                        data_public_interfaces=interfaces,
+                        local=True
                     )
                 elif network_type == 'private':
                     set_private_data_network(
                         data_private_ip=ip_address,
-                        local=True,
-                        targets=node_id
+                        data_private_interfaces=interfaces,
+                        local=True
                     )
             except Exception as ex:
                 raise ex

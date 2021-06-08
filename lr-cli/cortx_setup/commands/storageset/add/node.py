@@ -86,7 +86,6 @@ class AddServerNode(Command):
             PillarSet().run(
                 'cluster/storage_set/server_nodes',
                 server_node,
-                targets=node_id,
                 local=True
             )
             Conf.set(

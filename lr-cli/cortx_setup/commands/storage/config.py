@@ -112,7 +112,6 @@ class StorageEnclosureConfig(Command):
             PillarSet().run(
                 f'storage/{enc_num}/name',
                 f'{name}',
-                targets=node_id,
                 local=True
             )
             self.logger.info(
@@ -130,7 +129,6 @@ class StorageEnclosureConfig(Command):
             PillarSet().run(
                 f'storage/{enc_num}/type',
                 f'{storage_type}',
-                targets=node_id,
                 local=True
             )
             self.logger.info(
@@ -148,7 +146,6 @@ class StorageEnclosureConfig(Command):
             PillarSet().run(
                 f'storage/{enc_num}/controller/user',
                 f'{user}',
-                targets=node_id,
                 local=True
             )
             self.logger.info(
@@ -166,7 +163,6 @@ class StorageEnclosureConfig(Command):
             PillarSet().run(
                 f'storage/{enc_num}/controller/secret',
                 f'{password}',
-                targets=node_id,
                 local=True
             )
             self.logger.info(
@@ -184,7 +180,6 @@ class StorageEnclosureConfig(Command):
             PillarSet().run(
                 f'storage/{enc_num}/controller/type',
                 f'{controller_type}',
-                targets=node_id,
                 local=True
             )
             self.logger.info(
@@ -216,7 +211,6 @@ class StorageEnclosureConfig(Command):
                 PillarSet().run(
                     f'storage/{enc_num}/controller/{mode}/ip',
                     f'{ip}',
-                    targets=node_id,
                     local=True
                 )
                 self.logger.info(
@@ -234,7 +228,6 @@ class StorageEnclosureConfig(Command):
                 PillarSet().run(
                     f'storage/{enc_num}/controller/{mode}/port',
                     f'{port}',
-                    targets=node_id,
                     local=True
                 )
                 self.logger.info(

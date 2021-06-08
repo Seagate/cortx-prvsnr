@@ -16,6 +16,7 @@
 #
 
 from .hostname import Hostname
+from .pillar_sync import PillarSync
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
 from .node.prepare.server import NodePrepareServer
@@ -62,5 +63,6 @@ __all__ = [
     'SecurityConfig',
     'SetSignature',
     'StorageEnclosureConfig',
+    'PillarSync',
     'Commons'
  ]
