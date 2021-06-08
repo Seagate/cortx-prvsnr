@@ -162,7 +162,11 @@ class DestroyNode(Deploy):
                     f"components.{state}"
                 )
         except Exception as exc:
-            logger.warn(f"Failed {state} on {targets} Error: {str(exc)}")
+            logger.error(
+                f"Failed {state} on {targets}\n"
+                f"Error: {str(exc)}"
+            )
+            raise
 
     def _run_cmd(self, cmds, targets=None):
         for cmd in cmds:
@@ -179,7 +183,11 @@ class DestroyNode(Deploy):
                         f"{cmd}"
                     )
             except Exception as exc:
-                logger.warn(f"Failed cmd {cmd} on {targets} Error: {str(exc)}")
+                logger.error(
+                    f"Failed cmd {cmd} on {targets}\n"
+                    f"Error: {str(exc)}"
+                )
+                raise
 
     def _run_states(self,  # noqa: C901 FIXME
         states_group: str, run_args: run_args_type):
