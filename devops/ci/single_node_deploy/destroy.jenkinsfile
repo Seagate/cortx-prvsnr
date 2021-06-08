@@ -50,7 +50,7 @@ node ('provisioning'){
 
             stage("Teardown: HA") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+                command -v provisioner &>/dev/null && provisioner destroy --states ha
             """
             echo "Successful teardown: HA"
             }
@@ -78,21 +78,21 @@ node ('provisioning'){
 
             stage("Teardown: 3rd_Party") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+                command -v provisioner &>/dev/null && provisioner destroy --states prereq
             """
             echo "Successful teardown: 3rd-Party"
             }
 
             stage("Teardown: Platform") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+                command -v provisioner &>/dev/null && provisioner destroy --states system
             """
             echo "Successful teardown: Platform"
             }
 
             stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap
             """
             echo "Successful teardown: Bootstrap"
             }

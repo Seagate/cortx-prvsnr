@@ -76,7 +76,7 @@ node ('provisioning'){
         stage("Teardown: HA") {
             sshCommand remote: remotes[0], command: """
                 command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states ha || true
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states ha
             """
             echo "Successful teardown: HA"
         }
@@ -108,7 +108,7 @@ node ('provisioning'){
         stage("Teardown: 3rd_Party") {
             sshCommand remote: remotes[0], command: """
                 command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states prereq || true
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states prereq
             """
             echo "Successful teardown: 3rd-Party"
         }
@@ -116,7 +116,7 @@ node ('provisioning'){
         stage("Teardown: Platform") {
             sshCommand remote: remotes[0], command: """
                 command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states system || true
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states system
             """
             echo "Successful teardown: Platform"
         }
@@ -124,7 +124,7 @@ node ('provisioning'){
         stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remotes[0], command: """
                 command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states bootstrap || true
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states bootstrap
             """
             echo "Successful teardown: Bootstrap"
         }
