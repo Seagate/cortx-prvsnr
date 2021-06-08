@@ -15,31 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-cortx_components = dict(
-    utils=[
-        "cortx_utils"
-    ],
-    iopath=[
-        "motr",
-        "s3server",
-        "hare"
-    ],
-    controlpath=[
-        "sspl",
-        "uds",
-        "csm"
-    ],
-    ha=[
-        "ha.cortx-ha"
-    ]
-)
-
+# Cortx Setup API for configuring cortx
 
 from cortx_setup.commands.command import Command
 from provisioner.commands import deploy
 from provisioner.salt import local_minion_id
+from cortx_setup.commands.common_utils import (
+    get_provisioner_states,
+    get_cortx_states
+)
 
-"""Cortx Setup API for configuring cortx"""
+node_id = local_minion_id()
+
+cortx_components = get_cortx_states() 
 
 
 class CortxClusterConfig(Command):
@@ -59,20 +47,26 @@ class CortxClusterConfig(Command):
                         f"Invoking config command for {state} component"
                     )
                     deploy.Deploy()._apply_state(
-                        f"components.{state}", targets=node_id,
-                        stages='config.config'
+                        f"components.{state}", stages='config.config'
                     )
                     self.logger.debug(
                         f"Invoking init command for {state} component"
                     )
                     deploy.Deploy()._apply_state(
-                        f"components.{state}", targets=node_id,
-                        stages='config.init_mod'
+                        f"components.{state}", stages='config.init_mod'
                     )
                 except Exception as ex:
                     raise ex
 
     def run(self):
 
-        self.logger.debug("Configuring cortx components on nodes")
+       """
+       Cortx cluster config command
+
+        Execution:
+        `cortx_setup cluster config cortx`
+
+        """
+
+        self.logger.debug("Configuring cortx components")
         self.configure_cortx()
