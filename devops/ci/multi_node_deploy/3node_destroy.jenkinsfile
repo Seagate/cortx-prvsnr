@@ -182,6 +182,7 @@ node ('provisioning'){
 
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
+                    unalias rm
                     test -e /var/cache/yum && rm -rf /var/cache/yum
                     # Cleanup pip config
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
@@ -191,6 +192,7 @@ node ('provisioning'){
                     test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
                     test -e /opt/seagate && rm -rf /opt/seagate
                     test -e /etc/csm && rm -rf /etc/csm
+                    test -e /etc/cortx && rm -rf /etc/cortx
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate
                     test -e /srv/glusterfs && rm -rf /srv/glusterfs
