@@ -117,7 +117,7 @@ class NodePrepareNetwork(Command):
         if hostname is not None:
             self.logger.debug(f"Setting up system hostname to {hostname}")
             try:
-                set_hostname(hostname=hostname, targets=node_id, local=True)
+                set_hostname(hostname=hostname, local=True)
                 Conf.set(
                     'node_prepare_index',
                     f'server_node>{machine_id}>hostname',

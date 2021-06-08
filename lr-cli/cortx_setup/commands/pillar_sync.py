@@ -39,7 +39,7 @@ class PillarSync(Command):
                 if pillar == 'storage' and value.get('enclosure-0'):
                     enc_num = key.split('-')
                     value[f'enclosure-{enc_num[1]}'] = value.pop('enclosure-0')
-            res_pillar.update(value)
+                res_pillar.update(value)
             self.logger.info(f"Updating {pillar} pillar data")
             PillarSet().run(
                 f'{pillar}',
