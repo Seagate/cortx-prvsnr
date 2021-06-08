@@ -42,10 +42,11 @@ from provisioner.salt import (
 # from provisioner.salt_master import config_salt_master
 # from provisioner.salt_minion import config_salt_minions
 
+from provisioner import errors
 from provisioner.cortx_ha import (
     cluster_stop,
     cluster_start,
-    check_cluster_health_status
+    is_cluster_healthy
 )
 
 
@@ -84,7 +85,8 @@ class SWUpgrade(CommandParserFillerMixin):
 
     def validate(self):
         logger.info('SW Upgrade Validation')
-        check_cluster_health_status()
+        if not is_cluster_healthy():
+            raise errors.ProvisionerError('cluster is not healthy')
 
         logger.info("Ensure update repos are configured")
         self._ensure_upgrade_repos_configuration()
@@ -122,7 +124,7 @@ class SWUpgrade(CommandParserFillerMixin):
         # here we can use python API (SWUpgradeNode) since
         # old provisioner version would be called anyway
         logger.info('Upgrading Provisioner on all the nodes')
-        SWUpgradeNode().run(sw=['provisioner'])
+        SWUpgradeNode().run(sw=['provisioner'], no_events=True)
 
         # support for a separate orchestrator module
         # todo: can be a python API call if no changes for provisioner
@@ -152,12 +154,6 @@ class SWUpgrade(CommandParserFillerMixin):
         logger.info(f"Upgrade plan is: '{res}'")
         return res
 
-    def stop_cluster(self):
-        # logger.info("Moving the Cortx cluster into standby mode")
-        # FIXME cluster_standby()
-        logger.info("Stopping the Cortx cluster")
-        cluster_stop()
-
     def upgrade_cluster(self, planned_node_groups: List[List[str]]):
         logger.info("Fire pre-upgrade event (cluster level)")
         # FIXME pre-upgrade calls
@@ -165,18 +161,22 @@ class SWUpgrade(CommandParserFillerMixin):
         #   resources cleanup and final cluster stop of should
         #   happen as part of pre-uprgade HA call
 
+        # the following needed only in case pacemaker is upgraded
+        # logger.info("Stopping the Cortx cluster")
+        # cluster_stop(standby=False)
+
         for group in planned_node_groups:
             logger.info(f"Upgrading nodes: '{group}'")
             # XXX ??? provisioner (orchestrator) have been already
             #         upgraded, do we need to upgrade them here?
             SWUpgradeNode().run(targets=group)
 
+        # the following needed only in case pacemaker is upgraded
+        # logger.info("Stopping the Cortx cluster")
+        # cluster_start(unstandby=True)
+
         logger.info("Fire post-upgrade event (cluster level)")
         # FIXME post-upgrade calls
-
-    def start_cluster(self):
-        logger.info("Starting the Cortx cluster")
-        cluster_start()
 
     def prepare(self, cortx_version):
         self.validate()
@@ -202,11 +202,14 @@ class SWUpgrade(CommandParserFillerMixin):
         # noprepare is True or new logic is the same
         planned_node_groups = self.plan_upgrade(offline=offline)
 
-        self.stop_cluster()
+        logger.info("Moving the Cortx cluster into standby mode")
+        cluster_stop(standby=True)
 
         self.upgrade_cluster(planned_node_groups)
 
-        self.start_cluster()
+        logger.info("Starting the Cortx cluster")
+        cluster_start()
+        # cluster_start(unstandby=False)
 
         # TODO make the folllowing a part of migration
         #      routine on a node level

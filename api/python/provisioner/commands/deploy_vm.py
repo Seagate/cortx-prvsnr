@@ -130,23 +130,15 @@ class DeployVM(Deploy):
                 elif state in (
                     "sync.software.rabbitmq",
                     "sync.software.openldap",
-                    "csm"
+                    "csm",
+                    "ha.cortx-ha"
                 ):
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
                         f"components.{state}", secondaries, stages
                     )
-                elif state in (
-                    "ha.cortx-ha",
-                ):
-                    # Execute first on primary then on secondary sequentially.
-                    nodes = Deploy._get_node_list()
-                    self._apply_state(f"components.{state}", primary, stages)
-                    if primary in nodes:
-                        nodes.remove(primary)
-                    for node in nodes:
-                        self._apply_state(f"components.{state}", node, stages)
+
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
 

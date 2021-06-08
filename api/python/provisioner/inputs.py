@@ -1241,7 +1241,9 @@ class SWUpgradeRepo(SWUpdateRepo):
                     'source': (f'file://{self.target_build}/{self.release}/'
                                f'{config.OS_ISO_DIR}'),
                     'is_repo': True,
-                    'enabled': self.enabled
+                    # FIXME upgrade iso currently may lack repodata
+                    # 'enabled': self.enabled
+                    'enabled': False
                 },
                 f'{config.CORTX_ISO_DIR}': {
                     'source': (f'file://{self.target_build}/{self.release}/'

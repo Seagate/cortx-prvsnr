@@ -6,6 +6,11 @@ firewall:
         - 443/tcp
       s3:
         - 9443/tcp
+{% if "physical" not in grains['virtual'] %}
+      # Applicable only in VM environment, esp. OVA
+      www:
+        - 80/tcp
+{% endif %}
   mgmt_public:
     services:
       - ssh
@@ -35,3 +40,10 @@ firewall:
       uds:
         - 5000/tcp
         - 5000/udp
+{% if "physical" not in grains['virtual'] %}
+      # Applicable only in VM environment, esp. OVA
+      www:
+        - 80/tcp
+      haproxy:
+        - 443/tcp
+{% endif %}
