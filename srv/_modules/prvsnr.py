@@ -25,7 +25,7 @@ import sys
 __virtualname__ = 'provisioner'
 
 try:
-    import provisioner
+    import provisioner  # pylint: disable=unused-import
 except ImportError:
     import subprocess
     from pathlib import Path
@@ -33,12 +33,14 @@ except ImportError:
     #      but that directory is not listed in salt's sys.path,
     #      EOS-5401 might be related
     try:
-        prvsnr_pkg_path = subprocess.run(
-            "python3 -c 'import provisioner; print(provisioner.__file__)'",
+        prvsnr_pkg_path = subprocess.run(  # nosec
+            [
+                "python3", "-c",
+                "import provisioner; print(provisioner.__file__)"
+            ],
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
-            shell=True
         ).stdout.strip()
         sys.path.insert(0, str(Path(prvsnr_pkg_path).parent.parent))
         import provisioner

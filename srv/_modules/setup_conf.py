@@ -33,18 +33,20 @@ from pathlib import Path
 __virtualname__ = 'setup_conf'
 
 try:
-    import provisioner
+    import provisioner  # pylint: disable=unused-import
 except ImportError:
     # TODO pip3 installs provisioner to /usr/local/lib/python3.6/site-packages
     #      but that directory is not listed in salt's sys.path,
     #      EOS-5401 might be related
     try:
-        prvsnr_pkg_path = subprocess.run(
-            "python3 -c 'import provisioner; print(provisioner.__file__)'",
+        prvsnr_pkg_path = subprocess.run(  # nosec
+            [
+                "python3", "-c",
+                "import provisioner; print(provisioner.__file__)"
+            ],
             check=True,
             stdout=subprocess.PIPE,
-            universal_newlines=True,
-            shell=True
+            universal_newlines=True
         ).stdout.strip()
         sys.path.insert(0, str(Path(prvsnr_pkg_path).parent.parent))
         import provisioner  # noqa: F401
@@ -250,7 +252,7 @@ def conf_cmd(conf_file, conf_key):
                 logger.debug(
                     f"Component setup command as list: {cmd_as_list}"
                 )
-                subprocess.run(
+                subprocess.run(  # nosec
                     cmd_as_list,
                     stdout=subprocess.DEVNULL,
                     check=True
