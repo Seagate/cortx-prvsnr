@@ -26,6 +26,8 @@ PKG_COMP_LIST=(
     "cortx-sspl-test,"
     "cortx-s3iamcli,"
     "cortx-csm_web,"
+    "cortx-prvsnr,provisioner"
+    "python36-cortx-prvsnr,"
 )
 
 rm -rf "${BUILD_DIR}"/rpmbuild
