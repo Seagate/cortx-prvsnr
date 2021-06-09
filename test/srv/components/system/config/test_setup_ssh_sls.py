@@ -42,8 +42,8 @@ def test_setup_ssh_known_hosts(
     output = mhostsrvnode1.check_output(
         'salt-call --local --out json config.get master'
     )
-    master_host = json.loads(output)['local']
+    primary_host = json.loads(output)['local']
 
     # TODO checks for the keys' types
     mhostsrvnode1.check_output('ssh-keygen -F {}'.format(minion_id))
-    mhostsrvnode1.check_output('ssh-keygen -F {}'.format(master_host))
+    mhostsrvnode1.check_output('ssh-keygen -F {}'.format(primary_host))
