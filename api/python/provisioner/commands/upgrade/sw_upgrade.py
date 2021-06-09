@@ -286,7 +286,7 @@ class SWUpgrade(CommandParserFillerMixin):
                 cortx_version = GetReleaseVersion.cortx_version()
                 logger.info(
                     f"Starting"
-                    f"{'rolling' if (flow == config.CortxFlows.UPGRADE) else 'offline'}"  # noqa: E501
+                    f" {'rolling' if (flow == config.CortxFlows.UPGRADE) else 'offline'}"  # noqa: E501
                     " upgrade logic."
                     f" Current version of CORTX: '{cortx_version}'"
                 )

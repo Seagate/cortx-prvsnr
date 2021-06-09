@@ -168,16 +168,11 @@ class SpecRenderer(CommandParserFillerMixin):
         hook_spec: Union[Dict, List],
         defaults: Optional[HookSpec] = None
     ) -> Tuple[HookSpec, Dict]:
-
-        hook = config.MiniAPIHooks(hook)
-
-        if hook is config.MiniAPIHooks.SUPPORT_BUNDLE:
-            if not (hook_spec is None or isinstance(hook_spec, list)):
-                raise TypeError(
-                    f"an array of paths is expected for hook '{hook.value}',"
-                    f" provided '{type(hook_spec)}'"
-                )
-            return HookSpecSupportBundle(hook_spec), {}
+        try:
+            hook = config.MiniAPIHooks(hook)
+        except ValueError:
+            logger.warning(f"Unexpected hook '{hook}', ignoring")
+            return HookSpecCmd(), {}
 
         # case: shorthand for 'hook: cmd'
         if isinstance(hook_spec, str):
@@ -285,6 +280,13 @@ class SpecRenderer(CommandParserFillerMixin):
             raise ValueError(
                 f"the spec is already rendered for a different context: {ctx}"
             )
+
+        support_bundle = config_spec.pop(
+            config.MiniAPISpecFields.SUPPORT_BUNDLE.value, None
+        )
+        if support_bundle:
+            support_bundle = HookSpecSupportBundle(support_bundle)
+
         # format validation: single top level key
         if len(config_spec) != 1:
             raise ValueError(
@@ -303,6 +305,11 @@ class SpecRenderer(CommandParserFillerMixin):
 
         # store the rendered ctx
         res[config.MiniAPISpecFields.CTX.value] = self.render_ctx
+        # restore support bundle data
+        if support_bundle:
+            res[config.MiniAPISpecFields.SUPPORT_BUNDLE.value] = (
+                support_bundle.spec(normalize=self.normalize)
+            )
         # store the sw spec
         res[sw] = self._build_spec(sw_spec)
 
@@ -357,8 +364,8 @@ class EventRaiser(CommandParserFillerMixin):
             'setup_conf.raise_event',
             fun_kwargs=dict(
                 event=self.event,
-                flow=self.value,
-                level=self.level
+                flow=self.flow.value,
+                level=self.level.value
             )
         )
 

@@ -74,11 +74,37 @@ fi
 '''
 
 
+pcs_mock_tmpl = '''
+if [[ "$1" == "--help" ]]; then
+    echo 'pcs help'
+elif [[ "$1 $2" == "cluster stop" ]]; then
+    rm -rf /tmp/start
+    touch /tmp/stop
+elif [[ "$1 $2" == "cluster start" ]]; then
+    rm -rf /tmp/stop
+    touch /tmp/start
+elif [[ "$1" == "status" ]]; then
+    if [[ -f /tmp/stop ]]; then
+        echo OFFLINE:
+        rm -rf /tmp/stop
+    else
+        rm -rf /tmp/start
+    fi
+else
+    echo "Unexpected args: <$@>"
+    exit 1
+fi
+'''
+
+
 @pytest.fixture
 def mock_system_cmds(hosts, request):
     request.applymarker(
         pytest.mark.mock_cmds({
-            list(hosts)[0]: [{'cortx': cortx_mock_tmpl}, 'pcs']
+            list(hosts)[0]: [
+                {'cortx': cortx_mock_tmpl},
+                {'pcs': pcs_mock_tmpl}
+            ]
         })
     )
     request.getfixturevalue('mock_hosts')
@@ -138,6 +164,18 @@ def test_swupgrade_r2_offline(
     #           - mini APIs: (TODO separate test for setup.yaml spec)
     #               - called on NODE level
     #               - HA: were called for CLUSTER level as well
+    #
+    # FIXME hard-coded mock output
+    assert (
+        run_host.check_output(
+            "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6}'"
+        ) == (
+            "upgrade-offline cluster pre-upgrade\n"
+            "upgrade-offline node pre-upgrade\n"
+            "upgrade-offline node post-upgrade\n"
+            "upgrade-offline cluster post-upgrade"
+        )
+    )
     #           - HA mini APIs were called for cluster level as well
     #             (separate test for setup.yaml spec)
     #

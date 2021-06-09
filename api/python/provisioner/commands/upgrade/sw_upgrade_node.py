@@ -135,9 +135,9 @@ class SWUpgradeNode(CommandParserFillerMixin):
 
             sw_data = self.plan_upgrade(sw_list=sw)
 
-            self.backup()
+            self.backup(no_events=no_events)
 
-            self.upgrade(sw_data, flow, targets=targets)
+            self.upgrade(sw_data, flow, no_events=no_events, targets=targets)
 
         except Exception as update_exc:
             # TODO TEST

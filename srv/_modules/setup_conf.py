@@ -159,7 +159,7 @@ def hook(
                 res = _call_cmd(cmd)
                 logger.debug(
                     f"Hook '{hook}' command '{cmd}'"
-                    f" for '{sw}' resulted in: {res}"
+                    f" for '{sw}' resulted in: '{res}'"
                 )
         except Exception as exc:
             logger.warning(
@@ -191,9 +191,9 @@ def raise_event(event, flow, level, fail_fast=False):
     for sw, cmd in events:
         try:
             res = _call_cmd(cmd)
-            logger.warning(
+            logger.debug(
                 f"Event '{event}' command '{cmd}' "
-                f"for '{sw}' resulted in: {res}"
+                f"for '{sw}' resulted in: '{res}'"
             )
         except Exception as exc:
             logger.warning(

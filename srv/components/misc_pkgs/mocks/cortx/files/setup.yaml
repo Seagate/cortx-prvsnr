@@ -17,42 +17,42 @@
 
 {{ component }}:
   post_install:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: post_install'
   config:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: config'
   init:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: init'
   test:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: test'
   reset:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: reset'
   backup:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: backup'
   restore:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: restore'
   upgrade:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: upgrade'
     pre:
       args:
         - '{{ component }}: pre-upgrade'
       when: true
-    pre:
+    post:
       args:
         - '{{ component }}: post-upgrade'
       when: true

@@ -649,6 +649,7 @@ class MiniAPISpecFields(Enum):
     DEFAULTS = '__defaults__'
     EVENTS = '__events__'
     CTX = '__context__'
+    SUPPORT_BUNDLE = 'support_bundle'
 
 
 class MiniAPISpecHookFields(Enum):
@@ -674,7 +675,6 @@ class MiniAPIHooks(Enum):
     CLEANUP = 'cleanup'
     BACKUP = 'backup'
     RESTORE = 'restore'
-    SUPPORT_BUNDLE = 'support_bundle'
 
 
 class MiniAPIEvents(Enum):
