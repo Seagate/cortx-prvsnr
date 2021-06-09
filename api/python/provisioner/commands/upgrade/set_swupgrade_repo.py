@@ -28,6 +28,7 @@ from .. import inputs, values
 from provisioner.config import (REPO_CANDIDATE_NAME,
                                 IS_REPO_KEY,
                                 RELEASE_INFO_FILE,
+                                CORTX_RELEASE_INFO_FILE,
                                 THIRD_PARTY_RELEASE_INFO_FILE,
                                 ReleaseInfo,
                                 PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
@@ -38,7 +39,8 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 PIP_CONFIG_FILE,
                                 SWUpgradeInfoFields,
                                 ISOValidationFields,
-                                CheckVerdict
+                                CheckVerdict,
+                                ISOKeywordsVer2 as ISOVer2
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError
@@ -86,6 +88,79 @@ SW_UPGRADE_BUNDLE_SCHEME = {
             "repodata": YumRepoDataValidator(),
         },
         required=False)
+}
+
+
+SW_UPGRADE_BUNDLE_SCHEME_VER2 = {
+    RELEASE_INFO_FILE: ReleaseInfoValidator(),
+    ISOVer2.FW: DirValidator(
+        {
+            ISOVer2.SERVER: DirValidator(
+                required=False
+            ),
+            ISOVer2.STORAGE: DirValidator(
+                required=False
+            )
+        },
+        required=False
+    ),
+    ISOVer2.OS: DirValidator(
+        {
+            ISOVer2.PATCHES: DirValidator(
+                required=False
+            )
+        },
+        required=False
+    ),
+    ISOVer2.SW: DirValidator(
+        {
+            ISOVer2.CORTX: DirValidator(
+                {
+                    CORTX_RELEASE_INFO_FILE: ReleaseInfoValidator(
+                        required=True
+                    ),
+                    "repodata": YumRepoDataValidator()
+                },
+                required=True
+            ),
+            ISOVer2.EXTERNAL: DirValidator(
+                {
+                    THIRD_PARTY_RELEASE_INFO_FILE:
+                        ThirdPartyReleaseInfoValidator(),
+                    ISOVer2.PYTHON:  DirValidator(
+                        {
+                            "index.html": FileValidator(required=True)
+                        },
+                        required=False),
+                    ISOVer2.RPM: DirValidator(
+                        {
+                            ISOVer2.EPEL_7: DirValidator(
+                                {
+                                    "repodata": YumRepoDataValidator()
+                                },
+                                required=True
+                            ),
+                            ISOVer2.COMMONS: DirValidator(
+                                {
+                                    "repodata": YumRepoDataValidator()
+                                },
+                                required=False
+                            ),
+                            ISOVer2.PERFORMANCE: DirValidator(
+                                {
+                                    "repodata": YumRepoDataValidator()
+                                },
+                                required=False
+                            )
+                        },
+                        required=True
+                    )
+                },
+                required=False
+            )
+        },
+        required=True
+    )
 }
 
 

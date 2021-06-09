@@ -1182,6 +1182,11 @@ class SWUpgradeRepo(SWUpdateRepo):
         },
         default=False
     )
+    # NOTE: source version parameter defines SW Upgrade ISO structure
+    source_version: config.ISOVersion = ParamDictItemInputBase._attr_ib(
+        descr="SW upgrade source version",
+        default=config.ISOVersion.VERSION1  # Legacy version by default
+    )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade
     _target_build: str = attr.ib(default=None)
@@ -1207,6 +1212,8 @@ class SWUpgradeRepo(SWUpdateRepo):
 
             return res
         elif self.is_remote():
+            # TODO: EOS-20669: Need to save version of remote repo structure,
+            #  e.g. self.source_version.
             return {
                 f'{config.OS_ISO_DIR}': {
                     'source': f'{self.source}/{config.OS_ISO_DIR}',
@@ -1235,6 +1242,7 @@ class SWUpgradeRepo(SWUpdateRepo):
             return {
                 f'{self.release}': {
                     'source': f'salt://{iso_dir}/{self.release}.iso',
+                    'version': f'{self.source_version.value}',
                     'is_repo': False
                 },
                 f'{config.OS_ISO_DIR}': {

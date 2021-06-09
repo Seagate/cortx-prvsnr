@@ -113,6 +113,7 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 REPO_CANDIDATE_NAME = 'candidate'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
 THIRD_PARTY_RELEASE_INFO_FILE = 'THIRD_PARTY_RELEASE.INFO'
+CORTX_RELEASE_INFO_FILE = 'CORTX_RELEASE.INFO'
 
 SALT_MASTER_CONFIG_DEFAULT = '/etc/salt/master'
 SALT_MINION_CONFIG_DEFAULT = '/etc/salt/minion'
@@ -125,6 +126,42 @@ OS_ISO_DIR = 'os'
 CORTX_ISO_DIR = 'cortx_iso'
 CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
 CORTX_PYTHON_ISO_DIR = 'python_deps'
+
+
+class ISOVersion(Enum):
+
+    """Simple class enumeration that defines different ISO bundle
+    scheme versions.
+    """
+
+    VERSION1 = "1.0.0"
+    VERSION2 = "2.0.0"
+
+
+class ISOKeywordsVer2:
+
+    """Directory names, file names and other important keywords for ISO
+    structure of version 2.
+
+    This class is used for simple grouping of common names for ISO structure
+    of version 2. It should help to avoid hard cording such names directly in
+    code.
+
+    """
+
+    FW = "fw"
+    SERVER = "server"
+    STORAGE = "storage"
+    OS = "os"
+    PATCHES = "patches"
+    SW = "sw"
+    CORTX = "cortx"
+    EXTERNAL = "external"
+    PYTHON = "python"
+    RPM = "rpm"
+    EPEL_7 = "EPEL-7"
+    COMMONS = "commons"
+    PERFORMANCE = "performance"
 
 
 PRVSNR_CORTX_REPOS_BASE_DIR = (
