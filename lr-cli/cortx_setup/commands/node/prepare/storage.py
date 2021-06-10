@@ -167,7 +167,6 @@ class NodePrepareStorage(Command):
             PillarSet().run(
                 f'storage/{_enc_num}/enclosure_id',
                 _enc_id_on_enc,
-                targets=node_id,
                 local=True
             )
             self.logger.debug(

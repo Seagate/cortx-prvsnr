@@ -97,7 +97,6 @@ class DurabilityConfig(Command):
             PillarSet().run(
                 'cluster/storage_set/durability',
                 durability_dict,
-                targets=node_id,
                 local=True
             )
             Conf.set(
