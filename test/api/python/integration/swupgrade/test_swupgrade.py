@@ -20,8 +20,6 @@ import logging
 from copy import deepcopy
 from collections import defaultdict
 
-from provisioner.commands import GetReleaseVersion
-
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +83,8 @@ def mock_system_cmds(hosts, request):
 # main goals:
 #   - verify delegation of orchestration to a new version
 #   - verify salt based call work fine (mini API)
-@pytest.mark.verified
 @pytest.mark.hosts_num(3)
+@pytest.mark.verified
 @pytest.mark.isolated
 def test_swupgrade_r2_offline(
     setup_hosts,
@@ -110,17 +108,10 @@ def test_swupgrade_r2_offline(
         "provisioner sw_upgrade --offline"
     )
 
-    # CHECKS
-
-    # CLUSTER level
-
-    # new Cortx version is running
-    # FIXME hard-coded
-    metadata = run_host.check_output(
-        "provisioner get_release_version"
-    )
-    assert GetReleaseVersion.cortx_version(metadata) == '2.1.0-177'
-
+    # TODO
+    #    - after checks:
+    #       - CLUSTER level:
+    #           - new Cortx version is running
     #           - new provisioner API vesion was called to manage the logic
     #             with --noprepare flag
     #           - node level logic was applied for all the nodes concurrently

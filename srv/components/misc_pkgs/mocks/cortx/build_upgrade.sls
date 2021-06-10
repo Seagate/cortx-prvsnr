@@ -21,6 +21,6 @@
 {% set mocks_repo_default = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_{}'.format(version) %}
 {% set mocks_repo = salt['pillar.get']('inline:upgrade_repo_dir', mocks_repo_default) %}
 
-{% from tpldir + '/_macros.sls' import bundle_built with context %}
+{% from './_macros.sls' import bundle_built with context %}
 
 {{ bundle_built(mocks_repo, 'upgrade', version, gen_iso=True) }}

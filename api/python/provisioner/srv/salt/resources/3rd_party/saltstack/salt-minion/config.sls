@@ -17,6 +17,100 @@
 
 {% set onchanges = salt['pillar.get']('inline:salt-minion:onchanges') %}
 
-{% from tpldir + '/macros.sls' import salt_minion_configured with context %}
+# FIXME that fails intermittently with
+#       Relative path "./macros.sls" cannot be resolved without an environment
+#{ % from './macros.sls' import salt_minion_configured with context % }
 
-{{ salt_minion_configured(onchanges) }}
+#{ { salt_minion_configured(onchanges) } }
+
+{% set fileroot_prefix = salt['pillar.get']('inline:fileroot_prefix', '') %}
+
+salt_minion_configured:
+  file.managed:
+    - name: /etc/salt/minion
+    - source: salt://{{ fileroot_prefix }}saltstack/salt-minion/files/config/minion
+    - keep_source: True
+    - backup: minion
+    - template: jinja
+
+salt_minion_config_is_good:
+  cmd.run:
+    - name: 'salt-call --local test.ping'
+    - onchanges:
+      - file: salt_minion_configured
+
+# FIXME EOS-8473 prepend is not a clean solution
+salt_minion_grains_configured:
+  file.managed:
+    - name: /etc/salt/grains
+    - source: salt://{{ fileroot_prefix }}saltstack/salt-minion/files/config/grains
+    - keep_source: True
+    - backup: minion
+    - template: jinja
+
+# TODO EOS-8473 better content management
+salt_minion_id_set:
+  file.prepend:
+    - name: /etc/salt/minion_id
+    - text: {{ grains.id }}
+    - onchanges_in:
+      - file: salt_minion_onchanges
+
+salt_minion_pki_set:
+  file.recurse:
+    - name: /etc/salt/pki/minion
+    - source: salt://{{ fileroot_prefix }}saltstack/salt-cluster/files/pki/minions/{{ grains.id }}
+    - clean: False
+    - keep_source: True
+    - maxdepth: 0
+    - onchanges_in:
+      - file: salt_minion_onchanges
+
+salt_minion_master_pki_set:
+  file.managed:
+    - name: /etc/salt/pki/minion/minion_master.pub
+    - source: salt://{{ fileroot_prefix }}saltstack/salt-cluster/files/pki/master/master.pub
+    - keep_source: True
+    - backup: minion
+    - template: jinja
+    - onchanges_in:
+      - file: salt_minion_onchanges
+
+salt_minion_enabled:
+  service.enabled:
+    - name: salt-minion.service
+    - require:
+      - salt_minion_configured
+      - salt_minion_grains_configured
+
+
+    {% if onchanges == 'stop' %}
+
+salt_minion_onchanges:
+  service.dead:
+    - name: salt-minion.service
+    - require:
+      - salt_minion_config_is_good
+    - onchanges:
+      - file: salt_minion_configured
+      - file: salt_minion_grains_configured
+
+    {% elif onchanges == 'restart' %}
+
+salt_minion_onchanges:
+  cmd.run:
+    - name: 'salt-call service.restart salt-minion'
+    - bg: True
+    - require:
+      - salt_minion_config_is_good
+    - onchanges:
+      - file: salt_minion_configured
+      - file: salt_minion_grains_configured
+
+    {% else %}
+
+salt_minion_onchanges:
+  test.show_notification:
+    - text: {{ "onchanges is " + onchanges + ", no action" }}
+
+    {% endif %}
