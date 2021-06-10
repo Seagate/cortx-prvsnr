@@ -171,7 +171,8 @@ class SWUpgrade(CommandParserFillerMixin):
                 config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.PRE
             ),
             flow=flow,
-            level=config.MiniAPILevels.CLUSTER
+            level=config.MiniAPILevels.CLUSTER,
+            targets=config.LOCAL_MINION
         ).run()
 
         # the following needed only in case pacemaker is upgraded
@@ -194,7 +195,8 @@ class SWUpgrade(CommandParserFillerMixin):
                 config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.POST
             ),
             flow=flow,
-            level=config.MiniAPILevels.CLUSTER
+            level=config.MiniAPILevels.CLUSTER,
+            targets=config.LOCAL_MINION
         ).run()
 
     def prepare(self, cortx_version, flow=config.CortxFlows.UPGRADE):

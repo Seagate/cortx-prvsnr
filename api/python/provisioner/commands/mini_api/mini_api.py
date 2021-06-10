@@ -30,7 +30,8 @@ from provisioner.attr_gen import attr_ib
 from provisioner.salt import function_run
 
 from provisioner.commands._basic import (
-    CommandParserFillerMixin
+    CommandParserFillerMixin,
+    RunArgs
 )
 
 logger = logging.getLogger(__name__)
@@ -358,6 +359,7 @@ class EventRaiser(CommandParserFillerMixin):
         cli_spec='mini_api/fail_fast',
         default=False
     )
+    targets: str = RunArgs.targets
 
     def run(self):
         return function_run(
@@ -366,7 +368,8 @@ class EventRaiser(CommandParserFillerMixin):
                 event=self.event,
                 flow=self.flow.value,
                 level=self.level.value
-            )
+            ),
+            targets=self.targets
         )
 
 
@@ -376,7 +379,8 @@ class MiniAPI(CommandParserFillerMixin):
     _run_args_type = None
 
     mini_api_list = {
-        'render_spec': SpecRenderer
+        'render_spec': SpecRenderer,
+        'raise_event': EventRaiser
     }
 
     # XXX DRY copy-paste from Helper command
