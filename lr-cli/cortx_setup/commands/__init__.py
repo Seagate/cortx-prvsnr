@@ -24,7 +24,7 @@ from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
 from .cluster.show import ClusterShow
 from .cluster.config.network import ClusterNetworkConfig
-from .cluster.config.cortx import CortxClusterConfig
+from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
@@ -47,7 +47,7 @@ __all__ = [
     'AddStorageEnclosure',
     'ClusterCreate',
     'ClusterNetworkConfig',
-    'CortxClusterConfig',
+    'ClusterConfigComponent',
     'ClusterShow',
     'CreateStorageSet',
     'DurabilityConfig',
