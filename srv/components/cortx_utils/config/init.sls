@@ -16,8 +16,5 @@
 #
 
 include:
-  - .install
-  - .config
-{% if grains['id'] == 'srvnode-1' %}
-  - .sanity_check
-{% endif %}
+  - components.cortx_utils.config.post_install
+  - components.cortx_utils.config.config
