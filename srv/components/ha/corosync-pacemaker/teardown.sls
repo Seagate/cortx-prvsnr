@@ -48,6 +48,7 @@ Remove corosync-pacemaker data:
       - /var/lib/corosync
       - /var/lib/pacemaker
       - /var/lib/pcsd
+      - /var/log/pcsd
 
 # Enable and Start Firewall:
 #   cmd.run:
