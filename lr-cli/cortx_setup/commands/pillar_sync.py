@@ -16,9 +16,14 @@
 #
 
 from .command import Command
-from provisioner.salt import cmd_run
+from provisioner.salt import cmd_run, StatesApplier
 from cortx_setup import config
 from provisioner.commands import PillarSet
+from provisioner.config import (
+    PRVSNR_USER_LOCAL_PILLAR_DIR,
+    PRVSNR_DATA_ROOT_DIR,
+    PRVSNR_FACTORY_PROFILE_DIR
+)
 import json
 
 
@@ -45,3 +50,13 @@ class PillarSync(Command):
                 f'{pillar}',
                 res_pillar
             )
+        conf_path = str(PRVSNR_FACTORY_PROFILE_DIR / 'confstore')
+        # backup local consftore data
+        self.logger.debug(f"Copy local confstore file to {conf_path}")
+        state = 'components.provisioner.confstore'
+        StatesApplier.apply([state])
+        # backup local pillar data
+        cmd_run(f"rm -rf {PRVSNR_DATA_ROOT_DIR}/.backup ")
+        cmd_run(f"mkdir -p {PRVSNR_DATA_ROOT_DIR}/.backup")
+        cmd_run(f"mv {PRVSNR_USER_LOCAL_PILLAR_DIR}/* "
+                f"{PRVSNR_DATA_ROOT_DIR}/.backup/")
