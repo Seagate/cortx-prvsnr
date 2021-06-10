@@ -42,6 +42,13 @@ upgrade:
   iteration: upgrade round number
   old_version: old version number
   new_version: new version number
+  orchestrator:
+    noprepare: skip preparation phase
+    offline: perform offline upgrade
+  provisioner:
+    sw:
+      help: list of sw to be updated, if not specified - detected automatically
+      nargs: +
 consul:
     server: This flag is used to control if an agent is in server or client mode
     bind_addr:
@@ -55,6 +62,42 @@ consul:
     bootstrap_expect:
       help: the number of expected servers in the Consul datacenter
       metavar: number
+salt_master:
+  lvm2_first: >-
+    install lvm2 before saltstack (workaround for GlusterFS in-docker setups)
+  updated_keys: list of minion ids which keys have been changed
+  onchanges:
+    help: action on salt-master configuration changes
+    choices: ['restart', 'nothing']
+salt_minion:
+  masters: list of salt-master hosts
+  cluster_uuid:
+    help: Cluster UUID
+    nargs: '+'
+    metavar: uuid
+  onchanges:
+    help: action on salt-minion configuration changes
+    choices: ['restart', 'stop', 'nothing']
+  rediscover: fetch host system information and connections
+salt_cluster:
+  regen_keys: re-generate old keys
+provisioner:
+  install_dir:
+    help: provisioner installation directory
+    metavar: path
+  repo:
+    tgz:
+      help: path to a repo archive, if defined 'path' and 'version'
+      metavar: path
+    path:
+      help: the path to local provisioner repo
+      metavar: path
+    version: Provisioner version to setup
+    update: re-install local repo
+  api:
+    distr:
+      help: type of API dirtibutive
+      choices: ['pip', 'package']
 glusterfs:
   peers:
     help: gluster peer host (IP/domain)
@@ -81,3 +124,14 @@ setup:
   ha: turn on high availability mode
   salt_master: domain name or IP of the salt-master
   vendored: The flag to use setup logic from a vendor
+mini_api:
+  spec:
+    help: mini provisioner spec file
+    metavar: path
+  flow:
+    help: CORTX configuration flow
+    choices: __py__:provisioner.config.CortxFlows
+  level:
+    help: mini provisioning level
+    choices: __py__:provisioner.config.MiniAPILevels
+  normalize: normalize spec

@@ -24,7 +24,7 @@ from provisioner.vendor import attr
 from provisioner.resources import consul
 from provisioner.attr_gen import attr_ib
 
-from .base import ResourceSLS
+from .base import Resource3rdPartySLS
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +38,8 @@ class VersionRange:
 
 
 @attr.s
-class ConsulSLS(ResourceSLS):
-    base_sls = 'resources.3rd_party.consul'
+class ConsulSLS(Resource3rdPartySLS):
+    _base_sls = 'consul'
 
     def __attrs_post_init__(self):
         """No Ops."""
@@ -143,7 +143,7 @@ class ConsulUpgradeSLS(ConsulSLS):
     def is_vendored(self) -> bool:
         return False
 
-    def run(self):
+    def _run(self):
         for m_range, m_spec in self.migrations.items():
             if (
                 self.state.new_version == m_range.new_version

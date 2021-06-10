@@ -16,49 +16,43 @@
 #
 
 import logging
-from typing import Any, Union
+from typing import Any, Union, ClassVar
 from pathlib import Path
-import os
 
 from .vendor import attr
 from .paths import FileRootPath, USER_SHARED_FILEROOT
+from .salt_api.base import SaltClientBase
 from .salt_api.runner import SaltRunnerClient
+# from .salt_api.caller import SaltLocalCallerClient
+
 from . import utils
 
 logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class ResourcePath:
-    resource: str
-    fname: str
-
-    @property
-    def path(self):
-        return (
-            Path('components')
-            / self.resource.replace('.', os.sep)
-            / 'files'
-            / self.fname
-        )
-
-
-@attr.s(auto_attribs=True)
 class FileRoot:
+    # TODO local client may require a separate parent class
+    def_local_client_t: ClassVar[SaltClientBase] = (
+        # SaltLocalCallerClient
+        SaltRunnerClient
+    )
+
     _root: FileRootPath = USER_SHARED_FILEROOT
+    local_client: SaltClientBase = attr.Factory(def_local_client_t)
     refresh_on_update: bool = True
-    _runner_client: SaltRunnerClient = attr.ib(init=False, default=None)
+
+    _runner: SaltRunnerClient = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
-        """Do post init."""
-        self._runner_client = SaltRunnerClient()
+        self._runner = SaltRunnerClient(c_path=self.local_client.c_path)
 
     def refresh(self):
         # TODO DOC
         # ensure it would be visible for salt-master / salt-minions
         # TODO makes sense to move to client, so ssh and runner clients
         #      may do that in a different way
-        self._runner_client.run(
+        self._runner.run(
             'fileserver.clear_file_list_cache',
             fun_kwargs=dict(backend='roots')
         )
@@ -67,26 +61,24 @@ class FileRoot:
     def root(self):
         return self._root
 
-    def path(self, r_path: Union[str, Path, ResourcePath]):
-        if isinstance(r_path, ResourcePath):
-            r_path = r_path.path
+    def path(self, r_path: Union[str, Path]):
+        return self.root.path(r_path)
 
-        return self._root / r_path
-
-    def exists(self, r_path: Union[str, Path, ResourcePath]):
+    def exists(self, r_path: Union[str, Path]):
         return self.path(r_path).exists()
 
-    def read(self, r_path: Union[str, Path, ResourcePath], text: bool = True):
+    def read(self, r_path: Union[str, Path], text: bool = True):
         path = self.path(r_path)
         return path.read_text() if text else path.read_bytes()
 
-    def read_yaml(self, r_path: Union[str, Path, ResourcePath]):
+    def read_yaml(self, r_path: Union[str, Path]):
         return utils.load_yaml(self.path(r_path))
 
     # TODO make idempotent
+    # TODO option to create parent dirs if not exists
     def write(
         self,
-        r_path: Union[str, Path, ResourcePath],
+        r_path: Union[str, Path],
         data: Any,
         text: bool = True
     ):
@@ -101,8 +93,8 @@ class FileRoot:
             self.refresh()
 
     # TODO make idempotent
-    def write_yaml(self, r_path: Union[str, Path, ResourcePath], data: Any):
-        utils.dump_yaml(self.path(r_path), data)
+    def write_yaml(self, r_path: Union[str, Path], data: Any):
+        return self.write(r_path, utils.dump_yaml_str(data), text=True)
 
     # FIXME mostly duplicates salt:copy_to_file_roots
     def copy(
@@ -126,12 +118,12 @@ class FileRoot:
             #       name=str(dest)
             #     )
             # )
-            self._runner_client.cmd_run(
+            self.local_client.cmd_run(
                 "mkdir -p {0} && rm -rf {2} && cp -R {1} {2}"
                 .format(dest.parent, source, dest)
             )
         else:
-            self._runner_client.run(
+            self.local_client.state_single(
                 'file.managed',
                 fun_kwargs=dict(
                     source=str(source),

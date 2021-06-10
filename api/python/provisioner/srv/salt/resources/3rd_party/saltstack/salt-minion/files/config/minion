@@ -1,0 +1,33 @@
+{% if salt['pillar.get']('salt-minion:config:master') %}
+master: {{ salt['pillar.get']('salt-minion:config:master') }}
+{% elif salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") %}
+master: {{ salt['cmd.shell']("salt-call --local grains.get master --out=text | awk -F ':' '{ print $2 }'") }}
+{% else %}
+master: srvnode-1
+{% endif %}
+random_master: False
+master_shuffle: False
+output: highstate
+ping_interval: 5
+mine_enabled: True
+mine_interval: 60
+file_roots:
+  base:
+    - /var/lib/seagate/cortx/provisioner/local/srv/salt     # new style
+    - /var/lib/seagate/cortx/provisioner/shared/srv/salt     # new style
+    - /opt/seagate/cortx/provisioner/srv_user
+    - /opt/seagate/cortx/provisioner/srv
+    - /opt/seagate/cortx/provisioner/srv_ext  # file root for salt extensions
+fileserver_backend:
+  - roots
+pillar_roots:
+  base:
+    - /var/lib/seagate/cortx/provisioner/local/srv/pillar   # new style
+    - /var/lib/seagate/cortx/provisioner/shared/srv/pillar  # new style
+    - /srv/glusterfs/volume_prvsnr_data/srv/pillar          # fallback for read-only queries
+    - /opt/seagate/cortx/provisioner/pillar
+state_output: changes
+log_file: /var/log/seagate/provisioner/salt_minion.log
+log_level_logfile: warning
+use_superseded:
+  - module.run

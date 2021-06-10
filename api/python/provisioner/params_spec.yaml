@@ -61,16 +61,22 @@ hostname:
   hostname: cluster/srvnode-0/hostname
 
 
-data_network:
+public_data_network:
   _path: cluster.sls
   data_public_ip: cluster/srvnode-0/network/data/public_ip
   data_netmask: cluster/srvnode-0/network/data/netmask
   data_gateway: cluster/srvnode-0/network/data/gateway
   data_public_interfaces: cluster/srvnode-0/network/data/public_interfaces
+  data_mtu: cluster/srvnode-0/network/data/mtu
+
+
+private_data_network:
+  _path: cluster.sls
   data_private_ip: cluster/srvnode-0/network/data/private_ip
   data_private_interfaces: cluster/srvnode-0/network/data/private_interfaces
   data_mtu: cluster/srvnode-0/network/data/mtu
 
+  
 release:
   _path: release.sls
   target_build: release/target_build

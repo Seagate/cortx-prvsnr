@@ -31,21 +31,11 @@ Get enclosure_id for {{ grains['id'] }}:
     - name: echo "enc_{{ machine_id }}" > /etc/enclosure-id
   {% else %}
 Get enclosure_id for {{ grains['id'] }}:
-  test.show_notification:
-    - text: "Can't not set the enclosure id on VM as there is not machine id set on {{ grains['id'] }}"
+   test.fail_without_changes:
+    - comment : "Can't not set the enclosure id on VM as there is not machine id set on {{ grains['id'] }}"
   {% endif %}
 {% endif %}
-
-Replace enclosure id in grains:
-    cmd.run:
-      - name: 'enclosure_id=`cat /etc/enclosure-id`; sed -ie "s/enclosure_id:*.*/enclosure_id: ${enclosure_id}/" /etc/salt/grains'
-      - require:
-        - Get enclosure_id for {{ grains['id'] }}
 
 Sync grains data after refresh enclosure_id:
   module.run:
     - saltutil.refresh_grains: []
-    - require:
-      - Replace enclosure id in grains
-    - watch_in:
-      - Sync salt data

@@ -41,6 +41,8 @@ get_setup_info:
   type: GetSetupInfo
 check:
   type: Check
+mini_api:
+  type: mini_api.mini_api.MiniAPI
 
 # config commands
 pillar_set:
@@ -64,12 +66,17 @@ set_network:
       # - components.system.network.data.direct
       # - components.ha.corosync-pacemaker.config.cluster_ip
       # - components.ha.corosync-pacemaker.config.mgmt_vip
-set_data_network:
+set_public_data_network:
   type: Set
-  input_type: DataNetwork
+  input_type: PublicDataNetwork
   states:
     post:
       - components.system.network.data.public
+set_private_data_network:
+  type: Set
+  input_type: PrivateDataNetwork
+  states:
+    post:
       - components.system.network.data.direct
 set_hostname:
   type: Set
@@ -125,6 +132,14 @@ sw_update:
   type: SWUpdate
 sw_upgrade:
   type: upgrade.SWUpgrade
+sw_upgrade_node:
+  type: upgrade.SWUpgradeNode
+get_swupgrade_info:
+  type: upgrade.GetSWUpgradeInfo
+check_iso_authenticity:
+  type: upgrade.CheckISOAuthenticity
+get_iso_version:
+  type: upgrade.GetISOVersion
 fw_update:
   type: FWUpdate
 sw_rollback:
@@ -141,6 +156,8 @@ configure_cortx:
   type: ConfigureCortx
 create_user:
   type: CreateUser
+create_service_user:
+  type: CreateServiceUser
 cmd_run:
   type: CmdRun
 configure_setup:
@@ -163,6 +180,10 @@ configure_node:
 # setup commands
 setup_provisioner:
   type: SetupProvisioner
+bootstrap_provisioner:
+  type: BootstrapProvisioner
+post_provisioner:
+  type: PostProvisioner
 setup_singlenode:
   type: SetupSinglenode
 setup_cluster:

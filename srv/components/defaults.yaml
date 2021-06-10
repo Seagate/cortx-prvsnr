@@ -48,7 +48,7 @@ tmp_dir: /tmp
 
  {% set commons_repo = '/'.join([target_build, '3rd_party']) %}
 
-  {% set epel_repo = "http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/" %}
+  {% set epel_repo = "https://dl.fedoraproject.org/pub/epel/7/x86_64/" %}
     # url: https://dl.fedoraproject.org/pub/epel/7/x86_64/
   {% set saltstack_repo = "https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3002" %}
 

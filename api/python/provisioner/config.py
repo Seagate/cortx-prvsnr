@@ -45,6 +45,11 @@ PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'
 CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
 ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
 
+API_SPEC_PATH = CONFIG_MODULE_DIR / 'api_spec.yaml'
+PARAMS_SPEC_PATH = CONFIG_MODULE_DIR / 'params_spec.yaml'
+CLI_SPEC_PATH = CONFIG_MODULE_DIR / 'cli_spec.yaml'
+ATTRS_SPEC_PATH = CONFIG_MODULE_DIR / 'attrs_spec.yaml'
+
 # TODO
 #  - rename to defaults.py or constants.py or ...
 #  - then rename base.py to config.py
@@ -362,25 +367,8 @@ def profile_paths(base_dir: Optional[Path] = None) -> Dict:
     }
 
 
-# TODO IMPROVE EOS-8473 better name
-REPO_BUILD_DIRS = [
-    '.build',
-    'build',
-    '.boxes',
-    '.eggs',
-    '.vdisks',
-    '.vagrant',
-    '.pytest_cache',
-    f'{PROFILE_DIR_NAME}',
-    '__pycache__',
-    'packer_cache',
-    'tmp',
-    '*.iso'
-]
+REPO_VERSION_RAW = '__raw__'  # to not interfere with any reasonable git refs
 
-# Using any base path is risky as it builds a dependency inside code.
-# This results in loss of flexibility.
-# CORTX_REPOS_BASE_URL = 'http://cortx-storage.colo.seagate.com/releases/cortx'
 
 LOCALHOST_IP = '127.0.0.1'
 LOCALHOST_DOMAIN = 'localhost'
@@ -448,6 +436,7 @@ class Checks(Enum):
     STORAGE_HBA = "storage_hba"
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
+    UPGRADE_ISO_VERSION = "upgrade_iso_version"
 
 
 class GroupChecks(Enum):
@@ -459,6 +448,7 @@ class GroupChecks(Enum):
     DEPLOY_POST_CHECKS = "deploy_post_checks"
     REPLACENODE_CHECKS = "replacenode_checks"
     SWUPDATE_CHECKS = "swupdate_checks"
+    SWUPGRADE_CHECKS = "swupgrade_checks"
     UNBOXING_PRE_CHECKS = "unboxing_pre_checks"
     UNBOXING_POST_CHECKS = "unboxing_post_checks"
 
@@ -483,6 +473,17 @@ SWUPDATE_CHECKS = {
     Checks.CLUSTER_STATUS.value,
     Checks.LOGS_ARE_GOOD.value,
     Checks.PASSWORDLESS_SSH_ACCESS.value
+}
+
+SWUPGRADE_CHECKS = {
+    Checks.NETWORK.value,
+    Checks.CONNECTIVITY.value,
+    Checks.BMC_ACCESSIBILITY.value,
+    Checks.COMMUNICABILITY.value,
+    Checks.CLUSTER_STATUS.value,
+    Checks.LOGS_ARE_GOOD.value,
+    Checks.PASSWORDLESS_SSH_ACCESS.value,
+    Checks.UPGRADE_ISO_VERSION.value
 }
 
 REPLACENODE_CHECKS = {
@@ -561,6 +562,12 @@ class CortxResourceT(Enum):
 
     REPOS = "cortx_repos"
     CONSUL = "consul"
+    SALTSTACK = "saltstack"
+    SALT_MASTER = "salt-master"
+    SALT_MINION = "salt-minion"
+    SALT_CLUSTER = "salt-cluster"
+    PROVISIONER = "provisioner"
+    PROVISIONER_API = "provisioner-api"
 
 
 class ContentType(Enum):
@@ -577,6 +584,7 @@ class HashType(Enum):
 
     MD5 = "md5"
     SHA256 = "sha256"
+    SHA384 = "sha384"
     SHA512 = "sha512"
 
 
@@ -592,3 +600,66 @@ class LockMetaDataFields(Enum):
 
     PID = "pid"
     SOURCE_TARGET = "source_target"
+
+
+class HareStatus(Enum):
+    """Hare output statuses"""
+
+    FAILED = 'Failed'
+    SUCCEEDED = 'Succeeded'
+    IN_PROGRESS = 'InProgress'
+
+
+class ISOValidationFields(Enum):
+    """Name of ISO validation fields."""
+
+    STATUS = "Status"
+    MSG = "msg"
+
+
+class SWUpgradeInfoFields(Enum):
+    """Named fields for meta information about SW upgrade repository"""
+
+    VERSION = "version"
+    VERSION_CONSTRAINT = "version_constraint"
+
+
+class CortxFlows(Enum):
+
+    """Cortx configuration flows."""
+
+    DEPLOY = "deploy"
+    UPGRADE = "upgrade"
+    UPGRADE_OFFLINE = "upgrade-offline"
+
+
+class MiniAPILevels(Enum):
+
+    """Mini Provisioner API Levels."""
+
+    CLUSTER = "cluster"
+    NODE = "node"
+
+
+class MiniAPIHooks(Enum):
+
+    """Mini Provisioner API Hooks."""
+
+    POST_INSTALL = 'post_install'
+    PREPARE = 'prepare'
+    CONFIG = 'config'
+    INIT = 'init'
+    TEST = 'test'
+    UPGRADE = 'upgrade'
+    RESET = 'reset'
+    CLEANUP = 'cleanup'
+    BACKUP = 'backup'
+    RESTORE = 'restore'
+    SUPPORT_BUNDLE = 'support_bundle'
+
+class MiniAPIEvents(Enum):
+
+    """Mini Provisioner API Events."""
+
+    PRE = 'pre'
+    POST = 'post'

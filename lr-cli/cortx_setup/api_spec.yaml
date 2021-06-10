@@ -1,0 +1,86 @@
+#
+## Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+##
+## This program is free software: you can redistribute it and/or modify
+## it under the terms of the GNU Affero General Public License as published
+## by the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+## GNU Affero General Public License for more details.
+## You should have received a copy of the GNU Affero General Public License
+## along with this program. If not, see <https://www.gnu.org/licenses/>.
+## For any questions about this software or licensing,
+## please email opensource@seagate.com or cortx-questions@seagate.com.
+##
+#
+
+
+hostname:
+  Hostname
+
+pillar_sync:
+  PillarSync
+
+network:
+  config:
+    NetworkConfig
+
+node:
+  initialize:
+    NodeInitalize
+  finalize:
+    NodeFinalize
+  prepare:
+    server:
+      NodePrepareServer
+    firewall:
+      NodePrepareFirewall
+    time:
+      NodePrepareTime
+    network:
+      NodePrepareNetwork
+    storage:
+      NodePrepareStorage
+
+cluster:
+  create:
+    ClusterCreate
+  show:
+    ClusterShow
+  config:
+    network:
+      ClusterNetworkConfig
+
+resource:
+  discover:
+    ResourceDiscover
+  show:
+    ResourceShow
+
+security:
+  config:
+    SecurityConfig
+
+signature:
+  get:
+    GetSignature
+  set:
+    SetSignature
+
+storage:
+  config:
+    StorageEnclosureConfig
+
+storageset:
+  create:
+    CreateStorageSet
+  add:
+    node:
+      AddServerNode
+    enclosure:
+      AddStorageEnclosure
+  config:
+    durability:
+      DurabilityConfig

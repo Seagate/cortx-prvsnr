@@ -69,7 +69,7 @@ class SWRollback(CommandParserFillerMixin):
 
     @staticmethod
     def _rollback_component(component, targets):
-        state_name = "components.{}.rollback".format(component)
+        state_name = f"{component}.rollback"
         try:
             logger.info(
                 "Restoring {} configuration on {}".format(component, targets)
@@ -132,7 +132,7 @@ class SWRollback(CommandParserFillerMixin):
             if not sw_list:
                 logger.warning('No components listed for rollback')
 
-            for component in reversed(upgrade_dict['sw_list']):
+            for component in reversed(list(upgrade_dict['sw_list'].values())):
                 self._rollback_component(component, targets)
 
         except Exception as exc:

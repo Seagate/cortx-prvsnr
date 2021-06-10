@@ -348,7 +348,8 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     as 'cortx_version' and yum txn ids for each node
     upgrade:
       sw_list:
-        - motr
+        - motr:
+          sls: <base_sls_path>
         - s3server
         ...
       yum_snapshots:
@@ -389,6 +390,81 @@ def sw_upgrade(targets=ALL_MINIONS, nowait=False):
 
     """
     return _api_call('sw_upgrade', targets=targets, nowait=nowait)
+
+
+def get_swupgrade_info(release: str = None, iso_path: str = None,
+                       nowait=False):
+    """
+    Return information about CORTX packages and their versions.
+
+    Parameters
+    ----------
+    release: str
+        (optional) SW Upgrade repository release version
+    iso_path: str
+        (optional) Path to SW upgrade single ISO bundle
+    nowait: bool
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    None
+
+    """
+    return _api_call('get_swupgrade_info', release=release, iso_path=iso_path,
+                     nowait=nowait)
+
+
+def check_iso_authenticity(iso_path: str, sig_file: str,
+                           gpg_pub_key: str = None,
+                           import_pub_key: bool = False, nowait=False):
+    """
+    Validate SW Upgrade single ISO authenticity using GPG tool.
+
+    Parameters
+    ----------
+    iso_path: str
+        Path to SW upgrade single ISO bundle
+    sig_file: str
+        Path to file with ISO signature
+    gpg_pub_key: str
+        (Optional) Path to the custom GPG public key
+    import_pub_key: bool
+        (Optional) Specifies whether to import a given GPG public key
+    nowait: bool
+        (Optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+
+    """
+    return _api_call('check_iso_authenticity', iso_path=iso_path,
+                     sig_file=sig_file, gpg_pub_key=gpg_pub_key,
+                     import_pub_key=import_pub_key, nowait=nowait)
+
+
+def get_iso_version(nowait=False):
+    """
+    Return latest available ISO version.
+
+    Parameters
+    ----------
+    nowait: bool
+        (optional) Run asynchronously. Default: False
+
+    Returns
+    -------
+    Union[str, None]:
+            Return string with SW upgrade ISO version if it is higher then
+            release version. Return None if SW upgrade ISO version is equal
+            to release version. Raise exception otherwise
+
+    Raises
+    ------
+    ProvisionerError:
+        If release version is greater than the upgrade version
+    """
+    return _api_call('get_iso_version', nowait=nowait)
 
 
 def fw_update(source, dry_run=False, nowait=False):
@@ -640,7 +716,7 @@ def setup_firewall():
     return _api_call('setup_firewall')
 
 
-def set_data_network(local=False, **kwargs):
+def set_public_data_network(local=False, **kwargs):
     """
     Set data network for the system
 
@@ -649,6 +725,17 @@ def set_data_network(local=False, **kwargs):
     :param data_gateway: (optional) gateway for data interface
     :param data_public_interfaces: (optional) list of public data interfaces
 
+    :param local: (optional) set values in local pillar
+
+    :return:
+    """
+    return _api_call('set_public_data_network', local=local, **kwargs)
+
+
+def set_private_data_network(local=False, **kwargs):
+    """
+    Set data network for the system
+
     :param data_private_ip: (optional) ip address for private data interface
     :param data_private_interfaces: (optional) list of private data interfaces
 
@@ -656,4 +743,4 @@ def set_data_network(local=False, **kwargs):
 
     :return:
     """
-    return _api_call('set_data_network', local=local, **kwargs)
+    return _api_call('set_private_data_network', local=local, **kwargs)

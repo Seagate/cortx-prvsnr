@@ -88,15 +88,15 @@ class Resource(CommandParserFillerMixin):
 
     @classmethod
     def extract_positional_args(cls, kwargs):
-        # FIXME
         rc_manager = SLSResourceManager()
-        state_ts = {st_t.name: st_t for st_t in rc_manager.transitions}
+        state_ts = {
+            (st_t.resource_t.resource_t_id.value, st_t.name): st_t
+            for st_t in rc_manager.transitions
+        }
 
-        # XXX ??? FIXME
-        kwargs.pop('resource_name')
-
+        resource_name = kwargs.pop('resource_name')
         state_name = kwargs.pop('resource_state_name')
-        state_t = state_ts[state_name]
+        state_t = state_ts[(resource_name, state_name)]
         _args = [state_t]
 
         args, kwargs = super().extract_positional_args(kwargs)
@@ -124,7 +124,7 @@ class Resource(CommandParserFillerMixin):
         })
 
         if run_args.runner_minion_id:
-            return salt_args.salt_client.provisioner_cmd(
+            return salt_args.client.provisioner_cmd(
                 'resource',
                 fun_args=([state_t.name] + list(args)),
                 fun_kwargs=_kwargs,

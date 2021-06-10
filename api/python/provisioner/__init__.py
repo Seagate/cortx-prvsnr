@@ -43,6 +43,9 @@ from .api import (  # noqa: F401
     set_swupgrade_repo,
     sw_update,
     sw_upgrade,
+    get_swupgrade_info,
+    check_iso_authenticity,
+    get_iso_version,
     fw_update,
     sw_rollback,
     set_ssl_certs,
@@ -62,7 +65,8 @@ from .api import (  # noqa: F401
     set_hostname,
     set_mgmt_network,
     setup_firewall,
-    set_data_network
+    set_public_data_network,
+    set_private_data_network
 )
 
 from .values import (  # noqa: F401
@@ -87,6 +91,9 @@ __all__ = [
     'set_swupgrade_repo',
     'sw_update',
     'sw_upgrade',
+    'get_swupgrade_info',
+    'get_iso_version',
+    'check_iso_authenticity',
     'sw_rollback',
     'set_ssl_certs',
     'fw_update',
@@ -106,7 +113,8 @@ __all__ = [
     'set_hostname',
     'set_mgmt_network',
     'setup_firewall',
-    'set_data_network',
+    'set_public_data_network',
+    'set_private_data_network',
     'UNCHANGED',
     'DEFAULT',
     'UNDEFINED',

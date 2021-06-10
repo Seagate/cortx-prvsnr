@@ -32,6 +32,8 @@ import pytest
 
 from provisioner.vendor import attr
 
+from .testapi.integration import HostMeta
+
 logger = logging.getLogger(__name__)
 
 MODULE_DIR = Path(__file__).resolve().parent
@@ -604,12 +606,16 @@ def safe_hostname(name):
     return re_multiple_dahses.sub('-', _s).lower()[-63:].lstrip('-')
 
 
-def mock_system_cmd(host, cmd, cmd_mock=None, bin_path='/usr/local/bin'):
+def mock_system_cmd(
+    mhost: HostMeta, cmd, cmd_mock=None, bin_path='/usr/local/bin', tmpdir=None
+):
     # TODO might not work in some cases
-    cmd_orig = host.run('which {}'.format(cmd))
-    if cmd_orig.rc == 0:
-        cmd_orig = cmd_orig.stdout.strip()
-        host.check_output('mv -f {0} {0}.bak'.format(cmd_orig))
+    try:
+        cmd_orig = mhost.host.find_command(cmd)
+    except ValueError:
+        cmd_orig = None
+    else:
+        mhost.check_output('mv -f {0} {0}.bak'.format(cmd_orig))
 
     # TODO shell quotes interpreting might impact expected output
     if cmd_mock is None:
@@ -617,18 +623,27 @@ def mock_system_cmd(host, cmd, cmd_mock=None, bin_path='/usr/local/bin'):
 
     cmd_mock = '#!/bin/bash\n{}'.format(cmd_mock)
     cmd_path = Path(bin_path) / cmd
-    host.check_output("echo -e '{}'>{}".format(cmd_mock, cmd_path))
-    host.check_output("chmod +x {}".format(cmd_path))
+    if tmpdir:
+        local_path = tmpdir / cmd
+        local_path.write_text(cmd_mock)
+        mhost.copy_to_host(local_path, cmd_path)
+    else:
+        mhost.check_output("echo -e '{}'>{}".format(cmd_mock, cmd_path))
+    mhost.check_output("chmod +x {}".format(cmd_path))
 
 
-def restore_system_cmd(host, cmd, bin_path='/usr/local/bin'):
+def restore_system_cmd(mhost: HostMeta, cmd, bin_path='/usr/local/bin'):
     cmd_path = Path(bin_path) / cmd
-    host.check_output('rm -f {}'.format(cmd_path))
+    mhost.check_output('rm -f {}'.format(cmd_path))
 
-    cmd_orig = host.run('which {}.bak'.format(cmd))
-    if cmd_orig.rc == 0:
-        cmd_orig = cmd_orig.stdout.strip()
-        host.check_output('mv -f {} {}'.format(cmd_orig, cmd_orig[:-4]))
+    cmd_bak = f"{cmd}.bak"
+
+    try:
+        mhost.host.find_command(cmd_bak)
+    except ValueError:
+        pass
+    else:
+        mhost.check_output(f"mv -f {cmd_bak} {cmd}")
 
 
 def fixture_builder(

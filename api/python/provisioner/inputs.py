@@ -25,6 +25,7 @@ import argparse
 import importlib
 from enum import Enum
 
+from . import config, utils
 from .vendor import attr
 from .errors import UnknownParamError, SWUpdateRepoSourceError
 from .pillar import (
@@ -37,8 +38,6 @@ from .values import (
     is_special
 )
 from .serialize import PrvsnrType, loads
-
-from . import config, utils
 
 
 METADATA_PARAM_GROUP_KEY = '_param_group_key'
@@ -647,8 +646,8 @@ class MgmtNetwork(ParamGroupInputBase):
 
 
 @attr.s(auto_attribs=True)
-class DataNetwork(ParamGroupInputBase):
-    _param_group = 'data_network'
+class PublicDataNetwork(ParamGroupInputBase):
+    _param_group = 'public_data_network'
     data_public_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node public data interface IP",
         validator=Validation.check_ip4
@@ -664,6 +663,15 @@ class DataNetwork(ParamGroupInputBase):
     data_public_interfaces: List = ParamGroupInputBase._attr_ib(
         _param_group, descr="node public data network interfaces"
     )
+    data_mtu: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data network mtu",
+        default=1500
+    )
+
+
+@attr.s(auto_attribs=True)
+class PrivateDataNetwork(ParamGroupInputBase):
+    _param_group = 'private_data_network'
     data_private_ip: str = ParamGroupInputBase._attr_ib(
         _param_group, descr="node private data interface IP",
         validator=Validation.check_ip4
@@ -1144,6 +1152,35 @@ class SWUpgradeRepo(SWUpdateRepo):
         ),
         default=None,
         converter=lambda x: x and config.HashType(str(x))
+    )
+    sig_file: Optional[Union[str, Path]] = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "Path to the file with ISO signature"
+            }
+        },
+        converter=utils.converter_path_resolved,
+        validator=utils.validator_path_exists,
+        default=None
+    )
+    gpg_pub_key: str = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': "(Optional) Path to the custom GPG public key"
+            }
+        },
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
+        default=None
+    )
+    import_pub_key: bool = attr.ib(
+        metadata={
+            METADATA_ARGPARSER: {
+                'help': ("(Optional) Specifies whether to import a given GPG "
+                         "public key or not")
+            }
+        },
+        default=False
     )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade

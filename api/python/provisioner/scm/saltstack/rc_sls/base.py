@@ -16,16 +16,13 @@
 #
 
 from typing import (
-    ClassVar,
-    Optional,
-    Dict,
-    Any,
-    List,
-    Tuple
+    ClassVar, Optional, Dict, Any, List, Tuple, Union
 )
 from pathlib import Path
 import importlib
 import logging
+import functools
+from collections import defaultdict
 
 from provisioner import config, values, errors
 from provisioner.pillar import PillarKey, PillarResolverNew
@@ -37,7 +34,8 @@ from provisioner.resources.base import (
     ResourceManager
 )
 from provisioner.salt_api.base import SaltClientBase
-# from provisioner.fileroot import ResourcePath
+from provisioner.salt_api.runner import SaltRunnerClient
+from provisioner.fileroot import FileRoot
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +48,34 @@ VENDOR_SLS_PREFIX = 'vendor'
 @attr.s(auto_attribs=True)
 class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
     """Base class for Salt state formulas that implement transitions."""
-    base_sls: ClassVar[Optional[str]] = None
+    _fileroot_prefix: ClassVar[Optional[Union[str, Path]]] = None
+    _base_sls: ClassVar[Optional[Union[str, Path]]] = None
     sls: ClassVar[Optional[str]] = None
 
     client: SaltClientBase
-    pillar_inline: Dict = None
+    pillar_inline: Dict = attr.Factory(functools.partial(defaultdict, dict))
 
     _pillar: Optional[dict] = attr.ib(init=False, default=None)
+
+    @property
+    def fileroot_prefix(self):
+        # XXX not the best place for that logic
+        #     but __attrs_post_init__ might be not
+        #     called from child classes in case of override
+        res = Path(self._fileroot_prefix or '')
+        if res.is_absolute():
+            raise ValueError("fileroot_prefix should be relative: '{res}'")
+        return res
+
+    @property
+    def base_sls(self):
+        # XXX not the best place for that logic
+        #     but __attrs_post_init__ might be not
+        #     called from child classes in case of override
+        res = Path(self._base_sls or '')
+        if res.is_absolute():
+            raise ValueError("base_sls should be relative: '{res}'")
+        return res
 
     @property
     def resource_type(self) -> config.CortxResourceT:
@@ -67,11 +86,19 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
         return self.resource_type.value
 
     @property
+    def targets_list(self):
+        return list(self.pillar)
+
+    @property
     def pillar(self):
         # XXX uses the pillar only
         if self._pillar is None:
             rc_key = PillarKey(self.resource_name)
-            pillar = PillarResolverNew(client=self.client).get((rc_key,))
+
+            pillar = PillarResolverNew(
+                targets=self.targets, client=self.client
+            ).get((rc_key,))
+
             self._pillar = {
                 target: (
                     _pillar[rc_key]
@@ -96,35 +123,87 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
 
     def pillar_set(
         self, pillar: Dict, expand: bool = True,
-        fpath=None
+        fpath=None, targets=None
     ):
+        if targets is None:
+            targets = self.targets
+        else:
+            # TODO verify that target is a single minion
+            #      which is part (or same) as self.targets
+            pass
         return self.client.pillar_set({
             self.resource_name: pillar
-        }, expand=expand, fpath=fpath, targets=self.targets)
+        }, expand=expand, fpath=fpath, targets=targets)
 
     def set_vendored(self, vendored: bool):
         self.pillar_set(dict(vendored=vendored))
 
-    # def r_path(self, path: Union[str, Path]):
-    #    return ResourcePath(self.resource_t, path)
+    def rc_r_path(self, path: Union[str, Path]):
+        # FIXME hard code
+        return (
+            self.fileroot_prefix / self.base_sls / 'files' / path
+        )
 
-    # def fileroot_path(self, path: Union[str, Path]):
-    #    return self.fileroot.path(self.r_path(path))
+    def fileroot_path(self, path: Union[str, Path]):
+        return self.client.fileroot_path.path(self.rc_r_path(path))
+
+    @property
+    def fileroot(self):
+        return FileRoot(
+            self.client.fileroot_path,
+            local_client=FileRoot.def_local_client_t(
+                c_path=self.client.c_path
+            )
+        )
+
+    def fileroot_read(
+        self,
+        r_path: Union[str, Path],
+        text: bool = True,
+        yaml: bool = False
+    ):
+        if yaml:
+            return self.fileroot.read_yaml(self.rc_r_path(r_path))
+        else:
+            return self.fileroot.read(self.rc_r_path(r_path), text=text)
+
+    def fileroot_write(
+        self,
+        r_path: Union[str, Path],
+        data: Any,
+        text: bool = True,
+        yaml: bool = False
+    ):
+        if yaml:
+            return self.fileroot.write_yaml(self.rc_r_path(r_path), data)
+        else:
+            return self.fileroot.write(
+                self.rc_r_path(r_path), data, text=text
+            )
+
+    def fileroot_copy(
+        self, source: Union[str, Path], r_dest: Union[str, Path],
+    ):
+        return self.fileroot.copy(source, self.rc_r_path(r_dest))
 
     def setup_roots(self):
         logger.info(
-            f"Preparing '{self.resource_name}' roots for"
+            f"Preparing '{self.resource_name}' pillar and file roots for"
             f" '{self.state.name}' on targets: {self.targets}"
         )
 
-    def run(self):
-        self.setup_roots()
+        if self.fileroot_prefix:
+            self.pillar_inline['inline']['fileroot_prefix'] = (
+                f"{self.fileroot_prefix}/"
+            )
 
+    def _run(self):
         res = []
         # XXX possibly a divergence with a design
         # some SLS may just shifts root without any states appliance
         if self.sls:
             fun_kwargs = {}
+            # TODO DOC how to pass inline pillar
             if self.pillar_inline:
                 fun_kwargs['pillar'] = self.pillar_inline
 
@@ -135,16 +214,40 @@ class ResourceSLS(ResourceTransition):  # XXX ??? inheritance
             if self.is_vendored:
                 slss = [f'{VENDOR_SLS_PREFIX}.{sls}' for sls in slss]
 
-            if self.base_sls:
-                slss = [f'{self.base_sls}.{sls}' for sls in slss]
+            base_sls_path = self.fileroot_prefix / self.base_sls
+            slss = ['.'.join((base_sls_path / sls).parts) for sls in slss]
+
+            kwargs = dict(fun_kwargs=fun_kwargs, targets=self.targets)
+
+            # if isinstance(self.targets, (list, tuple)):
+            #     kwargs['targets'] = '|'.join(self.targets)
+            #     kwargs['tgt_type'] = 'pcre'
 
             for sls in slss:
-                _res = self.client.state_apply(
-                    sls, targets=self.targets, fun_kwargs=fun_kwargs
-                )
+                _res = self.client.state_apply(sls, **kwargs)
                 res.append(_res)
 
         return res
+
+    def run(self):
+        self.setup_roots()
+        return self._run()
+
+
+class Resource3rdPartySLS(ResourceSLS):
+    _fileroot_prefix = 'resources/3rd_party'
+
+
+class ResourceSystemSLS(ResourceSLS):
+    _fileroot_prefix = 'resources/system'
+
+
+class ResourceCortxSLS(ResourceSLS):
+    _fileroot_prefix = 'resources/cortx'
+
+
+class ResourceMiscSLS(ResourceSLS):
+    _fileroot_prefix = 'resources/misc'
 
 
 # arbitrary dir and recursive are not support for now

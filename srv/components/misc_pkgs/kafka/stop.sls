@@ -28,11 +28,17 @@ Stop kafka:
 
 Ensure kafka has stopped:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 0 -eq $(ps ax | grep -i 'kafka.Kafka' | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
-    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+    # Ref: https://docs.saltproject.io/en/3002/ref/states/requisites.html#retrying-states
+        # Until condition here is quite tricky, esp. in case of cmd.run.
+        # If you wonder why this case doesn't result in infinite loop before timing out, read further.
+        # Command test 0 -eq ${var} results in non-zero code for inequality.
+        # Non-zero value is True for Python. So in "Until", check results true; although shell interprets as false.
+        # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
+        # Note this when interpreting the next line.
+        until: True
         attempts: 10
-        until: False
         interval: 2
     - require:
       - Stop kafka
@@ -54,11 +60,17 @@ Stop zookeeper:
 
 Ensure kafka-zookeeper has stopped:
   cmd.run:
-    - name: test 1 -le $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
+    - name: test 0 -eq $(ps ax | grep java | grep -i QuorumPeerMain | grep -v grep | awk '{print $1}' | wc -l)
     - retry:
-    # Ref: https://docs.saltproject.io/en/3000/ref/states/requisites.html#retrying-states
+    # Ref: https://docs.saltproject.io/en/3002/ref/states/requisites.html#retrying-states
+        # Until condition here is quite tricky, esp. in case of cmd.run.
+        # If you wonder why this case doesn't result in infinite loop before timing out, read further.
+        # Command test 0 -eq ${var} results in non-zero code for inequality.
+        # Non-zero value is True for Python. So in "Until", check results true; although shell interprets as false.
+        # The reverse happens when shell we have a true condition with ret-code '0'. until results in false.
+        # Note this when interpreting the next line.
+        until: True
         attempts: 10
-        until: False
         interval: 2
     - require:
       - Stop zookeeper

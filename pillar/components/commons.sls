@@ -52,3 +52,28 @@ commons:
       cortx-sspl-test: latest
       uds-pyi: latest
       cortx-cli: latest
+  sw_data:
+    provisioner:
+      base_sls: components.provisioner
+      mini: /opt/seagate/cortx/provisioner/conf/setup.yaml
+    motr:
+      base_sls: components.motr
+      mini: /opt/seagate/cortx/motr/conf/setup.yaml
+    s3server:
+      base_sls: components.s3server
+      mini: /opt/seagate/cortx/s3/conf/setup.yaml
+    hare:
+      base_sls: components.hare
+      mini: /opt/seagate/cortx/hare/conf/setup.yaml
+    ha:
+      base_sls: components.ha.cortx-ha
+      mini: /opt/seagate/cortx/ha/conf/setup.yaml
+    sspl:
+      base_sls: components.sspl
+      mini: /opt/seagate/cortx/sspl/conf/setup.yaml
+    uds:
+      base_sls: components.uds
+      mini: /opt/seagate/cortx/uds/conf/setup.yaml
+    csm:
+      base_sls: components.csm
+      mini: /opt/seagate/cortx/csm/conf/setup.yaml

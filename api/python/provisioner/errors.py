@@ -301,6 +301,22 @@ class ClusterNotHealthyError(ProvisionerError):
         )
 
 
+class ClusterStopError(ProvisionerError):
+    _prvsnr_type_ = True
+
+    def __init__(self, reason: Union[Exception, str]):
+        self.reason = reason
+
+    def __str__(self):
+        return f'Failed to stop the cluster {self.reason}'
+
+
+class CLusterStartError(ClusterStopError):
+
+    def __str__(self):
+        return f'Failed to start the cluster {self.reason}'
+
+
 class SWUpdateError(ProvisionerError):
     _prvsnr_type_ = True
 
