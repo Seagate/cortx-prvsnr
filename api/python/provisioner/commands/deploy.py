@@ -77,8 +77,6 @@ deploy_states = dict(
         "misc_pkgs.consul.install",
         "misc_pkgs.lustre",
         "misc_pkgs.consul.install",
-        "ha.corosync-pacemaker.install",
-        "ha.corosync-pacemaker.config.base"
     ],
     utils=[
         "cortx_utils"
@@ -91,14 +89,17 @@ deploy_states = dict(
         "s3server",
         "hare"
     ],
-    ha=[
-        "ha.cortx-ha"
-    ],
     # states to be applied in desired sequence
     controlpath=[
         "sspl",
         "uds",
         "csm"
+    ],
+    ha=[
+        "ha.corosync-pacemaker.install",
+        "ha.corosync-pacemaker.config.base",
+        "ha.haproxy.start",
+        "ha.cortx-ha"
     ],
     backup=[
         "provisioner.backup",
@@ -306,8 +307,6 @@ class Deploy(CommandParserFillerMixin):
                     "sync.files",
                     "ha.cortx-ha"
                 ):
-                    if state == "ha.cortx-ha":
-                        self.ensure_consul_running()
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
                         f"components.{state}", secondaries, stages

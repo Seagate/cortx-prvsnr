@@ -15,7 +15,7 @@
 * please email opensource@seagate.com or cortx-questions@seagate.com.
 */
 
-node {
+node ('provisioning'){
     properties([
         buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
         parameters([
@@ -50,7 +50,7 @@ node {
 
             stage("Teardown: HA") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+                command -v provisioner &>/dev/null && provisioner destroy --states ha
             """
             echo "Successful teardown: HA"
             }
@@ -78,21 +78,21 @@ node {
 
             stage("Teardown: 3rd_Party") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+                command -v provisioner &>/dev/null && provisioner destroy --states prereq
             """
             echo "Successful teardown: 3rd-Party"
             }
 
             stage("Teardown: Platform") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+                command -v provisioner &>/dev/null && provisioner destroy --states system
             """
             echo "Successful teardown: Platform"
             }
 
             stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap
             """
             echo "Successful teardown: Bootstrap"
             }
@@ -149,6 +149,7 @@ node {
 
             stage("Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
+                    unalias rm
                     test -e /var/cache/yum && rm -rf /var/cache/yum
                     # Cleanup pip config
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
@@ -158,6 +159,7 @@ node {
                     test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
                     test -e /opt/seagate && rm -rf /opt/seagate
                     test -e /etc/csm && rm -rf /etc/csm
+                    test -e /etc/cortx/ha && rm -rf /etc/cortx/ha
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate
                     test -e /srv/glusterfs && rm -rf /srv/glusterfs

@@ -15,7 +15,7 @@
 * please email opensource@seagate.com or cortx-questions@seagate.com.
 */
 
-node {
+node ('provisioning'){
     properties([
         buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')),
         parameters([
@@ -57,6 +57,11 @@ node {
         for ( remote in remotes.reverse() ) {
             stage("${remote.name}: SSH Connectivity Check") {
                 sshCommand remote: remote, command: "exit"
+                sshCommand remote: remote, command: """
+                    # Reduce TCP keepalive time to 15 mins from 2 hours
+                    # https://tldp.org/HOWTO/TCP-Keepalive-HOWTO/usingkeepalive.html
+                    echo 900 | tee /proc/sys/net/ipv4/tcp_keepalive_time
+                """
                 echo "Successful connected to VM ${remote.host}."
             }
         }
@@ -70,47 +75,56 @@ node {
 
         stage("Teardown: HA") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states ha || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states ha
             """
             echo "Successful teardown: HA"
         }
 
         stage("Teardown: Control-Path") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states controlpath || true
             """
             echo "Successful teardown: Control-Path"
         }
 
         stage("Teardown: IO-Path") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states iopath || true
             """
             echo "Successful teardown: IO-Path"
         }
 
         stage("Teardown: Foundation") {
-            sshCommand remote: remotes[0], command: "provisioner destroy --states utils || true"
+            sshCommand remote: remotes[0], command: """
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states utils || true
+            """
             echo "Successful teardown: Foundation"
         }
 
         stage("Teardown: 3rd_Party") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states prereq || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states prereq
             """
             echo "Successful teardown: 3rd-Party"
         }
 
         stage("Teardown: Platform") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states system || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states system
             """
             echo "Successful teardown: Platform"
         }
 
         stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap || true
+                command -v provisioner &>/dev/null && \
+                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states bootstrap
             """
             echo "Successful teardown: Bootstrap"
         }
@@ -168,6 +182,7 @@ node {
 
             stage("${remote.name}: Cleanup bricks and other directories") {
                 sshCommand remote: remote, command: """
+                    unalias rm
                     test -e /var/cache/yum && rm -rf /var/cache/yum
                     # Cleanup pip config
                     test -e /etc/pip.conf && rm -f /etc/pip.conf
@@ -177,6 +192,7 @@ node {
                     test -e /opt/seagate/cortx_configs && rm -rf /opt/seagate/cortx_configs
                     test -e /opt/seagate && rm -rf /opt/seagate
                     test -e /etc/csm && rm -rf /etc/csm
+                    test -e /etc/cortx && rm -rf /etc/cortx
                     # Bricks cleanup
                     test -e /var/lib/seagate && rm -rf /var/lib/seagate
                     test -e /srv/glusterfs && rm -rf /srv/glusterfs
@@ -200,6 +216,13 @@ node {
                     rm -rf /var/log/seagate
                 """
                 echo "Successfully removed logs from the node ${remote.host}."
+            }
+
+            stage("${remote.name}: Reset SSH") {
+                sshCommand remote: remote, command: """
+                    test -e /root/.ssh && rm -rf /root/.ssh || true
+                    echo 900 | tee /proc/sys/net/ipv4/tcp_keepalive_time
+                """
             }
         }
     }

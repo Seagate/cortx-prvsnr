@@ -191,8 +191,6 @@ class DeployDual(Deploy):
                     )
                 else:
                     self._apply_state(f"components.{state}", targets, stages)
-                    if state == "ha.cortx-ha":
-                        self.ensure_consul_running()
 
     def run(self, **kwargs):  # noqa: C901 FIXME
         run_args = self._run_args_type(**kwargs)

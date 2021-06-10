@@ -87,7 +87,6 @@ class AddStorageEnclosure(Command):
             PillarSet().run(
                 'cluster/storage_set/storage_enclosures',
                 storage_enclosure,
-                targets=node_id,
                 local=True
             )
             Conf.set(
