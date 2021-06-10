@@ -18,25 +18,21 @@
             *   [Radon](#radon)
             *   [Remarklint](#remarklint)
 
-*   [Unit testing](#unit-testing)
+*   [Testing with Docker](#testing-with-docker)
 
-*   [Integration testing](#integration-testing)
+    *   [Docker configuration](#docker-configuration)
 
-    *   [Testing with Docker](#testing-with-docker)
+    *   [Docker on Fedora 33](#docker-on-fedora-33)
 
-        *   [Docker configuration](#docker-configuration)
+    *   [Docker test helpers](#docker-test-helpers)
 
-        *   [Docker on Fedora 33](#docker-on-fedora-33)
+        *   [Building provisioner packages](#building-provisioner-packages)
+        *   [Building testing bundles](#building-testing-bundles)
+        *   [Docker environment creation](#docker-environment-creation)
 
-        *   [Docker test helpers](#docker-test-helpers)
+    *   [Integration test cases](#integration-test-cases)
 
-            *   [Building provisioner packages](#building-provisioner-packages)
-            *   [Building testing bundles](#building-testing-bundles)
-            *   [Docker environment creation](#docker-environment-creation)
-
-        *   [Integration test cases](#integration-test-cases)
-
-            *   [Provisioner setup](#provisioner-setup)
+        *   [Provisioner setup](#provisioner-setup)
 
 *   [Appendix](#appendix)
 
@@ -206,11 +202,7 @@ docs for the details).
 ./test/tools/remark <input-path> --use toc -o
 ```
 
-## Unit testing
 
-**TBD**
-
-## Integration testing
 
 ### Testing with Docker
 

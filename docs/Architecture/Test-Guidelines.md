@@ -205,4 +205,20 @@ pytest
 
 ### Unit Tests
 
-This proposed design is more suited for Integration Tests, so the Unit Tests can either be placed under a separate `unittest` folder created for each group as explained in the above Design diagram or can be placed under the existing mirrored architecture in `test/` folder.
+Unit testing is a way to test a single unit of software. For example, testing a utility function that changes the Array/List of characters to a string. Unit testing is the best way to be sure that your functions work as expected.
+
+The goals of the kind of testing outlined here are simplicity, loose or no coupling, and speed:
+
+Tests should be as simple as possible, while exercising the application-under-test (AUT) completely.
+Tests should run as quickly as possible, to encourage running them frequently.
+Tests should avoid coupling with other tests, or with parts of the AUT which they are not responsible for testing.
+
+-Following are some links to start writing unit tests by following guidelines:
+
+  -[https://pylonsproject.org/community-unit-testing-guidelines.html]
+
+  -[https://realpython.com/python-mock-library/]
+
+  -[https://docs.python-guide.org/writing/tests/]
+
+  -[https://docs.python.org/3/library/unittest.mock-examples.html]
