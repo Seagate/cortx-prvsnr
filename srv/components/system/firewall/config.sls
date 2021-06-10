@@ -291,14 +291,6 @@ Management zone:
       {% endif %}
     - interfaces:
       - {{ mgmt_if }}
-    {% if not 'physical' in grains['virtual'] %}
-    - port_fwd:
-      {% if pillar['cluster'][grains['id']]['is_primary'] %}
-      - {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['primary_mc']['ip'] }}
-      {% else %}
-      - {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['secondary_mc']['ip'] }}
-      {% endif %}
-    {% endif %}
     - require:
       # - Add management zone
       - consul
