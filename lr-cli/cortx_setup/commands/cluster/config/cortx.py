@@ -20,6 +20,7 @@
 
 import os
 import socket
+from pathlib import Path
 from cortx_setup.commands.command import Command
 from cortx_setup.commands.enclosure.refresh import (
     RefreshEnclosureId
@@ -28,7 +29,8 @@ from cortx_setup.commands.cluster.encrypt import (
     EncryptPillar
 )
 from cortx_setup.config import (
-    ALL_MINIONS
+    ALL_MINIONS,
+    CONFIG_PATH
 )
 
 from provisioner.commands import (
@@ -55,7 +57,7 @@ class CortxClusterConfig(Command):
         'config_path': {
             'type': str,
             'optional': True,
-            'default': '/root/config.ini',
+            'default': CONFIG_PATH,
             'help': 'Config file path for bootstrap.'
         },
         'source': {
@@ -98,6 +100,7 @@ class CortxClusterConfig(Command):
             )
             local_fqdn = socket.gethostname()
             nodes = kwargs['nodes']
+            config_path = Path(kwargs['config_path'])
             target_build = kwargs['target_build']
 
             # Parsing nodes
@@ -107,9 +110,15 @@ class CortxClusterConfig(Command):
                 else:
                     nodes[idx] = f"srvnode-{idx+1}:{node}"
 
+            # Config validation
+            if not (CONFIG_PATH.exists() or config_path.exists()):
+                raise ValueError(f"'{config_path}' not found. "
+                                 "Please provide valid config path in command.")
+
             # Build validation
             if not target_build:
                 target_build = os.environ.get('CORTX_RELEASE_REPO')
+                kwargs['target_build'] = target_build
                 if not target_build:
                     raise ValueError("'target_build' is mandatory to bootstrap. "
                                      "Please provide valid build URL in command.")
@@ -122,7 +131,8 @@ class CortxClusterConfig(Command):
                          "to bootstrap. Please provide valid paths in command.")
 
             self.logger.debug(
-              f"Checks done. Starting bootstrap process for node(s): '{nodes}' now.."
+              "Initial checks done. "
+              f"Starting bootstrap process now with args: {kwargs}"
             )
             bootstrap_provisioner.BootstrapProvisioner()._run(**kwargs)
 
@@ -139,7 +149,7 @@ class CortxClusterConfig(Command):
             reset_machine_id.ResetMachineId.run()
 
             self.logger.debug("Refreshing enclosure id on the system")
-            RefreshEnclosureId.run(self)
+            RefreshEnclosureId().run()
 
             self.logger.debug("Generating cluster")
             StatesApplier.apply(
@@ -150,7 +160,7 @@ class CortxClusterConfig(Command):
             cluster_id.ClusterId().run()
 
             self.logger.debug("Encrypting config data")
-            EncryptPillar.run(self)
+            EncryptPillar().run()
 
             self.logger.debug("Exporting to Confstore")
             confstore_export.ConfStoreExport().run()
