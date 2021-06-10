@@ -52,6 +52,10 @@ class ProvisionerError(Exception):
     pass
 
 
+class NoMoreTriesError(ProvisionerError):
+    pass
+
+
 class ProvisionerRuntimeError(ProvisionerError, RuntimeError):
     pass
 

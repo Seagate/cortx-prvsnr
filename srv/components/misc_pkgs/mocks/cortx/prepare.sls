@@ -20,7 +20,7 @@
 # XXX hard-coded
 {% set mocks_repo = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/deploy_cortx_mock_{}'.format(version) %}
 
-{% from './_macros.sls' import bundle_built with context %}
+{% from tpldir + '/_macros.sls' import bundle_built with context %}
 
 {{ bundle_built(mocks_repo, 'deploy-cortx', version) }}
 
