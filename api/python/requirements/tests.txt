@@ -1,0 +1,9 @@
+pytest==6.2.4
+pytest-cov==2.12.1
+pytest-mock==3.6.1
+pytest-timeout==1.4.2
+pytest-xdist==2.2.1
+pytest-testinfra==6.3.0
+coverage==5.5
+docker==4.0.2
+flake8==3.9.2

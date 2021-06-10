@@ -16,6 +16,7 @@
 #
 
 from .hostname import Hostname
+from .pillar_sync import PillarSync
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
 from .node.prepare.server import NodePrepareServer
@@ -23,6 +24,7 @@ from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
 from .cluster.show import ClusterShow
 from .cluster.config.network import ClusterNetworkConfig
+from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
@@ -45,6 +47,7 @@ __all__ = [
     'AddStorageEnclosure',
     'ClusterCreate',
     'ClusterNetworkConfig',
+    'ClusterConfigComponent',
     'ClusterShow',
     'CreateStorageSet',
     'DurabilityConfig',
@@ -62,5 +65,6 @@ __all__ = [
     'SecurityConfig',
     'SetSignature',
     'StorageEnclosureConfig',
+    'PillarSync',
     'Commons'
  ]

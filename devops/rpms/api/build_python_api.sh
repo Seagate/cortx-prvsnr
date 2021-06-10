@@ -182,7 +182,10 @@ if [[ "$in_docker" == true ]]; then
     input_dir="/tmp/in"
     output_dir="/tmp/out"
 fi
-
+    # FIXME 'python-disable-dependency' params
+    #       are dirty hacks just to quickly resolve issues
+    #       that depends on other Cortx components, need to
+    #       remove later
     # --depends "salt >= 3002" \
 $fpm_tool --input-type "python" \
     --output-type "$output_type" \
@@ -193,6 +196,7 @@ $fpm_tool --input-type "python" \
     --python-package-name-prefix "python36" \
     --python-bin "python3" \
     --python-disable-dependency salt \
+    --python-disable-dependency Jinja2 \
     --no-python-downcase-dependencies \
     --exclude "*.pyc" \
     --exclude "*.pyo" \

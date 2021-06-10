@@ -15,43 +15,5 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove user and group:
-  user.absent:
-    - name: hacluster
-    - purge: True
-    - force: True
-
-{% for serv in ["corosync", "pacemaker", "pcsd"] %}
-Stop service {{ serv }}:
-  service.dead:
-    - name: {{ serv }}
-    - enable: False
-{% endfor %}
-
-Remove pcs package:
-  pkg.purged:
-    - pkgs:
-      - pcs
-      - pacemaker
-      - corosync
-      - fence-agents-ipmilan
-
-# Remove configuration directory:
-#   file.absent:
-#     - names:
-#       - /etc/corosync
-#       - /etc/pacemaker
-
-Remove corosync-pacemaker data:
-  file.absent:
-    - names:
-      - /var/lib/corosync
-      - /var/lib/pacemaker
-      - /var/lib/pcsd
-      - /var/log/pcsd
-
-# Enable and Start Firewall:
-#   cmd.run:
-#     - names:
-#       - systemctl enable firewalld
-#       - systemctl start firewalld
+include:
+  - components.uds.config.config
