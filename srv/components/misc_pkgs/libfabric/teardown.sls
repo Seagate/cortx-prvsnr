@@ -17,7 +17,7 @@
 
 Purge libfabric:
   pkg.purged:
-    - name: libfabric
+    - name: isa-l
 
 Delete kibana checkpoint flag:
   file.absent:
