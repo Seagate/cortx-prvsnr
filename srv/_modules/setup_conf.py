@@ -100,10 +100,12 @@ def _salt_salt():
     return _salt_builtin('__salt__')
 
 
-def _call_cmd(cmd):
+def _call_cmd(cmd, env=None):
     # TODO provide env according to spec
     __salt__ = _salt_salt()
-    return __salt__["cmd.run"](cmd, output_loglevel="trace", python_shell=True)
+    return __salt__["cmd.run"](
+        cmd, output_loglevel="trace", python_shell=True, env=env
+    )
 
 
 class ConfSetupHelper:
@@ -135,6 +137,14 @@ class ConfSetupHelper:
 
         return spec
 
+    @staticmethod
+    def env(hook, flow, level):
+        return dict(
+            PRVSNR_MINI_HOOK=hook,
+            PRVSNR_MINI_FLOW=flow,
+            PRVSNR_MINI_LEVEL=level
+        )
+
 
 def hook(
     hook,
@@ -158,7 +168,7 @@ def hook(
             # assuming that normailized spec2 includes only active hooks
             # with commands as values
             if cmd:
-                res = _call_cmd(cmd)
+                res = _call_cmd(cmd, env=helper.env(hook, flow, level))
                 logger.debug(
                     f"Hook '{hook}' command '{cmd}'"
                     f" for '{sw}' resulted in: '{res}'"
@@ -192,7 +202,7 @@ def raise_event(event, flow, level, fail_fast=False):
     excs = []
     for sw, cmd in events:
         try:
-            res = _call_cmd(cmd)
+            res = _call_cmd(cmd, env=helper.env(event, flow, level))
             logger.debug(
                 f"Event '{event}' command '{cmd}' "
                 f"for '{sw}' resulted in: '{res}'"
