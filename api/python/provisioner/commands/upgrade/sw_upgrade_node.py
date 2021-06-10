@@ -26,9 +26,15 @@ from provisioner.vendor import attr
 from provisioner.commands._basic import (
     RunArgs, RunArgsBase, CommandParserFillerMixin
 )
-from provisioner.commands.mini_api import (
-    EventRaiser
+from provisioner.commands import (
+    GetReleaseVersion
 )
+from provisioner.commands.mini_api import (
+    HookCaller,
+    MiniAPIHook
+)
+
+from .get_swupgrade_info import GetSWUpgradeInfo
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +50,8 @@ class RunArgsSWUpgradeNode(RunArgsBase):
     sw: List = attr_ib(
         cli_spec='upgrade/provisioner/sw', default=None
     )
-    no_events: bool = attr_ib(
-        cli_spec='upgrade/provisioner/no_events', default=False
+    no_hooks: bool = attr_ib(
+        cli_spec='upgrade/provisioner/no_hooks', default=False
     )
 
 
@@ -87,10 +93,15 @@ class SWUpgradeNode(CommandParserFillerMixin):
         # FIXME return list of objects, e.g. SWData
         return sw_data
 
-    def backup(self, no_events=False):
-        # TODO node level backup
-        # logger.info('SW Upgrade Node Backup (node level)')
-        pass
+    def backup(self, flow, no_hooks=False, targets=config.ALL_TARGETS):
+        if not no_hooks:
+            logger.info("Trigger 'backup' hook (node level)")
+            mini_hook = MiniAPIHook(
+                name=config.MiniAPIHooks.BACKUP,
+                flow=flow,
+                level=config.MiniAPILevels.NODE
+            )
+            HookCaller.hook(mini_hook, targets=targets)
 
     def upgrade_sw(self, sw, sw_data, targets):
         logger.info(f"Upgrading/Installing '{sw}' on '{targets}'")
@@ -98,46 +109,58 @@ class SWUpgradeNode(CommandParserFillerMixin):
         StatesApplier.apply([f"{sw_data['base_sls']}.install"], targets)
 
     def upgrade(
-        self, sw_data, flow, no_events=False, targets=config.ALL_TARGETS
+        self, sw_data, flow, no_hooks=False, targets=config.ALL_TARGETS
     ):
-        if not no_events:
+        # FIXME what if the following returns different versions
+        #       than cluster level logic
+        cortx_version = GetReleaseVersion.cortx_version()
+        upgrade_version = GetSWUpgradeInfo.cortx_version()
+        ctx_vars = dict(
+            CORTX_VERSION=cortx_version,
+            CORTX_UPGRADE_VERSION=upgrade_version
+        )
+
+        mini_hook = MiniAPIHook(
+            name=config.MiniAPIHooks.PRE_UPGRADE,
+            flow=flow,
+            level=config.MiniAPILevels.NODE
+        )
+
+        if not no_hooks:
             logger.info("Fire pre-upgrade event (node level)")
-            EventRaiser(
-                event=config.event_name(
-                    config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.PRE
-                ),
-                flow=flow,
-                level=config.MiniAPILevels.NODE
-            ).run()
+            HookCaller.hook(
+                mini_hook, ctx_vars=ctx_vars, targets=targets
+            )
 
-        logger.info('SW Upgrade Node (node level)')
-
+        logger.info(f"Upgrading sw: '{list(sw_data)}'")
         for sw, data in sw_data.items():
             self.upgrade_sw(sw, data, targets)
 
-        if not no_events:
+        if not no_hooks:
             logger.info("Fire post-upgrade event (node level)")
-            EventRaiser(
-                event=config.event_name(
-                    config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.POST
-                ),
-                flow=flow,
-                level=config.MiniAPILevels.NODE
-            ).run()
+            mini_hook.name = config.MiniAPIHooks.POST_UPGRADE
+            HookCaller.hook(
+                mini_hook, ctx_vars=ctx_vars, targets=targets
+            )
 
-    def run(self, flow, sw=None, no_events=False, targets=config.ALL_TARGETS):
+    def run(self, flow, sw=None, no_hooks=False, targets=config.ALL_TARGETS):
         try:
             # ASSUMPTIONS:
             #   - local minion has already upgraded version of provisioner
             #   - local minion has the same version of ISO
 
+            logger.info(
+                f"SW Upgrade Node, sw '{sw or 'all'}',"
+                f" no_hooks '{no_hooks}', targets '{targets}'"
+            )
+
             self.validate()
 
             sw_data = self.plan_upgrade(sw_list=sw)
 
-            self.backup(no_events=no_events)
+            self.backup(flow, no_hooks=no_hooks, targets=targets)
 
-            self.upgrade(sw_data, flow, no_events=no_events, targets=targets)
+            self.upgrade(sw_data, flow, no_hooks=no_hooks, targets=targets)
 
         except Exception as update_exc:
             # TODO TEST

@@ -661,7 +661,7 @@ class MiniAPISpecHookFields(Enum):
     WHEN = 'when'
 
 
-class MiniAPIHooks(Enum):
+class MiniAPIBaseHooks(Enum):
 
     """Mini Provisioner API Hooks."""
 
@@ -685,9 +685,18 @@ class MiniAPIEvents(Enum):
     POST = 'post'
 
 
-def event_name(hook: MiniAPIHooks, event: MiniAPIEvents):
-    return f"{event.value}-{hook.value}"
+def event_name(base_hook: MiniAPIBaseHooks, event: MiniAPIEvents):
+    return f"{event.value}-{base_hook.value}"
 
 
-MINI_API_EVENTS = list(itertools.product(MiniAPIHooks, MiniAPIEvents))
-MINI_API_EVENT_NAMES = [event_name(*ev) for ev in MINI_API_EVENTS]
+MiniAPIHooks = Enum(
+    'MiniAPIHooks',
+    (
+        [(k, v.value) for k, v in MiniAPIBaseHooks.__members__.items()] +
+        [
+            (event_name(*ev).upper().replace('-', '_'), event_name(*ev))
+            for ev in itertools.product(MiniAPIBaseHooks, MiniAPIEvents)
+        ]
+    ),
+    module=__name__
+)

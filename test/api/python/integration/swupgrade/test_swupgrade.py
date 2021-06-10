@@ -129,6 +129,8 @@ def test_swupgrade_r2_offline(
     # FIXME hard-coded
     upgrade_iso = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_2.1.0.iso'  # noqa: E501
     run_host = setup_hosts[0]
+    old_ver = '2.0.0-177'
+    new_ver = '2.1.0-177'
 
     # logic (HAPPY PATH):
     run_host.check_output(
@@ -147,7 +149,7 @@ def test_swupgrade_r2_offline(
     metadata = run_host.check_output(
         "provisioner get_release_version"
     )
-    assert GetReleaseVersion.cortx_version(metadata) == '2.1.0-177'
+    assert GetReleaseVersion.cortx_version(metadata) == new_ver
 
     #           - new provisioner API vesion was called to manage the logic
     #             with --noprepare flag
@@ -166,14 +168,30 @@ def test_swupgrade_r2_offline(
     #               - HA: were called for CLUSTER level as well
     #
     # FIXME hard-coded mock output
+
+    def mock_str(flow, level, hook, old_ver=None, new_ver=None):
+        res = (
+            f"{flow} {level} {hook} "
+            f"PRVSNR_MINI_FLOW={flow},"
+            f"PRVSNR_MINI_LEVEL={level},"
+            f"PRVSNR_MINI_HOOK={hook}"
+        )
+        if old_ver:
+            res += ",CORTX_VERSION={old_ver}"
+        if new_ver:
+            res += ",CORTX_UPGRADE_VERSION={new_ver}"
+        return res
+
     assert (
         run_host.check_output(
-            "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6}'"
+            "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6 FS $7}'"
         ) == (
-            "upgrade-offline cluster pre-upgrade\n"
-            "upgrade-offline node pre-upgrade\n"
-            "upgrade-offline node post-upgrade\n"
-            "upgrade-offline cluster post-upgrade"
+            f"{mock_str('upgrade-offline', 'cluster', 'backup')}\n"
+            f"{mock_str('upgrade-offline', 'cluster', 'pre-upgrade', old_ver, new_ver)}\n"  # noqa: E501
+            f"{mock_str('upgrade-offline', 'node', 'backup')}\n"
+            f"{mock_str('upgrade-offline', 'node', 'pre-upgrade', old_ver, new_ver)}\n"  # noqa: E501
+            f"{mock_str('upgrade-offline', 'node', 'post-upgrade', old_ver, new_ver)}\n"  # noqa: E501
+            f"{mock_str('upgrade-offline', 'cluster', 'post-upgrade', old_ver, new_ver)}"  # noqa: E501
         )
     )
 
@@ -181,10 +199,11 @@ def test_swupgrade_r2_offline(
     for host in setup_hosts[1:]:
         assert (
             host.check_output(
-                "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6}'"
+                "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6 FS $7}'"
             ) == (
-                "upgrade-offline node pre-upgrade\n"
-                "upgrade-offline node post-upgrade"
+                "{mock_str('upgrade-offline', 'node', 'backup')}\n"
+                "{mock_str('upgrade-offline', 'node', 'pre-upgrade', old_ver, new_ver)}\n"  # noqa: E501
+                "{mock_str('upgrade-offline', 'node', 'post-upgrade', old_ver, new_ver)}"  # noqa: E501
             )
         )
     #           - HA mini APIs were called for cluster level as well

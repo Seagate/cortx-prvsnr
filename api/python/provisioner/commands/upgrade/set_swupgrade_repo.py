@@ -330,7 +330,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     logger.info('Check sum validation succeeded')
             else:
                 logger.warning('Neither authenticity nor integrity validation'
-                               'is available')
+                               ' is possible (no inputs)')
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other

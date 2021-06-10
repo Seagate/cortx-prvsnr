@@ -15,13 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .mini_api import (
-    SpecRenderer,
-    EventRaiser
-)
-
+from .spec_renderer import SpecRenderer
+from .hook_caller import MiniAPIHook, HookCaller
+from .mini_api import MiniAPI
 
 __all__ = [
+    "MiniAPIHook",
+    "MiniAPI",
     "SpecRenderer",
-    "EventRaiser"
+    "HookCaller"
 ]

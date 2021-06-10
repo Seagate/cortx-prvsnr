@@ -110,6 +110,16 @@ def _call_cmd(cmd, env=None):
 
 class ConfSetupHelper:
 
+    @staticmethod
+    def env(hook, flow, level, ctx_vars=None):
+        res = ctx_vars or {}
+        res.update(dict(
+            PRVSNR_MINI_HOOK=hook,
+            PRVSNR_MINI_FLOW=flow,
+            PRVSNR_MINI_LEVEL=level
+        ))
+        return res
+
     def __init__(self, pillar, salt=None):
         self.pillar = pillar
         self.salt = salt
@@ -137,13 +147,21 @@ class ConfSetupHelper:
 
         return spec
 
-    @staticmethod
-    def env(hook, flow, level):
-        return dict(
-            PRVSNR_MINI_HOOK=hook,
-            PRVSNR_MINI_FLOW=flow,
-            PRVSNR_MINI_LEVEL=level
-        )
+    def filter_sw(self, sw):
+        if sw is None:
+            sw_list = list(self.sw_data)
+        elif isinstance(sw, str):
+            sw_list = sw.split()
+        else:
+            sw_list = sw
+
+        diff = set(sw_list) - set(self.sw_data)
+        if diff:
+            logger.warning(
+                f"The following unexpected SW would be ignored: '{diff}'"
+            )
+        # XXX ??? is it required to define the order here
+        return [_sw for _sw in self.sw_data if _sw in sw_list]
 
 
 def hook(
@@ -151,28 +169,34 @@ def hook(
     flow,
     level,
     sw=None,
+    ctx_vars=None,
     fail_fast=False
 ):
+    ev_field = MiniAPISpecFields.EVENTS.value
+
     helper = ConfSetupHelper(_salt_pillar())
+    sw_list = helper.filter_sw(sw)
 
-    if sw is None:
-        sw_list = list(helper.sw_data)
-    else:
-        sw_list = [sw]
-
-    excs = []
+    excs = {}
+    done = []
     for sw in sw_list:
         try:
             setup_spec = helper.sw_spec(sw, flow, level)
-            cmd = setup_spec.get(hook)
+            cmd = (
+                setup_spec.get(hook)  # base hook
+                or setup_spec.get(ev_field, {}).get(hook)  # or event
+            )
             # assuming that normailized spec2 includes only active hooks
             # with commands as values
             if cmd:
-                res = _call_cmd(cmd, env=helper.env(hook, flow, level))
+                res = _call_cmd(
+                    cmd, env=helper.env(hook, flow, level, ctx_vars=ctx_vars)
+                )
                 logger.debug(
                     f"Hook '{hook}' command '{cmd}'"
                     f" for '{sw}' resulted in: '{res}'"
                 )
+                done.append(sw)
         except Exception as exc:
             logger.warning(
                 f"Hook '{hook}' command '{cmd}' for '{sw}' failed: {exc}"
@@ -180,44 +204,15 @@ def hook(
             if fail_fast:
                 raise
             else:
-                excs.append((sw, hook, cmd, exc))
+                excs[sw] = (cmd, exc)
 
     if excs:
-        raise ProvisionerError(str(excs))
+        raise ProvisionerError(
+            f"Hook '{hook}' calls failed for '{list(excs)}': '{excs}'"
+        )
 
-
-def raise_event(event, flow, level, fail_fast=False):
-    ev_field = MiniAPISpecFields.EVENTS.value
-
-    helper = ConfSetupHelper(_salt_pillar())
-
-    events = []
-    for sw in helper.sw_data:
-        setup_spec = helper.sw_spec(sw, flow, level)
-        # assuming that normailized spec includes only active hooks
-        # with commands as values
-        if setup_spec and event in setup_spec[ev_field]:
-            events.append((sw, setup_spec[ev_field][event]))
-
-    excs = []
-    for sw, cmd in events:
-        try:
-            res = _call_cmd(cmd, env=helper.env(event, flow, level))
-            logger.debug(
-                f"Event '{event}' command '{cmd}' "
-                f"for '{sw}' resulted in: '{res}'"
-            )
-        except Exception as exc:
-            logger.warning(
-                f"Event '{event}' command '{cmd}' for '{sw}' failed: {exc}"
-            )
-            if fail_fast:
-                raise
-            else:
-                excs.append((sw, event, cmd, exc))
-
-    if excs:
-        raise ProvisionerError(str(excs))
+    if not done:
+        logger.info(f"No listeners for hook '{hook}' found")
 
 
 def conf_cmd(conf_file, conf_key):

@@ -32,7 +32,8 @@ from provisioner.commands import (
     PillarSet
 )
 from provisioner.commands.mini_api import (
-    EventRaiser
+    HookCaller,
+    MiniAPIHook
 )
 from provisioner.errors import SWUpdateError
 from provisioner.salt import (
@@ -54,6 +55,7 @@ from provisioner.cortx_ha import (
 
 
 from .sw_upgrade_node import SWUpgradeNode
+from .get_swupgrade_info import GetSWUpgradeInfo
 
 
 logger = logging.getLogger(__name__)
@@ -73,6 +75,7 @@ class RunArgsSWUpgrade:
 @attr.s(auto_attribs=True)
 class SWUpgrade(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
+    # TODO move run args to class attrs instead
     _run_args_type = RunArgsSWUpgrade
 
     @staticmethod
@@ -108,10 +111,10 @@ class SWUpgrade(CommandParserFillerMixin):
         # TODO FIXME ??? check ISO is compatible with all the nodes
         #      (even if it was checked during ISO setup)
 
-    def backup(self, cortx_version):
+    def backup(self, flow, cortx_version):
         logger.info('SW Upgrade Backup (cluster level)')
-        # Note. not documented in the design, mostly legacy but useful logic
 
+        # Note. not documented in the design, mostly legacy but useful logic
         logger.info('Storing current state of the yum history')
         txn_ids_dict = get_last_txn_ids(
             targets=config.ALL_MINIONS, multiple_targets_ok=True
@@ -123,11 +126,20 @@ class SWUpgrade(CommandParserFillerMixin):
             txn_ids_dict
         )
 
-    def self_upgrade(self, flow=config.CortxFlows.UPGRADE):
+        logger.info("Trigger 'backup' hook (cluster level)")
+        mini_hook = MiniAPIHook(
+            name=config.MiniAPIHooks.BACKUP,
+            flow=flow,
+            level=config.MiniAPILevels.CLUSTER
+        )
+        HookCaller.hook(mini_hook, targets=config.LOCAL_MINION)
+
+    def self_upgrade(self, flow):
         # here we can use python API (SWUpgradeNode) since
         # old provisioner version would be called anyway
         logger.info('Upgrading Provisioner on all the nodes')
-        SWUpgradeNode().run(flow=flow, sw=['provisioner'], no_events=True)
+        # FIXME what about backup hook for provisioner
+        SWUpgradeNode().run(flow=flow, sw=['provisioner'], no_hooks=True)
 
         # support for a separate orchestrator module
         # todo: can be a python API call if no changes for provisioner
@@ -144,7 +156,7 @@ class SWUpgrade(CommandParserFillerMixin):
             f"{'' if (flow == config.CortxFlows.UPGRADE) else ' --offline'}"
         )
 
-    def plan_upgrade(self, flow=config.CortxFlows.UPGRADE):
+    def plan_upgrade(self, flow):
         res = []
 
         logger.info("SW Upgrade Plan Build")
@@ -160,20 +172,27 @@ class SWUpgrade(CommandParserFillerMixin):
     def upgrade_cluster(
         self,
         planned_node_groups: List[List[str]],
-        flow=config.CortxFlows.UPGRADE
+        flow: config.CortxFlows,
+        from_ver: str,
+        to_ver: str
     ):
         logger.info("Fire pre-upgrade event (cluster level)")
+        mini_hook = MiniAPIHook(
+            name=config.MiniAPIHooks.PRE_UPGRADE,
+            flow=flow,
+            level=config.MiniAPILevels.CLUSTER
+        )
+        ctx_vars = dict(
+            CORTX_VERSION=from_ver,
+            CORTX_UPGRADE_VERSION=to_ver
+        )
+
         # Assumptions:
         #   resources cleanup and final cluster stop of should
         #   happen as part of pre-uprgade HA call
-        EventRaiser(
-            event=config.event_name(
-                config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.PRE
-            ),
-            flow=flow,
-            level=config.MiniAPILevels.CLUSTER,
-            targets=config.LOCAL_MINION
-        ).run()
+        HookCaller.hook(
+            mini_hook, ctx_vars=ctx_vars, targets=config.LOCAL_MINION
+        )
 
         # the following needed only in case pacemaker is upgraded
         # logger.info("Stopping the Cortx cluster")
@@ -190,23 +209,19 @@ class SWUpgrade(CommandParserFillerMixin):
         # cluster_start(unstandby=True)
 
         logger.info("Fire post-upgrade event (cluster level)")
-        EventRaiser(
-            event=config.event_name(
-                config.MiniAPIHooks.UPGRADE, config.MiniAPIEvents.POST
-            ),
-            flow=flow,
-            level=config.MiniAPILevels.CLUSTER,
-            targets=config.LOCAL_MINION
-        ).run()
+        mini_hook.name = config.MiniAPIHooks.POST_UPGRADE
+        HookCaller.hook(
+            mini_hook, ctx_vars=ctx_vars, targets=config.LOCAL_MINION
+        )
 
-    def prepare(self, cortx_version, flow=config.CortxFlows.UPGRADE):
+    def prepare(self, cortx_version, flow):
         self.validate()
 
-        self.backup(cortx_version)
+        self.backup(flow, cortx_version)
 
         self.self_upgrade(flow=flow)
 
-    def upgrade(self, flow=config.CortxFlows.UPGRADE):
+    def upgrade(self, flow, from_ver, to_ver):
         # TODO: can skip that if no changes for Orchestrator
         ret = cmd_run('provisioner --version')
         new_prvsnr_version = next(iter(ret.values()))
@@ -226,7 +241,9 @@ class SWUpgrade(CommandParserFillerMixin):
         logger.info("Moving the Cortx cluster into standby mode")
         cluster_stop(standby=True)
 
-        self.upgrade_cluster(planned_node_groups, flow=flow)
+        self.upgrade_cluster(
+            planned_node_groups, flow, from_ver, to_ver
+        )
 
         logger.info("Starting the Cortx cluster")
         cluster_start()
@@ -286,21 +303,33 @@ class SWUpgrade(CommandParserFillerMixin):
         try:
             if not noprepare:
                 cortx_version = GetReleaseVersion.cortx_version()
+                upgrade_version = GetSWUpgradeInfo.cortx_version()
                 logger.info(
                     f"Starting"
                     f" {'rolling' if (flow == config.CortxFlows.UPGRADE) else 'offline'}"  # noqa: E501
                     " upgrade logic."
+                    f" Current version of CORTX: '{cortx_version}', "
+                    f"target version: '{upgrade_version}'"
+                )
+                self.prepare(cortx_version, flow=flow)
+
+            ret = self.upgrade(flow, cortx_version, upgrade_version)
+
+            # final check of upgraded version
+            cortx_version = GetReleaseVersion.cortx_version()
+
+            if cortx_version == upgrade_version:
+                logger.info(
+                    f"Upgrade is done."
                     f" Current version of CORTX: '{cortx_version}'"
                 )
-                self.prepare(cortx_version)
-
-            ret = self.upgrade(flow=flow)
-
-            cortx_version = GetReleaseVersion.cortx_version()
-            logger.info(
-                f"Upgrade is done."
-                f" Current version of CORTX: '{cortx_version}'"
-            )
+            else:
+                msg = (
+                    "Upgraded to not expected version: "
+                    f"'{cortx_version}' instead of '{upgrade_version}'"
+                )
+                logger.error(msg)
+                raise errors.ProvisionerError(msg)
 
             return ret
         except Exception as update_exc:

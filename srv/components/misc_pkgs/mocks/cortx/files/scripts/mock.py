@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import logging
 
 FORMAT = '%(asctime)s-%(message)s'
 LOGGING_FILE = '/tmp/mock.log'
+
+mock_env = (
+    'PRVSNR_MINI_FLOW',
+    'PRVSNR_MINI_LEVEL',
+    'PRVSNR_MINI_HOOK',
+    'CORTX_VERSION',
+    'CORTX_UPGRADE_VERSION'
+)
 
 
 def main():
@@ -17,7 +26,8 @@ def main():
 
     """
     # pass all parameters "as is"
-    logger.info(f"MOCK: {' '.join(sys.argv[1:])}")
+    env = [f"{k}={v}" for k, v in os.environ.items() if k in mock_env]
+    logger.info(f"MOCK: {' '.join(sys.argv[1:])} {','.join(env)}")
 
 
 if __name__ == '__main__':
