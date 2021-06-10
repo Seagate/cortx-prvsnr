@@ -286,6 +286,10 @@ class ConfigureSetup(CommandParserFillerMixin):
             number_of_nodes, parsed
         )
 
+
+        #validate network interfaces and data-matadata devices from config.ini
+        validate._validate_config_devices(config,number_of_nodes)
+
         # Process default sections
         # copy data from srvnode_default to individual server_node sections
         # delete srvnode_default section

@@ -63,7 +63,6 @@ class CreateStorageSet(Command):
             PillarSet().run(
                 'cluster/storage_set/name',
                 name,
-                targets=node_id,
                 local=True
             )
 
@@ -71,7 +70,6 @@ class CreateStorageSet(Command):
             PillarSet().run(
                 'cluster/storage_set/count',
                 count,
-                targets=node_id,
                 local=True
             )
 

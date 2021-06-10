@@ -133,8 +133,6 @@ class DeployVM(Deploy):
                     "csm",
                     "ha.cortx-ha"
                 ):
-                    if state == "ha.cortx-ha":
-                        self.ensure_consul_running()
                     # Execute first on primary then on secondaries.
                     self._apply_state(f"components.{state}", primary, stages)
                     self._apply_state(
