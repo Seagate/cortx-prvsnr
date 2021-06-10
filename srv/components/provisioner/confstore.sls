@@ -15,12 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# TODO: use path from pillars or any other configuration
-{% set version = '2.1.0' %}
-# XXX hard-coded
-{% set mocks_repo_default = '/var/lib/seagate/cortx/provisioner/local/cortx_repos/upgrade_mock_{}'.format(version) %}
-{% set mocks_repo = salt['pillar.get']('inline:upgrade_repo_dir', mocks_repo_default) %}
+{% set profile_confstore = "/var/lib/seagate/cortx/provisioner/shared/factory_profile/confstore" %}
 
-{% from tpldir + '/_macros.sls' import bundle_built with context %}
+Create confstore dir in profile path:
+  file.directory:
+    - name: {{ profile_confstore }}
+    - user: root
+    - group: root
+    - dir_mode: 640
+    - makedirs: True
 
-{{ bundle_built(mocks_repo, 'upgrade', version, gen_iso=True) }}
+
+Copy confstore file:
+  file.managed:
+    - name: {{ profile_confstore }}/provisioner_cluster.json.{{ grains['id'] }}
+    - source: /opt/seagate/cortx_configs/provisioner_cluster.json
+    - user: root
+    - group: root
+    - replace: True

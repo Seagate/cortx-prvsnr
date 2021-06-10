@@ -78,7 +78,6 @@ class NetworkConfig(Command):
             PillarSet().run(
                 f'cluster/{node_id}/network/data/{mode_type}',
                 f'{mode}',
-                targets=node_id,
                 local=True
             )
             Conf.set(
@@ -97,7 +96,6 @@ class NetworkConfig(Command):
                 PillarSet().run(
                     f'cluster/{node_id}/network/data/{iface_key}',
                     interfaces,
-                    targets=node_id,
                     local=True
                 )
                 Conf.set(
@@ -112,7 +110,6 @@ class NetworkConfig(Command):
                 PillarSet().run(
                     f'cluster/{node_id}/network/mgmt/interfaces',
                     interfaces,
-                    targets=node_id,
                     local=True
                 )
                 Conf.set(

@@ -33,7 +33,7 @@ class Log:
         log_file = os.path.join(log_path, f"{file_name}.log")
 
         c_handler = logging.StreamHandler()
-        c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+        c_format = logging.Formatter('%(message)s')
 
         file_handler = logging.handlers.RotatingFileHandler(log_file, mode="a")
 

@@ -20,6 +20,9 @@
 hostname:
   Hostname
 
+pillar_sync:
+  PillarSync
+
 network:
   config:
     NetworkConfig

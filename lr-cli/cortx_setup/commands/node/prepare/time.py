@@ -46,15 +46,13 @@ class NodePrepareTime(Command):
                 "components.system.chrony.config",
                 "components.system.chrony.stop",
                 "components.system.chrony.start"
-            ],
-            local_minion_id()
+            ]
         )
 
     def set_enclosure_time(self):
         """Sets time on the enclosure"""
         StatesApplier.apply(
-            [ "components.controller.ntp" ],
-            local_minion_id()
+            [ "components.controller.ntp" ]
         )
 
     def run(self, **kwargs):
@@ -71,14 +69,12 @@ class NodePrepareTime(Command):
         PillarSet().run(
             'system/ntp/time_server',
             ntp_server,
-            targets=node_id,
             local=True
         )
 
         PillarSet().run(
             'system/ntp/time_zone',
             ntp_timezone,
-            targets=node_id,
             local=True
         )
 
