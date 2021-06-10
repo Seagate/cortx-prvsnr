@@ -35,21 +35,18 @@ cortx_components = get_cortx_states()
 class NodePrepare(Command):
     """Cortx Setup API for preparing node"""
     _args = {}
-    
+
     # deploy the specific component states wrt to stages like prepare, config, post_install
-    def _deploy(self, components: dict, stage: str = None):
+    def _deploy(self, components: dict, stage: list = None):
         for component in components:
             states = components[component]
             for state in states:
-                if stage and component not in ['platform', '3rd_party']:
-                    state = f"{state}.{stage}"
-
                 try:
                     self.logger.debug(
                         f"Running {state} for {node_id}"
                     )
                     deploy.Deploy()._apply_state(
-                        state, targets=node_id, stages=[state]
+                        f'components.{state}', targets=node_id, stages = stage
                     )
                 except Exception as ex:
                     raise ex
@@ -63,7 +60,7 @@ class NodePrepare(Command):
         """
 
         self.logger.debug("Deploying platform components")
-        self._deploy(provisioner_components['platform'])
+        self._deploy({'noncortx_component':provisioner_components['platform']}, stage = None)
 
         self.logger.debug("Deploying cortx components")
-        self._deploy(cortx_components, stage="prepare")
+        self._deploy(cortx_components, stage=["config.prepare"])

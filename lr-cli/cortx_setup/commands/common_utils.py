@@ -66,7 +66,7 @@ def get_provisioner_states():
     Get provisioner states system and 3rd party
 
     """
-    return get_pillar_data('execution/provisioner_components')
+    return get_pillar_data('execution/noncortx_components')
 
 def get_cortx_states():
     """

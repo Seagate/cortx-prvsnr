@@ -16,8 +16,7 @@
 #
 
 include:
-  - .install
+  - .post_install
+  - .prepare
   - .config
-{% if grains['id'] == 'srvnode-1' %}
-  - .sanity_check
-{% endif %}
+  - .init_mod
