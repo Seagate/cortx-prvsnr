@@ -180,7 +180,7 @@ def test_swupgrade_r2_offline(
     # other nodes should receive only node level events
     for host in setup_hosts[1:]:
         assert (
-            run_host.check_output(
+            host.check_output(
                 "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6}'"
             ) == (
                 "upgrade-offline node pre-upgrade\n"
