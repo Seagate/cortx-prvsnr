@@ -55,7 +55,7 @@ class ResetMachineId(CommandParserFillerMixin):
     def run(**kwargs):
 
         machine_id_reset_states = []
-        if kwargs['force']:
+        if 'force' in kwargs and kwargs['force']:
             logger.debug("machine_id on all nodes shall be forcefully reset.")
             machine_id_reset_states.append(
                 "components.provisioner.config.machine_id.force_reset")
