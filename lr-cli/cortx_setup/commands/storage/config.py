@@ -34,49 +34,8 @@ enc_file_path = Path(
 
 node_id = local_minion_id()
 enc_num = "enclosure-" + ((node_id).split('-'))[1]
-mode = None
-machine_id = None
-enclosure_id = None
 
 conf_pillar_map = {}
-
-def refresh_conf_pillar_map():
-
-    conf_pillar_map = {
-        'enclosure_id': (
-            f'storage/{enc_num}/enclosure_id',
-            f'server_node>{machine_id}>storage>enclosure_id'
-        ),
-        'user': (
-            f'storage/{enc_num}/controller/user',
-            f'storage_enclosure>{enclosure_id}>controller>user'
-        ),
-        'password': (
-            f'storage/{enc_num}/controller/secret',
-            f'storage_enclosure>{enclosure_id}>controller>secret'
-        ),
-        'ip': (
-            f'storage/{enc_num}/controller/{mode}/ip',
-            f'storage_enclosure>{enclosure_id}>controller>{mode}>ip'
-        ),
-        'port': (
-            f'storage/{enc_num}/controller/{mode}/port',
-            f'storage_enclosure>{enclosure_id}>controller>{mode}>port'
-        ),
-        'type': (
-            f'storage/{enc_num}/type',
-            f'storage_enclosure>{enclosure_id}>type'
-        ),
-        'controller_type': (
-            f'storage/{enc_num}/controller/type',
-            f'storage_enclosure>{enclosure_id}>controller>type',
-        ),
-        'name': (
-            f'storage/{enc_num}/name',
-            f'storage_enclosure>{enclosure_id}>name',
-        )
-    }
-
 
 """Cortx Setup API for configuring the storage enclosure """
 
@@ -141,11 +100,51 @@ class StorageEnclosureConfig(Command):
 
     def __init__(self):
         super().__init__()
+        self.machine_id = grains_get("machine_id")[node_id]["machine_id"]
+        self.enclosure_id = None
+        self.mode = None
         if enc_file_path.exists():
             if Path(enc_file_path).stat().st_size != 0:
                 with open(enc_file_path, "r") as file:
-                    enclosure_id = file.read().replace('\n', '')
-                refresh_conf_pillar_map()
+                    self.enclosure_id = file.read().replace('\n', '')
+        self.refresh_conf_pillar_map()
+
+    def refresh_conf_pillar_map(self):
+        global conf_pillar_map
+        conf_pillar_map = {
+            'enclosure_id': (
+                f'storage/{enc_num}/enclosure_id',
+                f'server_node>{self.machine_id}>storage>enclosure_id'
+            ),
+            'user': (
+                f'storage/{enc_num}/controller/user',
+                f'storage_enclosure>{self.enclosure_id}>controller>user'
+            ),
+            'password': (
+                f'storage/{enc_num}/controller/secret',
+                f'storage_enclosure>{self.enclosure_id}>controller>secret'
+            ),
+            'ip': (
+                f'storage/{enc_num}/controller/{self.mode}/ip',
+                f'storage_enclosure>{self.enclosure_id}>controller>{self.mode}>ip'
+            ),
+            'port': (
+                f'storage/{enc_num}/controller/{self.mode}/port',
+                f'storage_enclosure>{self.enclosure_id}>controller>{self.mode}>port'
+            ),
+            'storage_type': (
+                f'storage/{enc_num}/type',
+                f'storage_enclosure>{self.enclosure_id}>type'
+            ),
+            'controller_type': (
+                f'storage/{enc_num}/controller/type',
+                f'storage_enclosure>{self.enclosure_id}>controller>type',
+            ),
+            'name': (
+                f'storage/{enc_num}/name',
+                f'storage_enclosure>{self.enclosure_id}>name',
+            )
+        }
 
     def store(self, key, value):
 
@@ -173,7 +172,7 @@ class StorageEnclosureConfig(Command):
         name = kwargs.get('name')
         storage_type = kwargs.get('type')
         controller_type = kwargs.get('controller_type')
-        mode = kwargs.get('mode')
+        self.mode = kwargs.get('mode')
 
         Conf.load(
             'node_info_index',
@@ -182,19 +181,18 @@ class StorageEnclosureConfig(Command):
 
         if user != None and password != None and ip != None and port != None:
             # fetch enclosure serial/id
-            enclosure_id = EnclosureInfo(ip, user, password, port).get_enclosure_serial()
-            machine_id = grains_get("machine_id")[node_id]["machine_id"]
-            mode = "primary"
+            self.enclosure_id = EnclosureInfo(ip, user, password, port).get_enclosure_serial()
+            self.mode = "primary"
 
-            refresh_conf_pillar_map()
+            self.refresh_conf_pillar_map()
 
             self.logger.debug(f"Writing storage enclosure_id to the file {enc_file_path}")
             file = open(enc_file_path, "w")
-            file.write(enclosure_id + "\n")
+            file.write(self.enclosure_id + "\n")
             file.close()
 
             # store enclosure_id
-            self.store('enclosure_id', enclosure_id)
+            self.store('enclosure_id', self.enclosure_id)
 
             # store user and password
             self.store('user', user)
@@ -204,36 +202,36 @@ class StorageEnclosureConfig(Command):
             self.store('ip', ip)
             self.store('port', port)
         else:
-            refresh_conf_pillar_map()
+            self.refresh_conf_pillar_map()
             if name is not None:
-                if enclosure_id:
+                if self.enclosure_id:
                     self.store('name', name)
                 else:
                     self.logger.error("Please set 'user, password, primary ip and port' first")
                     raise RuntimeError("Cannot set name before setting user, password, ip and port")
 
             if storage_type is not None:
-                if enclosure_id:
+                if self.enclosure_id:
                     self.store('storage_type', storage_type)
                 else:
                     self.logger.error("Please set 'user, password, primary ip and port' first")
                     raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
 
             if controller_type is not None:
-                if enclosure_id:
+                if self.enclosure_id:
                     self.store('controller_type', controller_type)
                 else:
                     self.logger.error("Please set 'user, password, primary ip and port' first")
                     raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
 
-            if mode is not None:
+            if self.mode is not None:
                 if ip is None and port is None:
                     self.logger.exception(
-                        f"Sub options for mode {mode} are missing"
+                        f"Sub options for mode {self.mode} are missing"
                     )
                     raise RuntimeError('Please provide ip and/or port')
 
-                if enclosure_id:
+                if self.enclosure_id:
                     if ip:
                         self.store('ip', ip)
 
@@ -244,7 +242,7 @@ class StorageEnclosureConfig(Command):
                     raise RuntimeError("Incomplete arguments provided")
 
             if user is not None and password is not None:
-                if enclosure_id:
+                if self.enclosure_id:
                     host = pillar_get(f"storage/{enc_num}/controller/primary/ip")[node_id][f'storage/{enc_num}/controller/primary/ip']
                     port = pillar_get(f"storage/{enc_num}/controller/primary/port")[node_id][f'storage/{enc_num}/controller/primary/port']
 

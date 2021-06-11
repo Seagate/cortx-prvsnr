@@ -16,8 +16,8 @@
 #
 
 from logging import exception
-from ..command import Command
 from pathlib import Path
+from ..command import Command
 from provisioner.salt import function_run
 from provisioner.salt import StatesApplier
 
