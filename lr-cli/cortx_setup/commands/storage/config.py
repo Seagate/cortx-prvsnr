@@ -21,7 +21,7 @@ from cortx.utils.conf_store import Conf
 from provisioner.api import grains_get, pillar_get
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
-from .commons import EnclosureInfo
+from .enclosure_info import EnclosureInfo
 
 #TODO: Add this path in the global config
 prvsnr_cluster_path = Path(
