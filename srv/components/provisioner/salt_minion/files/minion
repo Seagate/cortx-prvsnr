@@ -1,7 +1,7 @@
 ##### Primary configuration settings #####
 ##########################################
 # This configuration file is used to manage the behavior of the Salt Minion.
-# With the exception of the location of the Salt Master Server, values that are
+# With the exception of the location of the Salt-Master Server, values that are
 # commented out but have an empty line after the comment are defaults that need
 # not be set in the config. If there is no blank line after the comment, the
 # value is presented as an example and is not the default.
@@ -11,7 +11,7 @@
 # as the main minion config file).
 #default_include: minion.d/*.conf
 
-# Set the location of the salt master server. If the master server cannot be
+# Set the location of the salt-master server. If the salt-master server cannot be
 # resolved, then the minion will fail to start.
 
 # TODO EOS-13921 IMPROVE need to sort out:
@@ -33,28 +33,28 @@ master: srvnode-1
 #proxy_username:
 #proxy_password:
 
-# If multiple masters are specified in the 'master' setting, the default behavior
+# If multiple salt-masters are specified in the 'master' setting, the default behavior
 # is to always try to connect to them in the order they are listed. If random_master is
 # set to True, the order will be randomized instead. This can be helpful in distributing
 # the load of many minions executing salt-call requests, for example, from a cron job.
-# If only one master is listed, this setting is ignored and a warning will be logged.
+# If only one salt-master is listed, this setting is ignored and a warning will be logged.
 # NOTE: If master_type is set to failover, use master_shuffle instead.
 random_master: False
 
 # Use if master_type is set to failover.
 master_shuffle: False
 
-# Minions can connect to multiple masters simultaneously (all masters
-# are "hot"), or can be configured to failover if a master becomes
-# unavailable.  Multiple hot masters are configured by setting this
-# value to "str".  Failover masters can be requested by setting
+# Minions can connect to multiple salt-masters simultaneously (all salt-masters
+# are "hot"), or can be configured to failover if a salt-master becomes
+# unavailable.  Multiple hot salt-masters are configured by setting this
+# value to "str".  Failover salt-masters can be requested by setting
 # to "failover".  MAKE SURE TO SET master_alive_interval if you are
 # using failover.
 # Setting master_type to 'disable' let's you have a running minion (with engines and
-# beacons) without a master connection
+# beacons) without a salt-master connection
 #master_type: str
 
-# Poll interval in seconds for checking if the master is still there.  Only
+# Poll interval in seconds for checking if the salt-master is still there.  Only
 # respected if master_type above is "failover". To disable the interval entirely,
 # set the value to -1. (This may be necessary on machines which have high numbers
 # of TCP connections, such as load balancers.)
@@ -62,23 +62,23 @@ master_shuffle: False
 
 # If the minion is in multi-master mode and the master_type configuration option
 # is set to "failover", this setting can be set to "True" to force the minion
-# to fail back to the first master in the list if the first master is back online.
+# to fail back to the first salt-master in the list if the first salt-master is back online.
 #master_failback: False
 
 # If the minion is in multi-master mode, the "master_type" configuration is set to
-# "failover", and the "master_failback" option is enabled, the master failback
-# interval can be set to ping the top master with this interval, in seconds.
+# "failover", and the "master_failback" option is enabled, the salt-master failback
+# interval can be set to ping the top salt-master with this interval, in seconds.
 #master_failback_interval: 5
 
-# Set whether the minion should connect to the master via IPv6:
+# Set whether the minion should connect to the salt-master via IPv6:
 #ipv6: False
 
 # Set the number of seconds to wait before attempting to resolve
-# the master hostname if name resolution fails. Defaults to 30 seconds.
+# the salt-master hostname if name resolution fails. Defaults to 30 seconds.
 # Set to zero if the minion should shutdown and not retry.
 # retry_dns: 30
 
-# Set the port used by the master reply and authentication server.
+# Set the port used by the salt-master reply and authentication server.
 #master_port: 4506
 
 # The user to run salt.
@@ -117,7 +117,7 @@ master_shuffle: False
 # Cache the minion id to a file when the minion's id is not statically defined
 # in the minion config. Defaults to "True". This setting prevents potential
 # problems when automatic minion id resolution changes, which can cause the
-# minion to lose connection with the master. To turn off minion id caching,
+# minion to lose connection with the salt-master. To turn off minion id caching,
 # set this config to ``False``.
 #minion_id_caching: True
 
@@ -189,7 +189,7 @@ output: highstate
 #
 #backup_mode: minion
 
-# When waiting for a master to accept the minion's public key, salt will
+# When waiting for a salt-master to accept the minion's public key, salt will
 # continuously attempt to reconnect until successful. This is the time, in
 # seconds, between those reconnection attempts.
 #acceptance_wait_time: 10
@@ -199,30 +199,30 @@ output: highstate
 # set to zero, the time between reconnection attempts will stay constant.
 #acceptance_wait_time_max: 0
 
-# If the master rejects the minion's public key, retry instead of exiting.
+# If the salt-master rejects the minion's public key, retry instead of exiting.
 # Rejected keys will be handled the same as waiting on acceptance.
 #rejected_retry: False
 
-# When the master key changes, the minion will try to re-auth itself to receive
-# the new master key. In larger environments this can cause a SYN flood on the
-# master because all minions try to re-auth immediately. To prevent this and
+# When the salt-master key changes, the minion will try to re-auth itself to receive
+# the new salt-master key. In larger environments this can cause a SYN flood on the
+# salt-master because all minions try to re-auth immediately. To prevent this and
 # have a minion wait for a random amount of time, use this optional parameter.
 # The wait-time will be a random number of seconds between 0 and the defined value.
 #random_reauth_delay: 60
 
 
-# To avoid overloading a master when many minions startup at once, a randomized
-# delay may be set to tell the minions to wait before connecting to the master.
+# To avoid overloading a salt-master when many minions startup at once, a randomized
+# delay may be set to tell the minions to wait before connecting to the salt-master.
 # This value is the number of seconds to choose from for a random number. For
 # example, setting this value to 60 will choose a random number of seconds to delay
 # on startup between zero seconds and sixty seconds. Setting to '0' will disable
 # this feature.
 #random_startup_delay: 0
 
-# When waiting for a master to accept the minion's public key, salt will
+# When waiting for a salt-master to accept the minion's public key, salt will
 # continuously attempt to reconnect until successful. This is the timeout value,
 # in seconds, for each individual attempt. After this timeout expires, the minion
-# will wait for acceptance_wait_time seconds before trying again. Unless your master
+# will wait for acceptance_wait_time seconds before trying again. Unless your salt-master
 # is under unusually heavy load, this should be left at the default.
 #auth_timeout: 60
 
@@ -230,47 +230,47 @@ output: highstate
 # authenticate.
 #auth_tries: 7
 
-# The number of attempts to connect to a master before giving up.
-# Set this to -1 for unlimited attempts. This allows for a master to have
+# The number of attempts to connect to a salt-master before giving up.
+# Set this to -1 for unlimited attempts. This allows for a salt-master to have
 # downtime and the minion to reconnect to it later when it comes back up.
-# In 'failover' mode, it is the number of attempts for each set of masters.
-# In this mode, it will cycle through the list of masters for each attempt.
+# In 'failover' mode, it is the number of attempts for each set of salt-masters.
+# In this mode, it will cycle through the list of salt-masters for each attempt.
 #
 # This is different than auth_tries because auth_tries attempts to
-# retry auth attempts with a single master. auth_tries is under the
-# assumption that you can connect to the master but not gain
+# retry auth attempts with a single salt-master. auth_tries is under the
+# assumption that you can connect to the salt-master but not gain
 # authorization from it. master_tries will still cycle through all
-# the masters in a given try, so it is appropriate if you expect
-# occasional downtime from the master(s).
+# the salt-masters in a given try, so it is appropriate if you expect
+# occasional downtime from the salt-master(s).
 master_tries: 5
 
 # If authentication fails due to SaltReqTimeoutError during a ping_interval,
 # cause sub minion process to restart.
 #auth_safemode: False
 
-# Ping Master to ensure connection is alive (minutes).
+# Ping Salt-Master to ensure connection is alive (minutes).
 ping_interval: 2
 
-# To auto recover minions if master changes IP address (DDNS)
+# To auto recover minions if salt-master changes IP address (DDNS)
 #    auth_tries: 10
 #    auth_safemode: False
 #    ping_interval: 2
 #
-# Minions won't know master is missing until a ping fails. After the ping fail,
+# Minions won't know salt-master is missing until a ping fails. After the ping fail,
 # the minion will attempt authentication and likely fails out and cause a restart.
-# When the minion restarts it will resolve the masters IP and attempt to reconnect.
+# When the minion restarts it will resolve the salt-masters IP and attempt to reconnect.
 
 # If you don't have any problems with syn-floods, don't bother with the
 # three recon_* settings described below, just leave the defaults!
 #
-# The ZeroMQ pull-socket that binds to the masters publishing interface tries
+# The ZeroMQ pull-socket that binds to the salt-masters publishing interface tries
 # to reconnect immediately, if the socket is disconnected (for example if
-# the master processes are restarted). In large setups this will have all
-# minions reconnect immediately which might flood the master (the ZeroMQ-default
+# the salt-master processes are restarted). In large setups this will have all
+# minions reconnect immediately which might flood the salt-master (the ZeroMQ-default
 # is usually a 100ms delay). To prevent this, these three recon_* settings
 # can be used.
 # recon_default: the interval in milliseconds that the socket should wait before
-#                trying to reconnect to the master (1000ms = 1 second)
+#                trying to reconnect to the salt-master (1000ms = 1 second)
 #
 # recon_max: the maximum time a socket should wait. each interval the time to wait
 #            is calculated by doubling the previous time. if recon_max is reached,
@@ -289,7 +289,7 @@ ping_interval: 2
 #                  and recon_max value kind of defeats the purpose of being able to
 #                  change these settings. If all minions have the same values and your
 #                  setup is quite large (several thousand minions), they will still
-#                  flood the master. The desired behavior is to have timeframe within
+#                  flood the salt-master. The desired behavior is to have timeframe within
 #                  all minions try to reconnect.
 #
 # Example on how to use these settings. The goal: have all minions reconnect within a
@@ -327,10 +327,10 @@ ping_interval: 2
 #loop_interval: 1
 
 # Some installations choose to start all job returns in a cache or a returner
-# and forgo sending the results back to a master. In this workflow, jobs
+# and forgo sending the results back to a salt-master. In this workflow, jobs
 # are most often executed with --async from the Salt CLI and then results
 # are evaluated by examining job caches on the minions or any configured returners.
-# WARNING: Setting this to False will **disable** returns back to the master.
+# WARNING: Setting this to False will **disable** returns back to the salt-master.
 #pub_ret: True
 
 
@@ -341,7 +341,7 @@ ping_interval: 2
 #grains_deep_merge: False
 
 # The grains_refresh_every setting allows for a minion to periodically check
-# its grains to see if they have changed and, if so, to inform the master
+# its grains to see if they have changed and, if so, to inform the salt-master
 # of the new grains. This operation is moderately expensive, therefore
 # care should be taken not to set this value too low.
 #
@@ -402,8 +402,8 @@ mine_interval: 60
 # minion event bus. The value is expressed in bytes.
 #max_event_size: 1048576
 
-# To detect failed master(s) and fire events on connect/disconnect, set
-# master_alive_interval to the number of seconds to poll the masters for
+# To detect failed salt-master(s) and fire events on connect/disconnect, set
+# master_alive_interval to the number of seconds to poll the salt-masters for
 # connection events.
 #
 #master_alive_interval: 10
@@ -423,8 +423,8 @@ mine_interval: 60
 #  - /etc/salt/extra_config
 #  - /etc/roles/webserver
 
-# The syndic minion can verify that it is talking to the correct master via the
-# key fingerprint of the higher-level master with the "syndic_finger" config.
+# The syndic minion can verify that it is talking to the correct salt-master via the
+# key fingerprint of the higher-level salt-master with the "syndic_finger" config.
 #syndic_finger: ''
 #
 #
@@ -432,7 +432,7 @@ mine_interval: 60
 #####   Minion module management     #####
 ##########################################
 # Disable specific modules. This allows the admin to limit the level of
-# access the master has to the minion.  The default here is the empty list,
+# access the salt-master has to the minion.  The default here is the empty list,
 # below is an example of how this needs to be formatted in the config file
 #disable_modules:
 #  - cmdmod
@@ -488,12 +488,12 @@ mine_interval: 60
 #autoload_dynamic_modules: True
 #
 # clean_dynamic_modules keeps the dynamic modules on the minion in sync with
-# the dynamic modules on the master, this means that if a dynamic module is
-# not on the master it will be deleted from the minion. By default, this is
+# the dynamic modules on the salt-master, this means that if a dynamic module is
+# not on the salt-master it will be deleted from the minion. By default, this is
 # enabled and can be disabled by changing this value to False.
 #clean_dynamic_modules: True
 #
-# Normally, the minion is not isolated to any single environment on the master
+# Normally, the minion is not isolated to any single environment on the salt-master
 # when running states, but the environment can be isolated on the minion side
 # by statically setting it. Remember that the recommended way to manage
 # environments is to isolate via the top file.
@@ -520,7 +520,7 @@ mine_interval: 60
 # Run states when the minion daemon starts. To enable, set startup_states to:
 # 'highstate' -- Execute state.highstate
 # 'sls' -- Read in the sls_list option and execute the named sls files
-# 'top' -- Read top_file option and execute based on that file on the Master
+# 'top' -- Read top_file option and execute based on that file on the Salt-Master
 #startup_states: ''
 #
 # List of states to run when the minion starts up if startup_states is 'sls':
@@ -543,11 +543,11 @@ mine_interval: 60
 #####     File Directory Settings    #####
 ##########################################
 # The Salt Minion can redirect all file server operations to a local directory,
-# this allows for the same state tree that is on the master to be used if
+# this allows for the same state tree that is on the salt-master to be used if
 # copied completely onto the minion. This is a literal copy of the settings on
-# the master but used to reference a local directory on the minion.
+# the salt-master but used to reference a local directory on the minion.
 
-# Set the file client. The client defaults to looking on the master server for
+# Set the file client. The client defaults to looking on the salt-master server for
 # files, but can be directed to look at the local file directory setting
 # defined below by setting it to "local". Setting a local file_client runs the
 # minion in masterless mode.
@@ -595,7 +595,7 @@ fileserver_backend:
 # Uncomment the line below if you do not want symlinks to be
 # treated as the files they are pointing to. By default this is set to
 # False. By uncommenting the line below, any detected symlink while listing
-# files on the Master will not be returned to the Minion.
+# files on the Salt-Master will not be returned to the Minion.
 #fileserver_ignoresymlinks: True
 #
 # By default, the Salt fileserver recurses fully into all defined environments
@@ -636,7 +636,7 @@ pillar_roots:
     - /opt/seagate/cortx/provisioner/pillar
 
 
-# Set a hard-limit on the size of the files that can be pushed to the master.
+# Set a hard-limit on the size of the files that can be pushed to the salt-master.
 # It will be interpreted as megabytes. Default: 100
 #file_recv_max_size: 100
 #
@@ -653,7 +653,7 @@ pillar_roots:
 #keysize: 2048
 
 # Enable permissive access to the salt keys.  This allows you to run the
-# master or minion as root, but have a non-root group be given access to
+# salt-master or minion as root, but have a non-root group be given access to
 # your pki_dir.  To make the access explicit, root must belong to the group
 # you've given access to. This is potentially quite insecure.
 #permissive_pki_access: False
@@ -682,12 +682,12 @@ state_output: changes
 # will be shown for each state run.
 #state_output_profile: True
 
-# Fingerprint of the master public key to validate the identity of your Salt master
+# Fingerprint of the salt-master public key to validate the identity of your Salt-master
 # before the initial key exchange. The master fingerprint can be found by running
-# "salt-key -f master.pub" on the Salt master.
+# "salt-key -f master.pub" on the Salt-master.
 #master_finger: ''
 
-# Use TLS/SSL encrypted connection between master and minion.
+# Use TLS/SSL encrypted connection between salt-master and minion.
 # Can be set to a dictionary containing keyword arguments corresponding to Python's
 # 'ssl.wrap_socket' method.
 # Default is None.
@@ -696,8 +696,8 @@ state_output: changes
 #    certfile: <path_to_certfile>
 #    ssl_version: PROTOCOL_TLSv1_2
 
-# Grains to be sent to the master on authentication to check if the minion's key
-# will be accepted automatically. Needs to be configured on the master.
+# Grains to be sent to the salt-master on authentication to check if the minion's key
+# will be accepted automatically. Needs to be configured on the salt-master.
 #autosign_grains:
 #  - uuid
 #  - server_id
@@ -811,13 +811,13 @@ log_level_logfile: warning
 #
 # All events logged will include the string 'ZeroMQ event'. A connection event
 # should be logged as the minion starts up and initially connects to the
-# master. If not, check for debug log level and that the necessary version of
+# salt-master. If not, check for debug log level and that the necessary version of
 # ZeroMQ is installed.
 #
 #zmq_monitor: False
 
-# Number of times to try to authenticate with the salt master when reconnecting
-# to the master
+# Number of times to try to authenticate with the salt-master when reconnecting
+# to the salt-master
 #tcp_authentication_retries: 5
 
 ######      Module configuration      #####
@@ -857,9 +857,9 @@ log_level_logfile: warning
 ######      Keepalive settings        ######
 ############################################
 # ZeroMQ now includes support for configuring SO_KEEPALIVE if supported by
-# the OS. If connections between the minion and the master pass through
+# the OS. If connections between the minion and the salt-master pass through
 # a state tracking device such as a firewall or VPN gateway, there is
-# the risk that it could tear down the connection the master and minion
+# the risk that it could tear down the connection the salt-master and minion
 # without informing either party that their connection has been taken away.
 # Enabling TCP Keepalives prevents this from happening.
 
@@ -884,7 +884,7 @@ log_level_logfile: warning
 
 ######   Windows Software settings    ######
 ############################################
-# Location of the repository cache file on the master:
+# Location of the repository cache file on the salt-master:
 #win_repo_cachefile: 'salt://win/repo/winrepo.p'
 
 

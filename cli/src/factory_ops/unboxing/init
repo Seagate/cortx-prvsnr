@@ -205,7 +205,7 @@ pre_unbox
 #echo "Done with provisioner replace node api" >> ${LOG_FILE}
 
 # Check salt services is required as one of initial steps
-# This is requried to fetch pillar data on master node
+# This is requried to fetch pillar data on primary node
 # check_salt_services
 
 # Update /root/.ssh/config file with hosts

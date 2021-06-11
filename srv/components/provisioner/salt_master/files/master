@@ -1,14 +1,14 @@
 ##### Primary configuration settings #####
 ##########################################
-# This configuration file is used to manage the behavior of the Salt Master.
+# This configuration file is used to manage the behavior of the Salt-Master.
 # Values that are commented out but have an empty line after the comment are
 # defaults that do not need to be set in the config. If there is no blank line
 # after the comment then the value is presented as an example and is not the
 # default.
 
-# Per default, the master will automatically include all config files
+# Per default, the salt-master will automatically include all config files
 # from master.d/*.conf (master.d is a directory in the same directory
-# as the main master config file).
+# as the main salt-master config file).
 #default_include: master.d/*.conf
 
 # The address of the interface to bind to:
@@ -21,8 +21,8 @@
 # The tcp port used by the publisher:
 #publish_port: 4505
 
-# The user under which the salt master will run. Salt will update all
-# permissions to allow the specified user to run the master. The exception is
+# The user under which the salt salt-master will run. Salt will update all
+# permissions to allow the specified user to run the salt-master. The exception is
 # the job cache, which must be deleted if this user is changed. If the
 # modified files cause conflicts, set verify_env to False.
 #user: root
@@ -39,13 +39,13 @@
 # key_logfile, pidfile, autosign_grains_dir:
 #root_dir: /
 
-# The path to the master's configuration file.
+# The path to the salt-master's configuration file.
 #conf_file: /etc/salt/master
 
 # Directory used to store public key data:
 #pki_dir: /etc/salt/pki/master
 
-# Key cache. Increases master speed for large numbers of accepted
+# Key cache. Increases salt-master speed for large numbers of accepted
 # keys. Available options: 'sched'. (Updates on a fixed schedule.)
 # Note that enabling this feature means that minions will not be
 # available to target for up to the length of the maintanence loop
@@ -82,7 +82,7 @@
 # seconds.
 timeout: 1200
 
-# The loop_interval option controls the seconds for the master's maintenance
+# The loop_interval option controls the seconds for the salt-master's maintenance
 # process check cycle. This process updates file server backends, cleans the
 # job cache and executes the scheduler.
 #loop_interval: 60
@@ -124,13 +124,13 @@ cli_summary: True
 # Set the directory used to hold unix sockets:
 #sock_dir: /var/run/salt/master
 
-# The master can take a while to start up when lspci and/or dmidecode is used
-# to populate the grains for the master. Enable if you want to see GPU hardware
-# data for your master.
+# The salt-master can take a while to start up when lspci and/or dmidecode is used
+# to populate the grains for the salt-master. Enable if you want to see GPU hardware
+# data for your salt-master.
 # enable_gpu_grains: False
 
-# The master maintains a job cache. While this is a great addition, it can be
-# a burden on the master for larger deployments (over 5000 minions).
+# The salt-master maintains a job cache. While this is a great addition, it can be
+# a burden on the salt-master for larger deployments (over 5000 minions).
 # Disabling the job cache will make previously executed jobs unavailable to
 # the jobs system and is not generally recommended.
 #job_cache: True
@@ -158,7 +158,7 @@ cli_summary: True
 #event_return: mysql
 
 # On busy systems, enabling event_returns can cause a considerable load on
-# the storage system for returners. Events can be queued on the master and
+# the storage system for returners. Events can be queued on the salt-master and
 # stored in a batched fashion using a single transaction for multiple events.
 # By default, events are not queued.
 #event_return_queue: 0
@@ -170,26 +170,26 @@ cli_summary: True
 
 # Passing very large events can cause the minion to consume large amounts of
 # memory. This value tunes the maximum size of a message allowed onto the
-# master event bus. The value is expressed in bytes.
+# salt-master event bus. The value is expressed in bytes.
 #max_event_size: 1048576
 
-# By default, the master AES key rotates every 24 hours. The next command
+# By default, the salt-master AES key rotates every 24 hours. The next command
 # following a key rotation will trigger a key refresh from the minion which may
 # result in minions which do not respond to the first command after a key refresh.
 #
-# To tell the master to ping all minions immediately after an AES key refresh, set
+# To tell the salt-master to ping all minions immediately after an AES key refresh, set
 # ping_on_rotate to True. This should mitigate the issue where a minion does not
 # appear to initially respond after a key is rotated.
 #
-# Note that ping_on_rotate may cause high load on the master immediately after
+# Note that ping_on_rotate may cause high load on the salt-master immediately after
 # the key rotation event as minions reconnect. Consider this carefully if this
-# salt master is managing a large number of minions.
+# salt-master is managing a large number of minions.
 #
 # If disabled, it is recommended to handle this event by listening for the
 # 'aes_key_rotate' event with the 'key' tag and acting appropriately.
 # ping_on_rotate: False
 
-# By default, the master deletes its cache of minion data when the key for that
+# By default, the salt-master deletes its cache of minion data when the key for that
 # minion is removed. To preserve the cache after key deletion, set
 # 'preserve_minion_cache' to True.
 #
@@ -200,19 +200,19 @@ cli_summary: True
 # Allow or deny minions from requesting their own key revocation
 #allow_minion_key_revoke: True
 
-# If max_minions is used in large installations, the master might experience
+# If max_minions is used in large installations, the salt-master might experience
 # high-load situations because of having to check the number of connected
 # minions for every authentication. This cache provides the minion-ids of
 # all connected minions to all MWorker-processes and greatly improves the
 # performance of max_minions.
 # con_cache: False
 
-# The master can include configuration from other files. To enable this,
+# The salt-master can include configuration from other files. To enable this,
 # pass a list of paths to this option. The paths can be either relative or
 # absolute; if relative, they are considered to be relative to the directory
-# the main master configuration file lives in (this file). Paths can make use
+# the main salt-master configuration file lives in (this file). Paths can make use
 # of shell-style globbing. If no files are matched by a path passed to this
-# option, then the master will log a warning message.
+# option, then the salt-master will log a warning message.
 #
 # Include a config file from some other path:
 # include: /etc/salt/extra_config
@@ -226,8 +226,8 @@ cli_summary: True
 ##########################################
 # Max open files
 #
-# Each minion connecting to the master uses AT LEAST one file descriptor, the
-# master subscription connection. If enough minions connect you might start
+# Each minion connecting to the salt-master uses AT LEAST one file descriptor, the
+# salt-master subscription connection. If enough minions connect you might start
 # seeing on the console (and then salt-master crashes):
 #   Too many open files (tcp_listener.cpp:335)
 #   Aborted (core dumped)
@@ -244,7 +244,7 @@ cli_summary: True
 #max_open_files: 100000
 
 # The number of worker threads to start. These threads are used to manage
-# return calls made from minions to the master. If the master seems to be
+# return calls made from minions to the salt-master. If the salt-master seems to be
 # running slowly, increase the number of threads. This setting can not be
 # set lower than 3.
 worker_threads: 10
@@ -259,9 +259,9 @@ worker_threads: 10
 #pub_hwm: 1000
 
 # These two ZMQ HWM settings, salt_event_pub_hwm and event_publisher_pub_hwm
-# are significant for masters with thousands of minions.  When these are
+# are significant for salt-masters with thousands of minions.  When these are
 # insufficiently high it will manifest in random responses missing in the CLI
-# and even missing from the job cache.  Masters that have fast CPUs and many
+# and even missing from the job cache.  Salt-Masters that have fast CPUs and many
 # cores with appropriate worker_threads will not need these set as high.
 
 # On deployment with 8,000 minions, 2.4GHz CPUs, 24 cores, 32GiB memory has
@@ -276,7 +276,7 @@ worker_threads: 10
 # ZMQ high-water-mark for EventPublisher pub socket
 #event_publisher_pub_hwm: 10000
 
-# The master may allocate memory per-event and not
+# The salt-master may allocate memory per-event and not
 # reclaim it.
 # To set a high-water mark for memory allocation, use
 # ipc_write_buffer to set a high-water mark for message
@@ -294,7 +294,7 @@ worker_threads: 10
 #batch_safe_limit: 100
 #batch_safe_size: 8
 
-# Master stats enables stats events to be fired from the master at close
+# Salt-Master stats enables stats events to be fired from the salt-master at close
 # to the defined interval
 #master_stats: False
 #master_stats_event_iter: 60
@@ -302,7 +302,7 @@ worker_threads: 10
 
 #####        Security settings       #####
 ##########################################
-# Enable passphrase protection of Master private key.  Although a string value
+# Enable passphrase protection of Salt-Master private key.  Although a string value
 # is acceptable; passwords should be stored in an external vaulting mechanism
 # and retrieved via sdb. See https://docs.saltstack.com/en/latest/topics/sdb/.
 # Passphrase protection is off by default but an example of an sdb profile and
@@ -313,7 +313,7 @@ worker_threads: 10
 #
 # key_pass: sdb://masterkeyring/key_pass
 
-# Enable passphrase protection of the Master signing_key. This only applies if
+# Enable passphrase protection of the Salt-Master signing_key. This only applies if
 # master_sign_pubkey is set to True.  This is disabled by default.
 # master_sign_pubkey: True
 # signing_key_pass: sdb://masterkeyring/signing_pass
@@ -333,7 +333,7 @@ worker_threads: 10
 
 # Time in minutes that an incoming public key with a matching name found in
 # pki_dir/minion_autosign/keyid is automatically accepted. Expired autosign keys
-# are removed when the master checks the minion_autosign directory.
+# are removed when the salt-master checks the minion_autosign directory.
 # 0 equals no timeout
 # autosign_timeout: 120
 
@@ -354,14 +354,14 @@ worker_threads: 10
 #autosign_grains_dir: /etc/salt/autosign_grains
 
 # Enable permissive access to the salt keys. This allows you to run the
-# master or minion as root, but have a non-root group be given access to
+# salt-master or minion as root, but have a non-root group be given access to
 # your pki_dir. To make the access explicit, root must belong to the group
 # you've given access to. This is potentially quite insecure. If an autosign_file
 # is specified, enabling permissive_pki_access will allow group access to that
 # specific file.
 #permissive_pki_access: False
 
-# Allow users on the master access to execute specific commands on minions.
+# Allow users on the salt-master access to execute specific commands on minions.
 # This setting should be treated with care since it opens up execution
 # capabilities to non root users. By default this capability is completely
 # disabled.
@@ -417,21 +417,21 @@ external_auth:
 # the same module used for external authentication.
 #eauth_acl_module: django
 
-# Allow minions to push files to the master. This is disabled by default, for
+# Allow minions to push files to the salt-master. This is disabled by default, for
 # security purposes.
 #file_recv: False
 
-# Set a hard-limit on the size of the files that can be pushed to the master.
+# Set a hard-limit on the size of the files that can be pushed to the salt-master.
 # It will be interpreted as megabytes. Default: 100
 #file_recv_max_size: 100
 
-# Signature verification on messages published from the master.
-# This causes the master to cryptographically sign all messages published to its event
+# Signature verification on messages published from the salt-master.
+# This causes the salt-master to cryptographically sign all messages published to its event
 # bus, and minions then verify that signature before acting on the message.
 #
 # This is False by default.
 #
-# Note that to facilitate interoperability with masters and minions that are different
+# Note that to facilitate interoperability with salt-masters and minions that are different
 # versions, if sign_pub_messages is True but a message is received by a minion with
 # no signature, it will still be accepted, and a warning message will be logged.
 # Conversely, if sign_pub_messages is False, but a minion receives a signed
@@ -442,7 +442,7 @@ external_auth:
 
 # Signature verification on messages published from minions
 # This requires that minions cryptographically sign the messages they
-# publish to the master.  If minions are not signing, then log this information
+# publish to the salt-master.  If minions are not signing, then log this information
 # at loglevel 'INFO' and drop the message without acting on it.
 # require_minion_sign_messages: False
 
@@ -454,7 +454,7 @@ external_auth:
 # to signing minion messages gradually.
 # drop_messages_signature_fail: False
 
-# Use TLS/SSL encrypted connection between master and minion.
+# Use TLS/SSL encrypted connection between salt-master and minion.
 # Can be set to a dictionary containing keyword arguments corresponding to Python's
 # 'ssl.wrap_socket' method.
 # Default is None.
@@ -532,17 +532,17 @@ external_auth:
 # found in the roster.  Set this to True to enable it.
 ssh_update_roster: True
 
-#####    Master Module Management    #####
+#####    Salt-Master Module Management    #####
 ##########################################
-# Manage how master side modules are loaded.
+# Manage how salt-master side modules are loaded.
 
-# Add any additional locations to look for master runners:
+# Add any additional locations to look for salt-master runners:
 #runner_dirs: []
 
-# Add any additional locations to look for master utils:
+# Add any additional locations to look for salt-master utils:
 #utils_dirs: []
 
-# Enable Cython for master side modules:
+# Enable Cython for salt-master side modules:
 #cython_enable: False
 
 
@@ -644,10 +644,10 @@ state_output: changes
 #####      File Server settings      #####
 ##########################################
 # Salt runs a lightweight file server written in zeromq to deliver files to
-# minions. This file server is built into the master daemon and does not
+# minions. This file server is built into the salt-master daemon and does not
 # require a dedicated port.
 
-# The file server works on environments passed to the master, each environment
+# The file server works on environments passed to the salt-master, each environment
 # can have multiple root directories, the subdirectories in the multiple file
 # roots cannot match, otherwise the downloaded files will not be able to be
 # reliably ensured. A base environment is required to house the top file.
@@ -695,13 +695,13 @@ file_roots:
 #default_top: base
 
 # The hash_type is the hash to use when discovering the hash of a file on
-# the master server. The default is sha256, but md5, sha1, sha224, sha384 and
+# the salt-master server. The default is sha256, but md5, sha1, sha224, sha384 and
 # sha512 are also supported.
 #
 # WARNING: While md5 and sha1 are also supported, do not use them due to the
 # high chance of possible collisions and thus security breach.
 #
-# Prior to changing this value, the master should be stopped and all Salt
+# Prior to changing this value, the salt-master should be stopped and all Salt
 # caches should be cleared.
 #hash_type: sha256
 
@@ -730,7 +730,7 @@ file_roots:
 # File Server Backend
 #
 # Salt supports a modular fileserver backend system, this system allows
-# the salt master to link directly to third party systems to gather and
+# the salt salt-master to link directly to third party systems to gather and
 # manage the files available to minions. Multiple backends can be
 # configured and will be searched for the requested file in the order in which
 # they are defined here. The default setting only enables the standard backend
@@ -753,7 +753,7 @@ fileserver_backend:
 # Uncomment the line below if you do not want symlinks to be
 # treated as the files they are pointing to. By default this is set to
 # False. By uncommenting the line below, any detected symlink while listing
-# files on the Master will not be returned to the Minion.
+# files on the Salt-Master will not be returned to the Minion.
 #fileserver_ignoresymlinks: True
 #
 # By default, the Salt fileserver recurses fully into all defined environments
@@ -803,7 +803,7 @@ fileserver_backend:
 #gitfs_passphrase: ''
 
 # When using the git fileserver backend at least one git remote needs to be
-# defined. The user running the salt master will need read access to the repo.
+# defined. The user running the salt-master will need read access to the repo.
 #
 # The repos will be searched in order to find the file requested by a client
 # and the first repo to have the file will return it.
@@ -896,16 +896,16 @@ pillar_roots:
 # is a security concern, you may want to try using the ssh transport.
 #pillar_gitfs_ssl_verify: True
 
-# The pillar_opts option adds the master configuration file data to a dict in
+# The pillar_opts option adds the salt-master configuration file data to a dict in
 # the pillar called "master". This is used to set simple configurations in the
-# master config file that can then be used on minions.
+# salt-master config file that can then be used on minions.
 #pillar_opts: False
 
-# The pillar_safe_render_error option prevents the master from passing pillar
+# The pillar_safe_render_error option prevents the salt-master from passing pillar
 # render errors to the minion. This is set on by default because the error could
 # contain templating data which would give that minion information it shouldn't
 # have, like a password! When set true the error message will only show:
-#   Rendering SLS 'my.sls' failed. Please see master log for details.
+#   Rendering SLS 'my.sls' failed. Please see salt-master log for details.
 #pillar_safe_render_error: True
 
 # The pillar_source_merging_strategy option allows you to configure merging strategy
@@ -961,7 +961,7 @@ pillar_roots:
 #git_pillar_ssl_verify: False
 
 # When set to False, if there is an update/checkout lock for a git_pillar
-# remote and the pid written to it is not running on the master, the lock
+# remote and the pid written to it is not running on the salt-master, the lock
 # file will be automatically cleared and a new lock will be obtained.
 #git_pillar_global_lock: True
 
@@ -995,10 +995,10 @@ pillar_roots:
 #  - '+refs/heads/*:refs/remotes/origin/*'
 #  - '+refs/tags/*:refs/tags/*'
 
-# A master can cache pillars locally to bypass the expense of having to render them
+# A salt-master can cache pillars locally to bypass the expense of having to render them
 # for each minion on every request. This feature should only be enabled in cases
 # where pillar rendering time is known to be unsatisfactory and any attendant security
-# concerns about storing pillars in a master cache have been addressed.
+# concerns about storing pillars in a salt-master cache have been addressed.
 #
 # When enabling this feature, be certain to read through the additional ``pillar_cache_*``
 # configuration options to fully understand the tunable parameters and their implications.
@@ -1007,22 +1007,22 @@ pillar_roots:
 # See https://docs.saltstack.com/en/latest/topics/targeting/pillar.html
 #pillar_cache: False
 
-# If and only if a master has set ``pillar_cache: True``, the cache TTL controls the amount
-# of time, in seconds, before the cache is considered invalid by a master and a fresh
+# If and only if a salt-master has set ``pillar_cache: True``, the cache TTL controls the amount
+# of time, in seconds, before the cache is considered invalid by a salt-master and a fresh
 # pillar is recompiled and stored.
 #pillar_cache_ttl: 3600
 
-# If and only if a master has set `pillar_cache: True`, one of several storage providers
+# If and only if a salt-master has set `pillar_cache: True`, one of several storage providers
 # can be utilized.
 #
-# `disk`: The default storage backend. This caches rendered pillars to the master cache.
+# `disk`: The default storage backend. This caches rendered pillars to the salt-master cache.
 #         Rendered pillars are serialized and deserialized as msgpack structures for speed.
-#         Note that pillars are stored UNENCRYPTED. Ensure that the master cache
+#         Note that pillars are stored UNENCRYPTED. Ensure that the salt-master cache
 #         has permissions set appropriately. (Same defaults are provided.)
 #
 # memory: [EXPERIMENTAL] An optional backend for pillar caches which uses a pure-Python
 #         in-memory data structure for maximal performance. There are several caveats,
-#         however. First, because each master worker contains its own in-memory cache,
+#         however. First, because each salt-master worker contains its own in-memory cache,
 #         there is no guarantee of cache consistency between minion requests. This
 #         works best in situations where the pillar rarely if ever changes. Secondly,
 #         and perhaps more importantly, this means that unencrypted pillars will
@@ -1049,20 +1049,20 @@ pillar_roots:
 
 #####          Syndic settings       #####
 ##########################################
-# The Salt syndic is used to pass commands through a master from a higher
-# master. Using the syndic is simple. If this is a master that will have
+# The Salt syndic is used to pass commands through a salt-master from a higher
+# salt-master. Using the syndic is simple. If this is a salt-master that will have
 # syndic servers(s) below it, then set the "order_masters" setting to True.
 #
-# If this is a master that will be running a syndic daemon for passthrough, then
-# the "syndic_master" setting needs to be set to the location of the master server
+# If this is a salt-master that will be running a syndic daemon for passthrough, then
+# the "syndic_master" setting needs to be set to the location of the salt-master server
 # to receive commands from.
 
-# Set the order_masters setting to True if this master will command lower
+# Set the order_masters setting to True if this salt-master will command lower
 # masters' syndic interfaces.
 #order_masters: False
 
-# If this master will be running a salt syndic daemon, syndic_master tells
-# this master where to receive commands from.
+# If this salt-master will be running a salt syndic daemon, syndic_master tells
+# this salt-master where to receive commands from.
 #syndic_master: masterofmasters
 
 # This is the 'ret_port' of the MasterOfMaster:
@@ -1074,8 +1074,8 @@ pillar_roots:
 # The log file of the salt-syndic daemon:
 #syndic_log_file: /var/log/salt/syndic
 
-# The behaviour of the multi-syndic when connection to a master of masters failed.
-# Can specify ``random`` (default) or ``ordered``. If set to ``random``, masters
+# The behaviour of the multi-syndic when connection to a salt-master of salt-masters failed.
+# Can specify ``random`` (default) or ``ordered``. If set to ``random``, salt-masters
 # will be iterated in random order. If ``ordered`` is specified, the configured
 # order will be used.
 #syndic_failover: random
@@ -1109,7 +1109,7 @@ pillar_roots:
 # This is not recommended, since it would allow anyone who gets root on any
 # single minion to instantly have root on all of the minions!
 
-# Minions can also be allowed to execute runners from the salt master.
+# Minions can also be allowed to execute runners from the salt salt-master.
 # Since executing a runner from the minion could be considered a security risk,
 # it needs to be enabled. This setting functions just like the peer setting
 # except that it opens up runners instead of module functions.
@@ -1129,7 +1129,7 @@ pillar_roots:
 #####         Mine settings     #####
 #####################################
 # Restrict mine.get access from minions. By default any minion has a full access
-# to get all mine data from master cache. In acl definion below, only pcre matches
+# to get all mine data from salt-master cache. In acl definion below, only pcre matches
 # are allowed.
 # mine_get:
 #   .*:
@@ -1148,8 +1148,8 @@ pillar_roots:
 
 #####         Logging settings       #####
 ##########################################
-# The location of the master log file
-# The master log can be sent to a regular file, local path name, or network
+# The location of the salt-master log file
+# The salt-master log can be sent to a regular file, local path name, or network
 # location. Remote logging works best when configured to use rsyslogd(8) (e.g.:
 # ``file:///dev/log``), with rsyslogd(8) configured for network logging. The URI
 # format is: <file|udp|tcp>://<host|socketpath>:<port-if-required>/<log-facility>
@@ -1233,7 +1233,7 @@ log_level_logfile: warning
 
 #####  Windows Software Repo settings #####
 ###########################################
-# Location of the repo on the master:
+# Location of the repo on the salt-master:
 #winrepo_dir_ng: '/srv/salt/win/repo-ng'
 #
 # List of git repositories to include with the local repo:
@@ -1245,10 +1245,10 @@ log_level_logfile: warning
 ########################################################
 # Legacy repo settings for pre-2015.8 Windows minions.
 #
-# Location of the repo on the master:
+# Location of the repo on the salt-master:
 #winrepo_dir: '/srv/salt/win/repo'
 #
-# Location of the master's repo cache file:
+# Location of the salt-master's repo cache file:
 #winrepo_mastercachefile: '/srv/salt/win/repo/winrepo.p'
 #
 # List of git repositories to include with the local repo:
@@ -1291,9 +1291,9 @@ log_level_logfile: warning
 # Salt's Presence System depends on this connection status to know if a minion
 # is "present".
 # ZeroMQ now includes support for configuring SO_KEEPALIVE if supported by
-# the OS. If connections between the minion and the master pass through
+# the OS. If connections between the minion and the salt-master pass through
 # a state tracking device such as a firewall or VPN gateway, there is
-# the risk that it could tear down the connection the master and minion
+# the risk that it could tear down the connection the salt-master and minion
 # without informing either party that their connection has been taken away.
 # Enabling TCP Keepalives prevents this from happening.
 
