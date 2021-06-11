@@ -291,6 +291,12 @@ Management zone:
       {% endif %}
     - interfaces:
       - {{ mgmt_if }}
+    - port_fwd:
+      {% if pillar['cluster'][grains['id']]['is_primary'] %}
+      - {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['primary_mc']['ip'] }}
+      {% else %}
+      - {{ pillar['storage_enclosure']['controller']['primary_mc']['port'] }}:80:tcp:{{ pillar['storage_enclosure']['controller']['secondary_mc']['ip'] }}
+      {% endif %}
     - require:
       # - Add management zone
       - consul
