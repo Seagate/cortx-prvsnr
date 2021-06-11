@@ -102,12 +102,6 @@ Management zone:
       {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}
       - {{ service }}
       {% endfor %}
-    - port_fwd:
-      {% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-      - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['primary']['ip'] }}
-      {% else %}
-      - {{ pillar['storage']['enclosure-1']['controller']['primary']['port'] }}:80:tcp:{{ pillar['storage']['enclosure-1']['controller']['secondary']['ip'] }}
-      {% endif %}
     - require:
       - Add management zone
       {% for service in pillar['firewall']['mgmt_public']['ports'].keys() %}

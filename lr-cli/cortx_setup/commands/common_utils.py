@@ -74,3 +74,19 @@ def get_cluster_id():
         raise ValueError("cluster_id not set or missing")
 
     return cluster_id
+
+
+
+def get_provisioner_states():
+    """
+    Get provisioner states system and 3rd party
+
+    """
+    return get_pillar_data('execution/noncortx_components')
+
+def get_cortx_states():
+    """
+    Get cortx states iopath controlpath and system states
+
+    """
+    return get_pillar_data('execution/cortx_components')

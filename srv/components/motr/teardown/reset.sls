@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set mini_prvsnr_if = '/opt/seagate/cortx/motr/conf/setup.yaml' %}
 Stage - Reset Motr:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd({{ mini_prvsnr_if }}, 'motr:reset')
+    - onlyif: test -e {{ mini_prvsnr_if }}
