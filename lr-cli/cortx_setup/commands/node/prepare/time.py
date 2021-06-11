@@ -17,6 +17,7 @@
 
 from cortx_setup.commands.command import Command
 from provisioner.api import grains_get
+from cortx_setup.validate import host
 from provisioner.commands import PillarSet
 from provisioner.salt import (
     local_minion_id,
@@ -28,7 +29,7 @@ class NodePrepareTime(Command):
     """Cortx Setup API for configuring time"""
     _args = {
         'server': {
-            'type': str,
+            'type': host,
             'default': 'time.seagate.com',
             'optional': True
         },

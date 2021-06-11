@@ -20,6 +20,7 @@ from .config import PRVSNR_VALUES_PREFIX
 _values = {}
 
 
+# FIXME very poor implementation, need to review
 class _Singletone:
     _prvsnr_type_ = True
     _instance = None

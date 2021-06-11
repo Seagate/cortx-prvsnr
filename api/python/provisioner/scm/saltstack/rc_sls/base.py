@@ -289,6 +289,8 @@ class TypesLoader:
         return res
 
 
+# FIXME _init_ is not good for singletone since it
+#       would always re-init the same object
 @attr.s(auto_attribs=True)
 class SLSResourceManager(ResourceManager, _Singletone):
 

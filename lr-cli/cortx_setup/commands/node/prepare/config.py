@@ -16,6 +16,7 @@
 #
 
 from cortx.utils.conf_store import Conf
+from cortx_setup.validate import ipv4
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from cortx_setup.commands.common_utils import (
@@ -70,7 +71,7 @@ class NodePrepareServerConfig(Command):
             'help': 'Node ID'
         },
         'mgmt_vip': {
-            'type': str,
+            'type': ipv4,
             'default': None,
             'optional': True,
             'help': 'Management VIP'

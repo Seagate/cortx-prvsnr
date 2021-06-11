@@ -25,6 +25,7 @@ from .config import LOCAL_MINION
 from .salt import cmd_run
 from .utils import ensure, run_subprocess_cmd, load_json_str
 from . import errors
+from .values import MISSED
 # from .hare import check_cluster_is_online
 
 try:
@@ -32,18 +33,12 @@ try:
 except ImportError:
     CortxClusterManager = None
 
-try:
-    run_subprocess_cmd("cortx --help")
-except errors.SubprocessCmdError:
-    cortx_cmd = None
-else:
-    cortx_cmd = "cortx"
+CORTX_HA_TOOL = "cortx"
 
 
 logger = logging.getLogger(__name__)
 
 
-@attr.s(auto_attribs=True)
 class ClusterManagerBase(ABC):
 
     def _run_cmd(self, cmd: str, json=False):
@@ -115,26 +110,21 @@ class ClusterManagerPCS(ClusterManagerBase):
             return not self._check_offline(ret)
 
 
-@attr.s(auto_attribs=True)
 class ClusterManagerCortxCmd(ClusterManagerBase):
 
-    def __attrs_post_init__(self):
-        if not cortx_cmd:
-            raise RuntimeError('No cortx command available')
-
     def cluster_status(self):
-        return self._run_cmd(f"{cortx_cmd} cluster status", json=True)
+        return self._run_cmd(f"{CORTX_HA_TOOL} cluster status", json=True)
 
     def cluster_stop(self, standby=False):
         # FIXME once interface is delivered
         standby = False
         return self._run_cmd(
-            f"{cortx_cmd} cluster {'standby' if standby else 'stop'}",
+            f"{CORTX_HA_TOOL} cluster {'standby' if standby else 'stop'}",
             json=True
         )
 
     def cluster_start(self):
-        return self._run_cmd(f"{cortx_cmd} cluster start", json=True)
+        return self._run_cmd(f"{CORTX_HA_TOOL} cluster start", json=True)
 
     def is_offline(self):
         ret = self.cluster_status()
@@ -170,27 +160,67 @@ class ClusterManagerCortxAPI(ClusterManagerCortxCmd):
         return self.ha_ccm.cluster_controller.start()
 
 
-cm_pcs = ClusterManagerPCS()
-cm_cortx_cmd = (ClusterManagerCortxCmd() if cortx_cmd else None)
-cm_cortx_api = (ClusterManagerCortxAPI() if CortxClusterManager else None)
+class ClusterManagerBroker:
+    _pcs = None
+    _cortx_cmd = None
+    _cortx_api = None
 
-cluster_manager = (cm_cortx_api or cm_cortx_cmd or cm_pcs)
+    @property
+    def cm_pcs(self):
+        if self._pcs is None:
+            ClusterManagerBroker._pcs = ClusterManagerPCS()
+        return self._pcs
+
+    @property
+    def cm_cortx_cmd(self):
+        if self._cortx_cmd is None:
+            try:
+                run_subprocess_cmd(f"{CORTX_HA_TOOL} --help")
+            except Exception as exc:
+                logger.warning(
+                    f"'cortx' tool is not usable, ignoring: '{exc}'"
+                )
+                ClusterManagerBroker._cortx_cmd = MISSED
+            else:
+                ClusterManagerBroker._cortx_cmd = ClusterManagerCortxCmd()
+
+        return None if self._cortx_cmd is MISSED else self._cortx_cmd
+
+    @property
+    def cm_cortx_api(self):
+        if self._cortx_api is None:
+            try:
+                ClusterManagerBroker._cortx_api = ClusterManagerCortxAPI()
+            except Exception as exc:
+                logger.warning(
+                    f"CORTX HA python API is not usable, ignoring: '{exc}'"
+                )
+                ClusterManagerBroker._cortx_cmd = MISSED
+
+        return None if self._cortx_cmd is MISSED else self._cortx_api
+
+    @property
+    def cm(self):
+        return (self.cm_cortx_api or self.cm_cortx_cmd or self.cm_pcs)
+
+
+cm_broker = ClusterManagerBroker()
 
 
 def ensure_cluster_is_stopped(
     standby=False, tries: int = 30, wait: float = 10
 ):
-    cluster_manager.cluster_stop(standby=standby)
+    cm_broker.cm.cluster_stop(standby=standby)
     # NOTE: In new HA API cluster stop command is async.
     # So ensure block is added
     # FIXME switch to cortx interfaces once they are delivered
-    ensure(cm_pcs.is_offline, tries=tries, wait=wait)
+    ensure(cm_broker.cm_pcs.is_offline, tries=tries, wait=wait)
 
 
 def ensure_cluster_is_started(tries: int = 30, wait: float = 10):
-    cluster_manager.cluster_start()
+    cm_broker.cm.cluster_start()
     # FIXME switch to cortx interfaces once they are delivered
-    ensure(cm_pcs.is_online, tries=tries, wait=wait)
+    ensure(cm_broker.cm_pcs.is_online, tries=tries, wait=wait)
 
 
 def is_cluster_healthy():
@@ -206,7 +236,7 @@ def is_cluster_healthy():
     logger.debug("Checking the CORTX cluster health")
     # FIXME switch to cortx interfaces once they are delivered
     try:
-        ensure(cm_pcs.is_online, tries=1)
+        ensure(cm_broker.cm_pcs.is_online, tries=1)
     except errors.NoMoreTriesError:
         return False
     else:
