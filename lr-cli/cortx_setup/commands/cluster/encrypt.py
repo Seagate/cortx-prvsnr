@@ -14,18 +14,33 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API to encrypt pillar values
 
-from pathlib import Path
 
-ALL_MINIONS = '*'
-
-CONFSTORE_CLUSTER_FILE = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
+from ..command import Command
+from cortx_setup.config import (
+    ALL_MINIONS
 )
+from provisioner.salt import StatesApplier
 
-local_pillars  = ['cluster', 'storage', 'system', 'firewall']
 
-# Will be changed to confstore yaml path
-CONFIG_PATH = Path('/root/config.ini')
+class EncryptPillar(Command):
+    """
+    Encrypt pillar data
+    """
 
-ENCLOSURE_ID = Path('/etc/enclosure-id')
+    _args = {}
+    def run(self, targets=ALL_MINIONS):
+        try:
+            self.logger.debug("Encrypting pillar data")
+
+            for state in [
+                'components.system.config.pillar_encrypt',
+                'components.system.config.sync_salt'
+            ]:
+                StatesApplier.apply([state], targets)
+
+        except Exception as exc:
+            self.logger.error(
+               f"Error in data encryption. Reason: '{str(exc)}'"
+            )
