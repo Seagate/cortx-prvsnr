@@ -17,37 +17,43 @@
 
 {{ component }}:
   post_install:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Post Install'
+      - '{{ component }}: post_install'
   config:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Config'
+      - '{{ component }}: config'
   init:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Init'
+      - '{{ component }}: init'
   test:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Test'
+      - '{{ component }}: test'
   reset:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Reset'
+      - '{{ component }}: reset'
   backup:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Backup'
+      - '{{ component }}: backup'
+    when: True
   restore:
-    cmd: mock
+    cmd: mock {{ flow }} {{ level }}
     args:
-      - 'Stage: '
-      - '{{ component }}: Restore'
+      - '{{ component }}: restore'
+  upgrade:
+    cmd: mock {{ flow }} {{ level }}
+    args:
+      - '{{ component }}: upgrade'
+    pre:
+      args:
+        - '{{ component }}: pre-upgrade'
+      when: true
+    post:
+      args:
+        - '{{ component }}: post-upgrade'
+      when: true

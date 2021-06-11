@@ -16,16 +16,21 @@
 #
 import logging
 from configparser import ConfigParser
-from typing import Type, Union
+from typing import Type, Union, Optional
 from urllib.parse import urlparse, unquote
+import json
 
 from packaging import version
 
-from provisioner import inputs
+from provisioner import inputs, errors
 from provisioner.commands.upgrade.set_swupgrade_repo import (CortxISOInfo,
                                                              SetSWUpgradeRepo)
-from provisioner.config import (CORTX_ISO_DIR, REPO_CANDIDATE_NAME,
-                                RELEASE_INFO_FILE)
+from provisioner.config import (
+    CORTX_ISO_DIR,
+    REPO_CANDIDATE_NAME,
+    RELEASE_INFO_FILE,
+    ReleaseInfo
+)
 from provisioner.pillar import PillarResolver, PillarKey
 
 from provisioner.salt import local_minion_id
@@ -65,6 +70,29 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = GetSWUpgradeInfoArgs
+
+    @classmethod
+    def cortx_version(
+        cls,
+        release_metadata: Optional[Union[str, dict]] = None,
+        iso_path: str = None,
+        release: str = None
+    ):
+        if release_metadata is None:
+            try:
+                release_metadata = cls().run(
+                    iso_path=iso_path, release=release
+                ).metadata
+            except errors.BadPillarDataError:
+                return None  # NOTE: there are no configured SW upgrade repos
+
+        if isinstance(release_metadata, str):
+            release_metadata = json.loads(release_metadata)
+
+        return (
+            f"{release_metadata[ReleaseInfo.VERSION.value]}-"
+            f"{release_metadata[ReleaseInfo.BUILD.value]}"
+        )
 
     @staticmethod
     def _get_set_swupgrade_repo_obj() -> SetSWUpgradeRepo:

@@ -42,7 +42,7 @@ get_setup_info:
 check:
   type: Check
 mini_api:
-  type: mini_api.mini_api.MiniAPI
+  type: mini_api.MiniAPI
 
 # config commands
 pillar_set:
