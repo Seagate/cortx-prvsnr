@@ -16,7 +16,6 @@
 #
 import logging
 from typing import Type, Union
-import json
 
 from packaging import version
 from provisioner import inputs
@@ -27,9 +26,7 @@ from .get_swupgrade_info import GetSWUpgradeInfo
 
 from ...commands import GetReleaseVersion
 
-from provisioner.config import ReleaseInfo
-from provisioner.errors import ProvisionerError, BadPillarDataError
-from provisioner.salt import local_minion_id
+from provisioner.errors import ProvisionerError
 
 logger = logging.getLogger(__name__)
 
@@ -57,31 +54,12 @@ class GetISOVersion(CommandParserFillerMixin):
 
         """
 
-        get_swupgrade_info = GetSWUpgradeInfo()
-        try:
-            upgrade_data = get_swupgrade_info.run()
-        except BadPillarDataError:
-            return None  # NOTE: there are no configured SW upgrade repos
-
-        release_version_resolver = GetReleaseVersion()
-        release_metadata = release_version_resolver.run(
-            targets=local_minion_id())  # str
-        release_metadata = json.loads(release_metadata)
-        if upgrade_data.metadata:
-            upgrade_ver = (
-                f'{upgrade_data.metadata[ReleaseInfo.VERSION.value]}-'
-                f'{upgrade_data.metadata[ReleaseInfo.BUILD.value]}'
-            )
-        else:
-            return None
-
-        release_ver = (
-            f'{release_metadata[ReleaseInfo.VERSION.value]}-'
-            f'{release_metadata[ReleaseInfo.BUILD.value]}'
-        )
+        release_ver = GetReleaseVersion.cortx_version()
+        upgrade_ver = GetSWUpgradeInfo.cortx_version()
 
         release_ver_parsed = version.parse(release_ver)
         upgrade_ver_parsed = version.parse(upgrade_ver)
+
         if upgrade_ver_parsed > release_ver_parsed:
             return str(upgrade_ver)
         elif upgrade_ver_parsed == release_ver_parsed:

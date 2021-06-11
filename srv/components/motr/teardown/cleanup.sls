@@ -14,6 +14,10 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+{% set mini_prvsnr_if = '/opt/seagate/cortx/motr/conf/setup.yaml' %}
 Stage - Cleanup Motr:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/motr/conf/setup.yaml', 'motr:cleanup')
+    - name: __slot__:salt:setup_conf.conf_cmd({{ mini_prvsnr_if }}, 'motr:cleanup')
+    - onlyif: test -e {{ mini_prvsnr_if }}
+

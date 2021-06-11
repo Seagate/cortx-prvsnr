@@ -18,6 +18,7 @@
 from enum import Enum
 from pathlib import Path
 import os
+import itertools
 from typing import Union, Dict, Optional
 
 CONFIG_MODULE_DIR = Path(__file__).resolve().parent
@@ -641,7 +642,26 @@ class MiniAPILevels(Enum):
     NODE = "node"
 
 
-class MiniAPIHooks(Enum):
+class MiniAPISpecFields(Enum):
+
+    """Mini Provisioner API Events."""
+
+    DEFAULTS = '__defaults__'
+    EVENTS = '__events__'
+    CTX = '__context__'
+    SUPPORT_BUNDLE = 'support_bundle'
+
+
+class MiniAPISpecHookFields(Enum):
+
+    """Mini Provisioner API Events."""
+
+    CMD = 'cmd'
+    ARGS = 'args'
+    WHEN = 'when'
+
+
+class MiniAPIBaseHooks(Enum):
 
     """Mini Provisioner API Hooks."""
 
@@ -655,7 +675,7 @@ class MiniAPIHooks(Enum):
     CLEANUP = 'cleanup'
     BACKUP = 'backup'
     RESTORE = 'restore'
-    SUPPORT_BUNDLE = 'support_bundle'
+
 
 class MiniAPIEvents(Enum):
 
@@ -663,3 +683,20 @@ class MiniAPIEvents(Enum):
 
     PRE = 'pre'
     POST = 'post'
+
+
+def event_name(base_hook: MiniAPIBaseHooks, event: MiniAPIEvents):
+    return f"{event.value}-{base_hook.value}"
+
+
+MiniAPIHooks = Enum(
+    'MiniAPIHooks',
+    (
+        [(k, v.value) for k, v in MiniAPIBaseHooks.__members__.items()] +
+        [
+            (event_name(*ev).upper().replace('-', '_'), event_name(*ev))
+            for ev in itertools.product(MiniAPIBaseHooks, MiniAPIEvents)
+        ]
+    ),
+    module=__name__
+)

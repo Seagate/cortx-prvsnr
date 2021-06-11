@@ -314,6 +314,8 @@ def salt_ready(ssh_client, salt_configured, setup_hosts):
         targets=nodes_ids[0]
     )
 
+    ssh_client.cmd_run("salt '*' saltutil.sync_all")
+
 
 @pytest.fixture
 def provisioner_installed(ssh_client):

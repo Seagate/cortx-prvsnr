@@ -14,3 +14,14 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+
+from .spec_renderer import SpecRenderer
+from .hook_caller import MiniAPIHook, HookCaller
+from .mini_api import MiniAPI
+
+__all__ = [
+    "MiniAPIHook",
+    "MiniAPI",
+    "SpecRenderer",
+    "HookCaller"
+]

@@ -61,6 +61,15 @@ class ErrorHandlingArgumentParser(argparse.ArgumentParser):
 
 
 class KeyValueListAction(argparse.Action):
+    @staticmethod
+    def parse(values: List):
+        res = {}
+        if values:
+            for kv in values:
+                k, v = kv.split("=", 1)
+                res[k.strip()] = v
+        return res
+
     def __call__(self, parser, namespace, values, option_string=None):
         res = getattr(namespace, self.dest, {})
 
@@ -73,10 +82,7 @@ class KeyValueListAction(argparse.Action):
         if res is None:
             res = {}
 
-        if values:
-            for kv in values:
-                k, v = kv.split("=", 1)
-                res[k.strip()] = v
+        res.update(self.parse(values))
 
         setattr(namespace, self.dest, res)
 
