@@ -39,7 +39,11 @@ Private direct network:
 {% if pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data_nw']['pvt_ip_addr'] }}
+    {% if "physical" in grains['virtual'] %}
     - mtu: 9000
+    {% else %}
+    - mtu: 1500
+    {% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}

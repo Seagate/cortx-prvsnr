@@ -50,7 +50,10 @@ salt-call state.apply components.system.firewall
 # OVA environment needs corrections to firewall rules
 firewall-cmd --zone=public --add-port=80/tcp --permanent
 firewall-cmd --zone=public --add-port=443/tcp --permanent
-firewall-cmd --reload
+firewall-cmd --permanent --remove-forward-port=port=80:proto=tcp:toport=80:toaddr=10.0.0.2
+# Restart is more reliable than reload
+#firewall-cmd --reload
+systemctl restart firewalld
 
 #reconfigure lustre
 salt-call state.apply components.misc_pkgs.lustre.stop
