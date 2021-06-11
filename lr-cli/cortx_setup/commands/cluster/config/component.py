@@ -126,7 +126,7 @@ class ClusterConfigComponent(Command):
                     stages=stages if stages else None
                 )
             except Exception as exc:
-                raise str(exc)
+                raise exc
 
     def run(self, **kwargs):
         """
