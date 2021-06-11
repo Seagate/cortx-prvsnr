@@ -22,6 +22,7 @@ from .node.initialize import NodeInitalize
 from .node.prepare.server import NodePrepareServer
 from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
+from .cluster.encrypt import EncryptPillar
 from .cluster.show import ClusterShow
 from .cluster.config.network import ClusterNetworkConfig
 from .cluster.config.component import ClusterConfigComponent
@@ -41,17 +42,20 @@ from .storageset.create import CreateStorageSet
 from .storageset.add.node import AddServerNode
 from .storageset.add.enclosure import AddStorageEnclosure
 from .storageset.config.durability import DurabilityConfig
+from .enclosure.refresh import RefreshEnclosureId
 
 
 __all__ = [
     'AddServerNode',
     'AddStorageEnclosure',
+    'Commons',
     'ClusterCreate',
     'ClusterNetworkConfig',
     'ClusterConfigComponent',
     'ClusterShow',
     'CreateStorageSet',
     'DurabilityConfig',
+    'EncryptPillar',
     'GetSignature',
     'Hostname',
     'NetworkConfig',
@@ -61,11 +65,10 @@ __all__ = [
     'NodePrepareNetwork',
     'NodePrepareTime',
     'NodePrepareStorage',
+    'RefreshEnclosureId',
     'ResourceShow',
     'ResourceDiscover',
     'SecurityConfig',
     'SetSignature',
-    'StorageEnclosureConfig',
-    'PillarSync',
-    'Commons'
- ]
+    'StorageEnclosureConfig'
+]
