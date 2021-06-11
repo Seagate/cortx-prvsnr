@@ -26,7 +26,7 @@ def main():
 
     """
     # pass all parameters "as is"
-    env = [f"{k}={v}" for k, v in os.environ.items() if k in mock_env]
+    env = [f"{k}={os.environ[k]}" for k in mock_env if k in os.environ]
     logger.info(f"MOCK: {' '.join(sys.argv[1:])} {','.join(env)}")
 
 

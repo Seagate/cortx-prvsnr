@@ -40,6 +40,7 @@
     cmd: mock {{ flow }} {{ level }}
     args:
       - '{{ component }}: backup'
+    when: True
   restore:
     cmd: mock {{ flow }} {{ level }}
     args:

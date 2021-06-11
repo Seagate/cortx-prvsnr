@@ -177,9 +177,9 @@ def test_swupgrade_r2_offline(
             f"PRVSNR_MINI_HOOK={hook}"
         )
         if old_ver:
-            res += ",CORTX_VERSION={old_ver}"
+            res += f",CORTX_VERSION={old_ver}"
         if new_ver:
-            res += ",CORTX_UPGRADE_VERSION={new_ver}"
+            res += f",CORTX_UPGRADE_VERSION={new_ver}"
         return res
 
     assert (
