@@ -24,7 +24,6 @@ from provisioner.salt import (
 )
 from provisioner.config import PRVSNR_ROOT_DIR
 from .config import NodePrepareServerConfig
-from cortx_setup.commands.common_utils import get_pillar_data
 
 
 class NodePrepareServer(NodePrepareServerConfig):
@@ -39,15 +38,15 @@ class NodePrepareServer(NodePrepareServerConfig):
         mgmt_vip = kwargs.get('mgmt_vip')
 
         try:
-            if "primary" in get_pillar_data(f"cluster/{node}/roles"):
-                if self._ip_not_pingable(mgmt_vip):
-                    self.logger.debug(
-                        f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
-                    state = "components.system.network.mgmt.ip_alias"
-                    self.logger.debug(f"Applying {state} on {node}")
-                    StatesApplier.apply([state])
-                else:
-                    raise Exception(f"The IP {mgmt_vip} is in use")
+            if self._ip_not_pingable(mgmt_vip):
+                self.logger.debug(
+                    f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
+                state = "components.system.network.mgmt.ip_alias"
+                self.logger.debug(f"Applying {state} on {node}")
+                StatesApplier.apply([state])
+            else:
+                self.logger.warning(
+                    f"Unable to alias IP to management network . The IP {mgmt_vip} is already in use")
 
             self.logger.debug("Updating salt-minion file")
             StateFunExecuter.execute(
@@ -56,12 +55,11 @@ class NodePrepareServer(NodePrepareServerConfig):
                     name="/etc/salt/minion",
                     source=str(PRVSNR_ROOT_DIR) +
                     'srv/components/provisioner/salt_minion/files/minion_factory',
-                    template='jinja'
-                )
-            )
+                    template='jinja'))
             self.logger.debug("Restarting salt-minion")
             cmd_run(
-                "salt-call --local service.restart salt-minion", background=True,
+                "salt-call --local service.restart salt-minion",
+                background=True,
                 targets=node)
 
         except Exception as e:
