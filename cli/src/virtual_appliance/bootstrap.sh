@@ -45,14 +45,12 @@ salt-call state.apply components.system.config.hosts
 
 #reconfigure firewall
 salt-call state.apply components.system.firewall.teardown
-salt-call state.apply components.system.firewall.config
+salt-call state.apply components.system.firewall
 # Firewall Salt states correct all deviations on the system
 # OVA environment needs corrections to firewall rules
 firewall-cmd --zone=public --add-port=80/tcp --permanent
 firewall-cmd --zone=public --add-port=443/tcp --permanent
-# Restart is more reliable than reload
-#firewall-cmd --reload
-systemctl restart firewalld
+firewall-cmd --reload
 
 #reconfigure lustre
 salt-call state.apply components.misc_pkgs.lustre.stop

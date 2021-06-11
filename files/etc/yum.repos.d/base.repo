@@ -1,5 +1,5 @@
 [base]
 gpgcheck=0
 enabled=1
-baseurl=https://vault.centos.org/7.8.2003/os/x86_64/
+baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/CentOS-7/CentOS-7-OS/
 name=base

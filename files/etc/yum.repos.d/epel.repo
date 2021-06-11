@@ -1,5 +1,6 @@
 [epel]
 gpgcheck=0
 enabled=1
-baseurl=https://dl.fedoraproject.org/pub/epel/7/x86_64/
+#baseurl=https://dl.fedoraproject.org/pub/epel/7/x86_64/
+baseurl=http://ssc-satellite1.colo.seagate.com/pulp/repos/EOS/Library/custom/EPEL-7/EPEL-7/
 name=epel
