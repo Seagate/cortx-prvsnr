@@ -24,13 +24,13 @@ execution:
       - ha.corosync-pacemaker.install
       - ha.corosync-pacemaker.config.base
   cortx_components:
-    utils:
+    foundation:
       - cortx_utils
-    io_path:
+    iopath:
       - motr
       - s3server
       - hare
-    control_path:
+    controlpath:
       - sspl
       - uds
       - csm
