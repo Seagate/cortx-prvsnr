@@ -1150,11 +1150,11 @@ for cmd_name, spec in api_spec.items():
             if cmd_module_path:
                 import_path = f'{import_path}.{cmd_module_path}'
             else:
-                import_path = f'provisioner.commands.{cmd_name}'
+                import_path = f'{import_path}.{cmd_name}'
 
             cmd_mod = importlib.import_module(import_path)
         except Exception:
-            logger.error(f"Failed to import provisioner.commands.{cmd_name}")
+            logger.error(f"Failed to import '{cmd_path}' for command '{cmd_name}'")
             raise
         command = getattr(cmd_mod, cmd_cls)
     commands[cmd_name] = command.from_spec(**spec)
