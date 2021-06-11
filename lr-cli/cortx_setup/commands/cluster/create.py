@@ -57,7 +57,6 @@ class ClusterCreate(Command):
                 PillarSet().run(
                     f'cluster/{key}',
                     value,
-                    targets=node_id,
                     local=True
                 )
                 Conf.set(

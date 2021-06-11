@@ -15,7 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from provisioner.salt import local_minion_id
+from provisioner.salt import local_minion_id, function_run
+from provisioner.commands import reset_machine_id
 
 from provisioner.pillar import (
     PillarResolver,
@@ -50,7 +51,16 @@ def get_machine_id(node: str):
         minion_id for the node
 
     """
-    return get_pillar_data(f'cluster/{node}/machine_id')
+    machine_id = function_run('grains.get', fun_args=['machine_id'],
+                                targets=node)[f'{node}']
+    if not machine_id:
+        try:
+            reset_machine_id.ResetMachineId().run()
+            get_machine_id(node)
+        except Exception as ex:
+            raise ex
+
+    return machine_id
 
 
 def get_cluster_id():
@@ -58,7 +68,13 @@ def get_cluster_id():
     Get Cluster_id
 
     """
-    return get_pillar_data('cluster/cluster_id')
+    cluster_id = list(function_run('grains.get', fun_args=['cluster_id']).values())[0]
+
+    if not cluster_id:
+        raise ValueError("cluster_id not set or missing")
+
+    return cluster_id
+
 
 
 def get_provisioner_states():

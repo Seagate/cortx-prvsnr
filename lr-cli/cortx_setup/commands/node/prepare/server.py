@@ -45,7 +45,7 @@ class NodePrepareServer(NodePrepareServerConfig):
                         f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
                     state = "components.system.network.mgmt.ip_alias"
                     self.logger.debug(f"Applying {state} on {node}")
-                    StatesApplier.apply([state], node)
+                    StatesApplier.apply([state])
                 else:
                     raise Exception(f"The IP {mgmt_vip} is in use")
 

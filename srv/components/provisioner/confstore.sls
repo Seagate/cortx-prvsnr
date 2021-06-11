@@ -15,43 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Remove user and group:
-  user.absent:
-    - name: hacluster
-    - purge: True
-    - force: True
+{% set profile_confstore = "/var/lib/seagate/cortx/provisioner/shared/factory_profile/confstore" %}
 
-{% for serv in ["corosync", "pacemaker", "pcsd"] %}
-Stop service {{ serv }}:
-  service.dead:
-    - name: {{ serv }}
-    - enable: False
-{% endfor %}
+Create confstore dir in profile path:
+  file.directory:
+    - name: {{ profile_confstore }}
+    - user: root
+    - group: root
+    - dir_mode: 640
+    - makedirs: True
 
-Remove pcs package:
-  pkg.purged:
-    - pkgs:
-      - pcs
-      - pacemaker
-      - corosync
-      - fence-agents-ipmilan
 
-# Remove configuration directory:
-#   file.absent:
-#     - names:
-#       - /etc/corosync
-#       - /etc/pacemaker
-
-Remove corosync-pacemaker data:
-  file.absent:
-    - names:
-      - /var/lib/corosync
-      - /var/lib/pacemaker
-      - /var/lib/pcsd
-      - /var/log/pcsd
-
-# Enable and Start Firewall:
-#   cmd.run:
-#     - names:
-#       - systemctl enable firewalld
-#       - systemctl start firewalld
+Copy confstore file:
+  file.managed:
+    - name: {{ profile_confstore }}/provisioner_cluster.json.{{ grains['id'] }}
+    - source: /opt/seagate/cortx_configs/provisioner_cluster.json
+    - user: root
+    - group: root
+    - replace: True

@@ -20,6 +20,9 @@
 hostname:
   Hostname
 
+pillar_sync:
+  PillarSync
+
 network:
   config:
     NetworkConfig
@@ -51,6 +54,8 @@ cluster:
   config:
     network:
       ClusterNetworkConfig
+    component:
+      ClusterConfigComponent
 
 resource:
   discover:

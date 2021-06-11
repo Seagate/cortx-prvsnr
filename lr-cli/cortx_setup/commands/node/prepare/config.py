@@ -92,7 +92,6 @@ class NodePrepareServerConfig(Command):
                 PillarSet().run(
                     confstore_pillar_dict[key][1],
                     value,
-                    targets=node,
                     local=True
                 )
                 Conf.set(
