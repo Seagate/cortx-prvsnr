@@ -17,4 +17,6 @@
 
 include:
   - components.cortx_utils.config.post_install
+  - components.cortx_utils.config.prepare
   - components.cortx_utils.config.config
+  - components.cortx_utils.config.init_mod

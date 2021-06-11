@@ -251,7 +251,7 @@ class Deploy(CommandParserFillerMixin):
             for stage in stages:
                 _state = f"{state}.{stage}"
                 if self._sls_exists(_state, targets=targets):
-                    return self._apply_state(_state, targets)
+                    self._apply_state(_state, targets)
                 else:
                     logger.warning(f"State {_state} is missed, ignored")
 
