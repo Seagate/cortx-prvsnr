@@ -27,16 +27,13 @@ from cortx_setup.commands.common_utils import (
 
 node_id = local_minion_id()
 
-provisioner_components = get_provisioner_states()
-
-cortx_components = get_cortx_states()
-
 
 class NodePrepare(Command):
     """Cortx Setup API for preparing node"""
     _args = {}
 
-    # deploy the specific component states wrt to stages like prepare, config, post_install
+    # deploy the specific component states wrt to stages like prepare, config,
+    # post_install
     def _deploy(self, components: dict, stage: list = None):
         for component in components:
             states = components[component]
@@ -46,7 +43,7 @@ class NodePrepare(Command):
                         f"Running {state} for {node_id}"
                     )
                     deploy.Deploy()._apply_state(
-                        f'components.{state}', targets=node_id, stages = stage
+                        f'components.{state}', targets=node_id, stages=stage
                     )
                 except Exception as ex:
                     raise ex
@@ -59,8 +56,12 @@ class NodePrepare(Command):
         `cortx_setup node prepare cortx`
         """
 
+        provisioner_components = get_provisioner_states()
+        cortx_components = get_cortx_states()
+
         self.logger.debug("Deploying platform components")
-        self._deploy({'noncortx_component':provisioner_components['platform']}, stage = None)
+        self._deploy(
+            {'noncortx_component': provisioner_components['platform']}, stage=None)
 
         self.logger.debug("Deploying cortx components")
         self._deploy(cortx_components, stage=["config.prepare"])

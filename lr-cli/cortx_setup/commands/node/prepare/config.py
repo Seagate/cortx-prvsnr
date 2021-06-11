@@ -27,22 +27,6 @@ from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 
 
 node = local_minion_id()
-machine_id = get_machine_id(node)
-#cluster_id = get_cluster_id()
-
-confstore_pillar_dict = {
-    'site_id': (
-        f'server_node>{machine_id}>site_id',
-        f'cluster/{node}/site_id'),
-    'rack_id': (
-        f'server_node>{machine_id}>rack_id',
-        f'cluster/{node}/rack_id'),
-    'node_id': (
-        f'server_node>{machine_id}>node_id',
-        f'cluster/{node}/node_id')}
-
-
-"""Cortx Setup API for configuring Node Prepare Server"""
 
 
 class NodePrepareServerConfig(Command):
@@ -75,6 +59,24 @@ class NodePrepareServerConfig(Command):
     }
 
     def run(self, **kwargs):
+        """Cortx Setup API for configuring Node Prepare Server"""
+
+        machine_id = get_machine_id(node)
+
+        # Prepare a mapping for pillar-key to confstore-key
+        confstore_pillar_dict = {
+            'site_id': (
+                f'server_node>{machine_id}>site_id',
+                f'cluster/{node}/site_id'),
+            'rack_id': (
+                f'server_node>{machine_id}>rack_id',
+                f'cluster/{node}/rack_id'),
+            'node_id': (
+                f'server_node>{machine_id}>node_id',
+                f'cluster/{node}/node_id')
+        }
+
+        # Load confstore
         Conf.load(
             'node_info_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'

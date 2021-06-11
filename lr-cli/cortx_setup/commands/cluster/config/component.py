@@ -28,10 +28,6 @@ from cortx_setup.commands.common_utils import (
 
 node_id = local_minion_id()
 
-noncortx_components = get_provisioner_states()
-
-cortx_components = get_cortx_states()
-
 
 class ClusterConfigComponent(Command):
     _args = {
@@ -67,15 +63,20 @@ class ClusterConfigComponent(Command):
 
         """
 
+        noncortx_components = get_provisioner_states()
+        cortx_components = get_cortx_states()
+
         # Deploy system, prereqs and cortx components
         if component_group is None:
             for component_group in noncortx_components:
-                self.logger.info(f"Deploying {component_group} components on nodes")
+                self.logger.info(
+                    f"Deploying {component_group} components on nodes")
                 self._configure(
                     noncortx_components[component_group]
                 )
         elif component_group in cortx_components:
-            self.logger.info(f"Deploying {component_group} components on nodes")
+            self.logger.info(
+                f"Deploying {component_group} components on nodes")
             self._configure(
                 cortx_components[component_group],
                 stages=['config.config', 'config.init_mod']
