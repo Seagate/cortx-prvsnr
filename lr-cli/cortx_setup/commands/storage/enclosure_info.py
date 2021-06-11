@@ -21,6 +21,9 @@ import requests
 from ..command import Command
 
 class EnclosureInfo(Command):
+    """
+        REST API Interface to fetch Enclosure Info.
+    """
 
     def __init__(self, host, username, password, port):
         self.host = host
@@ -31,6 +34,8 @@ class EnclosureInfo(Command):
         self.url = "http://" + self.host + ":" + str(self.port) + "/api/"
 
     def connect_enclosure(self):
+        """connects to controller and returns response object"""
+
         user_pass = f"{self.username}_{self.password}"
         user_pass = bytes(user_pass, 'utf-8')
         auth_string = hashlib.sha256(user_pass).hexdigest()
@@ -38,10 +43,14 @@ class EnclosureInfo(Command):
         return response
 
     def connection_status(self):
+        """returns true if controller is reachable with the given user, password, ip and port"""
+
         response = self.connect_enclosure()
         return (len(response['status']) == 1 and response["status"][0]["return-code"] == 1)
 
     def get_enclosure_serial(self):
+        """fetches & returns midplane-serial-number from enclosure"""
+
         response = self.connect_enclosure()
 
         if len(response['status']) == 1 and response["status"][0]["return-code"] == 1:

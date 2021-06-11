@@ -41,6 +41,10 @@ conf_pillar_map = {}
 
 
 class StorageEnclosureConfig(Command):
+    """
+        Cortx Setup API for configuring Storage Enclosure
+    """
+
     '''
     $ cortx_setup storage config --user <user> --password <password> --ip <ip-address> --port <port-number>
     $ cortx_setup storage config --name <enclosure-name>
@@ -48,6 +52,7 @@ class StorageEnclosureConfig(Command):
     $ cortx_setup storage config --controller_type {gallium|indium|virtual}
     $ cortx_setup storage config --mode {primary|secondary} --ip <ip-address> --port <port-number>
     '''
+
     _args = {
         'name': {
             'type': str,
@@ -103,13 +108,18 @@ class StorageEnclosureConfig(Command):
         self.machine_id = grains_get("machine_id")[node_id]["machine_id"]
         self.enclosure_id = None
         self.mode = None
+
+        # assign value to enclosure-id from /etc/enclosure-id if it exists
         if enc_file_path.exists():
             if Path(enc_file_path).stat().st_size != 0:
                 with open(enc_file_path, "r") as file:
                     self.enclosure_id = file.read().replace('\n', '')
+
         self.refresh_conf_pillar_map()
 
     def refresh_conf_pillar_map(self):
+        """updates values in the conf_pillar_map variable"""
+
         global conf_pillar_map
         conf_pillar_map = {
             'enclosure_id': (
@@ -147,8 +157,9 @@ class StorageEnclosureConfig(Command):
         }
 
     def store(self, key, value):
+        """stores value in pillar and confstore"""
 
-        self.logger.debug("Updating pillar with ")
+        self.logger.debug(f"Updating pillar with key:{conf_pillar_map[key][0]} and value:{value}")
         PillarSet().run(
             conf_pillar_map[key][0],
             value,
@@ -156,6 +167,7 @@ class StorageEnclosureConfig(Command):
             local=True
         )
 
+        self.logger.debug(f"Updating Cortx Confstor with key:{conf_pillar_map[key][1]} and value:{value}")
         Conf.set(
             'node_info_index',
             conf_pillar_map[key][1],
@@ -203,6 +215,7 @@ class StorageEnclosureConfig(Command):
             self.store('port', port)
         else:
             self.refresh_conf_pillar_map()
+
             if name is not None:
                 if self.enclosure_id:
                     self.store('name', name)
@@ -238,7 +251,9 @@ class StorageEnclosureConfig(Command):
                     if port:
                         self.store('port', port)
                 else:
-                    self.logger.error("Please provide user and password as well")
+                    self.logger.error(
+                        "Enclosure ID is not set: Please provide user and password as well to set Enclosure ID"
+                    )
                     raise RuntimeError("Incomplete arguments provided")
 
             if user is not None and password is not None:
@@ -252,10 +267,14 @@ class StorageEnclosureConfig(Command):
                         self.store('user', user)
                         self.store('password', password)
                     else:
-                        self.logger.error(f"Cannot establish connection with enclosure using user={user} and password={password} as credentials")
+                        self.logger.error(
+                            f"Cannot establish connection with controller using user={user} and password={password} as credentials"
+                        )
                         raise ValueError("Invalid credentials provided")
                 else:
-                    self.logger.error("Please provide ip and port as well")
+                    self.logger.error(
+                        "Enclosure ID is not set: Please provide ip and port as well to set Enclosure ID"
+                    )
                     raise RuntimeError("Incomplete arguments provided")
 
         Conf.save('node_info_index')
