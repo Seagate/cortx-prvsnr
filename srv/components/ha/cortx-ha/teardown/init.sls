@@ -16,7 +16,6 @@
 #
 
 include:
-  - components.ha.cortx-ha.ha_cleanup
   - components.ha.cortx-ha.teardown.reset
   - components.ha.cortx-ha.teardown.cleanup
 
