@@ -19,6 +19,7 @@
 
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
+from cortx_setup.validate import host, ipv4
 from cortx_setup.commands.common_utils import get_machine_id
 from provisioner import (
     set_hostname,
@@ -33,7 +34,7 @@ from cortx.utils.conf_store import Conf
 class NodePrepareNetwork(Command):
     _args = {
         'hostname': {
-            'type': str,
+            'type': host,
             'optional': True,
             'default': None,
             'help': 'Hostname to be set'
@@ -47,19 +48,19 @@ class NodePrepareNetwork(Command):
             'help': 'Type of network to prepare'
         },
         'gateway': {
-            'type': str,
+            'type': ipv4,
             'optional': True,
             'default': "",
             'help': 'Gateway IP'
         },
         'netmask': {
-            'type': str,
+            'type': ipv4,
             'optional': True,
             'default': "",
             'help': 'Netmask'
         },
         'ip_address': {
-            'type': str,
+            'type': ipv4,
             'optional': True,
             'default': "",
             'help': 'IP address'
