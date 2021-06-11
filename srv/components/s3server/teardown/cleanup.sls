@@ -15,8 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
+{% set mini_prvsnr_if = /opt/seagate/cortx/s3/conf/setup.yaml' %}
 Stage - Cleanup S3Server:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/s3/conf/setup.yaml', 's3:cleanup')
-{% endif %}
+    - name: __slot__:salt:setup_conf.conf_cmd({{ mini_prvsnr_if }}, 's3:cleanup')
+    - onlyif: test -e {{ mini_prvsnr_if }}
