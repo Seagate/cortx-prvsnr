@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set mini_prvsnr_if = '/opt/seagate/cortx/utils/conf/setup.yaml' %}
 Stage - cortx-utils cleanup:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/setup.yaml', 'utils:cleanup')
+    - name: __slot__:salt:setup_conf.conf_cmd({{ mini_prvsnr_if }}, 'utils:cleanup')
+    - onlyif: test -e {{ mini_prvsnr_if }}
