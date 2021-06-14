@@ -55,8 +55,12 @@ class NodePrepareServerConfig(Command):
             'default': None,
             'optional': True,
             'help': 'Management VIP'
+        },
+        'primary': {
+            'optional': True,
+            'action': 'store_true',
+            'help': 'Set node as a primary node'
         }
-
     }
 
     def run(self, **kwargs):
@@ -99,19 +103,23 @@ class NodePrepareServerConfig(Command):
                         confstore_pillar_dict[key][0],
                         value
                     )
-                else:
-                    self.logger.warning(
-                        f"Unable to update value for {key} to Confstore")
-
         # set management vip
         # we are not updating mgmt_vip to confstore
         # as there is no cluster_id so only setting it in pillars
         # In further steps when we export confstore it would add it to
         # confstore.
         PillarSet().run(
-            f'cluster/{node}/mgmt_vip',
+            f'cluster/mgmt_vip',
             kwargs['mgmt_vip'],
             local=True)
+
+        node_roles = ['primary'] if kwargs['primary'] else ['secondary']
+        # set node roles
+        PillarSet().run(
+            f"cluster/{node}/roles",
+            node_roles,
+            local=True
+        )
 
         Conf.save('node_info_index')
         self.logger.debug("Done")

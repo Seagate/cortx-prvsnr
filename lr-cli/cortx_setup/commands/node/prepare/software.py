@@ -16,13 +16,16 @@
 #
 
 from cortx_setup.commands.command import Command
-from provisioner.commands import deploy
+from provisioner.commands import (
+    deploy
+)
 from provisioner.salt import (
     local_minion_id
 )
 from cortx_setup.commands.common_utils import (
     get_provisioner_states,
-    get_cortx_states
+    get_cortx_states,
+    get_pillar_data
 )
 
 node_id = local_minion_id()
@@ -48,12 +51,12 @@ class NodePrepare(Command):
                 except Exception as ex:
                     raise ex
 
-    def run(self):
+    def run(self, **kwargs):
         """Node Prepare command .
         It would deploy platform states and prepare cortx components.
 
         Execution:
-        `cortx_setup node prepare cortx`
+        `cortx_setup node prepare software`
         """
 
         provisioner_components = get_provisioner_states()
