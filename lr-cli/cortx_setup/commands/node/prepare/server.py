@@ -55,12 +55,15 @@ class NodePrepareServer(NodePrepareServerConfig):
                     name="/etc/salt/minion",
                     source=str(PRVSNR_ROOT_DIR) +
                     'srv/components/provisioner/salt_minion/files/minion_factory',
-                    template='jinja'))
+                    template='jinja'
+                )
+            )
             self.logger.debug("Restarting salt-minion")
             cmd_run(
-                "salt-call --local service.restart salt-minion",
+                "systemctl restart salt-minion",
                 background=True,
-                targets=node)
+                targets=node
+            )
 
         except Exception as e:
             raise e
