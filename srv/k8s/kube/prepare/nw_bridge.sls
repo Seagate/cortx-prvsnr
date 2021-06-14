@@ -15,16 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+Setup module for k8s:
+  file.managed:
+    - name: /etc/modules-load.d/k8s.conf
+    - contents: |
+        br_netfilter
+
+Load module using modprobe:
+  cmd.run:
+    - name: modprobe br_netfilter
+
+Setup systemctl for k8s:
+  file.managed:
+    - name: /etc/sysctl.d/k8s.conf
+    - contents: |
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+
+Update systemctl for bridge network:
+  cmd.run:
+    - name: sysctl --system

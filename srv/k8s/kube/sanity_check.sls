@@ -15,16 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+Verify kubectl configuration:
+  cmd.run:
+    - name: kubectl version --client
+
+Init Kubeadm:
+  test.show_notification:
+    - text: "Execute the following command on srvnode-1: `salt "srvnode-1" state.apply k8s.kube.config`"

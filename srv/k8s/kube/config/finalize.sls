@@ -15,16 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+{% if 'srvnode-1' in grains['id'] %}
+Allow pods scheduling on all nodes:
+  cmd.run:
+    - name: kubectl taint nodes --all node-role.kubernetes.io/master-
+{% endif %}

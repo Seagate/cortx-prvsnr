@@ -15,16 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+include:
+  - k8s.prepare
+  - k8s.containerd
+  - k8s.docker.prepare
+  - k8s.docker.install
+  - k8s.docker.config
+  - k8s.docker.start
+  - k8s.docker.sanity_check

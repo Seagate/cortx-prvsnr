@@ -15,16 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+include:
+  - components.system.storage.config
+  - k8s.kube.prepare.setup_selinux
+  - k8s.kube.prepare.nw_bridge
+  - k8s.kube.prepare.kube_repo
+
+Disabled firewall for k8s:
+  service.dead:
+    - name: firewalld
+    - enable: False

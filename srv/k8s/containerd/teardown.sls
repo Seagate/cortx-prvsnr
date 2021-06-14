@@ -15,16 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+include:
+  - k8s.containerd.stop
+
+Remove containerd:
+  pkg.purged:
+    - name: containerd.io
+
+Remove package repo for containerd:
+  pkgrepo.absent:
+    - name: docker-ce-stable
+
+Containerd directory cleanup:
+  file.absent:
+    - name: /etc/containerd

@@ -15,16 +15,11 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+Setup package repo for containerd:
+  pkgrepo.managed:
+    - name: docker-ce-stable
+    - humanname: Docker CE Stable - $basearch
+    - baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    - enabled: 1
+    - gpgcheck: 1
+    - gpgkey: https://download.docker.com/linux/centos/gpg

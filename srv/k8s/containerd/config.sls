@@ -15,16 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+Create directory /etc/containerd:
+  file.directory:
+    - name: /etc/containerd
+    - user: root
+    - group: root
+    - dir_mode: 755
+    - file_mode: 644
+  
+Copy containerd config:
+  cmd.run:
+    - name: containerd config default | sudo tee /etc/containerd/config.toml
+
+Restart containerd:
+  module.run:
+    - service.restart:
+      - name: containerd

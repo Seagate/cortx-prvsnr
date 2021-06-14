@@ -15,16 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+{% if 'srvnode-1' in grains['id'] %}
+Install the Tigera Calico operator and custom resource definitions:
+  cmd.run:
+    - name: kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+
+Install Calico by creating the necessary custom resource:
+  cmd.run:
+    - name: kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+{% endif %}

@@ -15,16 +15,15 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+Set SELinux in disabled mode:
+  selinux.mode:
+    - name: disabled
+    - unless:
+      - (sestatus | grep -iE "SELinux status:.*disabled") >/dev/null
+
+Update file /etc/selinux/config:
+  file.replace:
+    - name: /etc/selinux/config
+    - pattern: SELINUX=.*
+    - repl: SELINUX=Disabled

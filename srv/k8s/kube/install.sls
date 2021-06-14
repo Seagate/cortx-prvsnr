@@ -15,16 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+# Reference: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+
+Install kube packages:
+  pkg.installed:
+    - pkgs:
+      - kubectl
+      - kubelet
+      - kubeadm
+    - refresh: True
+    - allow_updates: False
+    - disableexcludes: kubernetes

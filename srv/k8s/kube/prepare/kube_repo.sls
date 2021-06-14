@@ -15,16 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+
+Setup package repo for kubectl:
+  pkgrepo.managed:
+    - name: kubernetes
+    - humanname: Kubernetes
+    - baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    - gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    - gpgcheck: 1
+    - repo_gpgcheck: 1
+    - exclude: kubelet kubeadm kubectl
+    - enabled: True

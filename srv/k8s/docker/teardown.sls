@@ -15,16 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-upgrade:
-  sw_list:
-    - utils
-    - motr
-    - s3
-    - hare
-    - ha
-    - sspl
-    - uds
-    - csm
-  yum_snapshots: {} # define specific cortx-version's yum-txn-id for each node
-                    # <cortx-version>:
-                    #   <node-id>: <yum-txn-id>
+include:
+  - k8s.docker.stop
+
+Remove docker:
+  pkg.purged:
+    - pkgs:
+      - docker-ce
+      - docker-ce-cli
+
+Remove docker config:
+  file.absent:
+    - name: /etc/docker
+
+Remove docker data:
+  file.absent:
+    - name: /var/lib/docker
+
+Remove package repo for docker:
+  pkgrepo.absent:
+    - name: docker-ce-stable
