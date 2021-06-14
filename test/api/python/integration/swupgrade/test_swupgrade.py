@@ -201,9 +201,9 @@ def test_swupgrade_r2_offline(
             host.check_output(
                 "grep ha: /tmp/mock.log | awk '{print $3 FS $4 FS $6 FS $7}'"
             ) == (
-                "{mock_str('upgrade-offline', 'node', 'backup')}\n"
-                "{mock_str('upgrade-offline', 'node', 'pre-upgrade', old_ver, new_ver)}\n"  # noqa: E501
-                "{mock_str('upgrade-offline', 'node', 'post-upgrade', old_ver, new_ver)}"  # noqa: E501
+                f"{mock_str('upgrade-offline', 'node', 'backup')}\n"
+                f"{mock_str('upgrade-offline', 'node', 'pre-upgrade', old_ver, new_ver)}\n"  # noqa: E501
+                f"{mock_str('upgrade-offline', 'node', 'post-upgrade', old_ver, new_ver)}"  # noqa: E501
             )
         )
     #           - HA mini APIs were called for cluster level as well

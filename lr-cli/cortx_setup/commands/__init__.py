@@ -29,7 +29,7 @@ from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
-from .node.prepare.cortx import NodePrepare
+from .node.prepare.software import NodePrepare
 from .node.prepare.firewall import NodePrepareFirewall
 from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
@@ -61,8 +61,10 @@ __all__ = [
     'NetworkConfig',
     'NodeInitalize',
     'NodeFinalize',
+    'NodePrepare',
     'NodePrepareFirewall',
     'NodePrepareNetwork',
+    'NodePrepareServer',
     'NodePrepareTime',
     'NodePrepareStorage',
     'RefreshEnclosureId',
