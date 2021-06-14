@@ -56,10 +56,6 @@ from provisioner.salt import (
 )
 node_id = local_minion_id()
 
-noncortx_components = get_provisioner_states()
-
-cortx_components = get_cortx_states()
-
 
 class ClusterConfigComponent(Command):
 
@@ -215,6 +211,10 @@ class ClusterConfigComponent(Command):
 
             self.logger.info("Bootstrap done. Proceeding to deploy components..")
             self.logger.debug("Deploy system, prereqs and cortx components")
+
+            # Getting provisioner states for deployment
+            noncortx_components = get_provisioner_states()
+            cortx_components = get_cortx_states()
 
             if component_group is None:
                 for component_group in noncortx_components:
