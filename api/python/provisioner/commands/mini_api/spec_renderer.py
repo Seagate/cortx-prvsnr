@@ -58,8 +58,31 @@ class HookSpecCmd(HookSpec):
     args: Optional[Union[str, List[str], Tuple[str]]] = None
     when: Optional[bool] = None
     defaults: Optional['HookSpec'] = None
+    spec_version: str = config.MiniAPISpecVersions.INITIAL.value
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self):  # noqa: C901
+        # FIXME hard-coded
+        if self.defaults:
+            for field in config.MiniAPISpecHookFields:
+                if getattr(self, field.value) is None:
+                    setattr(
+                        self, field.value, getattr(self.defaults, field.value)
+                    )
+
+        if self.cmd is None:
+            self.cmd = []
+        elif isinstance(self.cmd, str):
+            # Note. initial mini spec format didn't bother with
+            #       proper arguments definition
+            self.cmd = [self.cmd.strip()]
+            if self.spec_version == config.MiniAPISpecVersions.INITIAL.value:
+                self.cmd = self.cmd[0].split()
+
+        if not isinstance(self.cmd, (list, tuple)):
+            raise TypeError(
+                f"Unexpected 'cmd' type: {type(self.cmd)}"
+            )
+
         if self.args is None:
             self.args = []
         elif isinstance(self.args, str):
@@ -71,13 +94,13 @@ class HookSpecCmd(HookSpec):
                 f"Unexpected 'args' type: {type(self.args)}"
             )
 
-        # FIXME hard-coded
-        if self.defaults:
-            for field in config.MiniAPISpecHookFields:
-                if getattr(self, field.value) is None:
-                    setattr(
-                        self, field.value, getattr(self.defaults, field.value)
-                    )
+        # Note. initial mini spec format didn't bother with
+        #       proper arguments definition
+        if self.spec_version == config.MiniAPISpecVersions.INITIAL.value:
+            _args = []
+            for _arg in self.args:
+                _args.extend(_arg.strip().split())
+            self.args = _args
 
         self.when = bool(self.when)
 
@@ -88,8 +111,13 @@ class HookSpecCmd(HookSpec):
     def spec(self, normalize=False) -> Optional[Any]:
         if normalize:
             if self.is_active:
-                cmd = self.cmd.split() + [quote(a) for a in self.args]
-                return ' '.join(cmd).strip()
+                if self.spec_version == config.MiniAPISpecVersions.INITIAL.value:
+                    cmd = self.cmd
+                    args = self.args
+                else:
+                    cmd = [quote(a) for a in self.cmd]
+                    args = [quote(a) for a in self.args]
+                return cmd + args
             else:
                 return None
         else:
@@ -133,6 +161,8 @@ class SpecRenderer(CommandParserFillerMixin):
     confstore: str = MiniAPIParams.confstore
     normalize: bool = MiniAPIParams.normalize
 
+    _version: str = attr.ib(init=False, default=None)
+
     @property
     def default_defaults(self):
         return dict(when=(self.level == config.MiniAPILevels.NODE))
@@ -172,7 +202,9 @@ class SpecRenderer(CommandParserFillerMixin):
             for f in config.MiniAPISpecHookFields
             if f.value in hook_spec
         }
-        main_spec = HookSpecCmd(defaults=defaults, **_hook_spec)
+        main_spec = HookSpecCmd(
+            defaults=defaults, spec_version=self._version, **_hook_spec
+        )
 
         events = {}
         # FIXME hard-coded
@@ -200,7 +232,9 @@ class SpecRenderer(CommandParserFillerMixin):
             # it should be dict or None now
             events[config.event_name(hook, event)] = (
                 HookSpecCmd() if event_spec is None else HookSpecCmd(
-                    defaults=main_spec, **event_spec
+                    defaults=main_spec,
+                    spec_version=self._version,
+                    **event_spec
                 )
             )
 
@@ -265,6 +299,14 @@ class SpecRenderer(CommandParserFillerMixin):
                 f"the spec is already rendered for a different context: {ctx}"
             )
 
+        self._version = config_spec.pop(
+            config.MiniAPISpecFields.VERSION.value, None
+        )
+
+        if self._version is None:
+            logger.info("Legacy (initial) version is being parsed")
+            self._version = config.MiniAPISpecVersions.INITIAL.value
+
         support_bundle = config_spec.pop(
             config.MiniAPISpecFields.SUPPORT_BUNDLE.value, None
         )
@@ -287,6 +329,8 @@ class SpecRenderer(CommandParserFillerMixin):
                 f" provided {type(sw_spec)}"
             )
 
+        # mark version
+        res[config.MiniAPISpecFields.VERSION.value] = self._version
         # store the rendered ctx
         res[config.MiniAPISpecFields.CTX.value] = self.render_ctx
         # restore support bundle data

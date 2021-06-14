@@ -15,28 +15,14 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '2.0.50'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "Seagate"  # TODO
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+Setup package repo for kubectl:
+  pkgrepo.managed:
+    - name: kubernetes
+    - humanname: Kubernetes
+    - baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    - gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    - gpgcheck: 1
+    - repo_gpgcheck: 1
+    - exclude: kubelet kubeadm kubectl
+    - enabled: True

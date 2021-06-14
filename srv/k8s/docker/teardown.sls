@@ -15,28 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-prvsnr'
-__version__ = '2.0.50'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'Provisioner API for CORTX components'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "Seagate"  # TODO
+include:
+  - k8s.docker.stop
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+Remove docker:
+  pkg.purged:
+    - pkgs:
+      - docker-ce
+      - docker-ce-cli
+
+Remove docker config:
+  file.absent:
+    - name: /etc/docker
+
+Remove docker data:
+  file.absent:
+    - name: /var/lib/docker
+
+Remove package repo for docker:
+  pkgrepo.absent:
+    - name: docker-ce-stable

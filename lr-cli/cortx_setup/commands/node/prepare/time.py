@@ -84,9 +84,10 @@ class NodePrepareTime(Command):
             self.set_server_time()
             machine_id = grains_get("machine_id")[node_id]["machine_id"]
             enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
-            if not machine_id in enclosure_id:
-                self.logger.debug(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
-                self.set_enclosure_time()
+            if enclosure_id:
+                if not machine_id in enclosure_id:   # check if the system is VM or HW
+                    self.logger.debug(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
+                    self.set_enclosure_time()
         except Exception as e:
             self.logger.error(f"Time configuration failed\n {str(e)}")
             raise e
