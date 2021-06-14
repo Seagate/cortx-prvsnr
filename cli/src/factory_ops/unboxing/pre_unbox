@@ -55,7 +55,7 @@
 #     4. Check ssh connectivity, from server B to server A using alias/minion id (srvnode-1)
 #     5. Check, if the ssh works without password from Server A to Server B using new hostname
 #     6. Check, if the ssh works without password from Server B to Server A using new hostname
-# 7. Update minion files on both the nodes to point master to server A hostname
+# 7. Update minion files on both the nodes to point salt-master to server A hostname
 #     1. Update primary node hostname in file /etc/salt/minion with hostname of Server A 
 #     2. Update primary node hostname in file /etc/salt/minion with hostname of Server B 
 #     3. Restart salt-minion service on Server A

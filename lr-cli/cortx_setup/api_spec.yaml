@@ -51,6 +51,8 @@ cluster:
     ClusterCreate
   show:
     ClusterShow
+  encrypt:
+    EncryptPillar
   config:
     network:
       ClusterNetworkConfig
@@ -88,3 +90,7 @@ storageset:
   config:
     durability:
       DurabilityConfig
+
+enclosure:
+  refresh:
+    RefreshEnclosureId

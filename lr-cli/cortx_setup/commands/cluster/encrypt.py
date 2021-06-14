@@ -14,9 +14,33 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API to encrypt pillar values
 
-{% set mini_prvsnr_if = '/opt/seagate/cortx/s3/conf/setup.yaml' %}
-Stage - Reset S3Server:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd({{ mini_prvsnr_if }}, 's3:reset')
-    - onlyif: test -e {{ mini_prvsnr_if }}
+
+from ..command import Command
+from cortx_setup.config import (
+    ALL_MINIONS
+)
+from provisioner.salt import StatesApplier
+
+
+class EncryptPillar(Command):
+    """
+    Encrypt pillar data
+    """
+
+    _args = {}
+    def run(self, targets=ALL_MINIONS):
+        try:
+            self.logger.debug("Encrypting pillar data")
+
+            for state in [
+                'components.system.config.pillar_encrypt',
+                'components.system.config.sync_salt'
+            ]:
+                StatesApplier.apply([state], targets)
+
+        except Exception as exc:
+            self.logger.error(
+               f"Error in data encryption. Reason: '{str(exc)}'"
+            )

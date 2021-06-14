@@ -595,8 +595,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             )
 
         # generate setup name
-        setup_location = self.setup_location(run_args)
-        setup_name = self.setup_name(run_args)
+        setup_location = SetupCmdBase.setup_location(run_args)
+        setup_name = SetupCmdBase.setup_name(run_args)
 
         # PREPARE FILE & PILLAR ROOTS
 
