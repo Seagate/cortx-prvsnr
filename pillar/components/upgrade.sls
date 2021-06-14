@@ -17,6 +17,7 @@
 
 upgrade:
   sw_list:
+    - utils
     - motr
     - s3
     - hare
