@@ -644,17 +644,25 @@ class MiniAPILevels(Enum):
 
 class MiniAPISpecFields(Enum):
 
-    """Mini Provisioner API Events."""
+    """Mini Provisioner Top level spec fields."""
 
+    VERSION = '__version__'
     DEFAULTS = '__defaults__'
     EVENTS = '__events__'
     CTX = '__context__'
     SUPPORT_BUNDLE = 'support_bundle'
 
 
+class MiniAPISpecVersions(Enum):
+
+    """Mini Provisioner specific versions."""
+
+    INITIAL = '1.0'
+
+
 class MiniAPISpecHookFields(Enum):
 
-    """Mini Provisioner API Events."""
+    """Mini Provisioner Hook spec fields."""
 
     CMD = 'cmd'
     ARGS = 'args'

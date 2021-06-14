@@ -143,7 +143,7 @@ class ClusterManagerCortxAPI(ClusterManagerCortxCmd):
         if CortxClusterManager:
             self.ha_ccm = CortxClusterManager()
         else:
-            raise RuntimeError('No cortx python API available')
+            raise RuntimeError('No cortx HA python API available')
 
     def cluster_status(self):
         return self.ha_ccm.cluster_controller.status()

@@ -24,7 +24,6 @@
 import errno
 import os
 import sys
-import yaml
 import subprocess
 import logging
 
@@ -101,7 +100,9 @@ def _salt_salt():
 
 
 def _call_cmd(cmd, env=None):
-    # TODO provide env according to spec
+    if isinstance(cmd, (list, tuple)):
+        cmd = ' '.join(cmd)
+
     __salt__ = _salt_salt()
     return __salt__["cmd.run"](
         cmd, output_loglevel="trace", python_shell=True, env=env
@@ -215,6 +216,7 @@ def hook(
         logger.info(f"No listeners for hook '{hook}' found")
 
 
+# TODO deprectate, use 'hook' instead
 def conf_cmd(conf_file, conf_key):
     if not os.path.exists(conf_file):
         logger.error(f"Setup config file {conf_file} doesn't exist.")
@@ -226,77 +228,50 @@ def conf_cmd(conf_file, conf_key):
 
     logger.debug(f"Setup config file: {conf_file}")
 
-    __pillar__ = _salt_pillar()
-    confstore_url = __pillar__['provisioner']['common_config']['confstore_url']
-    ret_val = ''
-    with open(conf_file, 'r') as fd:
+    # This split is hard-coded as this is the input format expected
+    # during call from the sls file.
+    sw = conf_key.split(':')[0]
+    hook = conf_key.split(':')[1]
+
+    helper = ConfSetupHelper(_salt_pillar())
+    # legacy case: only base hooks for 'deploy' flow on 'node' level
+    setup_spec = helper.sw_spec(sw, 'deploy', 'node')
+    cmd = setup_spec.get(hook, [])
+
+    if cmd:
+        # TODO improve, some very simple check against dangerous commands
+        if set(risky_commands).intersection(cmd):
+            raise Exception(
+                f"Execution of command '{cmd}' is identified "
+                "as a command with risky behavior. "
+                f"Hence, execution of command '{cmd}' is prohibited."
+            )
+
+        # Check if command exists
         try:
-            config_info = yaml.safe_load(fd)
-
-            # This split is hard-coded as this is the input format expected
-            # during call from the sls file.
-            component_setup = config_info[conf_key.split(':')[0]]
-            component_interface = component_setup[conf_key.split(':')[1]]
-            setup_cmd = component_interface['cmd']
+            # The command string has to be converted to a list
+            # to enabled execution of check_call with shell=False
+            help_cmd = [cmd[0], '--help']
             logger.debug(
-                f"Component Setup Command: {setup_cmd}"
+                f"Component setup help command: {help_cmd}"
             )
-
-            if set(risky_commands).intersection(setup_cmd.split()):
-                raise Exception(
-                    f"Execution of command {setup_cmd} is identified "
-                    "as a command with risky behavior. "
-                    f"Hence, execution of command {setup_cmd} is prohibited."
-                )
-
-            # Check if command exists
-            try:
-                # The command string has to be converted to a list
-                # to enabled execution of check_call with shell=False
-                cmd_as_list = (f"{setup_cmd} --help").split()
-                logger.debug(
-                    f"Component setup command as list: {cmd_as_list}"
-                )
-                subprocess.run(  # nosec
-                    cmd_as_list,
-                    stdout=subprocess.DEVNULL,
-                    check=True
-                    # env=env EOS-20788 POC
-                )
-            except subprocess.CalledProcessError as cp_err:
-                logger.exception(
-                    f"Command {' '.join(cmd_as_list)} "
-                    f"returned with error: {cp_err.stderr}"
-                )
-            except FileNotFoundError as fnf_err:
-                logger.exception(fnf_err)
-
-            # Proceed to process args, only if command has been specified
-            if setup_cmd:
-                setup_args = component_interface['args']
-
-                # If args is a string, do nothing.
-                # If args is a list, join the elements into a string
-                if isinstance(setup_args, list):
-                    setup_args = ' '.join(setup_args)
-                    logger.debug(
-                        f"Component Setup Command Args: {setup_args}"
-                    )
-
-                setup_args = setup_args.replace(
-                    "$URL",
-                    confstore_url
-                )
-                ret_val = setup_cmd + " " + str(setup_args)
-                logger.debug(f"Component Setup: {ret_val}")
-
-        except yaml.YAMLError as yml_err:
-            # Oops, yaml file was not well formed
-            logger.debug(
-                f"Error parsing component setup config - {conf_file}: "
-                f"{yml_err}"
+            subprocess.run(  # nosec
+                help_cmd,
+                stdout=subprocess.DEVNULL,
+                check=True
             )
-            ret_val = None
+        except subprocess.CalledProcessError as cp_err:
+            logger.exception(
+                f"Command '{help_cmd}: "
+                f"returned with error: {cp_err.stderr}"
+            )
+            # FIXME ??? legacy logic, why de don't raise exc in any case
+        except FileNotFoundError as fnf_err:
+            logger.exception(fnf_err)
 
-    logger.info(f"Component Setup: {ret_val}")
-    return ret_val
+    cmd = ' '.join(cmd)
+    logger.info(
+        f"Component '{sw}' Setup Command for '{hook}' hook: '{cmd}'"
+    )
+
+    return cmd
