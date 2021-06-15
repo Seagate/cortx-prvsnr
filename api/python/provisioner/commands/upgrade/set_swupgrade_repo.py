@@ -23,6 +23,7 @@ from urllib.parse import urlparse, unquote
 import requests
 from configparser import ConfigParser
 
+from provisioner.commands import Check
 from provisioner.commands.upgrade import CheckISOAuthenticity
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
 from ..set_swupdate_repo import SetSWUpdateRepo
@@ -41,7 +42,6 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 PIP_CONFIG_FILE,
                                 SWUpgradeInfoFields,
                                 ISOValidationFields,
-                                CheckVerdict,
                                 ISOVersion,
                                 ISOKeywordsVer2 as ISOVer2,
                                 UpgradeReposVer2,
