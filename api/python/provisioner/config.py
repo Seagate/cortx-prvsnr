@@ -651,12 +651,21 @@ class LockMetaDataFields(Enum):
     SOURCE_TARGET = "source_target"
 
 
-class HareStatus(Enum):
-    """Hare output statuses"""
+class HACmdResult(Enum):
+    """HA output for command results."""
 
-    FAILED = 'Failed'
-    SUCCEEDED = 'Succeeded'
-    IN_PROGRESS = 'InProgress'
+    FAILED = 'failed'
+    SUCCEEDED = 'succeeded'
+    IN_PROGRESS = 'inprogress'
+
+
+class HAClusterStatus(Enum):
+    """HA output for cluster statuses."""
+
+    ONLINE = 'online'
+    OFFLINE = 'offline'
+    STANDBY = 'standby'
+    DEGRADED = 'degraded'
 
 
 class ISOValidationFields(Enum):
