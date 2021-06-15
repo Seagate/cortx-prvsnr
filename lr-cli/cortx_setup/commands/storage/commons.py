@@ -52,7 +52,7 @@ class Commons(Command):
             self.logger.info("Generating the enclosure ID")
             try:
                 _set_enclosure_id_state = "components.system.storage.enclosure_id.config.set"
-                StatesApplier.apply(_set_enclosure_id_state, targets)
+                StatesApplier.apply([_set_enclosure_id_state], targets)
                 return self.fetch_enc_id(targets)
             except:
                 raise exception("Error generating the enclosure ID")

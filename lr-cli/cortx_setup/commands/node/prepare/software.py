@@ -16,27 +16,27 @@
 #
 
 from cortx_setup.commands.command import Command
-from provisioner.commands import deploy
+from provisioner.commands import (
+    deploy
+)
 from provisioner.salt import (
     local_minion_id
 )
 from cortx_setup.commands.common_utils import (
     get_provisioner_states,
-    get_cortx_states
+    get_cortx_states,
+    get_pillar_data
 )
 
 node_id = local_minion_id()
-
-provisioner_components = get_provisioner_states()
-
-cortx_components = get_cortx_states()
 
 
 class NodePrepare(Command):
     """Cortx Setup API for preparing node"""
     _args = {}
 
-    # deploy the specific component states wrt to stages like prepare, config, post_install
+    # deploy the specific component states wrt to stages like prepare, config,
+    # post_install
     def _deploy(self, components: dict, stage: list = None):
         for component in components:
             states = components[component]
@@ -46,21 +46,25 @@ class NodePrepare(Command):
                         f"Running {state} for {node_id}"
                     )
                     deploy.Deploy()._apply_state(
-                        f'components.{state}', targets=node_id, stages = stage
+                        f'components.{state}', targets=node_id, stages=stage
                     )
                 except Exception as ex:
                     raise ex
 
-    def run(self):
+    def run(self, **kwargs):
         """Node Prepare command .
         It would deploy platform states and prepare cortx components.
 
         Execution:
-        `cortx_setup node prepare cortx`
+        `cortx_setup node prepare software`
         """
 
+        provisioner_components = get_provisioner_states()
+        cortx_components = get_cortx_states()
+
         self.logger.debug("Deploying platform components")
-        self._deploy({'noncortx_component':provisioner_components['platform']}, stage = None)
+        self._deploy(
+            {'noncortx_component': provisioner_components['platform']}, stage=None)
 
         self.logger.debug("Deploying cortx components")
         self._deploy(cortx_components, stage=["config.prepare"])

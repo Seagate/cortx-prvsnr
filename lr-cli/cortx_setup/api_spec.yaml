@@ -43,7 +43,7 @@ node:
       NodePrepareNetwork
     storage:
       NodePrepareStorage
-    cortx:
+    software:
       NodePrepare
 
 cluster:

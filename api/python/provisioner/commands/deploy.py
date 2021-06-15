@@ -68,7 +68,6 @@ deploy_states = dict(
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
         "misc_pkgs.openldap",
-        "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
         "misc_pkgs.kafka",
         "misc_pkgs.elasticsearch",

@@ -16,46 +16,22 @@
 #
 
 include:
-  - components.misc_pkgs.rabbitmq.stop
+  - k8s.docker.stop
 
-{% if salt['cmd.run']('rpm -qa rabbitmq-server') %}
-Disable plugin:
-  rabbitmq_plugin.disabled:
-    - name: rabbitmq_management
-{% endif %}
-
-Remove RabbitMQ packages:
+Remove docker:
   pkg.purged:
-    - name: rabbitmq-server
+    - pkgs:
+      - docker-ce
+      - docker-ce-cli
 
-Remove RabbitMQ prereqs:
-  pkg.purged:
-    - name: erlang
-
-Remove plugin executable rabbitmqadmin:
+Remove docker config:
   file.absent:
-    - name: /usr/local/bin/rabbitmqadmin
+    - name: /etc/docker
 
-Remove /var/lib/rabbitmq:
+Remove docker data:
   file.absent:
-    - name: /var/lib/rabbitmq
+    - name: /var/lib/docker
 
-Remove /usr/lib/rabbitmq:
-  file.absent:
-    - name: /usr/lib/rabbitmq
-
-Remove /etc/rabbitmq:
-  file.absent:
-    - name: /etc/rabbitmq
-
-Remove /etc/logrotate.d/rabbitmq-server:
-  file.absent:
-    - name: /etc/logrotate.d/rabbitmq-server
-
-Remove rabbitmq logs:
-  file.absent:
-    - name: /var/log/rabbitmq
-
-Delete rabbitmq checkpoint flag:
-  file.absent:
-    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.rabbitmq
+Remove package repo for docker:
+  pkgrepo.absent:
+    - name: docker-ce-stable
