@@ -15,12 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if "primary" in pillar["cluster"][grains["id"]]["roles"] %}
-Run cortx-ha ha setup:
-  cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:cleanup')
-{% else %}
-No HA cleanup on secondary node:
-  test.show_notification:
-    - text: "HA cleanup  applies to primary node. There's no execution on secondary node"
-{% endif %}
+
+Create docker config file for k8s:
+  file.managed:
+    - name: /etc/docker/daemon.json
+    - contents: |
+        {
+          "exec-opts": ["native.cgroupdriver=systemd"],
+          "log-driver": "json-file",
+          "log-opts": {
+            "max-size": "100m"
+          },
+          "storage-driver": "overlay2"
+        }
+    - makedirs: True
+    - dir_mode: 755

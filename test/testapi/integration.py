@@ -291,7 +291,7 @@ def salt_configured(ssh_client):
 
 
 @pytest.fixture
-def salt_ready(ssh_client, salt_configured):
+def salt_ready(ssh_client, salt_configured, setup_hosts):
     SaltMasterStartSLS(
         state=SaltMasterStart(),
         client=ssh_client
@@ -302,7 +302,19 @@ def salt_ready(ssh_client, salt_configured):
         client=ssh_client
     ).run()
 
-    # TODO ensure minions are ready
+    # FIXME
+    #   - should be part of SaltCluster / SaltMaster resource
+    #   - in case of HA setup targets should be all masters
+    nodes_ids = [f"srvnode-{i+1}" for i in range(len(setup_hosts))]
+    ssh_client.cmd_run(
+        (
+            f"python3 -c \"from provisioner import salt_minion; "
+            f"salt_minion.ensure_salt_minions_are_ready({nodes_ids})\""
+        ),
+        targets=nodes_ids[0]
+    )
+
+    ssh_client.cmd_run("salt '*' saltutil.sync_all")
 
 
 @pytest.fixture

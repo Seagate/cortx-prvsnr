@@ -17,9 +17,9 @@
 
 from pathlib import Path
 from cortx_setup.commands.command import Command
+from cortx_setup.validate import ipv4, host
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id
 
 
 prvsnr_cluster_path = Path(
@@ -33,13 +33,13 @@ prvsnr_cluster_path = Path(
 class ClusterNetworkConfig(Command):
     _args = {
         'virtual_host': {
-            'type': str,
+            'type': ipv4,
             'default': None,
             'optional': True,
             'help': 'Cluster vip'
         },
         'search_domains': {
-            'type': str,
+            'type': host,
             'nargs': '+',
             'optional': True,
             'help': 'List of search domains for provided network '
@@ -53,7 +53,6 @@ class ClusterNetworkConfig(Command):
     }
 
     def run(self, **kwargs):
-        node_id = local_minion_id()
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -66,7 +65,6 @@ class ClusterNetworkConfig(Command):
                 PillarSet().run(
                     f'cluster/{key}',
                     value,
-                    targets=node_id,
                     local=True
                 )
                 Conf.set(

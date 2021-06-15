@@ -49,6 +49,8 @@ upgrade:
     sw:
       help: list of sw to be updated, if not specified - detected automatically
       nargs: +
+      metavar: SW
+    no_hooks: do not fire node level events
 consul:
     server: This flag is used to control if an agent is in server or client mode
     bind_addr:
@@ -125,6 +127,9 @@ setup:
   salt_master: domain name or IP of the salt-master
   vendored: The flag to use setup logic from a vendor
 mini_api:
+  hook:
+    help: mini provisioner hook name
+    choices: __py__:provisioner.config.MiniAPIHooks
   spec:
     help: mini provisioner spec file
     metavar: path
@@ -135,3 +140,16 @@ mini_api:
     help: mini provisioning level
     choices: __py__:provisioner.config.MiniAPILevels
   normalize: normalize spec
+  confstore:
+    help: ConfStore URL
+    metavar: URL
+  fail_fast: fail on first error
+  sw:
+    help: target sw, all if not specified
+    nargs: '*'
+    metavar: SW
+  # TODO need to support cli_parser.KeyValueListAction for that
+  ctx_vars:
+    help: a mapping of ctx variables to pass
+    nargs: '*'
+    metavar: key=value

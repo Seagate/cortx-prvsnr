@@ -17,8 +17,9 @@
 
 upgrade:
   sw_list:
+    - utils
     - motr
-    - s3server
+    - s3
     - hare
     - ha
     - sspl

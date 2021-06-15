@@ -17,6 +17,7 @@
 
 from cortx_setup.commands.command import Command
 from provisioner.api import grains_get
+from cortx_setup.validate import host
 from provisioner.commands import PillarSet
 from provisioner.salt import (
     local_minion_id,
@@ -28,7 +29,7 @@ class NodePrepareTime(Command):
     """Cortx Setup API for configuring time"""
     _args = {
         'server': {
-            'type': str,
+            'type': host,
             'default': 'time.seagate.com',
             'optional': True
         },
@@ -46,15 +47,13 @@ class NodePrepareTime(Command):
                 "components.system.chrony.config",
                 "components.system.chrony.stop",
                 "components.system.chrony.start"
-            ],
-            local_minion_id()
+            ]
         )
 
     def set_enclosure_time(self):
         """Sets time on the enclosure"""
         StatesApplier.apply(
-            [ "components.controller.ntp" ],
-            local_minion_id()
+            [ "components.controller.ntp" ]
         )
 
     def run(self, **kwargs):
@@ -71,14 +70,12 @@ class NodePrepareTime(Command):
         PillarSet().run(
             'system/ntp/time_server',
             ntp_server,
-            targets=node_id,
             local=True
         )
 
         PillarSet().run(
             'system/ntp/time_zone',
             ntp_timezone,
-            targets=node_id,
             local=True
         )
 
@@ -87,9 +84,10 @@ class NodePrepareTime(Command):
             self.set_server_time()
             machine_id = grains_get("machine_id")[node_id]["machine_id"]
             enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
-            if not machine_id in enclosure_id:
-                self.logger.debug(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
-                self.set_enclosure_time()
+            if enclosure_id:
+                if not machine_id in enclosure_id:   # check if the system is VM or HW
+                    self.logger.debug(f"Setting time on enclosure with server={ntp_server} & timezone={ntp_timezone}")
+                    self.set_enclosure_time()
         except Exception as e:
             self.logger.error(f"Time configuration failed\n {str(e)}")
             raise e

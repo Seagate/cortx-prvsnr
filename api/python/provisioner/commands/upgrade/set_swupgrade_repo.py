@@ -79,7 +79,8 @@ SW_UPGRADE_BUNDLE_SCHEME = {
         required=True),
     CORTX_PYTHON_ISO_DIR: DirValidator(
         {
-            "index.html": FileValidator(required=True)
+            # FIXME upgrade iso lacks that
+            "index.html": FileValidator(required=False)
         },
         required=False),
     OS_ISO_DIR: DirValidator(
@@ -404,7 +405,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     logger.info('Check sum validation succeeded')
             else:
                 logger.warning('Neither authenticity nor integrity validation'
-                               'is available')
+                               ' is possible (no inputs)')
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other
@@ -503,10 +504,16 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 repo_info = repo_map.get(dir_entry.name, None)
 
                 if repo_info is None:
-                    raise SWUpdateRepoSourceError(
-                        str(candidate_repo.source),
+                    # FIXME upgrade iso may includes something starange for now
+                    # raise SWUpdateRepoSourceError(
+                    #     str(candidate_repo.source),
+                    #     "Unexpected repository in single ISO: "
+                    #     f"{dir_entry.name}")
+                    logger.warning(
                         "Unexpected repository in single ISO: "
-                        f"{dir_entry.name}")
+                        f"{dir_entry.name}"
+                    )
+                    continue
                 if repo_info[IS_REPO_KEY]:
                     self._single_repo_validation(candidate_repo.release,
                                                  dir_entry.name)

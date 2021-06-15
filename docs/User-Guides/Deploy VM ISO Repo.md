@@ -185,7 +185,7 @@ Manual deployment of VM consists of following steps from Auto-Deploy, which coul
 
 
 1.  Bootstrap Validation
-    Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is executed successfully, verify salt master setup on both nodes (setup verification checklist)
+    Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is executed successfully, verify salt-master setup on both nodes (setup verification checklist)
     ```
     salt '*' test.ping  
     salt "*" service.stop puppet

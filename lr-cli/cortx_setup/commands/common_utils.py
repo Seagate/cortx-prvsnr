@@ -16,6 +16,7 @@
 #
 
 from provisioner.salt import local_minion_id, function_run
+from provisioner.commands import reset_machine_id
 
 from provisioner.pillar import (
     PillarResolver,
@@ -35,7 +36,7 @@ def get_pillar_data(key: str):
 
     """
     pillar_key = PillarKey(key)
-    pillar = PillarResolver(local_minion_id()).get([pillar_key])
+    pillar = PillarResolver(local_minion_id(), local=True).get([pillar_key])
     pillar = next(iter(pillar.values()))
     return pillar[PillarKey(key)]
 
@@ -52,6 +53,13 @@ def get_machine_id(node: str):
     """
     machine_id = function_run('grains.get', fun_args=['machine_id'],
                                 targets=node)[f'{node}']
+    if not machine_id:
+        try:
+            reset_machine_id.ResetMachineId().run()
+            get_machine_id(node)
+        except Exception as ex:
+            raise ex
+
     return machine_id
 
 
@@ -60,4 +68,25 @@ def get_cluster_id():
     Get Cluster_id
 
     """
-    return get_pillar_data('cluster/cluster_id')
+    cluster_id = list(function_run('grains.get', fun_args=['cluster_id']).values())[0]
+
+    if not cluster_id:
+        raise ValueError("cluster_id not set or missing")
+
+    return cluster_id
+
+
+
+def get_provisioner_states():
+    """
+    Get provisioner states system and 3rd party
+
+    """
+    return get_pillar_data('execution/noncortx_components')
+
+def get_cortx_states():
+    """
+    Get cortx states iopath controlpath and system states
+
+    """
+    return get_pillar_data('execution/cortx_components')

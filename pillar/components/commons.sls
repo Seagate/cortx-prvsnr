@@ -56,10 +56,13 @@ commons:
     provisioner:
       base_sls: components.provisioner
       mini: /opt/seagate/cortx/provisioner/conf/setup.yaml
+    utils:
+      base_sls: components.cortx_utils
+      mini: /opt/seagate/cortx/utils/conf/setup.yaml
     motr:
       base_sls: components.motr
       mini: /opt/seagate/cortx/motr/conf/setup.yaml
-    s3server:
+    s3:
       base_sls: components.s3server
       mini: /opt/seagate/cortx/s3/conf/setup.yaml
     hare:

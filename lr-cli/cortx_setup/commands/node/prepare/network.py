@@ -19,6 +19,7 @@
 
 from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
+from cortx_setup.validate import host, ipv4
 from cortx_setup.commands.common_utils import get_machine_id
 from provisioner import (
     set_hostname,
@@ -33,7 +34,7 @@ from cortx.utils.conf_store import Conf
 class NodePrepareNetwork(Command):
     _args = {
         'hostname': {
-            'type': str,
+            'type': host,
             'optional': True,
             'default': None,
             'help': 'Hostname to be set'
@@ -47,19 +48,19 @@ class NodePrepareNetwork(Command):
             'help': 'Type of network to prepare'
         },
         'gateway': {
-            'type': str,
+            'type': ipv4,
             'optional': True,
             'default': "",
             'help': 'Gateway IP'
         },
         'netmask': {
-            'type': str,
+            'type': ipv4,
             'optional': True,
             'default': "",
             'help': 'Netmask'
         },
         'ip_address': {
-            'type': str,
+            'type': ipv4,
             'optional': True,
             'default': "",
             'help': 'IP address'
@@ -117,7 +118,7 @@ class NodePrepareNetwork(Command):
         if hostname is not None:
             self.logger.debug(f"Setting up system hostname to {hostname}")
             try:
-                set_hostname(hostname=hostname, targets=node_id, local=True)
+                set_hostname(hostname=hostname, local=True)
                 Conf.set(
                     'node_prepare_index',
                     f'server_node>{machine_id}>hostname',
@@ -139,22 +140,22 @@ class NodePrepareNetwork(Command):
                         mgmt_public_ip=ip_address,
                         mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
-                        local=True,
-                        targets=node_id
+                        mgmt_interfaces=interfaces,
+                        local=True
                     )
                 elif network_type == 'data':
                     set_public_data_network(
                         data_public_ip=ip_address,
                         data_netmask=netmask,
                         data_gateway=gateway,
-                        local=True,
-                        targets=node_id
+                        data_public_interfaces=interfaces,
+                        local=True
                     )
                 elif network_type == 'private':
                     set_private_data_network(
                         data_private_ip=ip_address,
-                        local=True,
-                        targets=node_id
+                        data_private_interfaces=interfaces,
+                        local=True
                     )
             except Exception as ex:
                 raise ex

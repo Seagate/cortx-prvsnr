@@ -15,6 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set mini_prvsnr_if = '/opt/seagate/cortx/ha/conf/setup.yaml' %}
 Reset cortx-ha reset:
   cmd.run:
-    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/ha/conf/setup.yaml', 'ha:reset')
+    - name: __slot__:salt:setup_conf.conf_cmd({{ mini_prvsnr_if }}, 'ha:reset')
+    - onlyif: test -e {{ mini_prvsnr_if }}

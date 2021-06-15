@@ -16,16 +16,20 @@
 #
 
 from .hostname import Hostname
+from .pillar_sync import PillarSync
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
 from .node.prepare.server import NodePrepareServer
 from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
+from .cluster.encrypt import EncryptPillar
 from .cluster.show import ClusterShow
 from .cluster.config.network import ClusterNetworkConfig
+from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
+from .node.prepare.software import NodePrepare
 from .node.prepare.firewall import NodePrepareFirewall
 from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
@@ -38,29 +42,35 @@ from .storageset.create import CreateStorageSet
 from .storageset.add.node import AddServerNode
 from .storageset.add.enclosure import AddStorageEnclosure
 from .storageset.config.durability import DurabilityConfig
+from .enclosure.refresh import RefreshEnclosureId
 
 
 __all__ = [
     'AddServerNode',
     'AddStorageEnclosure',
+    'Commons',
     'ClusterCreate',
     'ClusterNetworkConfig',
+    'ClusterConfigComponent',
     'ClusterShow',
     'CreateStorageSet',
     'DurabilityConfig',
+    'EncryptPillar',
     'GetSignature',
     'Hostname',
     'NetworkConfig',
     'NodeInitalize',
     'NodeFinalize',
+    'NodePrepare',
     'NodePrepareFirewall',
     'NodePrepareNetwork',
+    'NodePrepareServer',
     'NodePrepareTime',
     'NodePrepareStorage',
+    'RefreshEnclosureId',
     'ResourceShow',
     'ResourceDiscover',
     'SecurityConfig',
     'SetSignature',
-    'StorageEnclosureConfig',
-    'Commons'
- ]
+    'StorageEnclosureConfig'
+]

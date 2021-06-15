@@ -20,6 +20,9 @@
 hostname:
   Hostname
 
+pillar_sync:
+  PillarSync
+
 network:
   config:
     NetworkConfig
@@ -40,15 +43,21 @@ node:
       NodePrepareNetwork
     storage:
       NodePrepareStorage
+    software:
+      NodePrepare
 
 cluster:
   create:
     ClusterCreate
   show:
     ClusterShow
+  encrypt:
+    EncryptPillar
   config:
     network:
       ClusterNetworkConfig
+    component:
+      ClusterConfigComponent
 
 resource:
   discover:
@@ -81,3 +90,7 @@ storageset:
   config:
     durability:
       DurabilityConfig
+
+enclosure:
+  refresh:
+    RefreshEnclosureId

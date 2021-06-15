@@ -68,8 +68,11 @@ def load_cli_spec():
 
         choices = getattr(module, attr_name)
 
-        if issubclass(choices, Enum):
-            choices = [i.value for i in choices]
+        try:
+            if issubclass(choices, Enum):
+                choices = [i.value for i in choices]
+        except TypeError:
+            pass  # not a class
 
         leaf.parent[leaf.key] = choices
 
@@ -1249,7 +1252,9 @@ class SWUpgradeRepo(SWUpdateRepo):
                     'source': (f'file://{self.target_build}/{self.release}/'
                                f'{config.OS_ISO_DIR}'),
                     'is_repo': True,
-                    'enabled': self.enabled
+                    # FIXME upgrade iso currently may lack repodata
+                    # 'enabled': self.enabled
+                    'enabled': False
                 },
                 f'{config.CORTX_ISO_DIR}': {
                     'source': (f'file://{self.target_build}/{self.release}/'
