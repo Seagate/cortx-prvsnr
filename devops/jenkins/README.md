@@ -18,19 +18,19 @@
         *   [Initial run](#initial-run)
         *   [Server management](#server-management)
         *   [Additional configuration](#additional-configuration)
-        *   [Command line reference](#command-line-reference)
+        *   [Server Command line reference](#server-command-line-reference)
 
     *   [Jenkins Agents](#jenkins-agents)
 
         *   [Build and start](#build-and-start)
         *   [Agent Management](#agent-management)
-        *   [Command line reference](#command-line-reference-1)
+        *   [Agent Command line reference](#agent-command-line-reference)
         *   [Jenkins Agent Troubleshootings](#jenkins-agent-troubleshootings)
 
     *   [Provisioner Jobs on Jenkins](#provisioner-jobs-on-jenkins)
 
         *   [Jobs update](#jobs-update)
-        *   [Command line reference](#command-line-reference-2)
+        *   [Jobs Command line reference](#jobs-command-line-reference)
 
 ## Overview
 
@@ -39,12 +39,9 @@ infrastracture along with automation for provisioner Jenkins jobs configuration.
 
 It uses the following tools:
 
-*   [docker](https://docs.docker.com/):
-    both server and agents are run as docker containers
-*   [JCasC](https://www.jenkins.io/projects/jcasc/) plugin:
-    to automate Jenkins server configuration
-*   [JJB](https://jenkins-job-builder.readthedocs.io/en/lates) tool/library:
-    to automate Jenkins jobs configurations
+*   [docker](https://docs.docker.com/): both server and agents are run as docker containers
+*   [JCasC](https://www.jenkins.io/projects/jcasc/) plugin: to automate Jenkins server configuration
+*   [JJB](https://jenkins-job-builder.readthedocs.io/en/lates) tool/library: to automate Jenkins jobs configurations
 
 ## Pre-requisites
 
@@ -103,8 +100,7 @@ Possible actions:
 
 Options:
 
-*   `--ssl-domain DOMAIN` will be used for self-signed certificate
-    generation to support HTTPS
+*   `--ssl-domain DOMAIN` will be used for self-signed certificate generation to support HTTPS
 *   `--config PATH` path to a configuration file
 
 Configuration:
@@ -113,6 +109,7 @@ Configuration:
     *   `url` Jenkins server url
     *   `username` Jenkins user with admin access
     *   `token` Jenkins user acess token
+
 *   `[server]`:
     *   `smeeio_channel`: url to a [smee.io](https://smee.io) channel that can be used
         for integration with version control system (e.g. GitHub) to receieve payloads
@@ -169,10 +166,8 @@ as a best choice.
 If you need to adjust the configuration please consider to do:
 
 *   to change existent parameters values: update your configuration file
-*   to change the configuration scheme: update
-    [server/jenkins.yaml.tmpl](cortx_jenkins/server/jenkins.yaml.tmpl)
-*   to adjust a list of plugins: update
-    [server/plugins.txt](cortx_jenkins/server/plugins.txt)
+*   to change the configuration scheme: update [server/jenkins.yaml.tmpl](cortx_jenkins/server/jenkins.yaml.tmpl)
+*   to adjust a list of plugins: update [server/plugins.txt](cortx_jenkins/server/plugins.txt)
 
 Once the change is ready you can rebuild the server:
 
@@ -186,7 +181,7 @@ cortx-jenkins server create
 In latter two cases please also consider to submit a patch to `cortx-prvsnr`
 repository.
 
-#### Command line reference
+#### Server Command line reference
 
 ```bash
 $ cortx-jenkins server --help
@@ -274,7 +269,7 @@ and mounted local directory as a working directory for a jenkins agent.
 To stop/start/restart an agent you can use either `cortx-jenkins agent` subcommands
 or similar `docker` commands.
 
-#### Command line reference
+#### Agent Command line reference
 
 ```bash
 $ cortx-jenkins agent --help
@@ -332,18 +327,25 @@ Options:
 
 Configuration:
 
-*   `[global]`: specifies `url`, `username` and `token` as explained above.
-*   `[jobs]`: that block would passed directly to JJB tool. Please refer to
-    [the docs](https://jenkins-job-builder.readthedocs.io/en/latest/execution.html#configuration-file)
-    for more details.
+*   JJB run configuration:
+    *   `[global]`: specifies `url`, `username` and `token` as explained above.
+    *   `[jobs]`: that block would passed directly to JJB tool. Please refer to
+        [the docs](https://jenkins-job-builder.readthedocs.io/en/latest/execution.html#configuration-file)
+        for more details.
+*   jobs configuration:
+    *   you can either change [defaults](./cortx_jenkins/jobs/defaults.yaml)
+        or update [jobs definitions](./cortx_jenkins/jobs/cortx-prvsnr/cortx-prvsnr-jobs.yaml)
 
 #### Jobs update
+
+**Note.** you will likely want to set a proper github access token credential id
+`github_credentials_id` in [defaults](./cortx_jenkins/jobs/defaults.yaml).
 
 ```bash
 cortx-jenkins jobs update
 ```
 
-#### Command line reference
+#### Jobs Command line reference
 
 ```bash
 $ cortx-jenkins jobs --help

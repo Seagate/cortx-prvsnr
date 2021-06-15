@@ -65,6 +65,11 @@
       - ghprb-trigger:
           <<: *ghprb-trigger-params
 
+
+- defaults:
+    name: provisioner jobs
+    folder: Provisioner
+
 - job-template:
     name: '{name}-ci-{type}'
     project-type: multibranch
@@ -82,7 +87,7 @@
           repo: cortx-prvsnr
           repo-owner: '{github_org}'
           # TODO make jinja template
-          credentials-id: github-user-and-token
+          credentials-id: '{github_credentials_id}'
           branch-discovery: '{ghsource_branch_discovery}'
 
           head-filter-regex: '{ghsource_head_filter_regex}'
