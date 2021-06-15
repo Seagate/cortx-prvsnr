@@ -104,3 +104,15 @@ logging.silent: true
 # Specifies locale to be used for all localizable strings, dates and number formats.
 # Supported languages are the following: English - en , by default , Chinese - zh-CN .
 #i18n.locale: "en"
+
+# server.host: "{{ pillar['cluster'][grains['id']]['hostname'] }}"
+# elasticsearch.requestHeadersWhitelist: ["securitytenant","Authorization"]
+elasticsearch.hosts: http://localhost:{{ pillar['elasticsearch']['http_port'] }}
+elasticsearch.ssl.verificationMode: none 
+elasticsearch.username: kibanaserver 
+elasticsearch.password: kibanaserver 
+newsfeed.enabled: false
+telemetry.optIn: false 
+telemetry.enabled: false 
+timelion.ui.enabled: true 
+
