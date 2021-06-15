@@ -49,7 +49,9 @@ from provisioner.salt import (
 from provisioner import errors
 from provisioner.cortx_ha import (
     cluster_stop,
+    cluster_standby,
     cluster_start,
+    cluster_unstandby,
     is_cluster_healthy
 )
 
@@ -176,6 +178,8 @@ class SWUpgrade(CommandParserFillerMixin):
         from_ver: str,
         to_ver: str
     ):
+        cluster_stopped = False
+
         logger.info("Fire pre-upgrade event (cluster level)")
         mini_hook = MiniAPIHook(
             name=config.MiniAPIHooks.PRE_UPGRADE,
@@ -196,7 +200,9 @@ class SWUpgrade(CommandParserFillerMixin):
 
         # the following needed only in case pacemaker is upgraded
         # logger.info("Stopping the Cortx cluster")
-        # cluster_stop(standby=False)
+        if False:
+            cluster_stop()
+            cluster_stopped = True
 
         for group in planned_node_groups:
             logger.info(f"Upgrading nodes: '{group}'")
@@ -206,7 +212,8 @@ class SWUpgrade(CommandParserFillerMixin):
 
         # the following needed only in case pacemaker is upgraded
         # logger.info("Stopping the Cortx cluster")
-        # cluster_start(unstandby=True)
+        if cluster_stopped:
+            cluster_start()
 
         logger.info("Fire post-upgrade event (cluster level)")
         mini_hook.name = config.MiniAPIHooks.POST_UPGRADE
@@ -239,14 +246,14 @@ class SWUpgrade(CommandParserFillerMixin):
         planned_node_groups = self.plan_upgrade(flow=flow)
 
         logger.info("Moving the Cortx cluster into standby mode")
-        cluster_stop(standby=True)
+        cluster_standby()
 
         self.upgrade_cluster(
             planned_node_groups, flow, from_ver, to_ver
         )
 
         logger.info("Starting the Cortx cluster")
-        cluster_start()
+        cluster_unstandby()
         # cluster_start(unstandby=False)
 
         # TODO make the folllowing a part of migration
