@@ -1278,6 +1278,51 @@ class Check(CommandParserFillerMixin):
 
         return res
 
+    @staticmethod
+    def _active_upgrade_iso(*, args: str) -> CheckEntry:
+        """
+        Ensure that no active upgrade ISO is available
+
+        Parameters
+        ----------
+        args: str
+            Active upgrade ISO validation specific arguments and parameters
+
+        Returns
+        -------
+        CheckEntry:
+            CheckEntry instance with validation result
+
+        """
+        # TODO: dynamic import is needed here to solve cross imports issues
+        #  between: `api/python/provisioner/commands/__init__.py` and
+        #  `api/python/provisioner/commands/upgrade/set_swupgrade_repo.py`:
+        #  SetSWUpgradeRepo imports Set class.
+        from provisioner.commands.upgrade import GetISOVersion
+
+        res: CheckEntry = CheckEntry(cfg.Checks.ACTIVE_UPGRADE_ISO.value)
+
+        try:
+            iso_version = GetISOVersion().run()
+        except Exception as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            if iso_version is None:
+                # NOTE: GetISOVersion returns None in two cases:
+                #  1. release version is equal to upgrade version, e.g. last
+                #     upgrade ISO was applied
+                #  2. there are no configured ISOs for the SW upgrade
+                #  Both cases mean that there are no active upgrade ISO
+                res.set_passed(checked_target=local_minion_id(),
+                               comment='There are no active SW upgrade ISO'
+                                       'detected')
+            else:
+                res.set_fail(checked_target=local_minion_id(),
+                             comment="An active upgrade ISO is detected")
+
+        return res
+
     def run(self, check_name: str = "",
             check_args: str = "") -> CheckResult:
         """
