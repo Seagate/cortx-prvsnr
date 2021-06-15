@@ -21,6 +21,7 @@ from typing import Type, Union
 import requests
 from configparser import ConfigParser
 
+from provisioner.commands import Check
 from provisioner.commands.upgrade import CheckISOAuthenticity
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
 from ..set_swupdate_repo import SetSWUpdateRepo
@@ -38,10 +39,11 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 PIP_CONFIG_FILE,
                                 SWUpgradeInfoFields,
                                 ISOValidationFields,
-                                CheckVerdict
+                                CheckVerdict, Checks
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
-                                ValidationError
+                                ValidationError,
+                                SWUpdateError
                                 )
 from provisioner.utils import (load_yaml,
                                load_checksum_from_file,
@@ -480,6 +482,18 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.info("Skipping update repo validation for special value: "
                         f"{repo.source}")
             return
+
+        checker = Check()
+        try:
+            check_res = checker.run(Checks.ACTIVE_UPGRADE_ISO.value)
+        except Exception as e:
+            logger.warning("During the detection of the active SW upgrade ISO "
+                           f"error happened: {str(e)}")
+        else:
+            if check_res.is_failed:
+                raise SWUpdateError("An active SW upgrade ISO is detected."
+                                    "Please, finish the current upgrade before"
+                                    " start the new one")
 
         logger.info(f"Validating upgrade repo: release '{REPO_CANDIDATE_NAME}'"
                     f", source {repo.source}")
