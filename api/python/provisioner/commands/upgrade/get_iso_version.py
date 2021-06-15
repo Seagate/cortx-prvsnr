@@ -57,6 +57,9 @@ class GetISOVersion(CommandParserFillerMixin):
         release_ver = GetReleaseVersion.cortx_version()
         upgrade_ver = GetSWUpgradeInfo.cortx_version()
 
+        if upgrade_ver is None:
+            return None  # There are no configured upgrade repos
+
         release_ver_parsed = version.parse(release_ver)
         upgrade_ver_parsed = version.parse(upgrade_ver)
 

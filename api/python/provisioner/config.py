@@ -485,6 +485,7 @@ class Checks(Enum):
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
     UPGRADE_ISO_VERSION = "upgrade_iso_version"
+    ACTIVE_UPGRADE_ISO = "active_upgrade_iso"
 
 
 class GroupChecks(Enum):

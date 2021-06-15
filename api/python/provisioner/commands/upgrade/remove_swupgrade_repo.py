@@ -18,6 +18,7 @@ import logging
 from typing import Type
 
 from provisioner import ALL_MINIONS
+from provisioner.lock import api_lock
 
 from .set_swupgrade_repo import SetSWUpgradeRepo
 from .. import inputs
@@ -29,6 +30,7 @@ class RemoveSWUpgradeRepo(SetSWUpgradeRepo):
 
     input_type: Type[inputs.SWUpgradeRemoveRepo] = inputs.SWUpgradeRemoveRepo
 
+    @api_lock
     def run(self, *args, targets=ALL_MINIONS, dry_run=False,
             local=False, **kwargs):
         # static validation

@@ -44,10 +44,13 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 CheckVerdict,
                                 ISOVersion,
                                 ISOKeywordsVer2 as ISOVer2,
-                                UpgradeReposVer2
+                                UpgradeReposVer2,
+                                CheckVerdict,
+                                Checks
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
-                                ValidationError
+                                ValidationError,
+                                SWUpdateError
                                 )
 from provisioner.utils import (load_yaml,
                                load_checksum_from_file,
@@ -570,6 +573,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
     @staticmethod
     def _check_iso_authenticity(params: inputs.SWUpgradeRepo):
         """
+        SW upgrade repository pre-validation.
 
         Parameters
         ----------
@@ -765,6 +769,18 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.info("Skipping update repo validation for special value: "
                         f"{repo.source}")
             return
+
+        checker = Check()
+        try:
+            check_res = checker.run(Checks.ACTIVE_UPGRADE_ISO.value)
+        except Exception as e:
+            logger.warning("During the detection of the active SW upgrade ISO "
+                           f"error happened: {str(e)}")
+        else:
+            if check_res.is_failed:
+                raise SWUpdateError("An active SW upgrade ISO is detected."
+                                    "Please, finish the current upgrade before"
+                                    " start the new one")
 
         self._source_version = repo.source_version
         logger.info("SW upgrade ISO struction version is "

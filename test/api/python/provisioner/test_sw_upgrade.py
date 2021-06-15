@@ -20,9 +20,11 @@ from pathlib import Path
 import pytest
 from unittest.mock import patch, MagicMock
 import yaml
+from provisioner.commands.check import CheckResult, CheckEntry
 
 from provisioner.commands.upgrade import GetSWUpgradeInfo, SetSWUpgradeRepo
-from provisioner.config import ReleaseInfo, SWUpgradeInfoFields
+from provisioner.commands.upgrade.set_swupgrade_repo import Check
+from provisioner.config import ReleaseInfo, SWUpgradeInfoFields, Checks
 
 from .test_validator import RELEASE_INFO
 
@@ -102,12 +104,19 @@ def test_get_swupgrade_info():
                         'set_swupgrade_repo.local_minion_id')
     load_yaml = 'provisioner.commands.upgrade.set_swupgrade_repo.load_yaml'
     cmd_run = 'provisioner.commands.upgrade.set_swupgrade_repo.cmd_run'
+
+    check_res = CheckResult()
+    check_entry = CheckEntry(Checks.ACTIVE_UPGRADE_ISO.value)
+    check_entry.set_passed(checked_target='srvnode-1',
+                           comment="Everything is ok")
+    check_res.add_checks(check_entry)
     with patch.object(SetSWUpgradeRepo, '_prepare_single_iso_for_apply',
                       new=lambda self, x: None), \
             patch.object(SetSWUpgradeRepo, '_get_mount_dir',
                          new=lambda self: BASE_DIR), \
             patch.object(SetSWUpgradeRepo, '_apply',
                          new=lambda self, x, targets, local: None), \
+            patch.object(Check, 'run', new=lambda self, x: check_res), \
             patch(local_minion_id1, MagicMock()), \
             patch(local_minion_id2, MagicMock()) as local_minion_id2_mock, \
             patch('provisioner.lock.Lock', LockMock) as api_lock_mock, \
