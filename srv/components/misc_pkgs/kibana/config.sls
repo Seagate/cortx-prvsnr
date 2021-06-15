@@ -26,6 +26,10 @@ Configure Kibana service:
     - name: /etc/systemd/system/kibana.service
     - source: salt://components/misc_pkgs/kibana/files/kibana.service
 
+Remove kibana security plugin:
+  cmd.run:
+    - name: "sudo /usr/share/kibana/bin/kibana-plugin remove opendistroSecurityKibana --allow-root"
+
 Reload service units:
   cmd.run:
     - name: systemctl daemon-reload
