@@ -18,9 +18,11 @@
 include:
   - components.misc_pkgs.rabbitmq.stop
 
+{% if salt['cmd.run']('rpm -qa rabbitmq-server') %}
 Disable plugin:
   rabbitmq_plugin.disabled:
     - name: rabbitmq_management
+{% endif %}
 
 Remove RabbitMQ packages:
   pkg.purged:
