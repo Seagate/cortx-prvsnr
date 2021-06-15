@@ -315,18 +315,9 @@ class SpecRenderer(CommandParserFillerMixin):
 
         # format validation: single top level key
         if len(config_spec) != 1:
-            raise ValueError(
-                "multiple components on the top level:"
+            logger.warning(
+                f"multiple components on the top level of '{self.spec}':"
                 f" {list(config_spec)}"
-            )
-
-        sw, sw_spec = next(iter(config_spec.items()))
-
-        # format validation: top level value is a dict
-        if not isinstance(sw_spec, dict):
-            raise TypeError(
-                "a dictionary is expected as a top level value,"
-                f" provided {type(sw_spec)}"
             )
 
         # mark version
@@ -338,15 +329,19 @@ class SpecRenderer(CommandParserFillerMixin):
             res[config.MiniAPISpecFields.SUPPORT_BUNDLE.value] = (
                 support_bundle.spec(normalize=self.normalize)
             )
-        # store the sw spec
-        res[sw] = self._build_spec(sw_spec)
+
+        for sw, sw_spec in config_spec.items():
+            # format validation: top level value is a dict
+            if not isinstance(sw_spec, dict):
+                raise TypeError(
+                    "a dictionary is expected as a top level value,"
+                    f" provided {type(sw_spec)}"
+                )
+
+            # store the sw spec
+            res[sw] = self._build_spec(sw_spec)
 
         return res
-
-    #     config_str = self.render()
-
-    #    if self.normalize:
-    #        config_str = utils.dump_yaml_str(dict(component=sw_spec))
 
     def run(self):
         return utils.dump_yaml_str(self.build())
