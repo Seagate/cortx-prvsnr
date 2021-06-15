@@ -16,14 +16,14 @@
 #
 
 
-Install cortx-py-utils python dependencies:
-  pip.installed:
-    - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
-    - bin_env: /usr/bin/pip3
+# Install cortx-py-utils python dependencies:
+#   pip.installed:
+#     - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
+#     - bin_env: /usr/bin/pip3
 
-Install cortx-py-utils:           # Package for cryptography
-  pkg.installed:
-    - name: cortx-py-utils
+# Install cortx-py-utils:           # Package for cryptography
+#   pkg.installed:
+#     - name: cortx-py-utils
 
 # # Skip cryptography install as it gets installed through cortx-py-utils
 # Ensure cryptography python package absent:
