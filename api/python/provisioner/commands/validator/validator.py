@@ -173,6 +173,9 @@ class DirValidator(PathValidator):
         if True validation raises an Exception if the directory
         doesn't exist
 
+    empty: bool
+        If False validation raises an Exception if the directory is empty
+
     Notes
     -----
     TBD: other possible parameters
@@ -200,6 +203,10 @@ class DirValidator(PathValidator):
         default=None,
     )
     required: bool = attr.ib(
+        validator=attr.validators.instance_of(bool),
+        default=False
+    )
+    empty: bool = attr.ib(
         validator=attr.validators.instance_of(bool),
         default=False
     )
@@ -235,6 +242,8 @@ class DirValidator(PathValidator):
             raise ValidationError(reason=f"'{path}' is not a directory")
 
         if self.files_scheme:
+            if self.empty and not any(path.iterdir()):
+                return
             for sub_path, validator in self.files_scheme.items():
                 validator.validate(path / sub_path)
 
