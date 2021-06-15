@@ -29,7 +29,10 @@ from provisioner.config import (
     CORTX_ISO_DIR,
     REPO_CANDIDATE_NAME,
     RELEASE_INFO_FILE,
-    ReleaseInfo
+    ReleaseInfo,
+    ISOVersion,
+    UpgradeReposVer2,
+    CORTX_RELEASE_INFO_FILE
 )
 from provisioner.pillar import PillarResolver, PillarKey
 
@@ -109,7 +112,9 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         #  objects are correctly defined (post- and pre- states)
         return commands['set_swupgrade_repo']
 
-    def _get_repo_metadata(self, release: str) -> dict:
+    def _get_repo_metadata(
+            self, release: str,
+            iso_version: ISOVersion = ISOVersion.VERSION1) -> dict:
         """
         Load Cortx repository metadata for the given release
 
@@ -117,6 +122,8 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         ----------
         release : str
             SW upgrade repository version
+        iso_version: ISOVersion
+            version of SW upgrade ISO
 
         Returns
         -------
@@ -124,7 +131,12 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             return dict with Cortx repository metadata
 
         """
-        repo = f'sw_upgrade_{CORTX_ISO_DIR}_{release}'
+        if iso_version == ISOVersion.VERSION1:
+            repo = f'sw_upgrade_{CORTX_ISO_DIR}_{release}'
+            release_file = RELEASE_INFO_FILE
+        else:
+            repo = f'sw_upgrade_{UpgradeReposVer2.CORTX.value}_{release}'
+            release_file = CORTX_RELEASE_INFO_FILE
 
         config = ConfigParser()
         config.read(f'/etc/yum.repos.d/{repo}.repo')
@@ -134,7 +146,7 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             logger.warning(f"'baseurl' option is missed for repo: '{repo}'")
             return dict()
 
-        res = urlparse(f'{repo_uri}/{RELEASE_INFO_FILE}')
+        res = urlparse(f'{repo_uri}/{release_file}')
 
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
 
@@ -164,6 +176,7 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         """
         local_minion = local_minion_id()
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
+        iso_version = None
 
         if iso_path is not None:
             # if the `iso_path` is set up, we ignore the `release` parameter
@@ -180,8 +193,8 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
                 fail_on_undefined=True
             )
 
-            upgrade_releases = list(pillars[local_minion][
-                PillarKey(pillar_path)].keys())
+            repos_info = pillars[local_minion][PillarKey(pillar_path)]
+            upgrade_releases = list(repos_info.keys())
 
             upgrade_releases.remove(REPO_CANDIDATE_NAME)
 
@@ -193,7 +206,29 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             # is formatted according to PEP-440
             release = max(upgrade_releases, key=version.parse)
 
+            if release in repos_info[release]:
+                release_info = repos_info[release][release]
+                iso_version = release_info.get('version',
+                                               ISOVersion.VERSION1.value)
+
+        if iso_version is None and release:
+            # NOTE: in case if release parameter is set
+            pillar_path = f'release/upgrade/repos/{release}'
+            pillars = PillarResolver(local_minion).get(
+                [PillarKey(pillar_path)],
+                fail_on_undefined=True
+            )
+
+            upgrade_release = pillars[local_minion][PillarKey(pillar_path)]
+            if release in upgrade_release:
+                iso_version = upgrade_release[release].get('version',
+                                                           ISOVersion.VERSION1)
+            else:
+                # NOTE: it may be remote repo
+                iso_version = ISOVersion.VERSION1
+
+        set_swupgrade_repo.set_source_version(iso_version)
         packages = set_swupgrade_repo.get_packages_version(release)
-        metadata = self._get_repo_metadata(release)
+        metadata = self._get_repo_metadata(release, iso_version)
 
         return CortxISOInfo(packages=packages, metadata=metadata)

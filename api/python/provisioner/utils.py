@@ -374,7 +374,8 @@ def repo_tgz(
     for d in (exclude_dirs or []):
         exclude.extend(['--exclude', str(d)])
 
-    if version != config.REPO_VERSION_RAW:
+    # FIXME: version can be None
+    if version and version != config.REPO_VERSION_RAW:
         # treat the version as git commit/branch/tag ...
         cmd = (
             ['git', 'archive', '--format=tar.gz', version, '-o', str(dest)] +

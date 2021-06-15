@@ -165,6 +165,16 @@ class ISOKeywordsVer2:
     PERFORMANCE = "performance"
 
 
+class UpgradeReposVer2(Enum):
+
+    """Names of upgrade repositories from SW upgrade ISO bundle of version 2"""
+
+    CORTX = ISOKeywordsVer2.CORTX
+    EPEL_7 = ISOKeywordsVer2.EPEL_7
+    COMMONS = ISOKeywordsVer2.COMMONS
+    PERFORMANCE = ISOKeywordsVer2.PERFORMANCE
+
+
 PRVSNR_CORTX_REPOS_BASE_DIR = (
     PRVSNR_DATA_LOCAL_DIR / 'cortx_repos'
 )
