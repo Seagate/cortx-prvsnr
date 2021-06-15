@@ -82,7 +82,10 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             try:
                 release_metadata = cls().run(
                     iso_path=iso_path, release=release
-                ).metadata
+                )
+                if release_metadata is None:
+                    return None
+                release_metadata = release_metadata.metadata
             except errors.BadPillarDataError:
                 return None  # NOTE: there are no configured SW upgrade repos
 
