@@ -80,3 +80,12 @@ commons:
     csm:
       base_sls: components.csm
       mini: /opt/seagate/cortx/csm/conf/setup.yaml
+      mini_sw:
+        - csm
+        - usl
+    # usl:
+    #   base_sls: null
+    #   mini: /opt/seagate/cortx/csm/conf/setup.yaml
+    #   mini_sw:
+    #     - csm
+    #     - usl
