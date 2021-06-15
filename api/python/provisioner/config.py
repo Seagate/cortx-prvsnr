@@ -654,9 +654,9 @@ class LockMetaDataFields(Enum):
 class HACmdResult(Enum):
     """HA output for command results."""
 
-    FAILED = 'Failed'
-    SUCCEEDED = 'Succeeded'
-    IN_PROGRESS = 'InProgress'
+    FAILED = 'failed'
+    SUCCEEDED = 'succeeded'
+    IN_PROGRESS = 'inprogress'
 
 
 class HAClusterStatus(Enum):
@@ -665,6 +665,7 @@ class HAClusterStatus(Enum):
     ONLINE = 'online'
     OFFLINE = 'offline'
     STANDBY = 'standby'
+    DEGRADED = 'degraded'
 
 
 class ISOValidationFields(Enum):

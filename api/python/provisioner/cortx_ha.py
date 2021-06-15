@@ -18,7 +18,6 @@
 import logging
 
 from typing import Optional, Union, Tuple, List
-from abc import ABC, abstractmethod
 
 from .vendor import attr
 from .config import (
@@ -43,128 +42,34 @@ CORTX_HA_TOOL = "cortx"
 logger = logging.getLogger(__name__)
 
 
-class ClusterManagerBase(ABC):
+class ClusterManagerBase:
+
+    _name = None
 
     def _run_cmd(self, cmd: str, json=False):
         ret = cmd_run(cmd, targets=LOCAL_MINION)
         ret = next(iter(ret.values()))
         return load_json_str(ret) if json else ret
 
-    @abstractmethod
-    def cluster_status(self):
+    def cluster_status(self) -> HAClusterStatus:
         """Return the status."""
-
-    @abstractmethod
-    def cluster_stop(self):
-        """Stop the cluster."""
-
-    @abstractmethod
-    def cluster_standby(self):
-        """Standby the cluster."""
-
-    @abstractmethod
-    def cluster_start(self):
-        """Start the cluster."""
-
-    @abstractmethod
-    def cluster_unstandby(self):
-        """Unstandby the cluster."""
-
-    @abstractmethod
-    def is_offline(self):
-        """Check whether cluster is offline."""
-
-    @abstractmethod
-    def is_online(self):
-        """Check whether cluster is online."""
-
-
-class ClusterManagerPCS(ClusterManagerBase):
-
-    def cluster_status(self):
-        return self._run_cmd('pcs status')
-
-    def cluster_stop(self, standby=False):
-        return self._run_cmd(
-            "pcs cluster stop --all"
-        )
-
-    def cluster_standby(self):
-        return self._run_cmd(
-            "pcs cluster standby --all"
-        )
-
-    def cluster_start(self):
-        return self._run_cmd('pcs cluster start --all')
-
-    def cluster_unstandby(self):
-        return self._run_cmd('pcs cluster unstandby --all')
-
-    def _check_offline(self, status):
-        return ('OFFLINE:' in status)
-
-    def is_offline(self):
-        # TODO naive implementation
-        try:
-            ret = self.cluster_status()
-        except errors.SaltCmdResultError as exc:
-            if (
-                'cluster is not currently running on this node'
-                not in str(exc.reason)
-            ):
-                logger.warning(f"Cluster status failed: {exc}")
-            return True
-        else:
-            return self._check_offline(ret)
-
-    def is_online(self):
-        # TODO naive implementation
-        try:
-            ret = self.cluster_status()
-        except errors.SaltCmdResultError as exc:
-            logger.warning(f"Cluster status failed: {exc}")
-            return False
-        else:
-            return not self._check_offline(ret)
-
-    def is_standby(self):
         raise NotImplementedError
 
-
-@attr.s(auto_attribs=True)
-class HAResponse:
-    status: str
-    output: str
-    error: str
-
-
-class ClusterManagerCortxCmd(ClusterManagerBase):
-
-    def _run_cmd(self, cmd: str):
-        ret = super()._run_cmd(cmd, json=True)
-        ret = HAResponse(**ret)
-        if ret.status == HACmdResult.FAILED.value:
-            raise errors.ProvisionerError(
-                "HA command `{cmd}` failed with error: '{ret.error}'"
-            )
-        return ret
-
-    def cluster_status(self):
-        return self._run_cmd(f"{CORTX_HA_TOOL} cluster status")
-
-    def cluster_stop(self, standby=False):
-        return self._run_cmd(
-            f"{CORTX_HA_TOOL} cluster stop"
-        )
+    def cluster_stop(self):
+        """Stop the cluster."""
+        raise NotImplementedError
 
     def cluster_standby(self):
-        raise NotImplementedError("Not supported by '{CORTX_HA_TOOL}' tool")
+        """Standby the cluster."""
+        raise NotImplementedError
 
     def cluster_start(self):
-        return self._run_cmd(f"{CORTX_HA_TOOL} cluster start")
+        """Start the cluster."""
+        raise NotImplementedError
 
     def cluster_unstandby(self):
-        raise NotImplementedError("Not supported by '{CORTX_HA_TOOL}' tool")
+        """Unstandby the cluster."""
+        raise NotImplementedError
 
     def check_status(
         self, status: Union[
@@ -176,21 +81,135 @@ class ClusterManagerCortxCmd(ClusterManagerBase):
         if isinstance(status, HAClusterStatus):
             status = [status]
         ret = self.cluster_status()
-        _status = HAClusterStatus(ret.output)
-        return _status in status
+        return ret in status
 
     def is_offline(self):
+        """Check whether cluster is offline."""
         return self.check_status(HAClusterStatus.OFFLINE)
 
     def is_online(self):
-        return self.check_status(HAClusterStatus.OFFLINE)
+        """Check whether cluster is online."""
+        return self.check_status(HAClusterStatus.ONLINE)
 
     def is_standby(self):
+        """Check whether cluster is in standby."""
         return self.check_status(HAClusterStatus.STANDBY)
 
 
+class ClusterManagerPCS(ClusterManagerBase):
+    _name = 'pcs tool'
+
+    def cluster_status(self) -> HAClusterStatus:
+        try:
+            res = self._run_cmd('pcs status')
+        except errors.SaltCmdResultError as exc:
+            if (
+                'cluster is not currently running on this node'
+                in str(exc.reason)
+            ):
+                return HAClusterStatus.OFFLINE
+            else:
+                logger.warning(f"Cluster status failed: {exc}")
+                raise
+        else:
+            _res = res.lower()
+            # TODO naive implementation
+            if 'online:' in _res:
+                return HAClusterStatus.ONLINE
+            elif 'standby' in _res:
+                return HAClusterStatus.STANDBY
+            elif 'offline:' in _res:
+                return HAClusterStatus.OFFLINE
+            else:
+                raise errors.ProvisionerError(
+                    f"Unknown cluster status: '{res}'"
+                )
+
+    def cluster_stop(self):
+        self._run_cmd(
+            "pcs cluster stop --all --force"
+        )
+
+    def cluster_standby(self):
+        self._run_cmd(
+            "pcs cluster standby --all"
+        )
+
+    def cluster_start(self):
+        self._run_cmd('pcs cluster start --all')
+
+    def cluster_unstandby(self):
+        self._run_cmd('pcs cluster unstandby --all')
+
+
 @attr.s(auto_attribs=True)
-class ClusterManagerCortxAPI(ClusterManagerCortxCmd):
+class HAResponse:
+    status: str
+    output: str
+    error: str
+
+
+class ClusterManagerCortxBase(ClusterManagerBase):
+
+    @staticmethod
+    def parse_ret(ret: str) -> HAResponse:
+        ret = load_json_str(ret)
+        ret = HAResponse(**ret)
+        if ret.status == HACmdResult.FAILED.value:
+            raise errors.ProvisionerError(
+                "HA command failed with error: '{ret.error}'"
+            )
+        return ret
+
+    def _run_api(self, api: str):
+        raise NotImplementedError
+
+    def cluster_status(self) -> HAClusterStatus:
+        status = self._run_api('status')
+        return HAClusterStatus(status.output)
+
+    def cluster_stop(self):
+        self._run_api('stop')
+
+    def cluster_standby(self):
+        self._run_api('standby')
+
+    def cluster_start(self):
+        self._run_api('start')
+
+    def cluster_unstandby(self):
+        self._run_api('unstandby')
+
+
+class ClusterManagerCortxCmd(ClusterManagerCortxBase):
+    _name = 'cortx tool'
+
+    def _run_api(self, api: str):
+        ret = self._run_cmd(f"{CORTX_HA_TOOL} cluster {api}", json=True)
+        return self.parse_ret(ret)
+
+    def cluster_standby(self):
+        raise NotImplementedError("Not supported by '{CORTX_HA_TOOL}' tool")
+
+    def cluster_unstandby(self):
+        raise NotImplementedError("Not supported by '{CORTX_HA_TOOL}' tool")
+
+
+def _call_ha_api_carefully(api):
+    def _ha_api_wrapper(*args, **kwargs):
+        try:
+            return api(*args, **kwargs)
+        except AttributeError:
+            raise NotImplementedError(
+                f"'{api}' api is not available in HA python API yet"
+            )
+    return _ha_api_wrapper
+
+
+@attr.s(auto_attribs=True)
+class ClusterManagerCortxAPI(ClusterManagerCortxBase):
+    _name = 'Cortx HA python API'
+
     ha_ccm: Optional[CortxClusterManager] = attr.ib(init=False, default=None)
 
     def __attrs_post_init__(self):
@@ -199,24 +218,24 @@ class ClusterManagerCortxAPI(ClusterManagerCortxCmd):
         else:
             raise RuntimeError('No cortx HA python API available')
 
-    def cluster_status(self):
-        ret = self.ha_ccm.cluster_controller.status()
-        return HAResponse(**ret)
+    def _run_api(self, api: str):
+        ret = getattr(self.ha_ccm.cluster_controller, api)()
+        return self.parse_ret(ret)
 
-    def cluster_stop(self):
-        return self.ha_ccm.cluster_controller.stop()
+    @_call_ha_api_carefully
+    def cluster_status(self) -> HAClusterStatus:
+        return super().cluster_status()
 
+    @_call_ha_api_carefully
     def cluster_standby(self):
-        return self.ha_ccm.cluster_controller.standby()
+        super().cluster_standby()
 
-    def cluster_start(self):
-        return self.ha_ccm.cluster_controller.start()
-
+    @_call_ha_api_carefully
     def cluster_unstandby(self):
-        return self.ha_ccm.cluster_controller.unstandby()
+        super().cluster_unstandby()
 
 
-class ClusterManagerBroker:
+class ClusterManagerBroker(ClusterManagerBase):
     _pcs = None
     _cortx_cmd = None
     _cortx_api = None
@@ -256,8 +275,46 @@ class ClusterManagerBroker:
         return None if self._cortx_cmd is MISSED else self._cortx_api
 
     @property
-    def cm(self):
-        return (self.cm_cortx_api or self.cm_cortx_cmd or self.cm_pcs)
+    def active_interfaces(self):
+        return [
+            i
+            for i in (self.cm_cortx_api, self.cm_cortx_cmd, self.cm_pcs)
+            if i
+        ]
+
+    def _delegate(self, api, *args, **kwargs):
+        ha_api = self.active_interfaces
+
+        if not ha_api:
+            raise errors.ProvisionerError("no active HA interfaces found")
+
+        for cm in ha_api:
+            try:
+                return getattr(cm, api)(*args, **kwargs)
+            except NotImplementedError:
+                pass
+
+        raise NotImplementedError(
+            f"'{api}' is not supported by any of {[i._name for i in ha_api]}"
+        )
+
+    def __init__(self):
+        def _api_wrapper(api):
+            def _api_f(*args, **kwargs):
+                return self._delegate(api, *args, **kwargs)
+            return _api_f
+
+        # TODO make that dynamic
+        for api in (
+            'cluster_status',
+            'cluster_stop',
+            'cluster_standby',
+            'cluster_start',
+            'cluster_unstandby',
+            'is_offline',
+            'is_online'
+        ):
+            setattr(self, api, _api_wrapper(api))
 
 
 cm_broker = ClusterManagerBroker()
@@ -274,9 +331,8 @@ def is_cluster_healthy():
         raise this exception if the number of tries was exceeded
     """
     logger.debug("Checking the CORTX cluster health")
-    # FIXME switch to cortx interfaces once they are delivered
     try:
-        ensure(cm_broker.cm_pcs.is_online, tries=1)
+        ensure(cm_broker.is_online, tries=1)
     except errors.NoMoreTriesError:
         return False
     else:
@@ -294,11 +350,10 @@ def cluster_stop():
 
     """
     logger.debug("Stopping the CORTX cluster")
-    cm_broker.cm.cluster_stop()
+    cm_broker.cluster_stop()
     # NOTE: In new HA API cluster stop command is async.
     # So ensure block is added
-    # FIXME switch to cortx interfaces once they are delivered
-    ensure(cm_broker.cm_pcs.is_offline, tries=20, wait=10)
+    ensure(cm_broker.is_offline, tries=20, wait=10)
 
 
 def cluster_standby():
@@ -312,8 +367,8 @@ def cluster_standby():
 
     """
     logger.debug("Stopping the CORTX cluster health")
-    cm_broker.cm.cluster_standby()
-    ensure(cm_broker.cm.is_standby, tries=20, wait=10)
+    cm_broker.cluster_standby()
+    ensure(cm_broker.is_standby, tries=20, wait=10)
 
 
 def cluster_start():
@@ -327,13 +382,17 @@ def cluster_start():
 
     """
     logger.debug("Stopping the CORTX cluster health")
-    cm_broker.cm.cluster_start()
+    cm_broker.cluster_start()
 
     def _check():
         # TODO might be not accurate for some business logic
-        return cm_broker.cm.is_standby() or cm_broker.cm.is_online()
+        return cm_broker.check_status(
+            (
+                HAClusterStatus.STANDBY,
+                HAClusterStatus.ONLINE
+            )
+        )
 
-    # FIXME switch to cortx interfaces once they are delivered
     ensure(_check, tries=20, wait=10)
 
 
@@ -348,5 +407,5 @@ def cluster_unstandby():
 
     """
     logger.debug("Stopping the CORTX cluster health")
-    cm_broker.cm.cluster_unstandby()
-    ensure(cm_broker.cm.is_online, tries=20, wait=10)
+    cm_broker.cluster_unstandby()
+    ensure(cm_broker.is_online, tries=20, wait=10)
