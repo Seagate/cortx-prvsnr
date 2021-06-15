@@ -49,10 +49,6 @@ Remove elasticsearch logs:
   file.absent:
     - name: /var/log/elasticsearch
 
-# Remove opnedistro repo:
-#   pkgrepo.absent:
-#     - name: opendistro
-
 Delete elasticsearch checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.elasticsearch

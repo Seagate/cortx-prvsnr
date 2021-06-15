@@ -19,16 +19,10 @@ Install JDK:
   pkg.installed:
     - name: java-1.8.0-openjdk-headless
 
-# Remove ES dependency pkg:
-#   pkg.purged:
-#     - pkgs:
-#       - elasticsearch-oss
-
 Install elasticsearch:
   pkg.installed:
     - name: opendistroforelasticsearch
     - version: {{ pillar['commons']['version']['opendistroforelasticsearch'] }}
-    - gpgcheck: 0
 
 Install rsyslog extras:
   pkg.installed:

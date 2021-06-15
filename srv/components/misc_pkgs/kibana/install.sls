@@ -15,14 +15,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-# Remove kibana dependency pkg:
-#   pkg.purged:
-#     - pkgs:
-#       - kibana-oss
 
 Install Kibana:
   pkg.installed:
     - name: opendistroforelasticsearch-kibana
     - version: {{ pillar['commons']['version']['opendistroforelasticsearch-kibana'] }}
-    - gpgcheck: 0
-

@@ -14,11 +14,3 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
-Add OpenDistro yum repo:
-  pkgrepo.managed:
-    - name: opendistro
-    - enabled: True
-    - humanname: OpenDistro
-    - baseurl: http://cortx-storage.colo.seagate.com/releases/cortx/third-party-deps/custom-deps/csm/
-    - gpgcheck: 0
