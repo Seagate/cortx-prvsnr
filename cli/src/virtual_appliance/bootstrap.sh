@@ -48,7 +48,7 @@ salt-call state.apply components.system.config.hosts
 
 #reconfigure firewall
 salt-call state.apply components.system.firewall.teardown
-salt-call state.apply components.system.firewall
+salt-call state.apply components.system.firewall.config
 # Firewall Salt states correct all deviations on the system
 # OVA environment needs corrections to firewall rules
 firewall-cmd --zone=management-zone --add-port=80/tcp --permanent
@@ -67,22 +67,21 @@ salt-call state.apply components.cortx_utils.sanity_check
 salt-call state.apply components.misc_pkgs.lustre.stop
 salt-call state.apply components.misc_pkgs.lustre.config
 
-echo "INFO: Restarting rabbitmq-server" | tee -a "${LOG_FILE}"
-systemctl restart rabbitmq-server
+# echo "INFO: Restarting rabbitmq-server" | tee -a "${LOG_FILE}"
+# systemctl restart rabbitmq-server
 echo "INFO: Restarting elasticsearch" | tee -a "${LOG_FILE}"
 systemctl restart elasticsearch
-
 
 #configure s3server
 echo "INFO: Configuring haproxy and s3" | tee -a "${LOG_FILE}"
 salt "*" state.apply components.s3server.config | tee -a "${LOG_FILE}"
 salt "*" state.apply components.s3server.start | tee -a "${LOG_FILE}"
 
-echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a "${LOG_FILE}"
-DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:public_interfaces:0 --output=newline_values_only)
-DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
-provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
-salt "*" state.apply components.s3clients.config | tee -a "${LOG_FILE}"
+# echo "INFO: Configuring s3 ips in /etc/hosts" | tee -a "${LOG_FILE}"
+# DATA_IF=$(salt-call pillar.get cluster:srvnode-1:network:data:public_interfaces:0 --output=newline_values_only)
+# DATA_IP=$(salt-call grains.get ip4_interfaces:${DATA_IF}:0 --output=newline_values_only)
+# provisioner pillar_set s3clients/s3server/ip \"${DATA_IP}\"
+# salt "*" state.apply components.s3clients.config | tee -a "${LOG_FILE}"
 
 #reconfigure hare CDF
 salt-call state.apply components.hare.config

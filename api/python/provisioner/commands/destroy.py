@@ -73,7 +73,6 @@ deploy_states = dict(
         "misc_pkgs.kibana.teardown",
         "misc_pkgs.elasticsearch.teardown",
         "misc_pkgs.nodejs.teardown",
-        "misc_pkgs.rabbitmq.teardown",
         "misc_pkgs.consul.teardown",
         "misc_pkgs.openldap.teardown",
         "ha.haproxy.teardown",
