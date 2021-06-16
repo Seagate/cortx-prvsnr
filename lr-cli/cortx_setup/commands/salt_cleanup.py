@@ -17,24 +17,14 @@
 
 from provisioner.salt import local_minion_id
 from provisioner.utils import run_subprocess_cmd
-from provisioner.commands.grains_get import GrainsGet
 from .command import Command
 
 
 class SaltCleanup(Command):
     _args = {}
 
-    def _get_grains_id(self):
-        res = GrainsGet().run('id')
-        if res.get(local_minion_id()):
-            result = res.get(local_minion_id())
-            if result.get('id'):
-                return result.get('id')
-        else:
-            self.logger.error("No grains id available")
-
     def run(self):
-        minion_id = self._get_grains_id()
+        minion_id = local_minion_id()
         if minion_id:
             self.logger.debug(f"removing minion {minion_id} from salt cluster")
             run_subprocess_cmd(f"salt-key -d {minion_id} -y")
