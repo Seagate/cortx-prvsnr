@@ -122,36 +122,18 @@ class ConfigValidator:
         except Exception as exc:
             raise ValueError(f"Config Failed to apply: {str(exc)}")
 
-    def _validate_config_devices(self,config,number_of_nodes) :
-        res= grains_get(
-            "hostname_status:Chassis",
-            targets=local_minion_id()
-            )[local_minion_id()]
-        if ( res['hostname_status:Chassis']=='server') :
-            devices = cmd_run(
-                "multipath -ll|grep mpath|sort -k2|cut -d' ' -f1|sed 's|mpath|/dev/disk/by-id/dm-name-mpath|g'|paste -s -d, -",
-                targets=ALL_MINIONS
-            )
-        else :
-            devices = cmd_run(
-                "lsblk -nd -o NAME -e 11|grep -v sda|sed 's|sd|/dev/sd|g'|paste -s -d, -",
-                targets=ALL_MINIONS
-            )
-        for section in config.sections() :
-
-            if ("srvnode" in section):
-                if (config.has_option(section,'storage.cvg.0.data_devices')):
-                    if 'default' in section:
-                        node_list = ['srvnode-' + str(num) for num in range(1, int(number_of_nodes) + 1 )]
-                    else:
-                        node_list = [section]
-                    for node in node_list:
-                        if (
-                            not all(value in devices[node].split(",") for value in config[section]['storage.cvg.0.data_devices'].split(",")) or
-                            not all(value in devices[node].split(",") for value in config[section]['storage.cvg.0.metadata_devices'].split(","))
-                            ) :
-                            msg = (
-                                    "Incorrect devices passed in config.ini "
-                                    f"devices should be provided from {devices.values()}"
-                                )
-                            raise ValueError(msg)
+    def _validate_config_devices(self,config) :
+        try :
+            for section in config.sections() :
+                if ("srvnode" in section):
+                    if (config.has_option(section,'storage.cvg.0.data_devices')):
+                        devices = config[section]['storage.cvg.0.data_devices'].split(",")
+                        devices.extend(config[section]['storage.cvg.0.metadata_devices'].split(","))
+                        for device in devices:
+                            if 'default' in section:
+                                target= ALL_MINIONS
+                            else:
+                                target= local_minion_id()
+                            cmd_run(f"ls {device}", targets=target)
+        except Exception as exc:
+            raise ValueError(f"Config Failed to apply: {str(exc)}")
