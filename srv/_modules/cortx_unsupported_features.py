@@ -1,0 +1,150 @@
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+# How to test:
+# $ salt-call saltutil.clear_cache
+# $ salt-call saltutil.sync_modules
+
+
+import asyncio
+import json
+import logging
+
+from pathlib import Path
+
+
+logging.basicConfig(format='%(levelname)s:%(message)s')
+logger = logging.getLogger(__name__)
+
+
+class CortxUnsupportedFeatures(object):
+    # Unsupported features library
+    _ufl = None
+    _us_features_schema = None
+
+
+    def __init__(self):
+        from cortx.utils.product_features import unsupported_features
+        self._ufl = unsupported_features
+
+        self._us_features_schema = Path("/opt/seagate/cortx/csm/")
+
+
+    def _update_unsupported_schema(
+        self,
+        unsupported_feature_list: list,
+        setup_types: list
+    ):
+        _us_features_dict = json.loads(
+            self._us_features_schema.read_text()
+        )
+
+        if setup_types and unsupported_feature_list:
+            # Here we iterate the setup types from input
+            # over the setup types from the schema file.
+            # Any entries from input not in schema are unsupported
+            # and not considered.
+            for setup_type in setup_types:
+                for entry in _us_features_dict["setup_types"]:
+                    if entry["name"] == setup_type:
+                        entry[
+                            "unsupported_features"
+                        ].extend(
+                            unsupported_feature_list
+                        )
+        else:
+            logger.warning(
+                f"Unable to update unsupported features schema."
+            )
+            logger.debug(
+                f"Either setup_types parameter is empty: {setup_types} "
+                " or "
+                f"unsupported features list is empty: {unsupported_feature_list}"
+            )
+
+        json.dumps(
+            _us_features_dict,
+            indent = 2
+        )
+
+
+    async def set_unsupported_feature_info(
+        self,
+        component: str,
+        unsupported_feature_list: list = []
+    ):
+        _uf_db_instance = self._ufl.UnsupportedFeaturesDB()
+        await _uf_db_instance.store_unsupported_features(
+            component_name=component,
+            features=unsupported_feature_list
+        )
+
+
+    async def get_unsupported_features(self, component: str):
+        _uf_db_instance = self._ufl.UnsupportedFeaturesDB()
+        return await _uf_db_instance.get_unsupported_features(
+            component_name = component
+        )
+
+
+def register(
+        component: str,
+        unsupported_feature_list: list = ["FW_Update"],
+        setup_types: list = ["virtual"]
+    ):
+    """ Define list of Cortx unsupported features.
+
+        Check with CSM team to get the list of usable feature IDs.
+        By default we disable FW upgrade on virtual environments.
+    """
+    # CortxUnsupportedFeatures class init
+    cuf = CortxUnsupportedFeatures()
+
+    cuf._update_unsupported_schema(
+        unsupported_feature_list,
+        setup_types
+    )
+
+    loop = asyncio.get_event_loop()
+    status = False
+    if component and unsupported_feature_list:
+        loop.run_until_complete(
+            cuf.set_unsupported_feature_info(
+                component,
+                unsupported_feature_list
+            )
+        )
+
+        # Verify the unsupported feature is set
+        feature_list = loop.run_until_complete(
+            cuf.get_unsupported_features(component)
+        )
+        if not set(unsupported_feature_list).issubset(set(feature_list)):
+            logger.error(
+                "Unsupported feature list: "
+                f"{feature_list} doesn't include the requested "
+                f"features to be supported: {unsupported_feature_list}"
+            )
+    else:
+        logger.warning(
+            f"Unable to set unsupported features."
+        )
+        logger.debug(
+            f"Either component parameter is empty: {component} "
+            " or "
+            f"unsupported features list is empty: {unsupported_feature_list}"
+        )
