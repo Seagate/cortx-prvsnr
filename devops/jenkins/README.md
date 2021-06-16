@@ -60,6 +60,13 @@ for Debian, Ubuntu and Centos:
 sudo bash cortx_jenkins/agent/setup_docker.sh
 ```
 
+Also a non-root user should be added into docker group.
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+
 ## Installation
 
 Run the following in activated python3 virtualenv

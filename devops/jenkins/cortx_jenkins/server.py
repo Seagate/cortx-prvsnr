@@ -228,7 +228,8 @@ def manage_server(cmd_args: ServerCmdArgs):
     start_server(server_config)
     logger.info("Jenkins Server infra started")
 
-    j_server_container = get_server_container()
-    smeeio_container = get_smeeio_container()
-    res = [j_server_container, smeeio_container]
+    res = [get_server_container()]
+    if server_config['smeeio_channel']:
+        res.append(get_smeeio_container())
+
     return [(cont.name, cont.short_id) for cont in res]
