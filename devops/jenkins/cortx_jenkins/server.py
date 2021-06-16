@@ -27,12 +27,7 @@ import docker
 
 from . import defs, utils
 
-docker_client = docker.from_env()
-
 logger = logging.getLogger(__name__)
-
-
-docker_client = docker.from_env()
 
 
 ServerCmdArgs = attr.make_class(
@@ -124,7 +119,7 @@ def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
 
 def get_container(name):
     try:
-        return docker_client.containers.get(name)
+        return docker.from_env().containers.get(name)
     except docker.errors.NotFound:
         logger.debug(
             f"Docker container '{name}' is not found"

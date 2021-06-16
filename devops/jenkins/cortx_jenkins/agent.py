@@ -30,8 +30,6 @@ import docker
 
 from . import defs, utils
 
-docker_client = docker.from_env()
-
 logger = logging.getLogger(__name__)
 
 
@@ -48,8 +46,6 @@ AgentCmdArgs = attr.make_class(
     )
 )
 
-
-docker_client = docker.from_env()
 
 AgentConfig = attr.make_class(
     'AgentConfig', (
@@ -141,7 +137,7 @@ def resolve_free_offline_agent(server):
 
 def get_agent_container():
     try:
-        return docker_client.containers.get(
+        return docker.from_env().containers.get(
             defs.AGENT_CONTAINER_NAME
         )
     except docker.errors.NotFound:
