@@ -65,6 +65,7 @@ class StorageEnclosureConfig(Command):
             'type': str,
             'default': None,
             'optional': True,
+            'choices': ['RBOD', 'JBOD', 'EBOD', 'virtual'],
             'help': 'Enclosure type e.g {RBOD | JBOD | EBOD | virtual}'
         },
         'user': {
@@ -82,12 +83,14 @@ class StorageEnclosureConfig(Command):
         'controller_type': {
             'type': str,
             'optional': True,
+            'choices': ['gallium', 'indium', 'virtual'],
             'help': 'Type of controller e.g {gallium | indium | virtual}'
         },
         'mode': {
             'type': str,
             'default': None,
             'optional': True,
+            'choices': ['primary', 'secondary'],
             'help': 'Controller mode e.g. {primary | secondary}'
         },
         'ip': {
@@ -201,9 +204,11 @@ class StorageEnclosureConfig(Command):
         )
 
 
-        setup_type = grains_get('hostname_status:Chassis')[node_id]['hostname_status:Chassis']
+        setup_type = Conf.get (
+            f'server_node>{self.machine_id}>type'
+        )
 
-        if setup_type == "vm":
+        if setup_type == "VM":
             if name or storage_type or controller_type:
                 if not self.enclosure_id:
                     self.enclosure_id = "enc_" + self.machine_id

@@ -25,6 +25,9 @@ pillar_sync:
 
 salt_cleanup:
   SaltCleanup
+server:
+  config:
+    ServerConfig
 
 network:
   config:
