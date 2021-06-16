@@ -21,7 +21,6 @@ from .command import Command
 
 
 class SaltCleanup(Command):
-    _args = {}
 
     def run(self):
         minion_id = local_minion_id()
