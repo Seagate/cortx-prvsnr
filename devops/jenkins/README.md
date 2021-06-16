@@ -45,7 +45,7 @@ It uses the following tools:
 *   [JCasC](https://www.jenkins.io/projects/jcasc/) plugin: to automate Jenkins
     server configuration
 
-*   [JJB](https://jenkins-job-builder.readthedocs.io/en/lates) tool/library:
+*   [JJB](https://jenkins-job-builder.readthedocs.io/en/latest) tool/library:
     to automate Jenkins jobs configurations
 
 ## Pre-requisites
