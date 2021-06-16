@@ -18,6 +18,7 @@
 from cortx_setup.commands.command import Command
 from provisioner.api import grains_get
 from cortx_setup.validate import host
+from cortx_setup.commands.common_utils import get_machine_id
 from provisioner.commands import PillarSet
 from provisioner.salt import (
     local_minion_id,
@@ -82,7 +83,7 @@ class NodePrepareTime(Command):
         try:
             self.logger.debug(f"Setting time on node with server={ntp_server} & timezone={ntp_timezone}")
             self.set_server_time()
-            machine_id = grains_get("machine_id")[node_id]["machine_id"]
+            machine_id = get_machine_id(node_id)
             enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
             if enclosure_id:
                 if not machine_id in enclosure_id:   # check if the system is VM or HW

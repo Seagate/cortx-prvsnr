@@ -18,6 +18,7 @@
 from pathlib import Path
 from ..command import Command
 from cortx.utils.conf_store import Conf
+from cortx_setup.commands.common_utils import get_machine_id
 from provisioner.api import grains_get, pillar_get
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
@@ -105,7 +106,7 @@ class StorageEnclosureConfig(Command):
 
     def __init__(self):
         super().__init__()
-        self.machine_id = grains_get("machine_id")[node_id]["machine_id"]
+        self.machine_id = get_machine_id(node_id)
         self.enclosure_id = None
         self.mode = None
 
@@ -174,6 +175,14 @@ class StorageEnclosureConfig(Command):
             value
         )
 
+    def store_in_file(self):
+        """Writes enclosure id to file /etc/enclosure-id"""
+
+        self.logger.debug(f"Writing storage enclosure_id to the file {enc_file_path}")
+        file = open(enc_file_path, "w")
+        file.write(self.enclosure_id + "\n")
+        file.close()
+
     def run(self, **kwargs):
 
         user = kwargs.get('user')
@@ -191,91 +200,110 @@ class StorageEnclosureConfig(Command):
             f'json://{prvsnr_cluster_path}'
         )
 
-        if user != None and password != None and ip != None and port != None:
-            # fetch enclosure serial/id
-            self.enclosure_id = EnclosureInfo(ip, user, password, port).get_enclosure_serial()
-            self.mode = "primary"
 
-            self.refresh_conf_pillar_map()
+        setup_type = grains_get('hostname_status:Chassis')[node_id]['hostname_status:Chassis']
 
-            self.logger.debug(f"Writing storage enclosure_id to the file {enc_file_path}")
-            file = open(enc_file_path, "w")
-            file.write(self.enclosure_id + "\n")
-            file.close()
+        if setup_type == "vm":
+            if name or storage_type or controller_type:
+                if not self.enclosure_id:
+                    self.enclosure_id = "enc_" + self.machine_id
+                    self.store_in_file()
+                    self.store('enclosure_id', self.enclosure_id)
 
-            # store enclosure_id
-            self.store('enclosure_id', self.enclosure_id)
-
-            # store user and password
-            self.store('user', user)
-            self.store('password', password)
-
-            # store ip and port as primary
-            self.store('ip', ip)
-            self.store('port', port)
-        else:
-            self.refresh_conf_pillar_map()
-
-            if name is not None:
-                if self.enclosure_id:
+                self.refresh_conf_pillar_map()
+                if name:
                     self.store('name', name)
-                else:
-                    self.logger.error("Please set 'user, password, primary ip and port' first")
-                    raise RuntimeError("Cannot set name before setting user, password, ip and port")
 
-            if storage_type is not None:
-                if self.enclosure_id:
+                if storage_type:
                     self.store('storage_type', storage_type)
-                else:
-                    self.logger.error("Please set 'user, password, primary ip and port' first")
-                    raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
 
-            if controller_type is not None:
-                if self.enclosure_id:
+                if controller_type:
                     self.store('controller_type', controller_type)
-                else:
-                    self.logger.error("Please set 'user, password, primary ip and port' first")
-                    raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
+            else:
+                self.logger.error("Please provide values for name, type and controller_type")
+                raise RuntimeError("Incomplete arguments provided")
+        else:
+            if user != None and password != None and ip != None and port != None:
+                # fetch enclosure serial/id
+                self.enclosure_id = EnclosureInfo(ip, user, password, port).get_enclosure_serial()
+                self.mode = "primary"
 
-            if self.mode is not None:
-                if ip is None and port is None:
-                    self.logger.exception(
-                        f"Sub options for mode {self.mode} are missing"
-                    )
-                    raise RuntimeError('Please provide ip and/or port')
+                self.refresh_conf_pillar_map()
 
-                if self.enclosure_id:
-                    if ip:
-                        self.store('ip', ip)
+                # store enclosure_id
+                self.store_in_file()
+                self.store('enclosure_id', self.enclosure_id)
 
-                    if port:
-                        self.store('port', port)
-                else:
-                    self.logger.error(
-                        "Enclosure ID is not set: Please provide user and password as well to set Enclosure ID"
-                    )
-                    raise RuntimeError("Incomplete arguments provided")
+                # store user and password
+                self.store('user', user)
+                self.store('password', password)
 
-            if user is not None and password is not None:
-                if self.enclosure_id:
-                    host = pillar_get(f"storage/{enc_num}/controller/primary/ip")[node_id][f'storage/{enc_num}/controller/primary/ip']
-                    port = pillar_get(f"storage/{enc_num}/controller/primary/port")[node_id][f'storage/{enc_num}/controller/primary/port']
+                # store ip and port as primary
+                self.store('ip', ip)
+                self.store('port', port)
+            else:
+                self.refresh_conf_pillar_map()
 
-                    valid_connection_check = EnclosureInfo(host, user, password, port).connection_status()
+                if name is not None:
+                    if self.enclosure_id:
+                        self.store('name', name)
+                    else:
+                        self.logger.error("Please set 'user, password, primary ip and port' first")
+                        raise RuntimeError("Cannot set name before setting user, password, ip and port")
 
-                    if valid_connection_check:
-                        self.store('user', user)
-                        self.store('password', password)
+                if storage_type is not None:
+                    if self.enclosure_id:
+                        self.store('storage_type', storage_type)
+                    else:
+                        self.logger.error("Please set 'user, password, primary ip and port' first")
+                        raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
+
+                if controller_type is not None:
+                    if self.enclosure_id:
+                        self.store('controller_type', controller_type)
+                    else:
+                        self.logger.error("Please set 'user, password, primary ip and port' first")
+                        raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
+
+                if self.mode is not None:
+                    if ip is None and port is None:
+                        self.logger.exception(
+                            f"Sub options for mode {self.mode} are missing"
+                        )
+                        raise RuntimeError('Please provide ip and/or port')
+
+                    if self.enclosure_id:
+                        if ip:
+                            self.store('ip', ip)
+
+                        if port:
+                            self.store('port', port)
                     else:
                         self.logger.error(
-                            f"Cannot establish connection with controller using user={user} and password={password} as credentials"
+                            "Enclosure ID is not set: Please provide user and password as well to set Enclosure ID"
                         )
-                        raise ValueError("Invalid credentials provided")
-                else:
-                    self.logger.error(
-                        "Enclosure ID is not set: Please provide ip and port as well to set Enclosure ID"
-                    )
-                    raise RuntimeError("Incomplete arguments provided")
+                        raise RuntimeError("Incomplete arguments provided")
+
+                if user is not None and password is not None:
+                    if self.enclosure_id:
+                        host = pillar_get(f"storage/{enc_num}/controller/primary/ip")[node_id][f'storage/{enc_num}/controller/primary/ip']
+                        port = pillar_get(f"storage/{enc_num}/controller/primary/port")[node_id][f'storage/{enc_num}/controller/primary/port']
+
+                        valid_connection_check = EnclosureInfo(host, user, password, port).connection_status()
+
+                        if valid_connection_check:
+                            self.store('user', user)
+                            self.store('password', password)
+                        else:
+                            self.logger.error(
+                                f"Cannot establish connection with controller using user={user} and password={password} as credentials"
+                            )
+                            raise ValueError("Invalid credentials provided")
+                    else:
+                        self.logger.error(
+                            "Enclosure ID is not set: Please provide ip and port as well to set Enclosure ID"
+                        )
+                        raise RuntimeError("Incomplete arguments provided")
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
