@@ -39,9 +39,14 @@ infrastracture along with automation for provisioner Jenkins jobs configuration.
 
 It uses the following tools:
 
-*   [docker](https://docs.docker.com/): both server and agents are run as docker containers
-*   [JCasC](https://www.jenkins.io/projects/jcasc/) plugin: to automate Jenkins server configuration
-*   [JJB](https://jenkins-job-builder.readthedocs.io/en/lates) tool/library: to automate Jenkins jobs configurations
+*   [docker](https://docs.docker.com/): both server and agents are run as
+    docker containers
+
+*   [JCasC](https://www.jenkins.io/projects/jcasc/) plugin: to automate Jenkins
+    server configuration
+
+*   [JJB](https://jenkins-job-builder.readthedocs.io/en/lates) tool/library:
+    to automate Jenkins jobs configurations
 
 ## Pre-requisites
 
@@ -96,11 +101,15 @@ Base command: `cortx-jenkins server`.
 Possible actions:
 
 *   `create`: builds and starts server docker container
-*   `start`/`stop`/`restart`/`remove`: to start/stop/restart/destroy server container
+
+*   `start`/`stop`/`restart`/`remove`: to start/stop/restart/destroy server
+    container
 
 Options:
 
-*   `--ssl-domain DOMAIN` will be used for self-signed certificate generation to support HTTPS
+*   `--ssl-domain DOMAIN` will be used for self-signed certificate generation
+    to support HTTPS
+
 *   `--config PATH` path to a configuration file
 
 Configuration:
@@ -114,6 +123,7 @@ Configuration:
     *   `smeeio_channel`: url to a [smee.io](https://smee.io) channel that can be used
         for integration with version control system (e.g. GitHub) to receieve payloads
         (push) even on a local Jenkins setup (**not for production**).
+
 *   `[server.properties]`: a set of parameters for Jenkins global configuration
 
 #### Start the server
@@ -132,7 +142,8 @@ In case of local setup Jenkins will be available at `https://localhost:8083/`.
 During the first run Jenkins will ask you to go through a few steps:
 
 1.  to unlock the server using the admin initial password. You would be provided
-    with a path on a server as an option and you can resolve the password as follows:
+    with a path on a server as an option and you can resolve the password
+    as follows:
 
     ```bash
     docker exec -it cortx-prvsnr-jenkins cat <path>
@@ -166,8 +177,12 @@ as a best choice.
 If you need to adjust the configuration please consider to do:
 
 *   to change existent parameters values: update your configuration file
-*   to change the configuration scheme: update [server/jenkins.yaml.tmpl](cortx_jenkins/server/jenkins.yaml.tmpl)
-*   to adjust a list of plugins: update [server/plugins.txt](cortx_jenkins/server/plugins.txt)
+
+*   to change the configuration scheme: update
+    [server/jenkins.yaml.tmpl](cortx_jenkins/server/jenkins.yaml.tmpl)
+
+*   to adjust a list of plugins: update
+    [server/plugins.txt](cortx_jenkins/server/plugins.txt)
 
 Once the change is ready you can rebuild the server:
 
@@ -176,7 +191,7 @@ cortx-jenkins server remove
 cortx-jenkins server create
 ```
 
-**Note**. The command above won't celanup but update an existent configuration.
+**Note**. The command above won't cleanup but update the existent configuration.
 
 In latter two cases please also consider to submit a patch to `cortx-prvsnr`
 repository.
@@ -219,7 +234,9 @@ Possible actions are the same as for the server.
 Options:
 
 *   `--name NAME` optional name of a Jenkins agent to use for the connection.
+
 *   `--config PATH` path to a configuration file
+
 *   `--work-dir PATH` path to a Jenkins agent root directory, whould be writeable
     for the current user. Default is `/var/lib/jenkins`.
 
@@ -232,13 +249,18 @@ for the current user and match the server agent configuration.
 Configuration:
 
 *   `[global]`
+
     *   `ssl_verify`: can be set to `false` to turn off ssl verification
         for requests to a Jenkins server
         (e.g. in case of self-signed certificate is used)
+
 *   `[agent]`: (optional, if not specified `[global]` settings are used)
+
     *   `url` Jenkins server url
+
     *   `username` Jenkins user with permissions
-        to Configure, Connect and Disconnect agents.
+        to Configure, Connect and Disconnect agents
+
     *   `token` Jenkins user acess token.
 
 #### Build and start
@@ -266,8 +288,8 @@ Jenkins agent will automatically connect the server and become online.
 An agent is started as a docker container with name `cortx-prvsnr-jenkins-agent`
 and mounted local directory as a working directory for a jenkins agent.
 
-To stop/start/restart an agent you can use either `cortx-jenkins agent` subcommands
-or similar `docker` commands.
+To stop/start/restart an agent you can use either `cortx-jenkins agent`
+subcommands or similar `docker` commands.
 
 #### Agent Command line reference
 
@@ -307,8 +329,9 @@ You will likely need to verify the jenkins credentials you set.
 
 ### Provisioner Jobs on Jenkins
 
-Jenkins jobs are managed using [JJB](https://jenkins-job-builder.readthedocs.io/en/latest)
-which provides python API as well:
+Jenkins jobs are managed using
+[JJB](https://jenkins-job-builder.readthedocs.io/en/latest)
+which provides both CLI and python API.
 
 Base command: `cortx-jenkins jobs`.
 
@@ -320,6 +343,7 @@ Possible actions:
 Options:
 
 *   `--config PATH` path to a configuration file
+
 *   `--jjb-args JJB_ARGS` a string that would be passed to JJB
     as running arguments. Please check
     [JJB docs](https://jenkins-job-builder.readthedocs.io/en/latest/execution.html#command-reference)
@@ -329,23 +353,25 @@ Configuration:
 
 *   JJB run configuration:
     *   `[global]`: specifies `url`, `username` and `token` as explained above.
+
     *   `[jobs]`: that block would passed directly to JJB tool. Please refer to
         [the docs](https://jenkins-job-builder.readthedocs.io/en/latest/execution.html#configuration-file)
         for more details.
+
 *   jobs configuration:
     *   you can either change [defaults](./cortx_jenkins/jobs/defaults.yaml)
         or update [jobs definitions](./cortx_jenkins/jobs/cortx-prvsnr/cortx-prvsnr-jobs.yaml).
+
     *   please check JJB docs for variables for more details:
         *   [Defaults](https://jenkins-job-builder.readthedocs.io/en/latest/definition.html#defaults)
         *   [Variable References](https://jenkins-job-builder.readthedocs.io/en/latest/definition.html#variable-references)
         *   [Variable Inheritance](https://jenkins-job-builder.readthedocs.io/en/latest/definition.html#variable-inheritance)
+
     *   The following (not all) parameters can be considered:
         *   `github_credentials_id` github access token credential id
         *   `github_org` repository owner (e.g. if you want to use your fork for testing)
 
-
 #### Jobs update
-
 
 ```bash
 cortx-jenkins jobs update
