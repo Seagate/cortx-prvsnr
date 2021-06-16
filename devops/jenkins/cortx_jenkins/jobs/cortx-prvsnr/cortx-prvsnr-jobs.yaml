@@ -67,11 +67,12 @@
 
 
 - defaults:
-    name: provisioner jobs
+    name: provisioner_jobs
     folder: Provisioner
 
 - job-template:
     name: '{name}-ci-{type}'
+    defaults: provisioner_jobs
     project-type: multibranch
     script-path: '{jenkinsfile-path}'
     periodic-folder-trigger: '{ghsource_periodic_folder_trigger}'
