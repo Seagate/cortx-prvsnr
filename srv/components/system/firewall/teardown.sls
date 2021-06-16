@@ -26,26 +26,30 @@ Reset default zone:
     - services:
       - ssh
     - ports:
+      # Ports added to ensure Salt services are not affected
       - 4505/tcp
       - 4506/tcp
 
+{% if 'management-zone' in salt['firewalld.get_zones']() %}
 Remove public management interfaces:
   firewalld.present:
     - name: management-zone
     - prune_interfaces: True
 
+Remove management-zone:
+  module.run:
+    - firewalld.delete_zone:
+      - zone: management-zone
+    - require:
+      - Reset default zone
+{% endif %}
+
+{% if 'public-data-zone' in salt['firewalld.get_zones']() %}
 Remove public data interfaces:
   firewalld.present:
     - name: public-data-zone
     - prune_interfaces: True
 
-Remove private data interfaces:
-  firewalld.present:
-    - name: trusted
-    - prune_interfaces: True
-    - prune_sources: True
-
-{% if 'public-data-zone' in salt['firewalld.get_zones']() %}
 Remove public-data-zone:
   module.run:
     - firewalld.delete_zone:
@@ -54,14 +58,25 @@ Remove public-data-zone:
       - Reset default zone
 {% endif %}
 
-{% if 'management-zone' in salt['firewalld.get_zones']() %}
-Remove management-zone:
+{% if 'private-data-zone' in salt['firewalld.get_zones']() %}
+Remove private data interfaces:
+  firewalld.present:
+    - name: private-data-zone
+    - prune_interfaces: True
+
+Remove private-data-zone:
   module.run:
     - firewalld.delete_zone:
-      - zone: management-zone
+      - zone: private-data-zone
     - require:
       - Reset default zone
 {% endif %}
+
+Remove lo interfaces:
+  firewalld.present:
+    - name: trusted
+    - prune_interfaces: True
+    - prune_sources: True
 
 Refresh firewalld:
   module.run:

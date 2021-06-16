@@ -108,6 +108,55 @@ Management zone:
       - {{ service }}
       {% endfor %}
 
+{% if "data_private" in pillar['firewall'] and
+    (
+      pillar['firewall']['mgmt_public']['ports'] or
+      pillar['firewall']['mgmt_public']['services']
+    )
+%}
+Add private data zone:
+  module.run:
+    - firewalld.new_zone:
+      - private-data-zone
+    - unless: firewall-cmd --list-all-zones | grep private-data-zone
+
+Private data zone:
+  firewalld.present:
+    - name: public-data-zone
+    - default: False
+    - prune_ports: True
+    - prune_services: True
+    - prune_interfaces: True
+    - interfaces:
+      {% for interface in data_if %}
+      - {{ interface }}
+      {% endfor %}
+    - services:
+      {% for service in pillar['firewall']['data_private']['services'] %}
+      - {{ service }}
+      {% endfor %}
+      {% for service in pillar['firewall']['data_private']['ports'].keys() %}
+      - {{ service }}
+      {% endfor %}
+    - require:
+      - Add private data zone
+      {% for service in pillar['firewall']['data_private']['ports'].keys() %}
+      - {{ service }}
+      {% endfor %}
+
+Trusted zone for lo:
+  firewalld.present:
+    - name: trusted
+    - default: False
+    - masquerade: False
+    - prune_ports: False
+    - prune_services: False
+    - prune_interfaces: True
+    - interfaces:
+      - lo
+    - sources:
+      - 127.0.0.0/24
+{% else %}
 Private data zone:
   firewalld.present:
     - name: trusted
@@ -126,6 +175,7 @@ Private data zone:
       {% if pillar['cluster'][grains['id']]['network']['data']['private_ip'] %}
       - {{ pillar['cluster'][grains['id']]['network']['data']['private_ip'].rsplit('.',1)[0] }}.0/24
       {% endif %}
+{% endif %}
 
 Restart firewalld:
   module.run:
