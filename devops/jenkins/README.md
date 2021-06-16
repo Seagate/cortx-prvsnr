@@ -111,7 +111,9 @@ Configuration:
     *   `token` Jenkins user acess token
 
 *   `[server]`:
-    *   `smeeio_channel`: url to a [smee.io](https://smee.io) channel that can be used for integration with version control system (e.g. GitHub) to receieve payloads (push) even on a local Jenkins setup (**not for production**).
+    *   `smeeio_channel`: url to a [smee.io](https://smee.io) channel that can be used
+        for integration with version control system (e.g. GitHub) to receieve payloads
+        (push) even on a local Jenkins setup (**not for production**).
 *   `[server.properties]`: a set of parameters for Jenkins global configuration
 
 #### Start the server
@@ -218,7 +220,8 @@ Options:
 
 *   `--name NAME` optional name of a Jenkins agent to use for the connection.
 *   `--config PATH` path to a configuration file
-*   `--work-dir PATH` path to a Jenkins agent root directory, whould be writeable for the current user. Default is `/var/lib/jenkins`.
+*   `--work-dir PATH` path to a Jenkins agent root directory, whould be writeable
+    for the current user. Default is `/var/lib/jenkins`.
 
 **Note** The options above make sense only for `create` action
 where agent configuration takes places.
@@ -229,10 +232,13 @@ for the current user and match the server agent configuration.
 Configuration:
 
 *   `[global]`
-    *   `ssl_verify`: can be set to `false` to turn off ssl verification for requests to a Jenkins server (e.g. in case of self-signed certificate is used)
+    *   `ssl_verify`: can be set to `false` to turn off ssl verification
+        for requests to a Jenkins server
+        (e.g. in case of self-signed certificate is used)
 *   `[agent]`: (optional, if not specified `[global]` settings are used)
     *   `url` Jenkins server url
-    *   `username` Jenkins user with permissions to Configure, Connect and Disconnect agents.
+    *   `username` Jenkins user with permissions
+        to Configure, Connect and Disconnect agents.
     *   `token` Jenkins user acess token.
 
 #### Build and start
