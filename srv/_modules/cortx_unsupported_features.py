@@ -44,10 +44,26 @@ class CortxUnsupportedFeatures(object):
         self._us_features_schema = Path("/opt/seagate/cortx/csm/")
 
 
+    def _update_unsupported_schema_dict(
+        self,
+        unsupported_schema_dict,
+        setup_type,
+        unsupported_feature_list
+    ):
+        for entry in unsupported_schema_dict["setup_types"]:
+            if entry["name"] == setup_type:
+                entry[
+                    "unsupported_features"
+                ].extend(
+                    unsupported_feature_list
+                )
+        return unsupported_schema_dict
+
+
     def _update_unsupported_schema(
         self,
-        unsupported_feature_list: list,
-        setup_types: list
+        unsupported_feature_list,
+        setup_types
     ):
         _us_features_dict = json.loads(
             self._us_features_schema.read_text()
@@ -59,13 +75,13 @@ class CortxUnsupportedFeatures(object):
             # Any entries from input not in schema are unsupported
             # and not considered.
             for setup_type in setup_types:
-                for entry in _us_features_dict["setup_types"]:
-                    if entry["name"] == setup_type:
-                        entry[
-                            "unsupported_features"
-                        ].extend(
-                            unsupported_feature_list
-                        )
+                _us_features_dict.update(
+                    self._update_unsupported_schema_dict(
+                        unsupported_schema_dict = _us_features_dict,
+                        setup_type = setup_type,
+                        unsupported_feature_list = unsupported_feature_list
+                    )
+                )
         else:
             logger.warning(
                 f"Unable to update unsupported features schema."
@@ -78,27 +94,32 @@ class CortxUnsupportedFeatures(object):
 
         json.dumps(
             _us_features_dict,
-            indent = 2
+            indent = 4
         )
 
 
     async def set_unsupported_feature_info(
         self,
-        component: str,
-        unsupported_feature_list: list = []
+        component,
+        unsupported_feature_list
     ):
-        _uf_db_instance = self._ufl.UnsupportedFeaturesDB()
-        await _uf_db_instance.store_unsupported_features(
-            component_name=component,
-            features=unsupported_feature_list
-        )
+        if component and unsupported_feature_list:
+            _uf_db_instance = self._ufl.UnsupportedFeaturesDB()
+            await _uf_db_instance.store_unsupported_features(
+                component_name=component,
+                features=unsupported_feature_list
+            )
 
 
-    async def get_unsupported_features(self, component: str):
-        _uf_db_instance = self._ufl.UnsupportedFeaturesDB()
-        return await _uf_db_instance.get_unsupported_features(
-            component_name = component
-        )
+    async def get_unsupported_features(self, component):
+        ret_val = None
+        if component:
+            _uf_db_instance = self._ufl.UnsupportedFeaturesDB()
+            ret_val = await _uf_db_instance.get_unsupported_features(
+                component_name = component
+            )
+
+        return ret_val
 
 
 def register(
@@ -120,7 +141,6 @@ def register(
     )
 
     loop = asyncio.get_event_loop()
-    status = False
     if component and unsupported_feature_list:
         loop.run_until_complete(
             cuf.set_unsupported_feature_info(
