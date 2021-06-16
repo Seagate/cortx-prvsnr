@@ -68,7 +68,6 @@ token = ''
   [jobs.jenkins]
   # Note. if credentials or url are not specified then
   #       accordant ones from [global] section are used
-  # FIXME: looks like the above is not true for url
   # user = 'jenkins'
   # password = '1234567890abcdef1234567890abcdef'
   # url = 'https://jenkins.example.com:8083'
