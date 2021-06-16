@@ -19,48 +19,34 @@
 from ..command import Command
 from provisioner.commands import deploy
 from provisioner.salt import local_minion_id
-
-cortx_components = dict(
-    utils=[
-        "cortx_utils"
-    ],
-    iopath=[
-        "motr",
-        "s3server",
-        "hare"
-    ],
-    controlpath=[
-        "sspl",
-        "uds",
-        "csm"
-    ],
-    ha=[
-        "ha.cortx-ha"
-    ]
+from cortx_setup.commands.common_utils import (
+    get_cortx_states
 )
-
 
 """Cortx Setup API for Node Initialize"""
 
 
-class NodeInitalize(Command):
+class NodeInitialize(Command):
     _args = {}
 
     """Initialize cortx components by calling post_install command"""
 
     def run(self):
         node_id = local_minion_id()
+        cortx_components = get_cortx_states()
 
         for component in cortx_components:
             states = cortx_components[component]
             for state in states:
                 try:
-                    self.logger.info(
-                        f"Invoking post_install command for {state} component"
+                    self.logger.debug(
+                        f"Executing post_install command for {state} component"
                     )
                     deploy.Deploy()._apply_state(
-                        state, targets=node_id, stages=['config.post_install']
+                        f"components.{state}",
+                        targets=node_id,
+                        stages=['config.post_install']
                     )
                 except Exception as ex:
                     raise ex
-        self.logger.info("Done")
+        self.logger.debug("Done")
