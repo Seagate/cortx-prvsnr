@@ -301,7 +301,7 @@ You will likely need to verify the jenkins credentials you set.
 
 ### Provisioner Jobs on Jenkins
 
-Jenkins jobs are managed using [JJB](https://jenkins-job-builder.readthedocs.io/en/lates)
+Jenkins jobs are managed using [JJB](https://jenkins-job-builder.readthedocs.io/en/latest)
 which provides python API as well:
 
 Base command: `cortx-jenkins jobs`.
@@ -328,12 +328,18 @@ Configuration:
         for more details.
 *   jobs configuration:
     *   you can either change [defaults](./cortx_jenkins/jobs/defaults.yaml)
-        or update [jobs definitions](./cortx_jenkins/jobs/cortx-prvsnr/cortx-prvsnr-jobs.yaml)
+        or update [jobs definitions](./cortx_jenkins/jobs/cortx-prvsnr/cortx-prvsnr-jobs.yaml).
+    *   please check JJB docs for variables for more details:
+        *   [Defaults](https://jenkins-job-builder.readthedocs.io/en/latest/definition.html#defaults)
+        *   [Variable References](https://jenkins-job-builder.readthedocs.io/en/latest/definition.html#variable-references)
+        *   [Variable Inheritance](https://jenkins-job-builder.readthedocs.io/en/latest/definition.html#variable-inheritance)
+    *   The following (not all) parameters can be considered:
+        *   `github_credentials_id` github access token credential id
+        *   `github_org` repository owner (e.g. if you want to use your fork for testing)
+
 
 #### Jobs update
 
-**Note.** you will likely want to set a proper github access token credential id
-`github_credentials_id` in [defaults](./cortx_jenkins/jobs/defaults.yaml).
 
 ```bash
 cortx-jenkins jobs update
