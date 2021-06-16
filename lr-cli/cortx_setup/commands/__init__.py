@@ -17,6 +17,7 @@
 
 from .hostname import Hostname
 from .pillar_sync import PillarSync
+from .salt_cleanup import SaltCleanup
 from .network.config import NetworkConfig
 from .node.initialize import NodeInitalize
 from .node.prepare.server import NodePrepareServer
@@ -72,5 +73,7 @@ __all__ = [
     'ResourceDiscover',
     'SecurityConfig',
     'SetSignature',
-    'StorageEnclosureConfig'
-]
+    'StorageEnclosureConfig',
+    'SaltCleanup',
+    'PillarSync'
+ ]
