@@ -168,6 +168,17 @@ jenkins:
     local:
       allowsSignup: true
       enableCaptcha: false
+      users:
+      - id: "admin"
+        name: "admin"
+        password: "${ADMIN_PASSWORD}"
+      #   properties:
+      #   - "apiToken"
+      #   - "mailer"
+      #   - "myView"
+      #   - preferredProvider:
+      #       providerId: "default"
+      #   - "timezone"
 
 unclassified:
   location:

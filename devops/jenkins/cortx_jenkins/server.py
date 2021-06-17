@@ -56,6 +56,7 @@ def start_docker_server():
         '-p', '8083:8083',
         '-p', '50000:50000',
         '-v', f"{defs.SERVER_VOLUME_NAME}:{defs.SERVER_JENKINS_HOME}",
+        '--env', 'JAVA_OPTS=-Djenkins.install.runSetupWizard=false',
         '--name', defs.SERVER_CONTAINER_NAME,
         defs.SERVER_IMAGE_NAME_FULL
     ])

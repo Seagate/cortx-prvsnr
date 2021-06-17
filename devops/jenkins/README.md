@@ -132,6 +132,7 @@ Configuration:
         (push) even on a local Jenkins setup (**not for production**).
 
 *   `[server.properties]`: a set of parameters for Jenkins global configuration
+    * **Note.** don't forget to set `ADMIN_PASSWORD` here !
 
 #### Start the server
 
