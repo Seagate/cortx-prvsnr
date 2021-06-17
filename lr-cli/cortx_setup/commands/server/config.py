@@ -53,15 +53,14 @@ class ServerConfig(Command):
         node_id = local_minion_id()
         machine_id = get_machine_id(node_id)
 
-        conf_pillar_map = {
-            'name': (
-                f'cluster/{node_id}/name',
-                f'server_node>{machine_id}>name'
-            ),
-            'type': (
-                f'cluster/{node_id}/type',
-                f'server_node>{machine_id}>type'
-            )
+        pillar_key_map = {
+            'name': f'cluster/{node_id}/name',
+            'type': f'cluster/{node_id}/type',
+        }
+
+        conf_key_map = {
+            'name': f'server_node>{machine_id}>name',
+            'type': f'server_node>{machine_id}>type',
         }
 
         Conf.load(
@@ -71,17 +70,19 @@ class ServerConfig(Command):
 
         for key, value in kwargs.items():
             if value:
-                if key in conf_pillar_map.keys():
-                    self.logger.debug(f"Updating pillar with key:{conf_pillar_map[key][0]} and value:{value}")
+                if key in pillar_key_map.keys():
+                    self.logger.debug(f"Updating pillar with key:{pillar_key_map[key]} and value:{value}")
                     PillarSet().run(
-                        conf_pillar_map[key][0],
+                        pillar_key_map[key],
                         value,
                         local=True
                     )
-                    self.logger.debug(f"Updating confstore with key:{conf_pillar_map[key][1]} and value:{value}")
+
+                if key in conf_key_map.keys():
+                    self.logger.debug(f"Updating confstore with key:{conf_key_map[key]} and value:{value}")
                     Conf.set(
                         'node_info_index',
-                        conf_pillar_map[key][1],
+                        conf_key_map[key],
                         value
                     )
 

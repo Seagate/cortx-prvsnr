@@ -36,7 +36,8 @@ enc_file_path = Path(
 node_id = local_minion_id()
 enc_num = "enclosure-" + ((node_id).split('-'))[1]
 
-conf_pillar_map = {}
+conf_key_map = {}
+pillar_key_map = {}
 
 """Cortx Setup API for configuring the storage enclosure """
 
@@ -119,62 +120,51 @@ class StorageEnclosureConfig(Command):
                 with open(enc_file_path, "r") as file:
                     self.enclosure_id = file.read().replace('\n', '')
 
-        self.refresh_conf_pillar_map()
+        self.refresh_key_map()
 
-    def refresh_conf_pillar_map(self):
-        """updates values in the conf_pillar_map variable"""
+    def refresh_key_map(self):
+        """updates values in the pillar_key_map and conf_key_map dictionary"""
 
-        global conf_pillar_map
-        conf_pillar_map = {
-            'enclosure_id': (
-                f'storage/{enc_num}/enclosure_id',
-                f'server_node>{self.machine_id}>storage>enclosure_id'
-            ),
-            'user': (
-                f'storage/{enc_num}/controller/user',
-                f'storage_enclosure>{self.enclosure_id}>controller>user'
-            ),
-            'password': (
-                f'storage/{enc_num}/controller/secret',
-                f'storage_enclosure>{self.enclosure_id}>controller>secret'
-            ),
-            'ip': (
-                f'storage/{enc_num}/controller/{self.mode}/ip',
-                f'storage_enclosure>{self.enclosure_id}>controller>{self.mode}>ip'
-            ),
-            'port': (
-                f'storage/{enc_num}/controller/{self.mode}/port',
-                f'storage_enclosure>{self.enclosure_id}>controller>{self.mode}>port'
-            ),
-            'storage_type': (
-                f'storage/{enc_num}/type',
-                f'storage_enclosure>{self.enclosure_id}>type'
-            ),
-            'controller_type': (
-                f'storage/{enc_num}/controller/type',
-                f'storage_enclosure>{self.enclosure_id}>controller>type',
-            ),
-            'name': (
-                f'storage/{enc_num}/name',
-                f'storage_enclosure>{self.enclosure_id}>name',
-            )
+        global pillar_key_map
+        global conf_key_map
+
+        pillar_key_map = {
+            'enclosure_id':     f'storage/{enc_num}/enclosure_id',
+            'user':             f'storage/{enc_num}/controller/user',
+            'password':         f'storage/{enc_num}/controller/secret',
+            'ip':               f'storage/{enc_num}/controller/{self.mode}/ip',
+            'port':             f'storage/{enc_num}/controller/{self.mode}/port',
+            'storage_type':     f'storage/{enc_num}/type',
+            'controller_type':  f'storage/{enc_num}/controller/type',
+            'name':             f'storage/{enc_num}/name',
+        }
+
+        conf_key_map = {
+            'enclosure_id':     f'server_node>{self.machine_id}>storage>enclosure_id',
+            'user':             f'storage_enclosure>{self.enclosure_id}>controller>user',
+            'password':         f'storage_enclosure>{self.enclosure_id}>controller>secret',
+            'ip':               f'storage_enclosure>{self.enclosure_id}>controller>{self.mode}>ip',
+            'port':             f'storage_enclosure>{self.enclosure_id}>controller>{self.mode}>port',
+            'storage_type':     f'storage_enclosure>{self.enclosure_id}>type',
+            'controller_type':  f'storage_enclosure>{self.enclosure_id}>controller>type',
+            'name':             f'storage_enclosure>{self.enclosure_id}>name',
         }
 
     def store(self, key, value):
         """stores value in pillar and confstore"""
 
-        self.logger.debug(f"Updating pillar with key:{conf_pillar_map[key][0]} and value:{value}")
+        self.logger.debug(f"Updating pillar with key:{pillar_key_map[key]} and value:{value}")
         PillarSet().run(
-            conf_pillar_map[key][0],
+            pillar_key_map[key],
             value,
             targets=node_id,
             local=True
         )
 
-        self.logger.debug(f"Updating Cortx Confstor with key:{conf_pillar_map[key][1]} and value:{value}")
+        self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
-            conf_pillar_map[key][1],
+            conf_key_map[key],
             value
         )
 
@@ -203,8 +193,8 @@ class StorageEnclosureConfig(Command):
             f'json://{prvsnr_cluster_path}'
         )
 
-
         setup_type = Conf.get (
+            'node_info_index',
             f'server_node>{self.machine_id}>type'
         )
 
@@ -212,10 +202,10 @@ class StorageEnclosureConfig(Command):
             if name or storage_type or controller_type:
                 if not self.enclosure_id:
                     self.enclosure_id = "enc_" + self.machine_id
+                    self.refresh_key_map()
                     self.store_in_file()
                     self.store('enclosure_id', self.enclosure_id)
 
-                self.refresh_conf_pillar_map()
                 if name:
                     self.store('name', name)
 
@@ -233,7 +223,7 @@ class StorageEnclosureConfig(Command):
                 self.enclosure_id = EnclosureInfo(ip, user, password, port).get_enclosure_serial()
                 self.mode = "primary"
 
-                self.refresh_conf_pillar_map()
+                self.refresh_key_map()
 
                 # store enclosure_id
                 self.store_in_file()
@@ -247,7 +237,7 @@ class StorageEnclosureConfig(Command):
                 self.store('ip', ip)
                 self.store('port', port)
             else:
-                self.refresh_conf_pillar_map()
+                self.refresh_key_map()
 
                 if name is not None:
                     if self.enclosure_id:
