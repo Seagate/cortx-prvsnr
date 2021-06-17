@@ -16,13 +16,15 @@
 
     *   [Jenkins Server](#jenkins-server)
 
+        *   [Server Configuration](#server-configuration)
         *   [Start the server](#start-the-server)
         *   [Server management](#server-management)
-        *   [Additional configuration](#additional-configuration)
+        *   [Server Configuration Changes](#server-configuration-changes)
         *   [Server Command line reference](#server-command-line-reference)
 
     *   [Jenkins Agents](#jenkins-agents)
 
+        *   [Agents Configuration](#agents-configuration)
         *   [Build and start](#build-and-start)
         *   [Agent Management](#agent-management)
         *   [Agent Command line reference](#agent-command-line-reference)
@@ -30,6 +32,7 @@
 
     *   [Provisioner Jobs on Jenkins](#provisioner-jobs-on-jenkins)
 
+        *   [Jobs Configuration](#jobs-configuration)
         *   [Jobs update](#jobs-update)
         *   [Jobs Command line reference](#jobs-command-line-reference)
 
@@ -125,7 +128,7 @@ Options:
 
 *   `--config PATH` path to a configuration file
 
-Configuration:
+#### Server Configuration
 
 *   `[global]`
     *   `url` Jenkins server url
@@ -161,10 +164,7 @@ and mounted volume `jenkins_home`.
 To stop/start/restart a server you can use either `cortx-jenkins server`
 subcommands or similar `docker` commands.
 
-#### Additional configuration
-
-Additional manual configuration of a running server is not considered
-as a best choice.
+#### Server Configuration Changes
 
 If you need to adjust the configuration please consider to do:
 
@@ -187,6 +187,10 @@ cortx-jenkins server create
 
 In latter two cases please also consider to submit a patch to `cortx-prvsnr`
 repository.
+
+**Note.** Manual configuration chnages of a running server are not considered
+as a good choice. It makes sense only for ad-hoc configuration testing. Once
+tested these changes should be put into automation scripts as descrived above.
 
 #### Server Command line reference
 
@@ -235,13 +239,13 @@ Options:
 **Note** The options above make sense only for `create` action
 where agent configuration takes places.
 
-Configuration:
+#### Agents Configuration
 
 *   `[global]`
 
     *   `ssl_verify`: can be set to `false` to turn off ssl verification
         for requests to a Jenkins server
-        (e.g. in case of self-signed certificate is used)
+        (e.g. in case self-signed certificate is used)
 
 *   `[agent]`: (optional, if not specified `[global]` settings are used)
 
@@ -260,7 +264,7 @@ scope of pipeline docker container management routine (please use `sudo`
 if needed):
 
 ```bash
-mkdir -p /var/lib/jenkins
+mkdir /var/lib/jenkins
 chown $USER:$USER /var/lib/jenkins
 ```
 
@@ -338,7 +342,7 @@ Options:
     [JJB docs](https://jenkins-job-builder.readthedocs.io/en/latest/execution.html#command-reference)
     for possible options.
 
-Configuration:
+#### Jobs Configuration
 
 *   JJB run configuration:
     *   `[global]`: specifies `url`, `username` and `token` as explained above.
