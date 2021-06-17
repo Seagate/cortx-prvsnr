@@ -53,6 +53,7 @@ def start_docker_server():
     # TODO use docker python wrapper
     utils.run_subprocess_cmd([
         'docker', 'run', '-d',
+        # TODO make that configurable
         '-p', '8083:8083',
         '-p', '50000:50000',
         '-v', f"{defs.SERVER_VOLUME_NAME}:{defs.SERVER_JENKINS_HOME}",

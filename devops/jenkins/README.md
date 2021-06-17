@@ -77,7 +77,7 @@ pip install devops/jenkins
 
 You may also want to add `-e` to install in editable mode.
 
-## Jenkins configuration automation
+## Configuration
 
 `cortx-jenkins` tool can be configured using a configuration file.
 
@@ -100,6 +100,11 @@ It has few configuration sections:
 *   `jobs`: for jobs
 
 Please check the example for the details regarding supported parameters.
+
+## Logging
+
+Only console logging is supported for now. By default `INFO` level is set.
+Level can be changed using `LOGLEVEL` environment variable.
 
 ### Jenkins Server
 
@@ -144,6 +149,8 @@ cortx-jenkins server create
 ```
 
 In case of local setup Jenkins will be available at `https://localhost:8083/`.
+
+**Note**. server port is always `8083` for now.
 
 #### Initial run
 
