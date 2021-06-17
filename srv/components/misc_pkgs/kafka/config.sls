@@ -106,3 +106,34 @@ Update connections in kafka config:
     - pattern: ^zookeeper.connect=.*
     - repl: zookeeper.connect={{ node_hosts|join(',')}}
     - append_if_not_found: True
+
+{% if 1 < server_nodes|length %}
+# As per guidelines in EOS-21185
+Update default replication factor in kafka config:
+  file.replace:
+    - name: /opt/kafka/config/server.properties
+    - pattern: ^default.replication.factor=.*
+    - repl: default.replication.factor=3
+    - append_if_not_found: True
+
+Update offsets topic replication factor in kafka config:
+  file.replace:
+    - name: /opt/kafka/config/server.properties
+    - pattern: ^offsets.topic.replication.factor=.*
+    - repl: offsets.topic.replication.factor=3
+    - append_if_not_found: True
+
+Update transaction state log replication factor in kafka config:
+  file.replace:
+    - name: /opt/kafka/config/server.properties
+    - pattern: ^transaction.state.log.replication.factor=.*
+    - repl: transaction.state.log.replication.factor=3
+    - append_if_not_found: True
+
+Update transaction state log min isr in kafka config:
+  file.replace:
+    - name: /opt/kafka/config/server.properties
+    - pattern: ^transaction.state.log.min.isr=.*
+    - repl: transaction.state.log.min.isr=2
+    - append_if_not_found: True
+{% endif %}
