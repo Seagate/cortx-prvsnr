@@ -10,12 +10,13 @@
 
 *   [Installation](#installation)
 
-*   [Jenkins configuration automation](#jenkins-configuration-automation)
+*   [Configuration](#configuration)
+
+*   [Logging](#logging)
 
     *   [Jenkins Server](#jenkins-server)
 
         *   [Start the server](#start-the-server)
-        *   [Initial run](#initial-run)
         *   [Server management](#server-management)
         *   [Additional configuration](#additional-configuration)
         *   [Server Command line reference](#server-command-line-reference)
@@ -137,7 +138,7 @@ Configuration:
         (push) even on a local Jenkins setup (**not for production**).
 
 *   `[server.properties]`: a set of parameters for Jenkins global configuration
-    * **Note.** don't forget to set `ADMIN_PASSWORD` here !
+    *   **Note.** don't forget to set `ADMIN_PASSWORD` here !
 
 #### Start the server
 
@@ -151,30 +152,6 @@ cortx-jenkins server create
 In case of local setup Jenkins will be available at `https://localhost:8083/`.
 
 **Note**. server port is always `8083` for now.
-
-#### Initial run
-
-During the first run Jenkins will ask you to go through a few steps:
-
-1.  to unlock the server using the admin initial password. You would be provided
-    with a path on a server as an option and you can resolve the password
-    as follows:
-
-    ```bash
-    docker exec -it cortx-prvsnr-jenkins cat <path>
-    ```
-
-2.  After that you would be prompted to specify the list of plugins.
-    As long as the current logic takes care about that automatically you will likely
-    want to close the window to skip that step. Alternatively you can choose
-    `Select plugin to install` and unselect all using `None` and then `Install`.
-
-3.  The next step will create first admin user, you would be able
-    to specify credentials and other admin settings.
-
-4.  The last step would be about Jenkins server url configuration.
-    The default value will match one specified in configuration file.
-    So you can leave that as-is.
 
 #### Server management
 
@@ -257,9 +234,6 @@ Options:
 
 **Note** The options above make sense only for `create` action
 where agent configuration takes places.
-
-**Note** Jenkins agent root directory should exists, has write permissions
-for the current user and match the server agent configuration.
 
 Configuration:
 
