@@ -188,11 +188,20 @@ class ClusterManagerCortxCmd(ClusterManagerCortxBase):
         ret = self._run_cmd(f"{CORTX_HA_TOOL} cluster {api}", json=True)
         return self.parse_ret(ret)
 
+    def cluster_status(self):
+        raise NotImplementedError(
+            f"'status' is not supported by '{CORTX_HA_TOOL}' tool"
+        )
+
     def cluster_standby(self):
-        raise NotImplementedError("Not supported by '{CORTX_HA_TOOL}' tool")
+        raise NotImplementedError(
+            f"'standby' is not supported by '{CORTX_HA_TOOL}' tool"
+        )
 
     def cluster_unstandby(self):
-        raise NotImplementedError("Not supported by '{CORTX_HA_TOOL}' tool")
+        raise NotImplementedError(
+            f"'unstandby' is not supported by '{CORTX_HA_TOOL}' tool"
+        )
 
 
 def _call_ha_api_carefully(api):
