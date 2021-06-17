@@ -16,15 +16,13 @@
 
     *   [Jenkins Server](#jenkins-server)
 
-        *   [Server Configuration](#server-configuration)
         *   [Start the server](#start-the-server)
         *   [Server management](#server-management)
-        *   [Server Configuration Changes](#server-configuration-changes)
+        *   [Additional configuration](#additional-configuration)
         *   [Server Command line reference](#server-command-line-reference)
 
     *   [Jenkins Agents](#jenkins-agents)
 
-        *   [Agents Configuration](#agents-configuration)
         *   [Build and start](#build-and-start)
         *   [Agent Management](#agent-management)
         *   [Agent Command line reference](#agent-command-line-reference)
@@ -32,7 +30,6 @@
 
     *   [Provisioner Jobs on Jenkins](#provisioner-jobs-on-jenkins)
 
-        *   [Jobs Configuration](#jobs-configuration)
         *   [Jobs update](#jobs-update)
         *   [Jobs Command line reference](#jobs-command-line-reference)
 
@@ -192,6 +189,7 @@ repository.
 as a good choice. It makes sense only for ad-hoc configuration testing. Once
 tested these changes should be put into automation scripts as descrived above.
 
+
 #### Server Command line reference
 
 ```bash
@@ -254,7 +252,11 @@ where agent configuration takes places.
     *   `username` Jenkins user with permissions
         to Configure, Connect and Disconnect agents
 
+        *   **Note**. in case of a server configured by the current tool
+            a user may have `agent-provider` role assigned
+
     *   `token` Jenkins user acess token.
+
 
 #### Build and start
 

@@ -57,4 +57,14 @@ RUN (groupadd docker || true) \
 
 RUN usermod -aG docker jenkins
 
+ARG JENKINS_URL
+ENV JENKINS_URL=${JENKINS_URL}
+
+ARG JENKINS_URL_TRUSTED
+ENV JENKINS_URL_TRUSTED=${JENKINS_URL_TRUSTED}
+
+COPY trust_server.sh /tmp/
+RUN bash /tmp/trust_server.sh \
+    && rm -f /tmp/trust_server.sh
+
 USER jenkins
