@@ -17,17 +17,48 @@
 
 
 from ..command import Command
+from cortx_setup.config import CERT_PATH
+from cortx_setup.validate import path, CortxSetupError
+from provisioner.utils import run_subprocess_cmd
+from datetime import datetime
 
 
 class SecurityConfig(Command):
     _args = {
         'certificate': {
-            'optional': False,
+            'type': path,
+            'optional': True,
             'help': 'Install security certificate'
         }
     }
 
-    def run(self, certificate):
-        self.logger.debug("Running security config command")
+    def run(self, certificate=None):
         self.logger.debug(f"Ceritifact path: {certificate}")
+        CERT_PATH.mkdir(parents=True, exist_ok=True)
+        if certificate:
+            try:
+                end_date = None
+                # pyOpenSSL will not be available by default
+                # on centos JIRA: EOS-21290
+                res = run_subprocess_cmd(
+                    f"openssl x509 -enddate -noout -in {certificate}"
+                )
+                if not res.returncode:
+                    res = res.stdout
+                    end_date = res.split('=')[1]
+                    ed = datetime.strptime(
+                             end_date.strip(), '%b %d %H:%M:%S %Y %Z')
+                    current_d = datetime.now()
+                    if current_d > ed:
+                        raise CortxSetupError(
+                            f"Certificate {certificate} is expired "
+                            f"End date: {ed}"
+                        )
+            except Exception as exc:
+                self.logger.error(
+                    f"Invalida ceritificate file {certificate}\n"
+                    f"Error: {exc}")
+                raise
+            self.logger.debug(f"Copy certificate to {str(CERT_PATH)}")
+            run_subprocess_cmd(f"cp -rf {certificate} {str(CERT_PATH)}")
         self.logger.debug("Done")
