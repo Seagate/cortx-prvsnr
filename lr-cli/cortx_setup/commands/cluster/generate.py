@@ -14,33 +14,37 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-# Cortx Setup API to encrypt pillar values
+# Cortx Setup API to generate cluster
 
 
 from ..command import Command
 from cortx_setup.config import (
     ALL_MINIONS
 )
-from provisioner.salt import StatesApplier
+from provisioner.salt import (
+    pillar_refresh,
+    StatesApplier
+)
 
-
-class EncryptSecrets(Command):
+class GenerateCluster(Command):
     """
-    Encrypt config data
+    Generate Cluster with sync'ed data
     """
 
     _args = {}
     def run(self, targets=ALL_MINIONS):
         try:
-            self.logger.debug("Encrypting config data")
+            self.logger.debug("Generating cluster pillar")
 
-            for state in [
-                'components.system.config.pillar_encrypt',
-                'components.system.config.sync_salt'
-            ]:
-                StatesApplier.apply([state], targets)
+            StatesApplier.apply(
+                       ['components.system.config.generate_cluster_pillar'],
+                       targets=ALL_MINIONS
+            )
+
+            self.logger.debug("Refreshing config")
+            pillar_refresh(targets=ALL_MINIONS)
 
         except Exception as exc:
             self.logger.error(
-               f"Error in data encryption. Reason: '{str(exc)}'"
+               f"Error in cluster generation. Reason: '{str(exc)}'"
             )

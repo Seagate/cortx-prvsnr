@@ -20,12 +20,14 @@
 
 import os
 import socket
+import shutil
 from pathlib import Path
 from typing import List, Optional
 
 from cortx_setup.config import (
     ALL_MINIONS,
-    CONFIG_PATH
+    SOURCE_PATH,
+    DEST_PATH
 )
 from cortx_setup.commands.command import Command
 from cortx_setup.commands.pillar_sync import (
@@ -35,7 +37,10 @@ from cortx_setup.commands.enclosure.refresh import (
     RefreshEnclosureId
 )
 from cortx_setup.commands.cluster.encrypt import (
-    EncryptPillar
+    EncryptSecrets
+)
+from cortx_setup.commands.cluster.generate import (
+    GenerateCluster
 )
 from cortx_setup.commands.common_utils import (
     get_provisioner_states,
@@ -67,12 +72,6 @@ class ClusterConfigComponent(Command):
             'help': ('List of FQDN of node(s) to be clustered and '
                      'bootstrapped, primary node given first.')
         },
-        'config_path': {
-            'type': str,
-            'optional': True,
-            'default': CONFIG_PATH,
-            'help': 'Config file path for bootstrap.'
-        },
         'source': {
             'type': str,
             'optional': True,
@@ -90,6 +89,12 @@ class ClusterConfigComponent(Command):
             'type': str,
             'optional': True,
             'help': 'Target build to bootstrap'
+        },
+        'ha': {
+            'type': bool,
+            'optional': True,
+            'default': False,
+            'help': 'Provide HA option for multi-node setup e.g: --ha'
         },
         'type': {
             'type': str,
@@ -131,16 +136,16 @@ class ClusterConfigComponent(Command):
         Bootstrap system, deploy cortx components
 
         Execution:
-        `cortx_setup cluster config component [nodes_fqdn]`
+        `cortx_setup cluster config component [nodes_fqdn] --type <state>`
 
         """
         try:
+            print ("kwargs first: " , kwargs)
             self.logger.debug(
               "Checking for basic details in place."
             )
             local_fqdn = socket.gethostname()
             nodes = kwargs['nodes']
-            config_path = Path(kwargs['config_path'])
             target_build = kwargs['target_build']
             component_group = kwargs['component_group']
 
@@ -151,10 +156,11 @@ class ClusterConfigComponent(Command):
                 else:
                     nodes[idx] = f"srvnode-{idx+1}:{node}"
 
-            # Config validation
-            if not (CONFIG_PATH.exists() or config_path.exists()):
-                raise ValueError(f"'{config_path}' not found. "
-                                 "Please provide valid config path in command.")
+            # TODO: Config validation when confstore yaml is used
+
+            # HA validation
+            if len(nodes) > 1:
+                kwargs['ha'] = True
 
             # Build validation
             if not target_build:
@@ -171,6 +177,7 @@ class ClusterConfigComponent(Command):
                          "iso single file and iso os file paths are mandatory "
                          "to bootstrap. Please provide valid paths in command.")
 
+            kwargs.pop('component_group')
             self.logger.info(
               "Initial checks done. Follow logs for progress. "
               f"Starting bootstrap process now with args: {kwargs}"
@@ -180,22 +187,24 @@ class ClusterConfigComponent(Command):
 #            # Currently, some changes are needed for this step
 #            post_provisioner.PostProvisioner().run(**kwargs)
 
-            self.logger.debug(
+            self.logger.debug("Cleanup existing storage config")
+            if SOURCE_PATH.exists():
+                shutil.move(SOURCE_PATH, DEST_PATH)
+
+            self.logger.info(
               "Starting with preparing environment. "
               "Syncing config data now.."
             )
             PillarSync().run()
 
+            self.logger.debug("Refreshing machine id on the system")
+            reset_machine_id.ResetMachineId.run()
+
             self.logger.debug("Generating cluster")
-            StatesApplier.apply(
-                  ["components.provisioner.config"], targets=ALL_MINIONS
-            )
+            GenerateCluster().run()
 
             self.logger.debug("Creating service user")
             create_service_user.CreateServiceUser.run(user="cortxub")
-
-            self.logger.debug("Refreshing machine id on the system")
-            reset_machine_id.ResetMachineId.run()
 
             self.logger.debug("Refreshing enclosure id on the system")
             RefreshEnclosureId().run()
@@ -204,7 +213,7 @@ class ClusterConfigComponent(Command):
             cluster_id.ClusterId().run()
 
             self.logger.debug("Encrypting config data")
-            EncryptPillar().run()
+            EncryptSecrets().run()
 
             self.logger.debug("Exporting to Confstore")
             confstore_export.ConfStoreExport().run()
@@ -218,6 +227,7 @@ class ClusterConfigComponent(Command):
 
             if component_group is None:
                 for component_group in noncortx_components:
+                    self.logger.debug(f"Deploying {component_group} components on nodes")
                     self.logger.debug(f"Deploying {component_group} components on nodes")
                     self._configure(
                         noncortx_components[component_group]
