@@ -140,7 +140,6 @@ class ClusterConfigComponent(Command):
 
         """
         try:
-            print ("kwargs first: " , kwargs)
             self.logger.debug(
               "Checking for basic details in place."
             )
@@ -176,6 +175,9 @@ class ClusterConfigComponent(Command):
                     raise ValueError(
                          "iso single file and iso os file paths are mandatory "
                          "to bootstrap. Please provide valid paths in command.")
+
+            # TODO: Complete bootstrap sequence to be moved to `cluster create` API
+            # Only deploy states will be executed as pasrt of this API.
 
             kwargs.pop('component_group')
             self.logger.info(
