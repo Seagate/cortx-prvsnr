@@ -1,6 +1,11 @@
 import re
 import ipaddress
 import argparse
+from pathlib import Path
+
+
+class CortxSetupError(Exception):
+    pass
 
 
 def host(hostname):
@@ -26,3 +31,11 @@ def ipv4(ip):
             raise argparse.ArgumentTypeError(
                 f"Invalid IP address {ip} canonical form will be {value} ")
     return ip
+
+
+def path(path):
+    if path:
+        if not Path(path).is_file():
+            raise argparse.ArgumentTypeError(
+                f"cannot access {path}: No such file ")
+    return path
