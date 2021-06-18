@@ -41,8 +41,7 @@ class CheckISOAuthenticityArgs:
                 'help': "Path to the SW upgrade single ISO bundle"
             }
         },
-        converter=utils.converter_path_resolved,
-        default=None
+        converter=utils.converter_path_resolved
     )
     sig_file: str = attr.ib(
         metadata={
@@ -52,7 +51,7 @@ class CheckISOAuthenticityArgs:
         },
         validator=attr.validators.optional(utils.validator_path_exists),
         converter=utils.converter_path_resolved,
-        default=None
+        default=None  # TODO: construct the default sig path based on ISO path
     )
     gpg_pub_key: str = attr.ib(
         metadata={
