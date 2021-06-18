@@ -40,8 +40,7 @@ class CortxUnsupportedFeatures(object):
     def __init__(self):
         from cortx.utils.product_features import unsupported_features
         self._ufl = unsupported_features
-
-        self._us_features_schema = Path("/opt/seagate/cortx/csm/")
+        self._us_features_schema = Path("/opt/seagate/cortx/csm/schema/unsupported_features.json")
 
 
     def _update_unsupported_schema_dict(
@@ -50,6 +49,7 @@ class CortxUnsupportedFeatures(object):
         setup_type,
         unsupported_feature_list
     ):
+        logger.debug(f"Unsupported schema to register: {json.dumps(unsupported_schema_dict)}")
         for entry in unsupported_schema_dict["setup_types"]:
             if entry["name"] == setup_type:
                 entry[
@@ -67,6 +67,11 @@ class CortxUnsupportedFeatures(object):
     ):
         _us_features_dict = json.loads(
             self._us_features_schema.read_text()
+        )
+
+        logger.debug(
+            "The existing unsupported features schema: "
+            f"{_us_features_dict}"
         )
 
         if setup_types and unsupported_feature_list:
@@ -92,9 +97,16 @@ class CortxUnsupportedFeatures(object):
                 f"unsupported features list is empty: {unsupported_feature_list}"
             )
 
-        json.dumps(
-            _us_features_dict,
-            indent = 4
+        logger.debug(
+            "The updated unsupported features schema: "
+            f"{_us_features_dict}"
+        )
+
+        self._us_features_schema.write_text(
+            json.dumps(
+                _us_features_dict,
+                indent = 4
+            )
         )
 
 
@@ -123,9 +135,9 @@ class CortxUnsupportedFeatures(object):
 
 
 def register(
-        component: str,
-        unsupported_feature_list: list = ["FW_Update"],
-        setup_types: list = ["virtual"]
+        component,
+        unsupported_feature_list,
+        setup_types
     ):
     """ Define list of Cortx unsupported features.
 
@@ -135,6 +147,11 @@ def register(
     # CortxUnsupportedFeatures class init
     cuf = CortxUnsupportedFeatures()
 
+    logger.debug(f"Unsupported schema list: {unsupported_feature_list}")
+    logger.debug(
+        "Setup types to register"
+        f"for unsupported schema list: {setup_types}"
+    )
     cuf._update_unsupported_schema(
         unsupported_feature_list,
         setup_types
@@ -153,12 +170,19 @@ def register(
         feature_list = loop.run_until_complete(
             cuf.get_unsupported_features(component)
         )
-        if not set(unsupported_feature_list).issubset(set(feature_list)):
-            logger.error(
-                "Unsupported feature list: "
-                f"{feature_list} doesn't include the requested "
-                f"features to be supported: {unsupported_feature_list}"
-            )
+        logger.debug(
+            "The registered feature list: "
+            f"{feature_list}"
+        )
+
+        for entry in feature_list:
+            if entry["feature_name"] not in unsupported_feature_list:
+                logger.error(
+                    "Unsupported feature list: "
+                    f"{feature_list} doesn't include the requested "
+                    f"features to be supported: {unsupported_feature_list}"
+                )
+                return False
     else:
         logger.warning(
             f"Unable to set unsupported features."
@@ -168,3 +192,6 @@ def register(
             " or "
             f"unsupported features list is empty: {unsupported_feature_list}"
         )
+        return False
+
+    return True

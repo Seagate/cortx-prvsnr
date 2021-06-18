@@ -17,15 +17,15 @@
 
 
 Register features to be unsuported:
-  modules.run:
-    - cortx_unsupported.register:
+  module.run:
+    - cortx_unsupported_features.register:
       - component: provisioner
       - unsupported_feature_list:
         - fw_update
       - setup_types:
+        - VM
         - virtual
-        - 5u84
-        - PODS
+        - other
         - JBOD
 
 Stage - Config CSM:
