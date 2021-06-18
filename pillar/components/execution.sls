@@ -51,5 +51,5 @@ execution:
       - uds
       - csm
     ha:
-      - cortx_ha
+      - ha.cortx-ha
 
