@@ -686,13 +686,17 @@ class AuthenticityValidator(PathValidator):
 
         # NOTE: return given path itself if it is in OpenPGP format already
         res = pub_key_path
-        with open(pub_key_path) as fh:
+        with open(pub_key_path, "rb") as fh:
+            # NOTE: read file as binary file since OpenPGP is binary format
             content = fh.readlines()
             armor_header = content[0]
             armor_tail = content[-1]
 
-        if (ARMOR_HEADER in armor_header
-                and ARMOR_TAIL in armor_tail):
+        # NOTE: we check that the armor header and armor tail in binary
+        #  representation exist in the first and the last line of
+        #  the pub key file.
+        if (ARMOR_HEADER.encode() in armor_header
+                and ARMOR_TAIL.encode() in armor_tail):
             # NOTE: it means that provided public key is in ASCII Armor format
             cmd = f"gpg --yes --dearmor {pub_key_path.resolve()}"
             try:
