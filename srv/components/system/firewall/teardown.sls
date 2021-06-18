@@ -20,21 +20,23 @@ Reset default zone:
   firewalld.present:
     - name: public
     - default: True
+    - prune_interfaces: True
     - prune_ports: True
-    - prune_services: False
-    - prune_interfaces: False
+    - prune_services: True
+    - prune_rich_rules: True
     - services:
+      - http
+      - salt-master
       - ssh
-    - ports:
-      # Ports added to ensure Salt services are not affected
-      - 4505/tcp
-      - 4506/tcp
 
 {% if 'management-zone' in salt['firewalld.get_zones']() %}
 Remove public management interfaces:
   firewalld.present:
     - name: management-zone
     - prune_interfaces: True
+    - prune_ports: True
+    - prune_services: True
+    - prune_rich_rules: True
 
 Remove management-zone:
   module.run:
@@ -49,6 +51,9 @@ Remove public data interfaces:
   firewalld.present:
     - name: public-data-zone
     - prune_interfaces: True
+    - prune_ports: True
+    - prune_services: True
+    - prune_rich_rules: True
 
 Remove public-data-zone:
   module.run:
@@ -63,6 +68,9 @@ Remove private data interfaces:
   firewalld.present:
     - name: private-data-zone
     - prune_interfaces: True
+    - prune_ports: True
+    - prune_services: True
+    - prune_rich_rules: True
 
 Remove private-data-zone:
   module.run:
@@ -72,11 +80,13 @@ Remove private-data-zone:
       - Reset default zone
 {% endif %}
 
-Remove lo interfaces:
+Reset trusted zone:
   firewalld.present:
     - name: trusted
     - prune_interfaces: True
+    - prune_ports: True
     - prune_sources: True
+    - prune_rich_rules: True
 
 Refresh firewalld:
   module.run:
@@ -86,4 +96,3 @@ Refresh firewalld:
 Delete firewall checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
-
