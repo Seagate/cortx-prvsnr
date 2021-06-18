@@ -703,10 +703,10 @@ class AuthenticityValidator(PathValidator):
                 # NOTE: by default gpg tool converts the given file to the file
                 #  with the same name + '.gpg' extension at the end.
                 #  Directory is the same
-                cmd_run(cmd, targets=local_minion_id(),
-                        fun_kwargs=dict(python_shell=True))
+                cmd_run(cmd, targets=local_minion_id())
             except Exception as e:
                 logger.error("Can't convert ASCII Armor GPG public key "
+                             f"'{pub_key_path.resolve()}'"
                              f"to OpenPGP format: '{e}'")
                 raise ValidationError(
                     f'Public key conversion error: "{e}"') from e
@@ -752,8 +752,7 @@ class AuthenticityValidator(PathValidator):
             cmd = f"gpg --verify {self.signature} {path}"
 
         try:
-            res = cmd_run(cmd, targets=local_minion_id(),
-                          fun_kwargs=dict(python_shell=True))
+            res = cmd_run(cmd, targets=local_minion_id())
         except Exception as e:
             logger.debug(f'Authenticity check is failed: "{e}"')
             raise ValidationError(
