@@ -26,7 +26,7 @@ from provisioner.vendor import attr
 from provisioner.commands._basic import (
     RunArgs, RunArgsBase, CommandParserFillerMixin
 )
-from provisioner.commands import (
+from provisioner.commands.release import (
     GetReleaseVersion
 )
 from provisioner.commands.mini_api import (

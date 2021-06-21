@@ -17,7 +17,7 @@
 import logging
 from configparser import ConfigParser
 from typing import Type, Union, Optional
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, ParseResult
 import json
 
 from packaging import version
@@ -42,6 +42,25 @@ from provisioner.vendor import attr
 
 
 logger = logging.getLogger(__name__)
+
+
+@attr.s(auto_attribs=True)
+class CortxReleaseUrl:
+    url: Union[str, ParseResult] = attr.ib(
+        converter=(lambda x: x if isinstance(x, ParseResult) else urlparse(x)),
+        validator=attr.validators.instance_of(ParseResult),
+    )
+
+    def __str__(self) -> str:
+        return self.url.geturl()
+
+    @property
+    def path(self) -> str:
+        return f"{self.url.netloc}{self.url.path}"
+
+    @property
+    def is_local(self) -> str:
+        return self.url.scheme == 'file'
 
 
 @attr.s(auto_attribs=True)
@@ -101,6 +120,81 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         )
 
     @staticmethod
+    def get_release_iso_version(release: str) -> Optional[ISOVersion]:
+        """
+        Return version of ISO bundle scheme fro a release
+
+        Parameters
+        ----------
+        release : str
+            CORTX release version
+
+        Returns
+        -------
+        dict:
+            return version of ISO bundle scheme fro a release
+
+        """
+        pillar_path = f'release/upgrade/repos/{release}'
+        pillars = PillarResolver(local_minion_id()).get(
+            [PillarKey(pillar_path)],
+            fail_on_undefined=True
+        )
+
+        upgrade_release = pillars[local_minion_id()][
+            PillarKey(pillar_path)
+        ]
+        if release in upgrade_release:
+            iso_version = upgrade_release[release].get('version',
+                                                       ISOVersion.VERSION1)
+        else:
+            # FIXME: it may be remote repo
+            iso_version = ISOVersion.VERSION1
+
+        return iso_version
+
+    @classmethod
+    def get_release_info_url(
+        cls,
+        release: str,
+        iso_version: Optional[ISOVersion] = None
+    ) -> Optional[CortxReleaseUrl]:
+        """
+        Return URL to a Cortx repository metadata file
+
+        Parameters
+        ----------
+        release : str
+            CORTX release version
+        iso_version: ISOVersion
+            version of SW upgrade ISO
+
+        Returns
+        -------
+        dict:
+            return URL to a Cortx repository metadata file
+
+        """
+        if iso_version is None:
+            iso_version = cls.get_release_iso_version(release)
+
+        if iso_version == ISOVersion.VERSION1:
+            repo = f'sw_upgrade_{CORTX_ISO_DIR}_{release}'
+            release_file = RELEASE_INFO_FILE
+        else:
+            repo = f'sw_upgrade_{UpgradeReposVer2.CORTX.value}_{release}'
+            release_file = CORTX_RELEASE_INFO_FILE
+
+        config = ConfigParser()
+        config.read(f'/etc/yum.repos.d/{repo}.repo')
+        repo_uri = config.get(repo, 'baseurl', fallback=None)
+
+        if repo_uri is None:
+            raise ValueError(f"'baseurl' option is missed for repo: '{repo}'")
+
+        return CortxReleaseUrl(f'{repo_uri}/{release_file}')
+
+    @staticmethod
     def _get_set_swupgrade_repo_obj() -> SetSWUpgradeRepo:
         """
         Get SetSWUpgradeRepo instance
@@ -117,14 +211,14 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
     def _get_repo_metadata(
             self, release: str,
-            iso_version: ISOVersion = ISOVersion.VERSION1) -> dict:
+            iso_version: Optional[ISOVersion] = None) -> dict:
         """
         Load Cortx repository metadata for the given release
 
         Parameters
         ----------
         release : str
-            SW upgrade repository version
+            CORTX release version
         iso_version: ISOVersion
             version of SW upgrade ISO
 
@@ -134,28 +228,15 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             return dict with Cortx repository metadata
 
         """
-        if iso_version == ISOVersion.VERSION1:
-            repo = f'sw_upgrade_{CORTX_ISO_DIR}_{release}'
-            release_file = RELEASE_INFO_FILE
-        else:
-            repo = f'sw_upgrade_{UpgradeReposVer2.CORTX.value}_{release}'
-            release_file = CORTX_RELEASE_INFO_FILE
-
-        config = ConfigParser()
-        config.read(f'/etc/yum.repos.d/{repo}.repo')
-        repo_uri = config.get(repo, 'baseurl', fallback=None)
-
-        if repo_uri is None:
-            logger.warning(f"'baseurl' option is missed for repo: '{repo}'")
-            return dict()
-
-        res = urlparse(f'{repo_uri}/{release_file}')
+        url = self.get_release_info_url(release, iso_version)
 
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
 
         return set_swupgrade_repo.load_metadata(
-                    release_file_path=unquote(res.path),
-                    remote=res.scheme != 'file')
+                    release_file_path=unquote(
+                        url.path if url.is_local() else str(url)
+                    ),
+                    remote=(not url.is_local()))
 
     def run(self, iso_path: str = None,
             release: str = None) -> Union[CortxISOInfo, None]:
@@ -220,20 +301,7 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
                     iso_version = ISOVersion.VERSION1
 
         if iso_version is None and release:
-            # NOTE: in case if release parameter is set
-            pillar_path = f'release/upgrade/repos/{release}'
-            pillars = PillarResolver(local_minion).get(
-                [PillarKey(pillar_path)],
-                fail_on_undefined=True
-            )
-
-            upgrade_release = pillars[local_minion][PillarKey(pillar_path)]
-            if release in upgrade_release:
-                iso_version = upgrade_release[release].get('version',
-                                                           ISOVersion.VERSION1)
-            else:
-                # NOTE: it may be remote repo
-                iso_version = ISOVersion.VERSION1
+            iso_version = self.get_release_iso_version(release)
 
         # explicitly convert to enum value
         iso_version = ISOVersion(iso_version)

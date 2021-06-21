@@ -24,7 +24,7 @@ from provisioner.vendor import attr
 
 from .get_swupgrade_info import GetSWUpgradeInfo
 
-from ...commands import GetReleaseVersion
+from provisioner.commands.release import GetReleaseVersion
 
 from provisioner.errors import ProvisionerError
 

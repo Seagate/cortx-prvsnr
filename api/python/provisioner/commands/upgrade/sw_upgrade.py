@@ -28,9 +28,9 @@ from provisioner.commands import (
     # SWUpdateDecisionMaker,
     # _apply_provisioner_config,
     # _restart_salt_minions,
-    GetReleaseVersion,
     PillarSet
 )
+from provisioner.commands.release import GetReleaseVersion
 from provisioner.commands.mini_api import (
     HookCaller,
     MiniAPIHook
