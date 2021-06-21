@@ -1669,6 +1669,7 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             else:
                 url = run_args.target_build
 
+            # TODO use SetReleaseVersion instead
             if url.startswith(('http://', 'https://')):
                 ssh_client.cmd_run(
                     (
