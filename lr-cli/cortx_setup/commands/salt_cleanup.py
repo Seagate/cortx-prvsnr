@@ -15,22 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .. import config
-from ..log import Log
+from provisioner.salt import local_minion_id
+from provisioner.utils import run_subprocess_cmd
+from .command import Command
 
 
-class Command(object):
-    logger = None
-    _args = {}
+class SaltCleanup(Command):
 
-    def __init__(self):
-        if Log.logger:
-            self.logger = Log.logger
-        else:
-            Log._get_logger("nodecli", "INFO", "/var/log/seagate/provisioner/")
-            self.logger = Log.logger
-        parent_dir = config.CONFSTORE_CLUSTER_FILE.parent
-        parent_dir.mkdir(parents=True, exist_ok=True)
-
-    def get_args(self):
-        return self._args
+    def run(self):
+        minion_id = local_minion_id()
+        if minion_id:
+            self.logger.debug(f"removing minion {minion_id} from salt cluster")
+            run_subprocess_cmd(f"salt-key -d {minion_id} -y")
+        self.logger.debug("Remove minion_id and minion_master.pub from system")
+        run_subprocess_cmd(f"rm -rf /etc/salt/minion_id")
+        run_subprocess_cmd(f"rm -rf /etc/salt/pki/minion/minion_master.pub")
+        self.logger.debug(f"Minion {minion_id} removed from salt configurtion")

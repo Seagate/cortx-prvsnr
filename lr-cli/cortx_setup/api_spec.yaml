@@ -23,6 +23,9 @@ hostname:
 pillar_sync:
   PillarSync
 
+salt_cleanup:
+  SaltCleanup
+
 network:
   config:
     NetworkConfig
