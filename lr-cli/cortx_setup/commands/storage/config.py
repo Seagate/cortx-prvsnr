@@ -150,7 +150,7 @@ class StorageEnclosureConfig(Command):
             'name':             f'storage_enclosure>{self.enclosure_id}>name',
         }
 
-    def store(self, key, value):
+    def update_pillar_and_conf(self, key, value):
         """stores value in pillar and confstore"""
 
         self.logger.debug(f"Updating pillar with key:{pillar_key_map[key]} and value:{value}")
@@ -204,58 +204,58 @@ class StorageEnclosureConfig(Command):
                     self.enclosure_id = "enc_" + self.machine_id
                     self.refresh_key_map()
                     self.store_in_file()
-                    self.store('enclosure_id', self.enclosure_id)
+                    self.update_pillar_and_conf('enclosure_id', self.enclosure_id)
 
                 if name:
-                    self.store('name', name)
+                    self.update_pillar_and_conf('name', name)
 
                 if storage_type:
-                    self.store('storage_type', storage_type)
+                    self.update_pillar_and_conf('storage_type', storage_type)
 
                 if controller_type:
-                    self.store('controller_type', controller_type)
+                    self.update_pillar_and_conf('controller_type', controller_type)
             else:
                 self.logger.error("Please provide values for name, type and controller_type")
                 raise RuntimeError("Incomplete arguments provided")
         else:
             if user != None and password != None and ip != None and port != None:
                 # fetch enclosure serial/id
-                self.enclosure_id = EnclosureInfo(ip, user, password, port).get_enclosure_serial()
+                self.enclosure_id = EnclosureInfo(ip, user, password, port).fetch_enclosure_serial()
                 self.mode = "primary"
 
                 self.refresh_key_map()
 
                 # store enclosure_id
                 self.store_in_file()
-                self.store('enclosure_id', self.enclosure_id)
+                self.update_pillar_and_conf('enclosure_id', self.enclosure_id)
 
                 # store user and password
-                self.store('user', user)
-                self.store('password', password)
+                self.update_pillar_and_conf('user', user)
+                self.update_pillar_and_conf('password', password)
 
                 # store ip and port as primary
-                self.store('ip', ip)
-                self.store('port', port)
+                self.update_pillar_and_conf('ip', ip)
+                self.update_pillar_and_conf('port', port)
             else:
                 self.refresh_key_map()
 
                 if name is not None:
                     if self.enclosure_id:
-                        self.store('name', name)
+                        self.update_pillar_and_conf('name', name)
                     else:
                         self.logger.error("Please set 'user, password, primary ip and port' first")
                         raise RuntimeError("Cannot set name before setting user, password, ip and port")
 
                 if storage_type is not None:
                     if self.enclosure_id:
-                        self.store('storage_type', storage_type)
+                        self.update_pillar_and_conf('storage_type', storage_type)
                     else:
                         self.logger.error("Please set 'user, password, primary ip and port' first")
                         raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
 
                 if controller_type is not None:
                     if self.enclosure_id:
-                        self.store('controller_type', controller_type)
+                        self.update_pillar_and_conf('controller_type', controller_type)
                     else:
                         self.logger.error("Please set 'user, password, primary ip and port' first")
                         raise RuntimeError("Cannot set storage_type before setting user, password, ip and port")
@@ -269,10 +269,10 @@ class StorageEnclosureConfig(Command):
 
                     if self.enclosure_id:
                         if ip:
-                            self.store('ip', ip)
+                            self.update_pillar_and_conf('ip', ip)
 
                         if port:
-                            self.store('port', port)
+                            self.update_pillar_and_conf('port', port)
                     else:
                         self.logger.error(
                             "Enclosure ID is not set: Please provide user and password as well to set Enclosure ID"
@@ -287,8 +287,8 @@ class StorageEnclosureConfig(Command):
                         valid_connection_check = EnclosureInfo(host, user, password, port).connection_status()
 
                         if valid_connection_check:
-                            self.store('user', user)
-                            self.store('password', password)
+                            self.update_pillar_and_conf('user', user)
+                            self.update_pillar_and_conf('password', password)
                         else:
                             self.logger.error(
                                 f"Cannot establish connection with controller using user={user} and password={password} as credentials"
