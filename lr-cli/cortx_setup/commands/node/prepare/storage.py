@@ -80,7 +80,7 @@ class NodePrepareStorage(Command):
         )
 
         # Decrypt the secret read from the storage pillar
-        
+
         if not enc_id_on_node:
             self.logger.error(
                 "Could not fetch enclosure_id id from pillar"

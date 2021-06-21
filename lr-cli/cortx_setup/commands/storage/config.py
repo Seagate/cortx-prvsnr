@@ -20,7 +20,8 @@ from ..command import Command
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
 from cortx_setup.commands.common_utils import get_machine_id
-from provisioner.api import grains_get, pillar_get
+from cortx_setup.validate import ipv4
+from provisioner.api import pillar_get
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from .enclosure_info import EnclosureInfo
@@ -96,7 +97,7 @@ class StorageEnclosureConfig(Command):
             'help': 'Controller mode e.g. {primary | secondary}'
         },
         'ip': {
-            'type': str,
+            'type': ipv4,
             'default': None,
             'optional': True,
             'help': 'IP address of the controller'
@@ -184,7 +185,7 @@ class StorageEnclosureConfig(Command):
         return str(
             Cipher.encrypt(
                 cipher_key, bytes(password, 'utf-8')
-            ), 
+            ),
             'utf-8'
         )
 
@@ -245,7 +246,7 @@ class StorageEnclosureConfig(Command):
                 self.update_pillar_and_conf('user', user)
 
                 # encrypt password and store
-                password = encrypt_password(password)
+                password = self.encrypt_password(password)
                 self.update_pillar_and_conf('password', password)
 
                 # store ip and port as primary

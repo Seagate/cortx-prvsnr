@@ -26,6 +26,7 @@ class EnclosureInfo(Command):
     """
 
     def __init__(self, host, username, password, port):
+        super().__init__()
         self.host = host
         self.username = username
         self.password = password
