@@ -29,7 +29,7 @@ network:
 
 node:
   initialize:
-    NodeInitalize
+    NodeInitialize
   finalize:
     NodeFinalize
   prepare:

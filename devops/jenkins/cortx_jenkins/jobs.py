@@ -50,7 +50,7 @@ def gen_jobs_ini(config: Dict):
         jobs_config['jenkins']['password'] = global_config['token']
 
     if not jobs_config['jenkins'].get('url'):
-        jobs_config['jenkins']['password'] = global_config['url']
+        jobs_config['jenkins']['url'] = global_config['url']
 
     _config = configparser.ConfigParser()
     _config.optionxform = lambda option: option

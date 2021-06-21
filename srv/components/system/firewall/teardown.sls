@@ -20,32 +20,41 @@ Reset default zone:
   firewalld.present:
     - name: public
     - default: True
+    - prune_interfaces: True
     - prune_ports: True
-    - prune_services: False
-    - prune_interfaces: False
+    - prune_services: True
+    - prune_rich_rules: True
     - services:
+      - http
+      - salt-master
       - ssh
-    - ports:
-      - 4505/tcp
-      - 4506/tcp
 
+{% if 'management-zone' in salt['firewalld.get_zones']() %}
 Remove public management interfaces:
   firewalld.present:
     - name: management-zone
     - prune_interfaces: True
+    - prune_ports: True
+    - prune_services: True
+    - prune_rich_rules: True
 
+Remove management-zone:
+  module.run:
+    - firewalld.delete_zone:
+      - zone: management-zone
+    - require:
+      - Reset default zone
+{% endif %}
+
+{% if 'public-data-zone' in salt['firewalld.get_zones']() %}
 Remove public data interfaces:
   firewalld.present:
     - name: public-data-zone
     - prune_interfaces: True
+    - prune_ports: True
+    - prune_services: True
+    - prune_rich_rules: True
 
-Remove private data interfaces:
-  firewalld.present:
-    - name: trusted
-    - prune_interfaces: True
-    - prune_sources: True
-
-{% if 'public-data-zone' in salt['firewalld.get_zones']() %}
 Remove public-data-zone:
   module.run:
     - firewalld.delete_zone:
@@ -54,14 +63,30 @@ Remove public-data-zone:
       - Reset default zone
 {% endif %}
 
-{% if 'management-zone' in salt['firewalld.get_zones']() %}
-Remove management-zone:
+{% if 'private-data-zone' in salt['firewalld.get_zones']() %}
+Remove private data interfaces:
+  firewalld.present:
+    - name: private-data-zone
+    - prune_interfaces: True
+    - prune_ports: True
+    - prune_services: True
+    - prune_rich_rules: True
+
+Remove private-data-zone:
   module.run:
     - firewalld.delete_zone:
-      - zone: management-zone
+      - zone: private-data-zone
     - require:
       - Reset default zone
 {% endif %}
+
+Reset trusted zone:
+  firewalld.present:
+    - name: trusted
+    - prune_interfaces: True
+    - prune_ports: True
+    - prune_sources: True
+    - prune_rich_rules: True
 
 Refresh firewalld:
   module.run:
@@ -71,4 +96,3 @@ Refresh firewalld:
 Delete firewall checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.firewall
-
