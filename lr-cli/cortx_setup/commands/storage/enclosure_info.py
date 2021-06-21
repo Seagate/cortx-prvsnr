@@ -26,6 +26,7 @@ class EnclosureInfo(Command):
     """
 
     def __init__(self, host, username, password, port):
+        super().__init__()
         self.host = host
         self.username = username
         self.password = password
@@ -48,7 +49,7 @@ class EnclosureInfo(Command):
         response = self.connect_enclosure()
         return (len(response['status']) == 1 and response["status"][0]["return-code"] == 1)
 
-    def get_enclosure_serial(self):
+    def fetch_enclosure_serial(self):
         """fetches & returns midplane-serial-number from enclosure"""
 
         response = self.connect_enclosure()
