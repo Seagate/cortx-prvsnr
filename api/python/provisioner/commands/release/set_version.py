@@ -51,7 +51,7 @@ class SetReleaseVersion(CommandParserFillerMixin):
 
         if release:
             url = GetSWUpgradeInfo.get_release_info_url()
-            source = (url.path if url.is_local() else str(url))
+            source = (url.path if url.is_local else str(url))
         else:
             logger.info(
                 'No upgrade release is found, setting the factory one'

@@ -233,10 +233,11 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
 
         return set_swupgrade_repo.load_metadata(
-                    release_file_path=unquote(
-                        url.path if url.is_local() else str(url)
-                    ),
-                    remote=(not url.is_local()))
+            release_file_path=unquote(
+                url.path if url.is_local else str(url)
+            ),
+            remote=(not url.is_local)
+        )
 
     def run(self, iso_path: str = None,
             release: str = None) -> Union[CortxISOInfo, None]:
