@@ -59,12 +59,12 @@ class NodePrepare(Command):
         `cortx_setup node prepare software`
         """
 
-        provisioner_components = get_provisioner_states()
+        # provisioner_components = get_provisioner_states()
         cortx_components = get_cortx_states()
 
-        self.logger.debug("Deploying platform components")
-        self._deploy(
-            {'noncortx_component': provisioner_components['platform']}, stage=None)
+        # self.logger.debug("Deploying platform components")
+        # self._deploy(
+        #     {'noncortx_component': provisioner_components['platform']}, stage=None)
 
         self.logger.debug("Deploying cortx components")
         self._deploy(cortx_components, stage=["config.prepare"])
