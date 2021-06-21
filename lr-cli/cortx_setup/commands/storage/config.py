@@ -18,6 +18,7 @@
 from pathlib import Path
 from ..command import Command
 from cortx.utils.conf_store import Conf
+from cortx.utils.security.cipher import Cipher
 from cortx_setup.commands.common_utils import get_machine_id
 from provisioner.api import grains_get, pillar_get
 from provisioner.commands import PillarSet
@@ -176,6 +177,17 @@ class StorageEnclosureConfig(Command):
         file.write(self.enclosure_id + "\n")
         file.close()
 
+    def encrypt_password(self, password):
+        """Returns encrypted password as string"""
+
+        cipher_key = Cipher.generate_key(self.enclosure_id, "storage")
+        return str(
+            Cipher.encrypt(
+                cipher_key, bytes(password, 'utf-8')
+            ), 
+            'utf-8'
+        )
+
     def run(self, **kwargs):
 
         user = kwargs.get('user')
@@ -229,8 +241,11 @@ class StorageEnclosureConfig(Command):
                 self.store_in_file()
                 self.update_pillar_and_conf('enclosure_id', self.enclosure_id)
 
-                # store user and password
+                # store user
                 self.update_pillar_and_conf('user', user)
+
+                # encrypt password and store
+                password = encrypt_password(password)
                 self.update_pillar_and_conf('password', password)
 
                 # store ip and port as primary
