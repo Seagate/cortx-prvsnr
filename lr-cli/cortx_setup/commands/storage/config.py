@@ -107,6 +107,24 @@ class StorageEnclosureConfig(Command):
             'default': None,
             'optional': True,
             'help': 'Port of the controller to connect to'
+        },
+        'cvg': {
+            'type': int,
+            'default': None,
+            'optional': True,
+            'help': 'cvg number'
+        },
+        'data-devices': {
+            'type': str,
+            'nargs': '+',
+            'optional': True,
+            'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
+        },
+        'metadata-devices': {
+            'type': str,
+            'nargs': '+',
+            'optional': True,
+            'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
         }
     }
 
@@ -139,6 +157,9 @@ class StorageEnclosureConfig(Command):
             'storage_type':     f'storage/{enc_num}/type',
             'controller_type':  f'storage/{enc_num}/controller/type',
             'name':             f'storage/{enc_num}/name',
+            'cvg':              f'cluster/{node_id}/storage/{cvg}',
+            'data_devices':     f'cluster/{node_id}/storage/{cvg}/{data_devices}',
+            'metadate_devices': f'cluster/{node_id}/storage/{cvg}/{metadata_devices}',
         }
 
         conf_key_map = {
@@ -150,6 +171,9 @@ class StorageEnclosureConfig(Command):
             'storage_type':     f'storage_enclosure>{self.enclosure_id}>type',
             'controller_type':  f'storage_enclosure>{self.enclosure_id}>controller>type',
             'name':             f'storage_enclosure>{self.enclosure_id}>name',
+            'cvg':              f'server_node>{{machine_id}}>storage>cvg',
+            'data_devices':     f'server_node>{{machine_id}}>storage>{cvg}>{data_devices}',
+            'metadate_devices': f'server_node>{{machine_id}}>storage>{cvg}>{metadata_devices}'
         }
 
     def update_pillar_and_conf(self, key, value):
@@ -201,6 +225,10 @@ class StorageEnclosureConfig(Command):
         controller_type = kwargs.get('controller_type')
         self.mode = kwargs.get('mode')
 
+        cvg = kwargs.get('cvg')
+        data_devices = kwargs.get('data_devices')
+        metadata_devices = kwargs.get('metadata_devices')
+
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -212,7 +240,8 @@ class StorageEnclosureConfig(Command):
         )
 
         if setup_type == "VM":
-            if name or storage_type or controller_type:
+            if name or storage_type or controller_type or cvg
+                or data_devices or metadata_devices:
                 if not self.enclosure_id:
                     self.enclosure_id = "enc_" + self.machine_id
                     self.refresh_key_map()
@@ -227,8 +256,17 @@ class StorageEnclosureConfig(Command):
 
                 if controller_type:
                     self.update_pillar_and_conf('controller_type', controller_type)
+
+                if cvg:
+                    self.update_pillar_and_conf('cvg', cvg)
+
+                if data_devices:
+                    self.update_pillar_and_conf('data_devices', data_devices)
+
+                if metadata_devices:
+                    self.update_pillar_and_conf('metadata_devices', metadata_devies)
             else:
-                self.logger.error("Please provide values for name, type and controller_type")
+                self.logger.error("Please provide values for name, type and controller_type, cvg, data_devices, metadata_devices")
                 raise RuntimeError("Incomplete arguments provided")
         else:
             if user != None and password != None and ip != None and port != None:
@@ -315,6 +353,15 @@ class StorageEnclosureConfig(Command):
                             "Enclosure ID is not set: Please provide ip and port as well to set Enclosure ID"
                         )
                         raise RuntimeError("Incomplete arguments provided")
+
+                if cvg is not None:
+                    self.update_pillar_and_conf('cvg', cvg)
+
+                if data_devices:
+                    self.update_pillar_and_conf('data_devices', data_devices)
+
+                if metadata_devices:
+                    self.update_pillar_and_conf('metadata_devices', metadata_devies)
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
