@@ -211,8 +211,13 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
             if release in repos_info[release]:
                 release_info = repos_info[release][release]
-                iso_version = release_info.get('version',
-                                               ISOVersion.VERSION1.value)
+                if release_info is not None:
+                    # NOTE: release_info can be None after applying
+                    #  remove_swupgrade_repo command
+                    iso_version = release_info.get('version',
+                                                   ISOVersion.VERSION1)
+                else:
+                    iso_version = ISOVersion.VERSION1
 
         if iso_version is None and release:
             # NOTE: in case if release parameter is set
@@ -230,6 +235,8 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
                 # NOTE: it may be remote repo
                 iso_version = ISOVersion.VERSION1
 
+        # explicitly convert to enum value
+        iso_version = ISOVersion(iso_version)
         set_swupgrade_repo.set_source_version(iso_version)
         packages = set_swupgrade_repo.get_packages_version(release)
         metadata = self._get_repo_metadata(release, iso_version)

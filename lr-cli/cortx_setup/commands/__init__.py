@@ -17,8 +17,9 @@
 
 from .hostname import Hostname
 from .pillar_sync import PillarSync
+from .salt_cleanup import SaltCleanup
 from .network.config import NetworkConfig
-from .node.initialize import NodeInitalize
+from .node.initialize import NodeInitialize
 from .node.prepare.server import NodePrepareServer
 from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
@@ -59,7 +60,7 @@ __all__ = [
     'GetSignature',
     'Hostname',
     'NetworkConfig',
-    'NodeInitalize',
+    'NodeInitialize',
     'NodeFinalize',
     'NodePrepare',
     'NodePrepareFirewall',
@@ -72,5 +73,7 @@ __all__ = [
     'ResourceDiscover',
     'SecurityConfig',
     'SetSignature',
-    'StorageEnclosureConfig'
-]
+    'StorageEnclosureConfig',
+    'SaltCleanup',
+    'PillarSync'
+ ]

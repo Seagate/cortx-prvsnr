@@ -56,6 +56,7 @@ Public data zone:
     - prune_ports: True
     - prune_services: True
     - prune_interfaces: True
+    - prune_rich_rules: True
     - interfaces:
       {% for interface in data_if %}
       - {{ interface }}
@@ -91,6 +92,7 @@ Management zone:
     - prune_ports: True
     - prune_services: True
     - prune_interfaces: True
+    - prune_rich_rules: True
     - interfaces:
     {% for interface in mgmt_if %}
       - {{ interface }}
@@ -108,14 +110,66 @@ Management zone:
       - {{ service }}
       {% endfor %}
 
+{% if "data_private" in pillar['firewall'] and
+    (
+      pillar['firewall']['mgmt_public']['ports'] or
+      pillar['firewall']['mgmt_public']['services']
+    )
+%}
+Trusted zone for lo:
+  firewalld.present:
+    - name: trusted
+    - default: False
+    - masquerade: False
+    - prune_ports: True
+    - prune_services: True
+    - prune_interfaces: True
+    - prune_rich_rules: True
+    - interfaces:
+      - lo
+    - sources:
+      - 127.0.0.0/24
+
+Add private data zone:
+  module.run:
+    - firewalld.new_zone:
+      - private-data-zone
+    - unless: firewall-cmd --list-all-zones | grep private-data-zone
+
+Private data zone:
+  firewalld.present:
+    - name: private-data-zone
+    - default: False
+    - prune_ports: True
+    - prune_services: True
+    - prune_interfaces: True
+    - prune_rich_rules: True
+    - interfaces:
+      {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
+      - {{ interface }}
+      {% endfor %}
+    - services:
+      {% for service in pillar['firewall']['data_private']['services'] %}
+      - {{ service }}
+      {% endfor %}
+      {% for service in pillar['firewall']['data_private']['ports'].keys() %}
+      - {{ service }}
+      {% endfor %}
+    - require:
+      - Add private data zone
+      {% for service in pillar['firewall']['data_private']['ports'].keys() %}
+      - {{ service }}
+      {% endfor %}
+{% else %}
 Private data zone:
   firewalld.present:
     - name: trusted
     - default: False
     - masquerade: False
-    - prune_ports: False
-    - prune_services: False
+    - prune_ports: True
+    - prune_services: True
     - prune_interfaces: True
+    - prune_rich_rules: True
     - interfaces:
       - lo
       {% for interface in pillar['cluster'][grains['id']]['network']['data']['private_interfaces'] %}
@@ -126,6 +180,7 @@ Private data zone:
       {% if pillar['cluster'][grains['id']]['network']['data']['private_ip'] %}
       - {{ pillar['cluster'][grains['id']]['network']['data']['private_ip'].rsplit('.',1)[0] }}.0/24
       {% endif %}
+{% endif %}
 
 Restart firewalld:
   module.run:
