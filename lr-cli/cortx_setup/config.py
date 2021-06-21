@@ -31,3 +31,7 @@ CONFIG_PATH = Path('/root/config.ini')
 ENCLOSURE_ID = Path('/etc/enclosure-id')
 
 CERT_PATH = Path('/etc/ssl/stx')
+
+# resource map generation and manifest generation
+RETRIES = 30
+WAIT = 5
