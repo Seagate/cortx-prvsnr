@@ -174,7 +174,7 @@ class StorageEnclosureConfig(Command):
 
         self.logger.debug(f"Writing storage enclosure_id to the file {enc_file_path}")
         file = open(enc_file_path, "w")
-        file.write(self.enclosure_id + "\n")
+        file.write(self.enclosure_id)
         file.close()
 
     def encrypt_password(self, password):
