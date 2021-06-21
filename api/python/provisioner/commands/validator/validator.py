@@ -30,6 +30,10 @@ from provisioner.errors import ValidationError
 logger = logging.getLogger(__name__)
 
 
+ARMOR_HEADER = "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+ARMOR_TAIL = "-----END PGP PUBLIC KEY BLOCK-----"
+
+
 class PathValidator(ABC):
 
     """Abstract Path Validator class defines the interface for inheritance."""
@@ -638,7 +642,6 @@ class ReleaseInfoValidatorBase(FileValidator):
 
 @attr.s(auto_attribs=True)
 class AuthenticityValidator(PathValidator):
-
     """
     Class for file authenticity validation using GPG tool
 
@@ -660,6 +663,59 @@ class AuthenticityValidator(PathValidator):
         converter=utils.converter_path_resolved,
         default=None
     )
+
+    @staticmethod
+    def _convert_key_to_open_pgp_format(pub_key_path: Path) -> Path:
+        """
+        Check if GPG Public key in ASCII Armor format. If so format it to
+        OpenPGP format.
+
+        Parameters
+        ----------
+        pub_key_path: Path
+            Path to GPG public key
+
+        Returns
+        -------
+        Path:
+            path to the file with GPG public key in OpenPGP format
+
+        """
+        # NOTE: for the ASCII Armor format, please, refer to RFC4880
+        #  https://datatracker.ietf.org/doc/html/rfc4880#section-6.2
+
+        # NOTE: return given path itself if it is in OpenPGP format already
+        res = pub_key_path
+        with open(pub_key_path, "rb") as fh:
+            # NOTE: read file as binary file since OpenPGP is binary format
+            content = fh.readlines()
+            armor_header = content[0]
+            armor_tail = content[-1]
+
+        # NOTE: we check that the armor header and armor tail in binary
+        #  representation exist in the first and the last line of
+        #  the pub key file.
+        if (ARMOR_HEADER.encode() in armor_header
+                and ARMOR_TAIL.encode() in armor_tail):
+            # NOTE: it means that provided public key is in ASCII Armor format
+            cmd = f"gpg --yes --dearmor {pub_key_path.resolve()}"
+            try:
+                # NOTE: by default gpg tool converts the given file to the file
+                #  with the same name + '.gpg' extension at the end.
+                #  Directory is the same
+                cmd_run(cmd, targets=local_minion_id())
+            except Exception as e:
+                logger.error("Can't convert ASCII Armor GPG public key "
+                             f"'{pub_key_path.resolve()}'"
+                             f"to OpenPGP format: '{e}'")
+                raise ValidationError(
+                    f'Public key conversion error: "{e}"') from e
+            else:
+                # NOTE: because .with_suffix method replaces the last suffix
+                suffix = pub_key_path.suffix + ".gpg"
+                res = pub_key_path.with_suffix(suffix)
+
+        return res
 
     def validate(self, path: Path) -> str:
         """
@@ -684,14 +740,19 @@ class AuthenticityValidator(PathValidator):
         logger.debug(f"Start '{path}' file authenticity validation")
 
         if self.gpg_public_key is not None:
-            cmd = (f"gpg --no-default-keyring --keyring {self.gpg_public_key} "
+            # NOTE: for validation signature with the custom GPG pub key
+            #  it is required to use pub key in OpenPGP format, not in
+            #  ASCII Armor format (--armor option of gpg tool)
+            open_pgp_key = self._convert_key_to_open_pgp_format(
+                self.gpg_public_key
+            )
+            cmd = (f"gpg --no-default-keyring --keyring {open_pgp_key} "
                    f"--verify {self.signature} {path}")
         else:
             cmd = f"gpg --verify {self.signature} {path}"
 
         try:
-            res = cmd_run(cmd, targets=local_minion_id(),
-                          fun_kwargs=dict(python_shell=True))
+            res = cmd_run(cmd, targets=local_minion_id())
         except Exception as e:
             logger.debug(f'Authenticity check is failed: "{e}"')
             raise ValidationError(
