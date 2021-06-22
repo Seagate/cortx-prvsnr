@@ -31,15 +31,12 @@ class ClusterCreate(Command):
     _args = {
         'name': {
             'type': str,
-            'default': 'cortx_cluster',
             'optional': True},
         'site_count': {
             'type': int,
-            'default': 1,
             'optional': True},
         'storageset_count': {
             'type': int,
-            'default': 1,
             'optional': True}
     }
 
