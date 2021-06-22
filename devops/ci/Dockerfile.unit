@@ -14,16 +14,17 @@ COPY python $PROJECT_PATH
 RUN pip3 install ${PROJECT_PATH}[test]
 RUN rm -rf $PROJECT_PATH
 
-ARG TEST_USER
-ENV TEST_USER=${TEST_USER:-test}
+# ARG TEST_USER
+# ENV TEST_USER=${TEST_USER:-test}
 
-ARG TEST_USER_GROUP
-ENV TEST_USER_GROUP=${TEST_USER_GROUP:-test}
+# ARG TEST_USER_GROUP
+# ENV TEST_USER_GROUP=${TEST_USER_GROUP:-test}
 
-ARG uid=1000
-ARG gid=1000
+# ARG uid=1000
+# ARG gid=1000
 
-RUN groupadd -g ${gid} ${TEST_USER_GROUP}
-RUN useradd -c "test user" -d /home/${TEST_USER} -u ${uid} -g ${gid} -m ${TEST_USER}
+# RUN groupadd -g ${gid} ${TEST_USER_GROUP}
+# RUN useradd -c "test user" -d /home/${TEST_USER} -u ${uid} -g ${gid} -m ${TEST_USER}
 
-USER ${TEST_USER}
+# USER ${TEST_USER}
+
