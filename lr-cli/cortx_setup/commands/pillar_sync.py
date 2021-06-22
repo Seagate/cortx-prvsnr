@@ -28,8 +28,6 @@ import json
 
 
 class PillarSync(Command):
-    _args = {
-    }
 
     def run(self, **kwargs):
         self.logger.debug("Updating pillar data")

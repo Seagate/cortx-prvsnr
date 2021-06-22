@@ -15,13 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-glusterfs:
-  in_docker: false
-  network_type: mgmt  # mgmt/data
-  volumes:
-    - name: volume_prvsnr_data
-      export_dir: /srv/glusterfs/volume_prvsnr_data
-      mount_dir: /var/lib/seagate/cortx/provisioner/shared
-    - name: volume_salt_cache_jobs
-      export_dir: /srv/glusterfs/volume_salt_cache_jobs
-      mount_dir: /var/cache/salt/master/jobs
+from provisioner.salt import local_minion_id
+from provisioner.utils import run_subprocess_cmd
+from .command import Command
+
+
+class SaltCleanup(Command):
+
+    def run(self):
+        minion_id = local_minion_id()
+        if minion_id:
+            self.logger.debug(f"removing minion {minion_id} from salt cluster")
+            run_subprocess_cmd(f"salt-key -d {minion_id} -y")
+        self.logger.debug("Remove minion_id and minion_master.pub from system")
+        run_subprocess_cmd(f"rm -rf /etc/salt/minion_id")
+        run_subprocess_cmd(f"rm -rf /etc/salt/pki/minion/minion_master.pub")
+        self.logger.debug(f"Minion {minion_id} removed from salt configurtion")

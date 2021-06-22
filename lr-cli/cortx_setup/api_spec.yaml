@@ -23,13 +23,20 @@ hostname:
 pillar_sync:
   PillarSync
 
+salt_cleanup:
+  SaltCleanup
+  
+server:
+  config:
+    ServerConfig
+
 network:
   config:
     NetworkConfig
 
 node:
   initialize:
-    NodeInitalize
+    NodeInitialize
   finalize:
     NodeFinalize
   prepare:
