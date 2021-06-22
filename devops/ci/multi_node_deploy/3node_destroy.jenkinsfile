@@ -172,6 +172,10 @@ node ('provisioning'){
 
             stage("${remote.name}: Stop services") {
                 sshCommand remote: remote, command: """
+                    kill -9 \$(ps -ax | grep [c]onsul | awk '{printf \$1 " "}') || true
+                    kill -9 \$(ps -ax | grep [h]ax | awk '{printf \$1 " "}') || true
+                    kill -9 \$(ps -ax | grep [m]0d | awk '{printf \$1 " "}') || true
+
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
                     systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
                     systemctl status glusterd >/dev/null && systemctl stop glusterd || true
@@ -228,9 +232,6 @@ node ('provisioning'){
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
                     #test -e /etc/yum.repos.d && pushd /etc/yum.repos.d;rm -fv !("redhat.repo");popd || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
-                    kill -9 \$(ps -ax | grep [c]onsul | awk '{printf \$1 " "}')
-                    kill -9 \$(ps -ax | grep [h]ax | awk '{printf \$1 " "}')
-                    kill -9 \$(ps -ax | grep [m]0d | awk '{printf \$1 " "}')
                 """
                 echo "Successfully removed file and directories."
             }
