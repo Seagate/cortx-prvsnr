@@ -75,56 +75,77 @@ node ('provisioning'){
 
         stage("Teardown: HA") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states ha
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states ha
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: HA"
         }
 
         stage("Teardown: Control-Path") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states controlpath || true
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states controlpath
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Control-Path"
         }
 
         stage("Teardown: IO-Path") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states iopath || true
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states iopath
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: IO-Path"
         }
 
         stage("Teardown: Foundation") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states utils || true
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states utils
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Foundation"
         }
 
         stage("Teardown: 3rd_Party") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states prereq
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states prereq
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: 3rd-Party"
         }
 
         stage("Teardown: Platform") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states system
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states system
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Platform"
         }
 
         stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remotes[0], command: """
-                command -v provisioner &>/dev/null && \
-                provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/setup.log --states bootstrap
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states bootstrap
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Bootstrap"
         }
