@@ -50,49 +50,77 @@ node ('provisioning'){
 
             stage("Teardown: HA") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states ha
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states ha
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: HA"
             }
 
             stage("Teardown: Control-Path") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states controlpath || true
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states controlpath
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Control-Path"
             }
 
             stage("Teardown: IO-Path") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states iopath || true
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states iopath
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: IO-Path"
             }
 
             stage("Teardown: Foundation") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states utils || true
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states utils
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Foundation"
             }
 
             stage("Teardown: 3rd_Party") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states prereq
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states prereq
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: 3rd-Party"
             }
 
             stage("Teardown: Platform") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states system
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states system
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Platform"
             }
 
             stage("Teardown: Provisioner Bootstrap") {
             sshCommand remote: remote, command: """
-                command -v provisioner &>/dev/null && provisioner destroy --states bootstrap
+                if command -v provisioner &>/dev/null ; then
+                    provisioner destroy --logfile --logfile-filename /var/log/seagate/provisioner/destroy.log --states bootstrap
+                else
+                    echo "provisioner command doesn't exist, check of python32-cortx-prvsnr is installed."
+                fi
             """
             echo "Successful teardown: Bootstrap"
             }
@@ -118,6 +146,10 @@ node ('provisioning'){
 
             stage("Stop services") {
                 sshCommand remote: remote, command: """
+                    kill -9 \$(ps -ax | grep [c]onsul | awk '{printf \$1 " "}') || true
+                    kill -9 \$(ps -ax | grep [h]ax | awk '{printf \$1 " "}') || true
+                    kill -9 \$(ps -ax | grep [m]0d | awk '{printf \$1 " "}') || true
+
                     systemctl status glustersharedstorage >/dev/null && systemctl stop glustersharedstorage || true
                     systemctl status glusterfsd >/dev/null && systemctl stop glusterfsd || true
                     systemctl status glusterd >/dev/null && systemctl stop glusterd || true
@@ -173,9 +205,6 @@ node ('provisioning'){
                     test -e /etc/yum.repos.d/RELEASE_FACTORY.INFO && rm -f /etc/yum.repos.d/RELEASE_FACTORY.INFO || true
                     #test -e /etc/yum.repos.d && pushd /etc/yum.repos.d;rm -fv !("redhat.repo");popd || true
                     test -e /root/.ssh && rm -rf /root/.ssh || true
-                    kill -9 \$(ps -ax | grep [c]onsul | awk '{printf \$1 " "}')
-                    kill -9 \$(ps -ax | grep [h]ax | awk '{printf \$1 " "}')
-                    kill -9 \$(ps -ax | grep [m]0d | awk '{printf \$1 " "}')
                 """
                 echo "Successfully removed."
             }

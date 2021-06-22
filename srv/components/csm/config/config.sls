@@ -15,6 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+
+Register features to be unsuported:
+  module.run:
+    - cortx_unsupported_features.register:
+      - component: provisioner
+      - unsupported_feature_list:
+        - fw_update
+      - setup_types:
+        - VM
+        - virtual
+        - other
+        - JBOD
+
 Stage - Config CSM:
   cmd.run:
     - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/csm/conf/setup.yaml', 'csm:config')
