@@ -19,6 +19,8 @@
 # $ salt-call saltutil.clear_cache
 # $ salt-call saltutil.sync_modules
 # $ salt-call cortx_unsupported_features.register component='provisioner' unsupported_feature_list='["fw_update"]' setup_types='["VM", "virtual", "other", "JBOD"]'
+# To enable debug logs in above command:
+# $ salt-call cortx_unsupported_features.register component='provisioner' unsupported_feature_list='["fw_update"]' setup_types='["VM", "virtual", "other", "JBOD"]' -ldebug
 # $ systemctl restart csm_agent csm_web
 
 
