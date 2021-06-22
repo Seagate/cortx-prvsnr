@@ -156,9 +156,13 @@ class SWUpgrade(CommandParserFillerMixin):
             "SW Upgrade: delegating remaing phases"
             " to upgraded orchestrator logic"
         )
+
+        cmd = "provisioner sw_upgrade --noprepare"
+        if flow == config.CortxFlows.UPGRADE_OFFLINE:
+            cmd += ' --offline'
+
         return cmd_run(
-            "provisioner sw_upgrade --noprepare"
-            f"{'' if (flow == config.CortxFlows.UPGRADE) else ' --offline'}"
+            cmd, targets=config.LOCAL_MINION
         )
 
     def plan_upgrade(self, flow):
@@ -233,7 +237,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
     def upgrade(self, flow, from_ver, to_ver):
         # TODO: can skip that if no changes for Orchestrator
-        ret = cmd_run('provisioner --version')
+        ret = cmd_run('provisioner --version', targets=config.LOCAL_MINION)
         new_prvsnr_version = next(iter(ret.values()))
         # Note. assumption: case new version < old version is validated
         #       as part of validate stage
@@ -312,9 +316,10 @@ class SWUpgrade(CommandParserFillerMixin):
 
         ret = None
         try:
+            cortx_version = GetReleaseVersion.cortx_version()
+            upgrade_version = GetSWUpgradeInfo.cortx_version()
+
             if not noprepare:
-                cortx_version = GetReleaseVersion.cortx_version()
-                upgrade_version = GetSWUpgradeInfo.cortx_version()
                 logger.info(
                     f"Starting"
                     f" {'rolling' if (flow == config.CortxFlows.UPGRADE) else 'offline'}"  # noqa: E501
