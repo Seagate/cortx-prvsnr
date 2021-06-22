@@ -274,7 +274,7 @@ try {
                     developers(),
                     requestor()
                 ],
-                to: '$DEFAULT_RECIPIENTS ' + env.CHANGE_AUTHOR_EMAIL
+                to: 'tanuja.shinde@seagate.com'
             ]
             emailext emailMessage
         }
