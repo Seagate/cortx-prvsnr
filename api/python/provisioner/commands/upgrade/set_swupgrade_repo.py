@@ -87,8 +87,7 @@ SW_UPGRADE_BUNDLE_SCHEME_VER1 = {
         required=True),
     CORTX_PYTHON_ISO_DIR: DirValidator(
         {
-            # FIXME upgrade iso lacks that
-            "index.html": FileValidator(required=False)
+            "index.html": FileValidator(required=True)
         },
         required=False),
     OS_ISO_DIR: DirValidator(
@@ -475,17 +474,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             )
             logger.warning(err_msg)
 
-            # TODO IMPROVE later raise and error
-            if False:
-                raise SWUpdateRepoSourceError(
-                    # FIXME repo is undefined here
-                    # str(repo.source),
-                    str(repo_name),
-                    (
-                        "SW upgrade repository for the release "
-                        f"'{release}' has been already enabled"
-                    )
+            raise SWUpdateRepoSourceError(
+                str(repo_name),
+                (
+                    f"SW upgrade repository '{repo_name}' for the release "
+                    f"'{release}' has been already enabled"
                 )
+            )
 
     @staticmethod
     def _validate_python_index(index_path: Path):

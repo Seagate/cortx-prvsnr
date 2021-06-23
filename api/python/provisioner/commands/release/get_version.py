@@ -95,7 +95,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
             if version == config.REPO_CANDIDATE_NAME:
                 continue
             release_info = base_dir / f'{version}/RELEASE.INFO'
-            # FIXME upgrade iso now may lack release file on top level
+            # Note. upgrade iso now may lack release file on top level
             if not release_info.exists():
                 release_info = (
                     base_dir / f'{version}/{config.CORTX_ISO_DIR}/RELEASE.INFO'
