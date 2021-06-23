@@ -111,6 +111,14 @@ cortx-prvsnr/
 └── └── setup.py
 ```
 
+### Field API design changes
+
+
+1. **Cluster create - Bootstrap:**   
+Currently, nodes to be clustered are getting fetched from the user as input `nodes`. But this param is not required and it must be automatically fetched from the list of salt keys (from `salt-key -L` command).   
+For this to be in place, before executing bootstrap, we'd need the node hostname to be updated as minion_id instead of `srvnode-0`. A separate API might be needed for this purpose.   
+
+
 ## Storage CVG Keys
 
 TB Added
