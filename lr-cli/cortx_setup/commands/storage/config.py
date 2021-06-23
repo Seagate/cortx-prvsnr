@@ -111,7 +111,7 @@ class StorageEnclosureConfig(Command):
         },
         'cvg': {
             'type': int,
-            'default': None,
+            'default': -1,
             'optional': True,
             'help': 'Cyllinder Volume Group number.'
         },
@@ -159,9 +159,9 @@ class StorageEnclosureConfig(Command):
             'storage_type':     f'storage/{enc_num}/type',
             'controller_type':  f'storage/{enc_num}/controller/type',
             'name':             f'storage/{enc_num}/name',
-            'cvg':              f'cluster/{node_id}/storage/cvg',
-            'data_devices':     f'cluster/{node_id}/storage/{self.cvg}/data_devices',
-            'metadate_devices': f'cluster/{node_id}/storage/{self.cvg}/metadata_devices'
+            'cvg':              f'cluster/{node_id}/storage/cvg_count',
+            'data_devices':     f'cluster/{node_id}/storage/cvg/data_devices',
+            'metadate_devices': f'cluster/{node_id}/storage/cvg/metadata_devices'
         }
 
         conf_key_map = {
@@ -173,9 +173,9 @@ class StorageEnclosureConfig(Command):
             'storage_type':     f'storage_enclosure>{self.enclosure_id}>type',
             'controller_type':  f'storage_enclosure>{self.enclosure_id}>controller>type',
             'name':             f'storage_enclosure>{self.enclosure_id}>name',
-            'cvg':              f'server_node>{self.machine_id}>storage>cvg',
-            'data_devices':     f'server_node>{self.machine_id}>storage>{self.cvg}>data_devices',
-            'metadate_devices': f'server_node>{self.machine_id}>storage>{self.cvg}>metadata_devices'
+            'cvg':              f'server_node>{self.machine_id}>storage>cvg_count',
+            'data_devices':     f'server_node>{self.machine_id}>storage>cvg>data_devices',
+            'metadate_devices': f'server_node>{self.machine_id}>storage>cvg>metadata_devices'
         }
 
     def update_pillar_and_conf(self, key, value):
@@ -276,7 +276,7 @@ class StorageEnclosureConfig(Command):
             if name:
                 self.update_pillar_and_conf('name', name)
             if storage_type:
-                if storage_type != "virtual":
+                if storage_type == "virtual":
                     self.update_pillar_and_conf('storage_type', storage_type)
                 else:
                     self.logger.error(
@@ -292,8 +292,7 @@ class StorageEnclosureConfig(Command):
                     self.logger.error(
                         "Controller type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
-
-            if not name and not storage_type and controller_type and not self.cvg:
+            if not name and not storage_type and not controller_type and not self.cvg:
                 self.logger.error(
                     "Please provide valid arguments,"
                     " for VM only {name, type, cvg} arguments are accepted"
@@ -466,7 +465,7 @@ class StorageEnclosureConfig(Command):
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
                     except:
-                        raise ValidationError(
+                        raise ValueError(
                             f"Validation for data device {device} failed\n"
                             "Please provide the correct device")
                 self.update_pillar_and_conf('data_devices', ddevices)
@@ -477,7 +476,7 @@ class StorageEnclosureConfig(Command):
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
                     except:
-                        raise ValidationError(
+                        raise ValueError(
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
 
