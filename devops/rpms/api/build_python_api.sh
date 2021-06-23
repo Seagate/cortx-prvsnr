@@ -24,7 +24,7 @@ repo_root_dir="$(realpath $script_dir/../../../)"
 docker_image_name="seagate/cortx-prvsnr:fpm"
 
 in_docker=false
-input_dir="$repo_root_dir/api/python"
+input_dir=("$repo_root_dir/api/python" "$repo_root_dir/lr-cli")
 output_dir=.
 output_type=rpm
 fpm_tool=fpm
@@ -88,14 +88,14 @@ function parse_args {
                 in_docker=true
                 shift
                 ;;
-            -i|--in-dir)
-                input_dir="$2"
-                if [[ ! -d "$input_dir" ]]; then
-                    >&2 echo "'$input_dir' not a directory"
-                    exit 5
-                fi
-                shift 2
-                ;;
+            # -i|--in-dir)
+            #     input_dir="$2"
+            #     if [[ ! -d "$input_dir" ]]; then
+            #         >&2 echo "'$input_dir' not a directory"
+            #         exit 5
+            #     fi
+            #     shift 2
+            #     ;;
             -o|--out-dir)
                 output_dir="$2"
                 if [[ ! -d "$output_dir" ]]; then
@@ -146,7 +146,7 @@ fi
 if [[ "$verbosity" -ge 1 ]]; then
     parsed_args=""
     parsed_args+="\toutput_dir=$output_dir\n\toutput_type=$output_type"
-    parsed_args+="\n\tin_docker=$in_docker\n\tinput_dir=$input_dir"
+    parsed_args+="\n\tin_docker=$in_docker\n\tinput_dir=${input_dir[@]}"
     parsed_args+="\n\tfpm_tool=$fpm_tool\n\tverbosity=$verbosity"
     parsed_args+="\n\trelease=$pkg_version"
 
@@ -159,9 +159,16 @@ if [[ -n "$pkg_version" ]]; then
     iteration="--iteration $pkg_version"
 fi
 
-tmp_dir="$(mktemp -d)"
-cp -r "${input_dir}/." "${tmp_dir}"
-input_dir="$tmp_dir"
+new_dir=()
+
+for dir in "${input_dir[@]}";
+do
+    tmp_dir="$(mktemp -d)";
+    cp -r "${dir}/." "${tmp_dir}";
+    new_dir+=("$tmp_dir")
+done
+
+input_dir=(${new_dir[@]})
 
 pushd "$output_dir"
     rm -f python3*-cortx-prvsnr*
@@ -176,9 +183,12 @@ if [[ "$in_docker" == true ]]; then
         docker build -t $docker_image_name "$docker_build_dir"
     popd
 
-    input_dir="$(realpath $input_dir)"
-    output_dir="$(realpath $output_dir)"
-    fpm_tool="docker run --rm -u $(id -u):$(id -g) -v $input_dir:/tmp/in -v $output_dir:/tmp/out $docker_image_name"
+    for dir in "${input_dir[@]}";
+    do
+        input_dir="$(realpath $dir)";
+        output_dir="$(realpath $output_dir)"
+        fpm_tool="docker run --rm -u $(id -u):$(id -g) -v $input_dir:/tmp/in -v $output_dir:/tmp/out $docker_image_name"
+    done
     input_dir="/tmp/in"
     output_dir="/tmp/out"
 fi
@@ -201,8 +211,8 @@ $fpm_tool --input-type "python" \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
     --rpm-auto-add-directories \
-    --before-install "$input_dir/provisioner/srv/salt/provisioner/files/pre_setup.sh" \
-    --after-install "$input_dir/provisioner/srv/salt/provisioner/files/post_setup.sh" \
+    --before-install "${input_dir[0]}/provisioner/srv/salt/provisioner/files/pre_setup.sh" \
+    --after-install "${input_dir[0]}/provisioner/srv/salt/provisioner/files/post_setup.sh" \
     --package "${output_dir}" \
     $iteration \
     "${input_dir}"
