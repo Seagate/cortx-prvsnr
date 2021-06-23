@@ -266,7 +266,7 @@ class CortxRelease:
         """
         if self._metadata is None:
             self._metadata = CortxReleaseInfo(self.load_metadata())
-        return self._metadata.metadata
+        return self._metadata
 
     @property
     def metadata(self) -> dict:
