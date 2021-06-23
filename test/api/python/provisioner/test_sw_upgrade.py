@@ -18,7 +18,7 @@ import re
 from pathlib import Path
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 import yaml
 from provisioner.commands.check import CheckResult, CheckEntry
 
@@ -102,7 +102,9 @@ def test_get_swupgrade_info():
                         'get_swupgrade_info.local_minion_id')
     local_minion_id2 = ('provisioner.commands.upgrade.'
                         'set_swupgrade_repo.local_minion_id')
-    load_yaml = 'provisioner.commands.upgrade.set_swupgrade_repo.load_yaml'
+    cortx_release_cls = (
+        'provisioner.commands.upgrade.set_swupgrade_repo.CortxRelease'
+    )
     cmd_run = 'provisioner.commands.upgrade.set_swupgrade_repo.cmd_run'
 
     check_res = CheckResult()
@@ -120,15 +122,24 @@ def test_get_swupgrade_info():
             patch(local_minion_id1, MagicMock()), \
             patch(local_minion_id2, MagicMock()) as local_minion_id2_mock, \
             patch('provisioner.lock.Lock', LockMock) as api_lock_mock, \
-            patch(load_yaml,
-                  MagicMock()) as load_yaml_mock, \
+            patch(
+                f"{cortx_release_cls}.metadata",
+                new_callable=PropertyMock
+            ) as metadata_mock, \
+            patch(
+                f"{cortx_release_cls}.version",
+                new_callable=PropertyMock
+            ) as version_mock, \
             patch(cmd_run, MagicMock()) as cmd_run_mock:
-        load_yaml_mock.return_value = yaml.safe_load(RELEASE_INFO)
+
+        metadata = yaml.safe_load(RELEASE_INFO)
+        metadata_mock.return_value = metadata
+        version_mock.return_value = '2.0.1-277'
         api_lock_mock.return_value = lambda fun: fun
         local_minion_id2_mock.return_value = LOCAL_MINION_ID
 
         cmd_run_mock.return_value = get_packages_versions()
 
         cortx_info = GetSWUpgradeInfo().run(iso_path='/path/to/single.iso')
-        assert cortx_info.metadata == yaml.safe_load(RELEASE_INFO)
+        assert cortx_info.metadata == metadata
         assert cortx_info.packages == get_cortx_packages()
