@@ -284,7 +284,7 @@ class SWUpgrade(CommandParserFillerMixin):
         #     except Exception:
         #         logger.exception('failed to restart salt minions')
 
-        SetReleaseVersion().run(to_ver)
+        SetReleaseVersion(to_ver).run()
 
     def run(self, offline=False, noprepare=False):  # noqa
         # TODO:

@@ -41,8 +41,7 @@ from ..errors import (
     ClusterMaintenanceDisableError,
     HAPostUpdateError,
     ClusterNotHealthyError,
-    SSLCertsUpdateError,
-    ReleaseFileNotFoundError,
+    SSLCertsUpdateError
 )
 from ..config import (
     ALL_MINIONS,

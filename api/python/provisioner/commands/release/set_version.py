@@ -16,10 +16,9 @@
 #
 
 import logging
-from typing import Type
 
 from provisioner.vendor import attr
-from provisioner import config, inputs
+from provisioner import config
 from provisioner.attr_gen import attr_ib
 
 from provisioner.commands._basic import (

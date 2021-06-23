@@ -15,9 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from configparser import ConfigParser
 from typing import Type, Union, Optional
-from urllib.parse import urlparse, unquote, ParseResult
 import json
 
 from packaging import version
@@ -26,13 +24,7 @@ from provisioner import inputs, errors
 from provisioner.commands.upgrade.set_swupgrade_repo import (CortxISOInfo,
                                                              SetSWUpgradeRepo)
 from provisioner.config import (
-    CORTX_ISO_DIR,
-    REPO_CANDIDATE_NAME,
-    RELEASE_INFO_FILE,
-    ReleaseInfo,
-    ISOVersion,
-    UpgradeReposVer2,
-    CORTX_RELEASE_INFO_FILE
+    REPO_CANDIDATE_NAME
 )
 from provisioner.pillar import PillarResolver, PillarKey
 

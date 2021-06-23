@@ -372,7 +372,7 @@ class SSLCertsUpdateError(ProvisionerError):
 
 class ReleaseFileNotFoundError(ProvisionerError):
     # FIXME reason might be an exception
-    def __init__(self, reason: str, rollback_error=None):
+    def __init__(self, reason: str = None):
         self.reason = reason
 
     def __str__(self):
