@@ -315,7 +315,7 @@ class ClusterStopError(ProvisionerError):
         return f'Failed to stop the cluster {self.reason}'
 
 
-class CLusterStartError(ClusterStopError):
+class ClusterStartError(ClusterStopError):
 
     def __str__(self):
         return f'Failed to start the cluster {self.reason}'
@@ -340,6 +340,10 @@ class SWUpdateError(ProvisionerError):
             "{}(reason={!r}, rollback_error={!r})"
             .format(self.__class__.__name__, self.reason, self.rollback_error)
         )
+
+
+class SWUpgradeError(SWUpdateError):
+    pass
 
 
 class SWUpdateFatalError(SWUpdateError):

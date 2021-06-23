@@ -31,6 +31,7 @@ from provisioner.commands import (
     PillarSet
 )
 from provisioner.commands.release import (
+    CortxRelease,
     GetReleaseVersion,
     SetReleaseVersion
 )
@@ -38,7 +39,7 @@ from provisioner.commands.mini_api import (
     HookCaller,
     MiniAPIHook
 )
-from provisioner.errors import SWUpdateError
+from provisioner.errors import SWUpgradeError
 from provisioner.salt import (
     StatesApplier,
     local_minion_id,
@@ -319,6 +320,9 @@ class SWUpgrade(CommandParserFillerMixin):
             cortx_version = GetReleaseVersion.cortx_version()
             upgrade_version = GetSWUpgradeInfo.cortx_version()
 
+            if not upgrade_version:
+                raise SWUpgradeError(f"no upgrade release is available")
+
             if not noprepare:
                 logger.info(
                     f"Starting"
@@ -351,4 +355,4 @@ class SWUpgrade(CommandParserFillerMixin):
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Upgrade failed')
-            raise SWUpdateError(update_exc) from update_exc
+            raise SWUpgradeError(update_exc) from update_exc

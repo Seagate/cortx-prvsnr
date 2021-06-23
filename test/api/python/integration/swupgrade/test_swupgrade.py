@@ -20,7 +20,8 @@ import logging
 from copy import deepcopy
 from collections import defaultdict
 
-from provisioner.commands.release import GetReleaseVersion
+from provisioner import utils
+from provisioner.commands.release import CortxRelease
 
 
 logger = logging.getLogger(__name__)
@@ -78,17 +79,29 @@ pcs_mock_tmpl = '''
 if [[ "$1" == "--help" ]]; then
     echo 'pcs help'
 elif [[ "$1 $2" == "cluster stop" ]]; then
-    rm -rf /tmp/start
+    rm -rf /tmp/start /tmp/standby
     touch /tmp/stop
 elif [[ "$1 $2" == "cluster start" ]]; then
-    rm -rf /tmp/stop
+    rm -rf /tmp/stop /tmp/standby
+    touch /tmp/start
+elif [[ "$1 $2" == "cluster standby" ]]; then
+    rm -rf /tmp/stop /tmp/start
+    touch /tmp/standby
+elif [[ "$1 $2" == "cluster unstandby" ]]; then
+    rm -rf /tmp/stop /tmp/standby
     touch /tmp/start
 elif [[ "$1" == "status" ]]; then
     if [[ -f /tmp/stop ]]; then
         echo OFFLINE:
         rm -rf /tmp/stop
-    else
+    elif [[ -f /tmp/start ]]; then
+        echo online:
         rm -rf /tmp/start
+    elif [[ -f /tmp/standby ]]; then
+        echo standby
+        rm -rf /tmp/standby
+    else
+        echo online:
     fi
 else
     echo "Unexpected args: <$@>"
@@ -146,10 +159,11 @@ def test_swupgrade_r2_offline(
 
     # new Cortx version is running
     # FIXME hard-coded
-    metadata = run_host.check_output(
-        "provisioner get_release_version"
+    metadata_str = run_host.check_output(
+        "provisioner release get_version --out yaml"
     )
-    assert GetReleaseVersion.cortx_version(metadata) == new_ver
+    metadata = utils.load_yaml_str(metadata_str)['ret']
+    assert CortxRelease(metadata=).version == new_ver
 
     #           - new provisioner API vesion was called to manage the logic
     #             with --noprepare flag

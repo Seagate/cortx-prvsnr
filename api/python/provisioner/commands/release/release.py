@@ -176,9 +176,12 @@ class CortxRelease:
                 release_data = upgrade_release.get(self.version)
                 # NOTE: release_data can be None after applying
                 #  remove_swupgrade_repo command
-                if release_data is not None:
-                    self._iso_version = release_data.get(
-                        'version', config.ISOVersion.VERSION1
+                if (
+                    isinstance(release_data, dict)
+                    and 'version' in release_data
+                ):
+                    self._iso_version = config.ISOVersion(
+                        release_data['version']
                     )
                 else:
                     # FIXME: it may be remote repo
@@ -210,7 +213,7 @@ class CortxRelease:
                 else:
                     repo = (
                         f"sw_upgrade_{config.UpgradeReposVer2.CORTX.value}"
-                        "_{self.version}"
+                        f"_{self.version}"
                     )
                     release_file = config.CORTX_RELEASE_INFO_FILE
 

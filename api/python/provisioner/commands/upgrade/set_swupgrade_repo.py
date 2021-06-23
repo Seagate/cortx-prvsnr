@@ -818,7 +818,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.debug(f"Resolved metadata {metadata}")
 
             try:
-                release = cortx_release.version
+                # TODO here cortx_release.version returns 'candidate',
+                #      it doesn't match metadata version info,
+                #      might be a case for improvement
+                release = cortx_release.release_info.version
             except KeyError:
                 raise SWUpdateRepoSourceError(
                     str(repo.source),
