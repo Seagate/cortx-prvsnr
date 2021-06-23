@@ -55,6 +55,7 @@ class StorageEnclosureConfig(Command):
     $ cortx_setup storage config --type {RBOD|JBOD|EBOD|virtual}
     $ cortx_setup storage config --controller_type {gallium|indium|virtual}
     $ cortx_setup storage config --mode {primary|secondary} --ip <ip-address> --port <port-number>
+    $ cortx_setup storage config --cvg {0|1} --metadata_devices <device list> --data_devices <data_devices>
     '''
 
     _args = {
@@ -114,13 +115,13 @@ class StorageEnclosureConfig(Command):
             'optional': True,
             'help': 'cvg number'
         },
-        'data-devices': {
+        'data_devices': {
             'type': str,
             'nargs': '+',
             'optional': True,
             'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
-        'metadata-devices': {
+        'metadata_devices': {
             'type': str,
             'nargs': '+',
             'optional': True,
@@ -172,8 +173,8 @@ class StorageEnclosureConfig(Command):
             'controller_type':  f'storage_enclosure>{self.enclosure_id}>controller>type',
             'name':             f'storage_enclosure>{self.enclosure_id}>name',
             'cvg':              f'server_node>{self.machine_id}>storage>cvg',
-            'data_devices':     f'server_node>{self.machine_id}>storage>cvg>data_devices',
-            'metadate_devices': f'server_node>{self.machine_id}>storage>cvg>metadata_devices'
+            'data_devices':     f'server_node>{self.machine_id}>storage>{self.cvg}>data_devices',
+            'metadate_devices': f'server_node>{self.machine_id}>storage>{self.cvg}>metadata_devices'
         }
 
     def update_pillar_and_conf(self, key, value):
@@ -238,77 +239,64 @@ class StorageEnclosureConfig(Command):
             'node_info_index',
             f'server_node>{self.machine_id}>type'
         )
+
         if setup_type == None:
             self.logger.error("Setup type is not set, please set the"
-            " setup type and try again, run following command to set"
-            " the setup type: 'cortx_config server config type <VM|HW>'"
+            " setup type and try again")
+            self.logger.error("Run following command to set the setup type"
+            ": 'cortx_config server config type <VM|HW>'"
             )
             raise RuntimeError("Could not find the setup type in conf store")
 
 
         if setup_type == "VM":
-            if (
-                name
-                or storage_type
-                or controller_type
-                or cvg
-                or data_devices
-                or metadata_devices
-            ):
-                if not self.enclosure_id:
-                    self.enclosure_id = "enc_" + self.machine_id
-                    self.refresh_key_map()
-                    self.store_in_file()
-                    self.update_pillar_and_conf(
-                        'enclosure_id',
-                        self.enclosure_id
-                    )
+            storage_type_in_conf = Conf.get (
+                'node_info_index',
+                f'storage_enclosure>{self.enclosure_id}>type'
+            )
 
-                if name:
-                    self.update_pillar_and_conf('name', name)
+            if not storage_type and not storage_type_in_conf:
+                #Set storage type to virtual for VM.
+                self.logger.debug(
+                    "Storage type is not provided, but since this is VM,"
+                    " setting the storage type to 'virtual'"
+                )
+                storage_type = "virtual"
+                self.update_pillar_and_conf('storage_type', storage_type)
 
+            if not self.enclosure_id:
+                self.enclosure_id = "enc_" + self.machine_id
+                self.refresh_key_map()
+                self.store_in_file()
+                self.update_pillar_and_conf(
+                    'enclosure_id',
+                    self.enclosure_id
+                )
+
+            if name:
+                self.update_pillar_and_conf('name', name)
+            if storage_type:
                 if storage_type != "virtual":
+                    self.update_pillar_and_conf('storage_type', storage_type)
+               else:
                     self.logger.error(
                         "Storage type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
-                else:
-                    self.update_pillar_and_conf('storage_type', storage_type)
-
-                if controller_type != "virtual":
-                    self.logger.error(
-                        "Controller type needs to be 'virtual' for VM")
-                    raise ValueError("Incorrect argument value provided")
-                else:
+            if controller_type:
+                if controller_type == "virtual":
                     self.update_pillar_and_conf(
                         'controller_type',
                         controller_type
                     )
-
-                if cvg > 1:
-                    self.logger.error(
-                        "The value of CVG has to be either 0 or 1")
-                    raise ValueError("Incorrect argument value provided")
                 else:
-                    self.update_pillar_and_conf('cvg', cvg)
+                    self.logger.error(
+                        "Controller type needs to be 'virtual' for VM")
+                    raise ValueError("Incorrect argument value provided")
 
-                if data_devices:
-                    ddevices = data_devices.split(",")
-                    for device in ddevices:
-                        cmd_run(f"ls {device}", targets=node_id)
-
-                    self.update_pillar_and_conf('data_devices', ddevices)
-
-                if metadata_devices:
-                    mdevices = data_devices.split(",")
-                    for device in mdevices:
-                        cmd_run(f"ls {device}", targets=node_id)
-
-                    self.update_pillar_and_conf('metadata_devices', mdevices)
-
-            else:
+            if not name and not storage_type and controller_type and not cvg:
                 self.logger.error(
-                    "Please provide values for name, type and controller_type,"
-                    " cvg, data_devices, metadata_devices"
+                    "Please provide valid arguments,"
+                    " for VM only {name, type, cvg} arguments are accepted"
                 )
                 raise RuntimeError("Incomplete arguments provided")
         else:
@@ -340,82 +328,29 @@ class StorageEnclosureConfig(Command):
                 self.update_pillar_and_conf('port', port)
             else:
                 self.refresh_key_map()
+                # Handle following cases:
+                # 1. only user or the password is provided
+                # 2. only ip or port is provided
+                # cortx_setup storage config --user
+                # cortx_setup storage config --password
+                # cortx_setup storage config --ip
+                # cortx_setup storage config --port
 
-                if name is not None:
-                    if self.enclosure_id:
-                        self.update_pillar_and_conf('name', name)
-                    else:
-                        self.logger.error("Enclosure ID is not set"
-                            "Run following command to set the enclosure id:"
-                            "cortx_setup storage config --user <user>"
-                            " --password <passwd> --ip <ip> --port <port>")
-                        raise RuntimeError(
-                            "Cannot set enclosure name without enclosure id"
-                        )
+                if (user and not password) or (password and not user):
+                    self.logger.error(
+                        f"Please provide 'user' and 'passowrd' together")
+                    raise RuntimeError("Imcomplete arguments provided")
 
-                if storage_type is not None:
-                    if self.enclosure_id:
-                        if storage_type == "virtual":
-                            self.logger.error(
-                            "Storage type can not be 'virtual' for HW")
-                            raise ValueError("Incorrect argument value provided")
-                        else:
-                            self.update_pillar_and_conf(
-                                'storage_type',
-                                storage_type
-                            )
-                    else:
-                        self.logger.error("Enclosure ID is not set"
-                            "Run following command to set the enclosure id:"
-                            "cortx_setup storage config --user <user>"
-                            " --password <passwd> --ip <ip> --port <port>")
-                        raise RuntimeError(
-                            "Cannot set enclosure type without enclosure id"
-                        )
-
-                if controller_type is not None:
-                    if self.enclosure_id:
-                        if controller_type == "virtual":
-                            self.logger.error(
-                            "Controller type can not be 'virtual' for HW")
-                            raise ValueError("Incorrect argument value provided")
-                        else:
-                            self.update_pillar_and_conf(
-                                'controller_type',
-                                controller_type
-                            )
-                    else:
-                        self.logger.error("Enclosure ID is not set"
-                            "Run following command to set the enclosure id:"
-                            "cortx_setup storage config --user <user>"
-                            " --password <passwd> --ip <ip> --port <port>")
-                        raise RuntimeError(
-                            "Cannot set controller type without enclosure id"
-                        )
-
-                if self.mode is not None:
-                    if ip is None and port is None:
-                        self.logger.exception(
-                            f"Sub options for mode {self.mode} are missing"
-                        )
-                        raise RuntimeError('Please provide ip and/or port')
-
-                    if self.enclosure_id:
-                        if ip:
-                            self.update_pillar_and_conf('ip', ip)
-
-                        if port:
-                            self.update_pillar_and_conf('port', port)
-                    else:
-                        self.logger.error("Enclosure ID is not set"
-                            "Run following command to set the enclosure id:"
-                            "cortx_setup storage config --user <user>"
-                            " --password <passwd> --ip <ip> --port <port>")
-                        raise RuntimeError(
-                            "Cannot set mode, ip and port without enclosure id"
-                        )
+                if (ip and not mode) or (port and not mode):
+                    #ip and port can not be provided with 'mode' argument
+                    self.logger.error(
+                        f"Please use 'mode' option to provide 'ip' or 'port'\n"
+                        f"e.g. cortx_setup storage config --mode primary --ip {ip}"
+                    )
+                    raise RuntimeError("Imcomplete arguments provided")
 
                 if user is not None and password is not None:
+                # cortx_setup storage config --user --password
                     if self.enclosure_id:
                         host = get_pillar_data(
                             f"storage/{enc_num}/controller/primary/ip"
@@ -423,14 +358,12 @@ class StorageEnclosureConfig(Command):
                         port = get_pillar_data(
                             f"storage/{enc_num}/controller/primary/port"
                             )[node_id][f'storage/{enc_num}/controller/primary/port']
-
                         valid_connection_check = EnclosureInfo(
                                                     host,
                                                     user,
                                                     password,
                                                     port
                                                 ).connection_status()
-
                         if valid_connection_check:
                             self.update_pillar_and_conf('user', user)
                             self.update_pillar_and_conf('password', password)
@@ -441,34 +374,114 @@ class StorageEnclosureConfig(Command):
                             )
                             raise ValueError("Invalid credentials provided")
                     else:
-                        self.logger.error(
-                            "Enclosure ID is not set:"
-                            " Please provide controller ip and port to fetch"
-                            " the enclosure id"
-                        )
-                        raise RuntimeError("Incomplete arguments provided")
+                        self.logger.error(f"Enclosure ID is not set\n"
+                            "Run following command to set the enclosure id:"
+                            "cortx_setup storage config --user <user>"
+                            " --password <passwd> --ip <ip> --port <port>")
+                        raise RuntimeError("Imcomplete arguments provided")
 
-                if cvg > 1:
-                    self.logger.error(
-                        "The value of CVG has to be either 0 or 1")
-                    raise ValueError("Incorrect argument value provided")
+            if name is not None:
+                if self.enclosure_id:
+                    self.update_pillar_and_conf('name', name)
                 else:
-                    self.update_pillar_and_conf('cvg', cvg)
+                    self.logger.error(f"Enclosure ID is not set.\n"
+                        "Run following command to set the enclosure id:"
+                        "cortx_setup storage config --user <user>"
+                        " --password <passwd> --ip <ip> --port <port>")
+                    raise RuntimeError(
+                        "Cannot set enclosure name without enclosure id"
+                    )
+            if storage_type is not None:
+                if self.enclosure_id:
+                    if storage_type == "virtual":
+                        self.logger.error(
+                        "Storage type can not be 'virtual' for HW")
+                        raise ValueError("Incorrect argument value provided")
+                    else:
+                        self.update_pillar_and_conf(
+                            'storage_type',
+                            storage_type
+                        )
+                else:
+                    self.logger.error(f"Enclosure ID is not set\n"
+                        "Run following command to set the enclosure id:"
+                        "cortx_setup storage config --user <user>"
+                        " --password <passwd> --ip <ip> --port <port>")
+                    raise RuntimeError(
+                        "Cannot set enclosure type without enclosure id"
+                    )
+            if controller_type is not None:
+                if self.enclosure_id:
+                    if controller_type == "virtual":
+                        self.logger.error(
+                        "Controller type can not be 'virtual' for HW")
+                        raise ValueError("Incorrect argument value provided")
+                    else:
+                        self.update_pillar_and_conf(
+                            'controller_type',
+                            controller_type
+                        )
+                else:
+                    self.logger.error(f"Enclosure ID is not set\n"
+                        "Run following command to set the enclosure id:"
+                        "cortx_setup storage config --user <user>"
+                        " --password <passwd> --ip <ip> --port <port>")
+                    raise RuntimeError(
+                        "Cannot set controller type without enclosure id"
+                    )
+            if self.mode is not None:
+                if ip is None and port is None:
+                    self.logger.exception(
+                        f"Sub options for mode {self.mode} are missing"
+                    )
+                    raise RuntimeError('Please provide ip and/or port')
 
-                if data_devices:
-                    ddevices = data_devices.split(",")
-                    for device in ddevices:
+                if self.enclosure_id:
+                    if ip:
+                        self.update_pillar_and_conf('ip', ip)
+
+                    if port:
+                        self.update_pillar_and_conf('port', port)
+                else:
+                    self.logger.error(f"Enclosure ID is not set\n"
+                        "Run following command to set the enclosure id:"
+                        "cortx_setup storage config --user <user>"
+                        " --password <passwd> --ip <ip> --port <port>")
+                    raise RuntimeError(
+                        "Cannot set mode, ip and port without enclosure id"
+                    )
+
+        if cvg is not None:
+            if data_devices is None and metadata_devices is None:
+                self.logger.error(
+                    "The parameters data_devices and metadata_devices"
+                    " are missing")
+                raise RuntimeError("Incomplete arguments provided")
+
+            self.update_pillar_and_conf('cvg', cvg)
+
+            if data_devices:
+                ddevices = data_devices.split(",")
+                for device in ddevices:
+                    try:
                         cmd_run(f"ls {device}", targets=node_id)
+                    except:
+                        raise ValidationError(
+                            f"Validation for data device {device} failed\n"
+                            "Please provide the correct device")
+                self.update_pillar_and_conf('data_devices', ddevices)
 
-                    self.update_pillar_and_conf('data_devices', ddevices)
-
-                if metadata_devices:
-                    mdevices = data_devices.split(",")
-                    for device in mdevices:
+            if metadata_devices:
+                mdevices = metadata_devices.split(",")
+                for device in mdevices:
+                    try:
                         cmd_run(f"ls {device}", targets=node_id)
+                    except:
+                        raise ValidationError(
+                                f"Validation for data device {device} failed\n"
+                                "Please provide the correct device")
 
-                    self.update_pillar_and_conf('metadata_devices', mdevices)
-
+                self.update_pillar_and_conf('metadata_devices', mdevices)
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
