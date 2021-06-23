@@ -27,8 +27,8 @@ from provisioner.commands._basic import (
     CommandParserFillerMixin,
 )
 
-from .get_version import GetReleaseVersion
-from .set_version import SetReleaseVersion
+from .get_release import GetRelease
+from .set_release import SetRelease
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,8 @@ class CortxReleaseCmd(CommandParserFillerMixin):
     _run_args_type = None
 
     cmds_list = {
-        'get_version': GetReleaseVersion,
-        'set_version': SetReleaseVersion,
+        'get_release': GetRelease,
+        'set_release': SetRelease,
     }
 
     # XXX DRY copy-paste from Helper command

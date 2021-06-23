@@ -34,9 +34,9 @@ get_params:
 get_node_id:
   type: GetNodeId
 get_release_version:
-  type: release.GetReleaseVersionLegacy
+  type: release.GetReleaseLegacy
 get_factory_version:
-  type: release.GetFactoryVersionLegacy
+  type: release.GetFactoryLegacy
 get_setup_info:
   type: GetSetupInfo
 check:

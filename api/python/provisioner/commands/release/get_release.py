@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class GetReleaseVersion(CommandParserFillerMixin):
+class GetRelease(CommandParserFillerMixin):
     description = (
         "A command to get CORTX release."
     )
@@ -128,18 +128,18 @@ class GetReleaseVersion(CommandParserFillerMixin):
 
 
 @attr.s(auto_attribs=True)
-class GetReleaseVersionLegacy(CommandParserFillerMixin):
+class GetReleaseLegacy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = None
 
     def run(self):
-        return json.dumps(GetReleaseVersion().run(factory=False))
+        return json.dumps(GetRelease().run(factory=False))
 
 
 @attr.s(auto_attribs=True)
-class GetFactoryVersionLegacy(CommandParserFillerMixin):
+class GetFactoryLegacy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = None
 
     def run(self):
-        return json.dumps(GetReleaseVersion().run(factory=True))
+        return json.dumps(GetRelease().run(factory=True))

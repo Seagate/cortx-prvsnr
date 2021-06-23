@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class SetReleaseVersion(CommandParserFillerMixin):
+class SetRelease(CommandParserFillerMixin):
     description = (
         "A command to set CORTX release."
     )

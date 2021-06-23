@@ -31,8 +31,8 @@ from provisioner.commands import (
     PillarSet
 )
 from provisioner.commands.release import (
-    GetReleaseVersion,
-    SetReleaseVersion
+    GetRelease,
+    SetRelease
 )
 from provisioner.commands.mini_api import (
     HookCaller,
@@ -284,7 +284,7 @@ class SWUpgrade(CommandParserFillerMixin):
         #     except Exception:
         #         logger.exception('failed to restart salt minions')
 
-        SetReleaseVersion(to_ver).run()
+        SetRelease(to_ver).run()
 
     def run(self, offline=False, noprepare=False):  # noqa
         # TODO:
@@ -316,7 +316,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
         ret = None
         try:
-            cortx_version = GetReleaseVersion.cortx_version()
+            cortx_version = GetRelease.cortx_version()
             upgrade_version = GetISOVersion.run()
 
             if not upgrade_version:
@@ -335,7 +335,7 @@ class SWUpgrade(CommandParserFillerMixin):
             ret = self.upgrade(flow, cortx_version, upgrade_version)
 
             # final check of upgraded version
-            cortx_version = GetReleaseVersion.cortx_version()
+            cortx_version = GetRelease.cortx_version()
 
             if cortx_version != upgrade_version:
                 msg = (

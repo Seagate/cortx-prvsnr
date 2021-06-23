@@ -24,7 +24,7 @@ from provisioner.vendor import attr
 
 from .get_swupgrade_info import GetSWUpgradeInfo
 
-from provisioner.commands.release import GetReleaseVersion
+from provisioner.commands.release import GetRelease
 
 from provisioner.errors import ProvisionerError
 
@@ -54,7 +54,7 @@ class GetISOVersion(CommandParserFillerMixin):
 
         """
 
-        release_ver = GetReleaseVersion.cortx_version()
+        release_ver = GetRelease.cortx_version()
         upgrade_ver = GetSWUpgradeInfo.cortx_version()
 
         if upgrade_ver is None:

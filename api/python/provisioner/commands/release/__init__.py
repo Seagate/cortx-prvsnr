@@ -20,21 +20,21 @@ from .release import (
     CortxReleaseInfo,
     CortxRelease
 )
-from .get_version import (
-    GetReleaseVersion,
-    GetReleaseVersionLegacy,
-    GetFactoryVersionLegacy,
+from .get_release import (
+    GetRelease,
+    GetReleaseLegacy,
+    GetFactoryLegacy,
 )
-from .set_version import SetReleaseVersion
+from .set_release import SetRelease
 from .release_cmd import CortxReleaseCmd
 
 __all__ = [
     "CortxReleaseUrl",
     "CortxReleaseInfo",
     "CortxRelease",
-    "GetReleaseVersion",
-    "GetReleaseVersionLegacy",
-    "GetFactoryVersionLegacy",
-    "SetReleaseVersion",
+    "GetRelease",
+    "GetReleaseLegacy",
+    "GetFactoryLegacy",
+    "SetRelease",
     "CortxReleaseCmd"
 ]

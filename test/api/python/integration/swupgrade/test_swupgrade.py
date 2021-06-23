@@ -160,10 +160,10 @@ def test_swupgrade_r2_offline(
     # new Cortx version is running
     # FIXME hard-coded
     metadata_str = run_host.check_output(
-        "provisioner release get_version --out yaml"
+        "provisioner release get_release --out yaml"
     )
     metadata = utils.load_yaml_str(metadata_str)['ret']
-    assert CortxRelease(metadata=).version == new_ver
+    assert CortxRelease(metadata=metadata).version == new_ver
 
     #           - new provisioner API vesion was called to manage the logic
     #             with --noprepare flag
