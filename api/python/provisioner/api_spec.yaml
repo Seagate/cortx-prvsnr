@@ -34,9 +34,9 @@ get_params:
 get_node_id:
   type: GetNodeId
 get_release_version:
-  type: release.GetReleaseVersion
+  type: release.GetReleaseVersionLegacy
 get_factory_version:
-  type: release.GetFactoryVersion
+  type: release.GetFactoryVersionLegacy
 get_setup_info:
   type: GetSetupInfo
 check:
@@ -213,4 +213,4 @@ mini_api:
   type: mini_api.MiniAPI
 
 release:
-  type: release.CortxRelease
+  type: release.CortxReleaseCmd

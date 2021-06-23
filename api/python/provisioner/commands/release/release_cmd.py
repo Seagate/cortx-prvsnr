@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True)
-class CortxRelease(CommandParserFillerMixin):
+class CortxReleaseCmd(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = None
 
@@ -50,43 +50,43 @@ class CortxRelease(CommandParserFillerMixin):
             parents = []
 
         subparsers = parser.add_subparsers(
-            dest='release',
+            dest='release_cmd',
             title='Various Cortx Release Commands',
             description='valid commands',
             # requried=True # ( sad, but python 3.6 doesn't have that
         )
 
-        for helper_name, helper_t in cls.cmds_list.items():
+        for cmd_name, cmd_t in cls.cmds_list.items():
             subparser = subparsers.add_parser(
-                helper_name, description=helper_t.description,
-                help=f"{helper_name} command help", parents=parents,
+                cmd_name, description=cmd_t.description,
+                help=f"{cmd_name} command help", parents=parents,
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )
-            inputs.ParserFiller.fill_parser(helper_t, subparser)
+            inputs.ParserFiller.fill_parser(cmd_t, subparser)
 
     # XXX DRY copy-paste from Helper command
     @classmethod
     def extract_positional_args(cls, kwargs):
-        helper_t = cls.cmds_list[kwargs.pop('release')]
-        _args = [helper_t]
+        cmd_t = cls.cmds_list[kwargs.pop('release_cmd')]
+        _args = [cmd_t]
 
         args, kwargs = super().extract_positional_args(kwargs)
         _args.extend(args)
 
         args, kwargs = inputs.ParserFiller.extract_positional_args(
-            helper_t, kwargs
+            cmd_t, kwargs
         )
         _args.extend(args)
 
         return _args, kwargs
 
     @staticmethod
-    def run(helper_t, *args, **kwargs):
-        helper_kwargs = {
+    def run(cmd_t, *args, **kwargs):
+        cmd_kwargs = {
             k: kwargs.pop(k) for k in list(kwargs)
-            if k in attr.fields_dict(helper_t)
+            if k in attr.fields_dict(cmd_t)
         }
 
-        cmd = helper_t(*args, **helper_kwargs)
+        cmd = cmd_t(*args, **cmd_kwargs)
 
         return cmd.run(**kwargs)

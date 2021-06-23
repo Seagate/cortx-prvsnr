@@ -36,23 +36,18 @@ from provisioner.commands._basic import (
     CommandParserFillerMixin
 )
 
+from .release import CortxRelease
+
 logger = logging.getLogger(__name__)
 
 
-@attr.s(auto_attribs=True)
-class GetReleaseVersionRunArgs:
-    factory: bool = attr_ib(cli_spec='release/factory', default=False)
-
-
-# TODO TEST
 @attr.s(auto_attribs=True)
 class GetReleaseVersion(CommandParserFillerMixin):
     description = (
         "A command to get CORTX release."
     )
 
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = GetReleaseVersionRunArgs
+    factory: bool = attr_ib(cli_spec='release/factory', default=False)
 
     _installed_rpms: List = attr.ib(init=False, default=None)
 
@@ -61,15 +56,11 @@ class GetReleaseVersion(CommandParserFillerMixin):
         cls, release_metadata: Optional[Union[str, dict]] = None
     ):
         if release_metadata is None:
-            release_metadata = cls().run()
+            release = cls().cortx_release()
+        else:
+            release = CortxRelease(metadata=release_metadata)
 
-        if isinstance(release_metadata, str):
-            release_metadata = json.loads(release_metadata)
-
-        return (
-            f"{release_metadata[config.ReleaseInfo.VERSION.value]}-"
-            f"{release_metadata[config.ReleaseInfo.BUILD.value]}"
-        )
+        return release.version
 
     @property
     def installed_rpms(self) -> List:
@@ -93,7 +84,7 @@ class GetReleaseVersion(CommandParserFillerMixin):
                 set(self.installed_rpms).issubset(release_rpms))
 
     def _get_release_info_path(self):
-        release_info = ''
+        release_info = None
         update_repo = PillarKey('release/upgrade')
         pillar = PillarResolver(local_minion_id()).get([update_repo])
         pillar = next(iter(pillar.values()))
@@ -114,10 +105,11 @@ class GetReleaseVersion(CommandParserFillerMixin):
                 if self._compare_rpms_info(release_rpms):
                     return release_info
 
-    def run(self, factory=False):
+    def cortx_release(self, factory=False):
         if factory:
-            source = config.CORTX_RELEASE_FACTORY_INFO_PATH
-        elif config.CORTX_RELEASE_INFO_PATH.exists():
+            return CortxRelease.factory_release()
+
+        if config.CORTX_RELEASE_INFO_PATH.exists():
             source = config.CORTX_RELEASE_INFO_PATH
         else:
             # fallback to legacy logic
@@ -129,13 +121,25 @@ class GetReleaseVersion(CommandParserFillerMixin):
         if not source.exists():
             raise errors.ReleaseFileNotFoundError()
 
-        return json.dumps(utils.load_yaml(source))
+        return CortxRelease(metadata_url=source)
+
+    def run(self, factory=False):
+        return self.cortx_release(factory=factory).metadata
 
 
 @attr.s(auto_attribs=True)
-class GetFactoryVersion(CommandParserFillerMixin):
+class GetReleaseVersionLegacy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
     _run_args_type = None
 
     def run(self):
-        return GetReleaseVersion().run(factory=True)
+        return json.dumps(GetReleaseVersion().run(factory=False))
+
+
+@attr.s(auto_attribs=True)
+class GetFactoryVersionLegacy(CommandParserFillerMixin):
+    input_type: Type[inputs.NoParams] = inputs.NoParams
+    _run_args_type = None
+
+    def run(self):
+        return json.dumps(GetReleaseVersion().run(factory=True))

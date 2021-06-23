@@ -20,7 +20,7 @@ import logging
 from copy import deepcopy
 from collections import defaultdict
 
-from provisioner.commands import GetReleaseVersion
+from provisioner.commands.release import GetReleaseVersion
 
 
 logger = logging.getLogger(__name__)

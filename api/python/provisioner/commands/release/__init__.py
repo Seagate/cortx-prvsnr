@@ -15,13 +15,26 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from .get_version import GetReleaseVersion, GetFactoryVersion
+from .release import (
+    CortxReleaseUrl,
+    CortxReleaseInfo,
+    CortxRelease
+)
+from .get_version import (
+    GetReleaseVersion,
+    GetReleaseVersionLegacy,
+    GetFactoryVersionLegacy,
+)
 from .set_version import SetReleaseVersion
-from .release import CortxRelease
+from .release_cmd import CortxReleaseCmd
 
 __all__ = [
+    "CortxReleaseUrl",
+    "CortxReleaseInfo",
+    "CortxRelease",
     "GetReleaseVersion",
-    "GetFactoryVersion",
+    "GetReleaseVersionLegacy",
+    "GetFactoryVersionLegacy",
     "SetReleaseVersion",
-    "CortxRelease"
+    "CortxReleaseCmd"
 ]

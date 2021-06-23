@@ -25,15 +25,11 @@ from provisioner.attr_gen import attr_ib
 from provisioner.commands._basic import (
     CommandParserFillerMixin,
 )
-from provisioner.commands.upgrade import GetSWUpgradeInfo
 from provisioner.salt import StateFunExecuter
 
+from .release import CortxRelease
+
 logger = logging.getLogger(__name__)
-
-
-@attr.s(auto_attribs=True)
-class SetReleaseVersionRunArgs:
-    release: str = attr_ib(cli_spec='release/version', default=None)
 
 
 @attr.s(auto_attribs=True)
@@ -42,27 +38,17 @@ class SetReleaseVersion(CommandParserFillerMixin):
         "A command to set CORTX release."
     )
 
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = SetReleaseVersionRunArgs
+    release: str = attr_ib(cli_spec='release/version')
 
-    def run(self, release=None):
-        if release is None:
-            release = GetSWUpgradeInfo.cortx_version()
-
-        if release:
-            url = GetSWUpgradeInfo.get_release_info_url()
-            source = (url.path if url.is_local else str(url))
-        else:
-            logger.info(
-                'No upgrade release is found, setting the factory one'
-            )
-            source = config.CORTX_RELEASE_FACTORY_INFO_PATH
+    def run(self):
+        url = CortxRelease(version=self.release).metadata_url
+        logger.debug(f"Found url '{url}' for the release '{self.release}'")
 
         StateFunExecuter.execute(
             'file.managed',
             fun_kwargs=dict(
-                name=config.CORTX_RELEASE_INFO_PATH,
-                source=source,
+                name=str(config.CORTX_RELEASE_INFO_PATH),
+                source=(url.path if url.is_local else str(url)),
                 create=True,
                 replace=True,
                 user='root',

@@ -20,20 +20,19 @@ from pathlib import Path
 from typing import Type, Union, Any
 from urllib.parse import urlparse, unquote
 
-import requests
 from configparser import ConfigParser
 
+from provisioner.vendor import attr
 from provisioner.commands import Check
 from provisioner.commands.upgrade import CheckISOAuthenticity
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
-from ..set_swupdate_repo import SetSWUpdateRepo
-from .. import inputs, values
+from provisioner.commands.set_swupdate_repo import SetSWUpdateRepo
+from provisioner import inputs, values
 from provisioner.config import (REPO_CANDIDATE_NAME,
                                 IS_REPO_KEY,
                                 RELEASE_INFO_FILE,
                                 CORTX_RELEASE_INFO_FILE,
                                 THIRD_PARTY_RELEASE_INFO_FILE,
-                                ReleaseInfo,
                                 PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
                                 CORTX_ISO_DIR,
                                 CORTX_3RD_PARTY_ISO_DIR,
@@ -52,19 +51,21 @@ from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
                                 SWUpdateError
                                 )
-from provisioner.utils import (load_yaml,
-                               load_checksum_from_file,
-                               load_checksum_from_str,
-                               HashInfo, load_yaml_str
-                               )
-from ..validator import (DirValidator,
-                         FileValidator,
-                         FileSchemeValidator,
-                         ReleaseInfoValidator,
-                         ThirdPartyReleaseInfoValidator,
-                         YumRepoDataValidator,
-                         HashSumValidator)
-from provisioner.vendor import attr
+from provisioner.utils import (
+    load_checksum_from_file,
+    load_checksum_from_str,
+    HashInfo
+)
+from provisioner.commands.validator import (
+    DirValidator,
+    FileValidator,
+    FileSchemeValidator,
+    ReleaseInfoValidator,
+    ThirdPartyReleaseInfoValidator,
+    YumRepoDataValidator,
+    HashSumValidator
+)
+from provisioner.commands.release import CortxRelease
 
 
 logger = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ SW_UPGRADE_BUNDLE_SCHEME_VER2 = {
                 {
                     THIRD_PARTY_RELEASE_INFO_FILE:
                         ThirdPartyReleaseInfoValidator(),
-                    ISOVer2.PYTHON:  DirValidator(
+                    ISOVer2.PYTHON: DirValidator(
                         {
                             "index.html": FileValidator(required=True)
                         },
@@ -169,8 +170,7 @@ SW_UPGRADE_BUNDLE_SCHEME_VER2 = {
                                 empty=True
                             )
                         },
-                        required=True
-                    )
+                        required=True)
                 },
                 required=False,
                 empty=True
@@ -678,7 +678,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # NOTE: yum repoinfo supports the wildcards in the name of a searching
         #  repository
         if not dry_run and self._does_repo_exist(
-                    f'sw_upgrade_*_{params.release}'):
+            f'sw_upgrade_*_{params.release}'
+        ):
             logger.warning(
               'other repo candidate was found, proceeding with force removal'
             )
@@ -815,34 +816,19 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             self._base_repo_validation(candidate_repo, base_dir, dry_run)
 
-            if candidate_repo.is_remote():
-                iso_root_dir = f'{candidate_repo.source}'
-            else:
-                iso_root_dir = base_dir / REPO_CANDIDATE_NAME
-
-            release_file = self.get_release_file_path(iso_root_dir)
-            metadata = self.load_metadata(release_file,
-                                          candidate_repo.is_remote())
+            cortx_release = CortxRelease(REPO_CANDIDATE_NAME)
+            metadata = cortx_release.metadata
 
             repo.metadata = metadata
             logger.debug(f"Resolved metadata {metadata}")
 
-            # the metadata file includes release info
-            # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
-            #  well formed
-            release = metadata.get(ReleaseInfo.RELEASE.value, None)
-
-            if release is None:
-                try:
-                    release = (
-                        f'{metadata[ReleaseInfo.VERSION.value]}-'
-                        f'{metadata[ReleaseInfo.BUILD.value]}'
-                    )
-                except KeyError:
-                    raise SWUpdateRepoSourceError(
-                            str(repo.source),
-                            f"No release data found in '{RELEASE_INFO_FILE}'"
-                    )
+            try:
+                release = cortx_release.version
+            except KeyError:
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"No release data found in '{RELEASE_INFO_FILE}'"
+                )
 
             self._post_repo_validation(candidate_repo, base_dir, dry_run)
 
@@ -879,7 +865,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         if (
             python_index_path.exists()
-            and any(p for p in python_index_path.iterdir() if p.is_dir())
+            and any(
+                p for p in python_index_path.iterdir() if p.is_dir()
+            )
         ):
             config = ConfigParser()
             config.read(PIP_CONFIG_FILE)
@@ -987,33 +975,3 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
 
         return res
-
-    @staticmethod
-    def load_metadata(release_file_path: str, remote: bool = False):
-        """
-
-        Parameters
-        ----------
-        release_file_path
-        remote
-
-        Returns
-        -------
-        dict:
-            dictionary with Cortx repository metadata (content of RELEASE.INFO
-            file)
-
-        """
-        try:
-            if remote:
-                r = requests.get(release_file_path)
-                metadata = load_yaml_str(r.content.decode("utf-8"))
-            else:
-                metadata = load_yaml(release_file_path)
-        except Exception as exc:
-            raise SWUpdateRepoSourceError(
-                        str(release_file_path),
-                        f"Failed to load '{release_file_path}' file: {exc}"
-                    )
-
-        return metadata
