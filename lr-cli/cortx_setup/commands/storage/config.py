@@ -294,7 +294,7 @@ class StorageEnclosureConfig(Command):
                 if data_devices:
                     ddevices = data_devices.split(",")
                     for device in ddevices:
-                        if cmd_run(f"ls {device}", targets=node_id)
+                        cmd_run(f"ls {device}", targets=node_id)
 
                     self.update_pillar_and_conf('data_devices', ddevices)
 
