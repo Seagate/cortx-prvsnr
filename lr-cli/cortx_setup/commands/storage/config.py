@@ -21,7 +21,7 @@ from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
 from cortx_setup.commands.common_utils import get_machine_id
 from cortx_setup.validate import ipv4
-from provisioner.api import pillar_get
+from cortx_setup.commands.common_utils import get_pillar_data
 from provisioner.commands import PillarSet
 from provisioner.salt import cmd_run, local_minion_id
 from .enclosure_info import EnclosureInfo
@@ -417,10 +417,10 @@ class StorageEnclosureConfig(Command):
 
                 if user is not None and password is not None:
                     if self.enclosure_id:
-                        host = pillar_get(
+                        host = get_pillar_data(
                             f"storage/{enc_num}/controller/primary/ip"
                             )[node_id][f'storage/{enc_num}/controller/primary/ip']
-                        port = pillar_get(
+                        port = get_pillar_data(
                             f"storage/{enc_num}/controller/primary/port"
                             )[node_id][f'storage/{enc_num}/controller/primary/port']
 
