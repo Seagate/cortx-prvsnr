@@ -113,7 +113,7 @@ class StorageEnclosureConfig(Command):
             'type': int,
             'default': None,
             'optional': True,
-            'help': 'cvg number'
+            'help': 'Cyllinder Volume Group number.'
         },
         'data_devices': {
             'type': str,
@@ -134,6 +134,7 @@ class StorageEnclosureConfig(Command):
         self.machine_id = get_machine_id(node_id)
         self.enclosure_id = None
         self.mode = None
+        self.cvg = None
 
         # assign value to enclosure-id from /etc/enclosure-id if it exists
         if enc_file_path.exists():
@@ -159,8 +160,8 @@ class StorageEnclosureConfig(Command):
             'controller_type':  f'storage/{enc_num}/controller/type',
             'name':             f'storage/{enc_num}/name',
             'cvg':              f'cluster/{node_id}/storage/cvg',
-            'data_devices':     f'cluster/{node_id}/storage/cvg/data_devices',
-            'metadate_devices': f'cluster/{node_id}/storage/cvg/metadata_devices'
+            'data_devices':     f'cluster/{node_id}/storage/{self.cvg}/data_devices',
+            'metadate_devices': f'cluster/{node_id}/storage/{self.cvg}/metadata_devices'
         }
 
         conf_key_map = {
@@ -226,7 +227,7 @@ class StorageEnclosureConfig(Command):
         controller_type = kwargs.get('controller_type')
         self.mode = kwargs.get('mode')
 
-        cvg = kwargs.get('cvg')
+        self.cvg = kwargs.get('cvg')
         data_devices = kwargs.get('data_devices')
         metadata_devices = kwargs.get('metadata_devices')
 
@@ -244,7 +245,7 @@ class StorageEnclosureConfig(Command):
             self.logger.error("Setup type is not set, please set the"
             " setup type and try again")
             self.logger.error("Run following command to set the setup type"
-            ": 'cortx_config server config type <VM|HW>'"
+            ": 'cortx_setup server config type <VM|HW>'"
             )
             raise RuntimeError("Could not find the setup type in conf store")
 
@@ -255,15 +256,6 @@ class StorageEnclosureConfig(Command):
                 f'storage_enclosure>{self.enclosure_id}>type'
             )
 
-            if not storage_type and not storage_type_in_conf:
-                #Set storage type to virtual for VM.
-                self.logger.debug(
-                    "Storage type is not provided, but since this is VM,"
-                    " setting the storage type to 'virtual'"
-                )
-                storage_type = "virtual"
-                self.update_pillar_and_conf('storage_type', storage_type)
-
             if not self.enclosure_id:
                 self.enclosure_id = "enc_" + self.machine_id
                 self.refresh_key_map()
@@ -272,13 +264,21 @@ class StorageEnclosureConfig(Command):
                     'enclosure_id',
                     self.enclosure_id
                 )
-
+            if not storage_type and not storage_type_in_conf:
+                #Set storage type to virtual for VM.
+                self.logger.debug(
+                    "Storage type is not provided, but since this is VM,"
+                    " setting the storage type to 'virtual'"
+                )
+                storage_type = "virtual"
+                self.update_pillar_and_conf('storage_type', storage_type)
+                storage_type = None
             if name:
                 self.update_pillar_and_conf('name', name)
             if storage_type:
                 if storage_type != "virtual":
                     self.update_pillar_and_conf('storage_type', storage_type)
-               else:
+                else:
                     self.logger.error(
                         "Storage type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
@@ -293,7 +293,7 @@ class StorageEnclosureConfig(Command):
                         "Controller type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
 
-            if not name and not storage_type and controller_type and not cvg:
+            if not name and not storage_type and controller_type and not self.cvg:
                 self.logger.error(
                     "Please provide valid arguments,"
                     " for VM only {name, type, cvg} arguments are accepted"
@@ -451,14 +451,14 @@ class StorageEnclosureConfig(Command):
                         "Cannot set mode, ip and port without enclosure id"
                     )
 
-        if cvg is not None:
+        if self.cvg is not None:
             if data_devices is None and metadata_devices is None:
                 self.logger.error(
                     "The parameters data_devices and metadata_devices"
                     " are missing")
                 raise RuntimeError("Incomplete arguments provided")
 
-            self.update_pillar_and_conf('cvg', cvg)
+            self.update_pillar_and_conf('cvg', self.cvg)
 
             if data_devices:
                 ddevices = data_devices.split(",")
