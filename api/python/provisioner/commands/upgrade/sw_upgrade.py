@@ -31,7 +31,6 @@ from provisioner.commands import (
     PillarSet
 )
 from provisioner.commands.release import (
-    CortxRelease,
     GetReleaseVersion,
     SetReleaseVersion
 )
@@ -61,7 +60,7 @@ from provisioner.cortx_ha import (
 
 
 from .sw_upgrade_node import SWUpgradeNode
-from .get_swupgrade_info import GetSWUpgradeInfo
+from .get_iso_version import GetISOVersion
 
 
 logger = logging.getLogger(__name__)
@@ -98,7 +97,7 @@ class SWUpgrade(CommandParserFillerMixin):
     def validate(self):
         logger.info('SW Upgrade Validation')
         if not is_cluster_healthy():
-            raise errors.ProvisionerError('cluster is not healthy')
+            raise errors.SWUpgradeError('cluster is not healthy')
 
         logger.info("Ensure update repos are configured")
         self._ensure_upgrade_repos_configuration()
@@ -318,10 +317,10 @@ class SWUpgrade(CommandParserFillerMixin):
         ret = None
         try:
             cortx_version = GetReleaseVersion.cortx_version()
-            upgrade_version = GetSWUpgradeInfo.cortx_version()
+            upgrade_version = GetISOVersion.run()
 
             if not upgrade_version:
-                raise SWUpgradeError(f"no upgrade release is available")
+                raise SWUpgradeError("no upgrade release is available")
 
             if not noprepare:
                 logger.info(
@@ -338,20 +337,21 @@ class SWUpgrade(CommandParserFillerMixin):
             # final check of upgraded version
             cortx_version = GetReleaseVersion.cortx_version()
 
-            if cortx_version == upgrade_version:
-                logger.info(
-                    f"Upgrade is done."
-                    f" Current version of CORTX: '{cortx_version}'"
-                )
-            else:
+            if cortx_version != upgrade_version:
                 msg = (
                     "Upgraded to not expected version: "
                     f"'{cortx_version}' instead of '{upgrade_version}'"
                 )
                 logger.error(msg)
-                raise errors.ProvisionerError(msg)
+                raise errors.SWUpgradeError(msg)
+
+            logger.info(
+                f"Upgrade is done."
+                f" Current version of CORTX: '{cortx_version}'"
+            )
 
             return ret
+
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Upgrade failed')
