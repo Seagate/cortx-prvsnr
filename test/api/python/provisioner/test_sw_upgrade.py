@@ -127,14 +127,14 @@ def test_get_swupgrade_info():
                 new_callable=PropertyMock
             ) as metadata_mock, \
             patch(
-                f"{cortx_release_cls}.version",
+                f"{cortx_release_cls}.release_info",
                 new_callable=PropertyMock
-            ) as version_mock, \
+            ) as release_info_mock, \
             patch(cmd_run, MagicMock()) as cmd_run_mock:
 
         metadata = yaml.safe_load(RELEASE_INFO)
         metadata_mock.return_value = metadata
-        version_mock.return_value = '2.0.1-277'
+        release_info_mock.return_value = MagicMock(version='2.0.1-277')
         api_lock_mock.return_value = lambda fun: fun
         local_minion_id2_mock.return_value = LOCAL_MINION_ID
 
