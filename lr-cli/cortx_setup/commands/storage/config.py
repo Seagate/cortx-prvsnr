@@ -22,8 +22,11 @@ from cortx.utils.security.cipher import Cipher
 from cortx_setup.commands.common_utils import get_machine_id
 from cortx_setup.validate import ipv4
 from cortx_setup.commands.common_utils import get_pillar_data
+from collections import OrderedDict
 from provisioner.commands import PillarSet
 from provisioner.salt import cmd_run, local_minion_id
+from provisioner.values import MISSED
+from cortx_setup.commands.common_utils import get_pillar_data
 from .enclosure_info import EnclosureInfo
 
 #TODO: Add this path in the global config
@@ -117,11 +120,13 @@ class StorageEnclosureConfig(Command):
         },
         'data_devices': {
             'type': str,
+            #'nargs': '+',
             'optional': True,
             'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
         'metadata_devices': {
             'type': str,
+            #'nargs': '+',
             'optional': True,
             'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
         }
@@ -158,8 +163,7 @@ class StorageEnclosureConfig(Command):
             'controller_type':  f'storage/{enc_num}/controller/type',
             'name':             f'storage/{enc_num}/name',
             'cvg':              f'cluster/{node_id}/storage/cvg_count',
-            'data_devices':     f'cluster/{node_id}/storage/cvg/data_devices',
-            'metadate_devices': f'cluster/{node_id}/storage/cvg/metadata_devices'
+            'cvg_devices':      f'cluster/{node_id}/storage/cvg'
         }
 
         conf_key_map = {
@@ -172,8 +176,7 @@ class StorageEnclosureConfig(Command):
             'controller_type':  f'storage_enclosure>{self.enclosure_id}>controller>type',
             'name':             f'storage_enclosure>{self.enclosure_id}>name',
             'cvg':              f'server_node>{self.machine_id}>storage>cvg_count',
-            'data_devices':     f'server_node>{self.machine_id}>storage>cvg>data_devices',
-            'metadate_devices': f'server_node>{self.machine_id}>storage>cvg>metadata_devices'
+            'cvg_devices':      f'server_node>{self.machine_id}>storage>cvg'
         }
 
     def update_pillar_and_conf(self, key, value):
@@ -226,6 +229,9 @@ class StorageEnclosureConfig(Command):
         self.mode = kwargs.get('mode')
 
         self.cvg_count = int(kwargs.get('cvg'))
+        #data_devices = []
+        #data_devices = kwargs.get('data_devices').split(",")
+        #metadata_devices = kwargs.get('metadata_devices')
         data_devices = []
         input_data_devices = kwargs.get('data_devices')
         if input_data_devices:
@@ -296,6 +302,7 @@ class StorageEnclosureConfig(Command):
                     self.logger.error(
                         "Controller type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
+        
             if not name and not storage_type and not controller_type and self.cvg_count == -1:
                 self.logger.error(
                     "Please provide valid arguments,"
@@ -462,8 +469,14 @@ class StorageEnclosureConfig(Command):
                 raise RuntimeError("Incomplete arguments provided")
 
             self.update_pillar_and_conf('cvg', self.cvg_count)
-
+            cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg') 
+            if cvg_list is MISSED:
+                cvg_list = []
+            elif isinstance(cvg_list[0], OrderedDict):
+                for i,key in enumerate(cvg_list):
+                    cvg_list[i] = dict(key)
             if data_devices:
+                print(f"data_devices: {data_devices}")
                 for device in data_devices:
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
@@ -471,9 +484,11 @@ class StorageEnclosureConfig(Command):
                         raise ValueError(
                             f"Validation for data device {device} failed\n"
                             "Please provide the correct device")
-                self.update_pillar_and_conf('data_devices', data_devices)
+                # cvg_list.insert(self.cvg_count) = {'data_devices':data_devices}
+                # self.update_pillar_and_conf('data_devices', data_devices)
 
             if metadata_devices:
+                # mdevices = metadata_devices.split(",")
                 for device in metadata_devices:
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
@@ -481,11 +496,9 @@ class StorageEnclosureConfig(Command):
                         raise ValueError(
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
-
-                self.update_pillar_and_conf(
-                    'metadata_devices',
-                    metadata_devices
-                )
+            cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
+
