@@ -26,7 +26,6 @@ from collections import OrderedDict
 from provisioner.commands import PillarSet
 from provisioner.salt import cmd_run, local_minion_id
 from provisioner.values import MISSED
-from cortx_setup.commands.common_utils import get_pillar_data
 from .enclosure_info import EnclosureInfo
 
 #TODO: Add this path in the global config
@@ -297,7 +296,7 @@ class StorageEnclosureConfig(Command):
                     self.logger.error(
                         "Controller type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
-        
+
             if not name and not storage_type and not controller_type and self.cvg_count == -1:
                 self.logger.error(
                     "Please provide valid arguments,"
@@ -462,7 +461,7 @@ class StorageEnclosureConfig(Command):
                 raise RuntimeError("Incomplete arguments provided")
 
             self.update_pillar_and_conf('cvg', self.cvg_count)
-            cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg') 
+            cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
             if cvg_list is MISSED:
                 cvg_list = []
             elif isinstance(cvg_list[0], OrderedDict):
