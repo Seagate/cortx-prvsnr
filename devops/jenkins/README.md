@@ -16,13 +16,15 @@
 
     *   [Jenkins Server](#jenkins-server)
 
+        *   [Server Configuration](#server-configuration)
         *   [Start the server](#start-the-server)
         *   [Server management](#server-management)
-        *   [Additional configuration](#additional-configuration)
+        *   [Server Configuration Changes](#server-configuration-changes)
         *   [Server Command line reference](#server-command-line-reference)
 
     *   [Jenkins Agents](#jenkins-agents)
 
+        *   [Agents Configuration](#agents-configuration)
         *   [Build and start](#build-and-start)
         *   [Agent Management](#agent-management)
         *   [Agent Command line reference](#agent-command-line-reference)
@@ -30,6 +32,7 @@
 
     *   [Provisioner Jobs on Jenkins](#provisioner-jobs-on-jenkins)
 
+        *   [Jobs Configuration](#jobs-configuration)
         *   [Jobs update](#jobs-update)
         *   [Jobs Command line reference](#jobs-command-line-reference)
 
@@ -67,6 +70,9 @@ Also a non-root user should be added into docker group.
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
+
+**Note** you will need to relogin to your current sessions to make
+your groups updated.
 
 ## Installation
 
@@ -138,7 +144,7 @@ Options:
         (push) even on a local Jenkins setup (**not for production**).
 
 *   `[server.properties]`: a set of parameters for Jenkins global configuration
-    *   **Note.** don't forget to set `ADMIN_PASSWORD` here !
+    *   **Note** don't forget to set `ADMIN_PASSWORD` here !
 
 #### Start the server
 
@@ -151,7 +157,7 @@ cortx-jenkins server create
 
 In case of local setup Jenkins will be available at `https://localhost:8083/`.
 
-**Note**. server port is always `8083` for now.
+**Note** server port is always `8083` for now.
 
 #### Server management
 
@@ -180,15 +186,14 @@ cortx-jenkins server remove
 cortx-jenkins server create
 ```
 
-**Note**. The command above won't cleanup but update the existent configuration.
+**Note** The command above won't cleanup but update the existent configuration.
 
 In latter two cases please also consider to submit a patch to `cortx-prvsnr`
 repository.
 
-**Note.** Manual configuration chnages of a running server are not considered
+**Note** Manual configuration chnages of a running server are not considered
 as a good choice. It makes sense only for ad-hoc configuration testing. Once
 tested these changes should be put into automation scripts as descrived above.
-
 
 #### Server Command line reference
 
@@ -252,11 +257,10 @@ where agent configuration takes places.
     *   `username` Jenkins user with permissions
         to Configure, Connect and Disconnect agents
 
-        *   **Note**. in case of a server configured by the current tool
+        *   **Note** in case of a server configured by the current tool
             a user may have `agent-provider` role assigned
 
     *   `token` Jenkins user acess token.
-
 
 #### Build and start
 
