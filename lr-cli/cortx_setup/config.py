@@ -35,3 +35,5 @@ ENCLOSURE_ID = Path('/etc/enclosure-id')
 CERT_PATH = Path('/etc/ssl/stx')
 SOURCE_PATH = PRVSNR_PILLAR_DIR / 'components' / 'storage.sls'
 DEST_PATH = PRVSNR_PILLAR_DIR / 'samples' / 'storage.sls'
+
+BMC_COMPONENT = 'server_node'
