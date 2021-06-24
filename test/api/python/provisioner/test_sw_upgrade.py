@@ -90,7 +90,7 @@ class LockMock:
 
 
 @pytest.mark.unit
-def test_get_swupgrade_info():
+def test_get_swupgrade_info(tmpdir_function):
     """
     Test for Provisioner wrapper over HA cluster stop command.
 
@@ -140,6 +140,9 @@ def test_get_swupgrade_info():
 
         cmd_run_mock.return_value = get_packages_versions()
 
-        cortx_info = GetSWUpgradeInfo().run(iso_path='/path/to/single.iso')
+        # FIXME avoid creation of files
+        iso_path = tmpdir_function / 'single.iso'
+        iso_path.touch()
+        cortx_info = GetSWUpgradeInfo().run(iso_path=iso_path)
         assert cortx_info.metadata == metadata
         assert cortx_info.packages == get_cortx_packages()
