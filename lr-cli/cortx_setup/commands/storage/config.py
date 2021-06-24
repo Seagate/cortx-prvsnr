@@ -227,9 +227,13 @@ class StorageEnclosureConfig(Command):
 
         self.cvg_count = int(kwargs.get('cvg'))
         data_devices = []
-        data_devices = kwargs.get('data_devices').split(",")
+        input_data_devices = kwargs.get('data_devices')
+        if input_data_devices:
+            data_devices = input_data_devices.split(",")
         metadata_devices = []
-        metadata_devices = kwargs.get('metadata_devices').split(",")
+        input_metadata_devices = kwargs.get('metadata_devices')
+        if input_metadata_devices:
+            metadata_devices = input_metadata_devices.split(",")
 
         Conf.load(
             'node_info_index',
