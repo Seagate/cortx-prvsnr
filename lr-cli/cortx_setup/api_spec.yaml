@@ -101,3 +101,6 @@ storageset:
 enclosure:
   refresh:
     RefreshEnclosureId
+
+prepare_confstore:
+  PrepareConfstore
