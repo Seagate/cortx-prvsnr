@@ -55,10 +55,16 @@ def disk_devices(device_type, devices):
     local_devices = None
     if device_type == HW_TYPE:
         local_devices = cmd_run("multipath -ll|grep mpath|sort -k2|cut -d' ' -f1|sed 's|mpath|/dev/disk/by-id/dm-name-mpath|g'|paste -s -d, -")  # noqa: E501
-        local_devices = local_devices[local_minion_id()].split(',')
+        local_devices = local_devices[local_minion_id()]
+        if not local_devices:
+            raise CortxSetupError(f"Devices are not present on system")
+        local_devices = local_devices.split(',')
     if device_type == VM_TYPE:
         local_devices = cmd_run("lsblk -o name -lpn | awk '/dev\/sd/{print}'")  # noqa: W605, E501
-        local_devices = local_devices[local_minion_id()].split('\n')
+        local_devices = local_devices[local_minion_id()]
+        if not local_devices:
+            raise CortxSetupError(f"Devices are not present on system")
+        local_devices = local_devices.split('\n')
     local_devices = set(local_devices)
     devices = set(devices)
 
