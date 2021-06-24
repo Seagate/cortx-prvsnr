@@ -120,13 +120,11 @@ class StorageEnclosureConfig(Command):
         },
         'data_devices': {
             'type': str,
-            #'nargs': '+',
-            'optional': True,
+             'optional': True,
             'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
         'metadata_devices': {
             'type': str,
-            #'nargs': '+',
             'optional': True,
             'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
         }
@@ -229,9 +227,6 @@ class StorageEnclosureConfig(Command):
         self.mode = kwargs.get('mode')
 
         self.cvg_count = int(kwargs.get('cvg'))
-        #data_devices = []
-        #data_devices = kwargs.get('data_devices').split(",")
-        #metadata_devices = kwargs.get('metadata_devices')
         data_devices = []
         input_data_devices = kwargs.get('data_devices')
         if input_data_devices:
@@ -462,7 +457,7 @@ class StorageEnclosureConfig(Command):
                     )
 
         if self.cvg_count != -1:
-            if data_devices is None and metadata_devices is None:
+            if not data_devices or not metadata_devices:
                 self.logger.error(
                     "The parameters data_devices and metadata_devices"
                     " are missing")
@@ -476,7 +471,7 @@ class StorageEnclosureConfig(Command):
                 for i,key in enumerate(cvg_list):
                     cvg_list[i] = dict(key)
             if data_devices:
-                print(f"data_devices: {data_devices}")
+                self.logger.debug(f"data_devices: {data_devices}")
                 for device in data_devices:
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
@@ -484,11 +479,8 @@ class StorageEnclosureConfig(Command):
                         raise ValueError(
                             f"Validation for data device {device} failed\n"
                             "Please provide the correct device")
-                # cvg_list.insert(self.cvg_count) = {'data_devices':data_devices}
-                # self.update_pillar_and_conf('data_devices', data_devices)
-
             if metadata_devices:
-                # mdevices = metadata_devices.split(",")
+                self.logger.debug(f"metadata_devices: {metadata_devices}")
                 for device in metadata_devices:
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
