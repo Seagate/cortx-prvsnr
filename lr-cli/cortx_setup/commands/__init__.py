@@ -23,7 +23,8 @@ from .node.initialize import NodeInitialize
 from .node.prepare.server import NodePrepareServer
 from .node.finalize import NodeFinalize
 from .cluster.create import ClusterCreate
-from .cluster.encrypt import EncryptPillar
+from .cluster.encrypt import EncryptSecrets
+from .cluster.generate import GenerateCluster
 from .cluster.show import ClusterShow
 from .cluster.config.network import ClusterNetworkConfig
 from .cluster.config.component import ClusterConfigComponent
@@ -57,7 +58,8 @@ __all__ = [
     'ClusterShow',
     'CreateStorageSet',
     'DurabilityConfig',
-    'EncryptPillar',
+    'EncryptSecrets',
+    'GenerateCluster',
     'GetSignature',
     'Hostname',
     'NetworkConfig',

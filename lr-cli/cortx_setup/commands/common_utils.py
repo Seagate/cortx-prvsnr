@@ -76,6 +76,23 @@ def get_cluster_id():
     return cluster_id
 
 
+def get_enclosure_id(node: str):
+    """
+    Get Enclosure_ID for the specific node
+
+    Parameters
+    ----------
+    node: str
+        minion_id for the node
+
+    """
+    enclosure_id = function_run('grains.get', fun_args=['enclosure_id'],
+                                targets=node)[f'{node}']
+    if not enclosure_id:
+        raise ValueError("enclosure_id is not set or missing")
+
+    return enclosure_id
+
 
 def get_provisioner_states():
     """
@@ -83,6 +100,7 @@ def get_provisioner_states():
 
     """
     return get_pillar_data('execution/noncortx_components')
+
 
 def get_cortx_states():
     """

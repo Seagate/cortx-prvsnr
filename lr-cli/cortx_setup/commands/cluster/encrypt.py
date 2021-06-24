@@ -24,15 +24,15 @@ from cortx_setup.config import (
 from provisioner.salt import StatesApplier
 
 
-class EncryptPillar(Command):
+class EncryptSecrets(Command):
     """
-    Encrypt pillar data
+    Encrypt config data
     """
 
     _args = {}
     def run(self, targets=ALL_MINIONS):
         try:
-            self.logger.debug("Encrypting pillar data")
+            self.logger.debug("Encrypting config data")
 
             for state in [
                 'components.system.config.pillar_encrypt',

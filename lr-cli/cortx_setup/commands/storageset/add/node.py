@@ -22,11 +22,11 @@ from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import (
     get_cluster_id,
+    get_machine_id,
     get_pillar_data
 )
 
 from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
 
@@ -42,15 +42,16 @@ class AddServerNode(Command):
             'type': str,
             'nargs': '+',
             'optional': False,
-            'help': 'List of server node(s) to be added to storageset'
+            'help': ('List of server node(s) space-separated to be added '
+                     'to storageset. e.g. srvnode-1 srvnode-2')
         }
     }
 
     def run(self, storage_set_name=None, server_node=None):
         try:
-            node_id = local_minion_id()
             index = 'storageset_index'
             cluster_id = get_cluster_id()
+            machine_id = []
 
             Conf.load(
                 index,
@@ -78,24 +79,29 @@ class AddServerNode(Command):
                    "Update it with `cortx_setup storageset create` command."
                 )
 
+            # Get corresponding machine-id of each node
+            for node in server_node:
+                machine_id.append(get_machine_id(node))
+
             self.logger.debug(
-                "Adding '{server_node}' to storageset "
+                "Adding machine_id '{machine_id}' to storageset "
                 f"'{storage_set_name}' in ConfStore."
             )
 
             PillarSet().run(
                 'cluster/storage_set/server_nodes',
-                server_node,
+                machine_id,
                 local=True
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>server_nodes',
-                server_node
+                machine_id
             )
 
             Conf.save(index)
-            self.logger.debug(f"Server nodes {server_node} added to Storageset")
+            self.logger.debug(f"Server nodes {server_node} with correspoding "
+                              f"machine_id {machine_id} added to Storageset")
 
         except ValueError as exc:
             raise ValueError(
