@@ -14,18 +14,36 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API to generate cluster
 
-import json
+
 from ..command import Command
-from provisioner.salt import local_minion_id, cmd_run
+from cortx_setup.config import (
+    ALL_MINIONS
+)
+from provisioner.salt import (
+    pillar_refresh,
+    StatesApplier
+)
 
+class GenerateCluster(Command):
+    """
+    Generate Cluster with sync'ed data
+    """
 
-class ClusterShow(Command):
+    def run(self, targets=ALL_MINIONS):
+        try:
+            self.logger.debug("Generating cluster pillar")
 
-    def run(self):
-        res = cmd_run('salt-key -L --out=json')
-        res = json.loads(res[local_minion_id()])
-        result = {}
-        result['cluster_nodes'] = res.get('minions')
-        result['non_cluster_nodes'] = res.get('minions_pre')
-        return result
+            StatesApplier.apply(
+                       ['components.system.config.generate_cluster_pillar'],
+                       targets=ALL_MINIONS
+            )
+
+            self.logger.debug("Refreshing config")
+            pillar_refresh(targets=ALL_MINIONS)
+
+        except Exception as exc:
+            self.logger.error(
+               f"Error in cluster generation. Reason: '{str(exc)}'"
+            )

@@ -1822,11 +1822,6 @@ class SetupProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ), targets=run_args.primary.minion_id
         )
 
-        ssh_client.cmd_run(
-            "salt-call state.apply components.provisioner.config.cluster_id",
-            targets=ALL_MINIONS
-        )
-
         return setup_ctx
 
     def run(self, *args, **kwargs):

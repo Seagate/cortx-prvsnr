@@ -59,7 +59,9 @@ cluster:
   show:
     ClusterShow
   encrypt:
-    EncryptPillar
+    EncryptSecrets
+  generate:
+    GenerateCluster 
   config:
     network:
       ClusterNetworkConfig
