@@ -151,6 +151,9 @@ class SWUpgrade(CommandParserFillerMixin):
         # logger.info('Upgrading Orchestrator on all the nodes')
         # cmd_run('provisioner sw_upgrade_node --sw orchestrator')
 
+        logger.info('Syncing salt minions')
+        cmd_run('salt-call saltutil.sync_all')
+
     def delegate(self, flow=config.CortxFlows.UPGRADE):
         logger.info(
             "SW Upgrade: delegating remaing phases"
