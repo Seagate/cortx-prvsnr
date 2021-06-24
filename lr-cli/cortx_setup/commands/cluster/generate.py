@@ -31,7 +31,6 @@ class GenerateCluster(Command):
     Generate Cluster with sync'ed data
     """
 
-    _args = {}
     def run(self, targets=ALL_MINIONS):
         try:
             self.logger.debug("Generating cluster pillar")
