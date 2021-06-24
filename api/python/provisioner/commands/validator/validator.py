@@ -477,6 +477,7 @@ class ReleaseInfoCommonContentScheme(FileContentScheme):
         validator=attr.validators.optional(
             attr.validators.instance_of(str)
         ),
+        converter=attr.converters.optional(str),
         default=None
     )
 

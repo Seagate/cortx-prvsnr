@@ -20,7 +20,7 @@ import json
 
 from packaging import version
 
-from provisioner import inputs, errors
+from provisioner import inputs, errors, utils
 from provisioner.commands.upgrade.set_swupgrade_repo import (CortxISOInfo,
                                                              SetSWUpgradeRepo)
 from provisioner.config import (
@@ -45,6 +45,8 @@ class GetSWUpgradeInfoArgs:
                 'help': "Path to SW upgrade single ISO bundle"
             }
         },
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
         default=None
     )
     release: str = attr.ib(
@@ -125,16 +127,18 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             Cortx repo metadata
 
         """
+        run_args = GetSWUpgradeInfoArgs(iso_path, release)
+
         local_minion = local_minion_id()
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
         iso_version = None
 
-        if iso_path is not None:
+        if run_args.iso_path is not None:
             # if the `iso_path` is set up, we ignore the `release` parameter
-            return set_swupgrade_repo.run(iso_path, dry_run=True)
+            return set_swupgrade_repo.run(run_args.iso_path, dry_run=True)
 
-        if release is not None:
-            cortx_release = CortxRelease(version=release)
+        if run_args.release is not None:
+            cortx_release = CortxRelease(version=run_args.release)
         else:
             # NOTE: take the latest release from SW upgrade repositories
 
@@ -157,14 +161,14 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
             # NOTE: Assumption: we expect that SW Upgrade release version
             # is formatted according to PEP-440
-            release = max(upgrade_releases, key=version.parse)
+            run_args.release = max(upgrade_releases, key=version.parse)
 
-            cortx_release = CortxRelease(version=release)
+            cortx_release = CortxRelease(version=run_args.release)
 
         iso_version = cortx_release.iso_version
 
         set_swupgrade_repo.set_source_version(iso_version)
-        packages = set_swupgrade_repo.get_packages_version(release)
+        packages = set_swupgrade_repo.get_packages_version(run_args.release)
 
         return CortxISOInfo(
             packages=packages,

@@ -48,6 +48,7 @@ class SetRelease(CommandParserFillerMixin):
             fun_kwargs=dict(
                 name=str(config.CORTX_RELEASE_INFO_PATH),
                 source=(url.path if url.is_local else str(url)),
+                skip_verify=True,
                 create=True,
                 replace=True,
                 user='root',

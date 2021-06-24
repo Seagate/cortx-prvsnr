@@ -165,7 +165,7 @@ class SWUpgrade(CommandParserFillerMixin):
             cmd, targets=config.LOCAL_MINION
         )
 
-    def plan_upgrade(self, flow):
+    def plan_upgrade(self, flow) -> List[List[str]]:
         res = []
 
         logger.info("SW Upgrade Plan Build")

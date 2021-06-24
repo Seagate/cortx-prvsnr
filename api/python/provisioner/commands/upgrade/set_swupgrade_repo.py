@@ -510,7 +510,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         pkgs = (p for p in index_path.iterdir() if p.is_dir())
         try:
-            test_package_name = next(pkgs)
+            test_package_name = next(pkgs).name
         except StopIteration:
             logger.debug("Python index is empty, skip the validation")
             return
