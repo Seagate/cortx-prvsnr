@@ -117,13 +117,11 @@ class StorageEnclosureConfig(Command):
         },
         'data_devices': {
             'type': str,
-            'nargs': '+',
             'optional': True,
             'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
         'metadata_devices': {
             'type': str,
-            'nargs': '+',
             'optional': True,
             'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
         }
@@ -134,7 +132,7 @@ class StorageEnclosureConfig(Command):
         self.machine_id = get_machine_id(node_id)
         self.enclosure_id = None
         self.mode = None
-        self.cvg = None
+        self.cvg_count = -1
 
         # assign value to enclosure-id from /etc/enclosure-id if it exists
         if enc_file_path.exists():
@@ -227,9 +225,11 @@ class StorageEnclosureConfig(Command):
         controller_type = kwargs.get('controller_type')
         self.mode = kwargs.get('mode')
 
-        self.cvg = kwargs.get('cvg')
-        data_devices = kwargs.get('data_devices')
-        metadata_devices = kwargs.get('metadata_devices')
+        self.cvg_count = int(kwargs.get('cvg'))
+        data_devices = []
+        data_devices = kwargs.get('data_devices').split(",")
+        metadata_devices = []
+        metadata_devices = kwargs.get('metadata_devices').split(",")
 
         Conf.load(
             'node_info_index',
@@ -292,7 +292,7 @@ class StorageEnclosureConfig(Command):
                     self.logger.error(
                         "Controller type needs to be 'virtual' for VM")
                     raise ValueError("Incorrect argument value provided")
-            if not name and not storage_type and not controller_type and not self.cvg:
+            if not name and not storage_type and not controller_type and self.cvg_count == -1:
                 self.logger.error(
                     "Please provide valid arguments,"
                     " for VM only {name, type, cvg} arguments are accepted"
@@ -450,29 +450,27 @@ class StorageEnclosureConfig(Command):
                         "Cannot set mode, ip and port without enclosure id"
                     )
 
-        if self.cvg is not None:
+        if self.cvg_count != -1:
             if data_devices is None and metadata_devices is None:
                 self.logger.error(
                     "The parameters data_devices and metadata_devices"
                     " are missing")
                 raise RuntimeError("Incomplete arguments provided")
 
-            self.update_pillar_and_conf('cvg', self.cvg)
+            self.update_pillar_and_conf('cvg', self.cvg_count)
 
             if data_devices:
-                ddevices = data_devices.split(",")
-                for device in ddevices:
+                for device in data_devices:
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
                     except:
                         raise ValueError(
                             f"Validation for data device {device} failed\n"
                             "Please provide the correct device")
-                self.update_pillar_and_conf('data_devices', ddevices)
+                self.update_pillar_and_conf('data_devices', data_devices)
 
             if metadata_devices:
-                mdevices = metadata_devices.split(",")
-                for device in mdevices:
+                for device in metadata_devices:
                     try:
                         cmd_run(f"ls {device}", targets=node_id)
                     except:
@@ -480,7 +478,10 @@ class StorageEnclosureConfig(Command):
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
 
-                self.update_pillar_and_conf('metadata_devices', mdevices)
+                self.update_pillar_and_conf(
+                    'metadata_devices',
+                    metadata_devices
+                )
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
