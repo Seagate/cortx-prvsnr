@@ -358,11 +358,9 @@ class StorageEnclosureConfig(Command):
                 # cortx_setup storage config --user --password
                     if self.enclosure_id:
                         host = get_pillar_data(
-                            f"storage/{enc_num}/controller/primary/ip"
-                            )[node_id][f'storage/{enc_num}/controller/primary/ip']
+                            f"storage/{enc_num}/controller/primary/ip")
                         port = get_pillar_data(
-                            f"storage/{enc_num}/controller/primary/port"
-                            )[node_id][f'storage/{enc_num}/controller/primary/port']
+                            f"storage/{enc_num}/controller/primary/port")
                         valid_connection_check = EnclosureInfo(
                                                     host,
                                                     user,
