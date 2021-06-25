@@ -22,11 +22,11 @@ from cortx_setup.commands.command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import (
     get_cluster_id,
+    get_enclosure_id,
     get_pillar_data
 )
 
 from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
 
@@ -42,20 +42,25 @@ class AddStorageEnclosure(Command):
             'type': str,
             'nargs': '+',
             'optional': False,
-            'help': 'List of storage enclosure(s) to be added to storageset'
+            'help': ('List of storage enclosure node(s) space-separated '
+                     'to be added to storageset. e.g. srvnode-1 srvnode-2')
         }
     }
 
     def run(self, storage_set_name=None, storage_enclosure=None):
         try:
-            node_id = local_minion_id()
             index = 'storageset_index'
+            cluster_id = get_cluster_id()
+            enclosure_id = []
+
+            # `storage_enclosure` adds enc_id of each node
+            # so input is node-name: srvnode-1, srvnode-2.
+            # Will/Should it be enclosure-1, enclosure-2 ?
 
             Conf.load(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
-            cluster_id = get_cluster_id()
 
             ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
             node_count = get_pillar_data("cluster/storage_set/count")
@@ -79,24 +84,31 @@ class AddStorageEnclosure(Command):
                    "Update node count with `cortx_setup storageset create` command."
                 )
 
+            # Get corresponding enclosure-id of each node
+            for node in storage_enclosure:
+                enclosure_id.append(get_enclosure_id(node))
+
             self.logger.debug(
-                "Adding '{storage_enclosure}' to storageset "
+                "Adding enclosure_id '{enclosure_id}' to storageset "
                 f"'{storage_set_name}' in ConfStore."
             )
 
             PillarSet().run(
                 'cluster/storage_set/storage_enclosures',
-                storage_enclosure,
+                enclosure_id,
                 local=True
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>storage_enclosures',
-                storage_enclosure
+                enclosure_id
             )
 
             Conf.save(index)
-            self.logger.debug(f"Storage enclosure '{storage_enclosure}' added.")
+            self.logger.debug(
+                  f"Storage enclosure for nodes {storage_enclosure} with corresponding "
+                  f"enclosure_id {enclosure_id} added to Storageset"
+            )
 
         except ValueError as exc:
             raise ValueError(

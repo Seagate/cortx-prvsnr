@@ -67,9 +67,7 @@ def set_ssl_verify(verify):
 
 
 def get_server_bridge_ip():
-    docker_client = docker.from_env()
-
-    j_server_container = docker_client.containers.get(
+    j_server_container = docker.from_env().containers.get(
         defs.SERVER_CONTAINER_NAME
     )
     return j_server_container.attrs[

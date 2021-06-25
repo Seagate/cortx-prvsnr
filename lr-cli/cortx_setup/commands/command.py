@@ -21,7 +21,7 @@ from ..log import Log
 
 class Command(object):
     logger = None
-    _args = None
+    _args = {}
 
     def __init__(self):
         if Log.logger:

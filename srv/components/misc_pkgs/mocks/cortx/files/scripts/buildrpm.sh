@@ -15,6 +15,7 @@ WORKING_DIR="$(realpath "$script_dir/..")"
 # TODO a kind of duplication for pillar/components/commons.sls
 # TODO provisioner pkgs
 PKG_COMP_LIST=(
+    "cortx-py-utils,utils"
     "cortx-csm_agent,csm"
     "cortx-hare,hare"
     "cortx-motr,motr"
