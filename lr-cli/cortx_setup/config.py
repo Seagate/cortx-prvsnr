@@ -41,3 +41,5 @@ HW_TYPE = 'HW'
 VM_TYPE = 'VM'
 SOURCE_PATH = PRVSNR_PILLAR_DIR / 'components' / 'storage.sls'
 DEST_PATH = PRVSNR_PILLAR_DIR / 'samples' / 'storage.sls'
+
+BMC_COMPONENT = 'server_node'
