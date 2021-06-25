@@ -1032,6 +1032,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             else:
                 url = run_args.target_build
 
+            # TODO use SetRelease instead
             if url.startswith(('http://', 'https://')):
                 ssh_client.cmd_run(
                     (
