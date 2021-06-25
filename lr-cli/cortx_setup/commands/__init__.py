@@ -16,6 +16,7 @@
 #
 
 from .hostname import Hostname
+from .confstore import PrepareConfstore
 from .pillar_sync import PillarSync
 from .salt_cleanup import SaltCleanup
 from .network.config import NetworkConfig
@@ -79,5 +80,6 @@ __all__ = [
     'SetSignature',
     'StorageEnclosureConfig',
     'SaltCleanup',
+    'PrepareConfstore',
     'PillarSync'
  ]
