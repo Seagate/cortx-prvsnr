@@ -40,7 +40,7 @@ class SetRelease(CommandParserFillerMixin):
     release: str = attr_ib(cli_spec='release/version')
 
     def run(self):
-        url = CortxRelease(version=self.release).metadata_url
+        url = CortxRelease(version=self.release).metadata_uri
         logger.debug(f"Found url '{url}' for the release '{self.release}'")
 
         StateFunExecuter.execute(

@@ -249,9 +249,6 @@ class SetSWUpdateRepo(Set):
                     str(repo.source), f"malformed repo: '{exc}'"
                 )
 
-            # FIXME should respect different version of iso,
-            #       need to use CortxRelease instead
-
             # TODO: take it from pillar
             # the repo includes metadata file
             iso_mount_dir = self._get_mount_dir() / REPO_CANDIDATE_NAME

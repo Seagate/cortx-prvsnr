@@ -58,6 +58,7 @@ class CortxReleaseUrl:
 
     @property
     def path(self) -> str:
+        # Note. if 'netloc' is defined 'path' will always start with '/'
         return f"{self.url.netloc}{self.url.path}"
 
     @property
@@ -92,7 +93,7 @@ class CortxRelease:
         default=None,
         converter=attr.converters.optional(CortxReleaseInfo)
     )
-    _metadata_url: Optional[CortxReleaseUrl] = attr.ib(
+    _metadata_uri: Optional[CortxReleaseUrl] = attr.ib(
         default=None,
         converter=attr.converters.optional(CortxReleaseUrl)
     )
@@ -103,7 +104,7 @@ class CortxRelease:
     def factory_release(cls):
         if cls._factory_release is None:
             cls._factory_release = cls(
-                metadata_url=config.CORTX_RELEASE_FACTORY_INFO_PATH
+                metadata_uri=config.CORTX_RELEASE_FACTORY_INFO_PATH
             )
         return cls._factory_release
 
@@ -114,17 +115,17 @@ class CortxRelease:
         #   if url is defined
         # - if both version and metadata are defined they should
         #   be consistent
-        if self._metadata_url:
+        if self._metadata_uri:
             if self._version:
                 logger.warning(
                     "'version' parameter would be ignored since"
-                    "'metadata_url' is provided"
+                    "'metadata_uri' is provided"
                 )
                 self._version = None
             if self._metadata:
                 logger.warning(
                     "'metadata' parameter would be ignored since"
-                    "'metadata_url' is provided"
+                    "'metadata_uri' is provided"
                 )
                 self._metadata = None
         elif self._metadata:
@@ -135,7 +136,7 @@ class CortxRelease:
                 )
         elif not self._version:
             raise ValueError(
-                "either 'version' or 'metadata' or 'metadata_url' "
+                "either 'version' or 'metadata' or 'metadata_uri' "
                 "should be defined"
             )
 
@@ -190,7 +191,7 @@ class CortxRelease:
         return self._iso_version
 
     @property
-    def metadata_url(self) -> CortxReleaseUrl:
+    def metadata_uri(self) -> CortxReleaseUrl:
         """
         Return URL to a Cortx repository metadata
 
@@ -200,9 +201,9 @@ class CortxRelease:
             return URL to a Cortx repository metadata file
 
         """
-        if self._metadata_url is None:
+        if self._metadata_uri is None:
             if self.is_factory:
-                self._metadata_url = CortxReleaseUrl(
+                self._metadata_uri = CortxReleaseUrl(
                     f"file://{config.CORTX_RELEASE_FACTORY_INFO_PATH}"
                 )
             else:
@@ -226,11 +227,11 @@ class CortxRelease:
                         f"'baseurl' option is missed for repo: '{repo}'"
                     )
 
-                self._metadata_url = CortxReleaseUrl(
+                self._metadata_uri = CortxReleaseUrl(
                     f'{repo_uri}/{release_file}'
                 )
 
-        return self._metadata_url
+        return self._metadata_uri
 
     def load_metadata(self):
         """
@@ -243,15 +244,15 @@ class CortxRelease:
             file)
         """
         try:
-            if self.metadata_url.is_local:
-                metadata = utils.load_yaml(self.metadata_url.path)
+            if self.metadata_uri.is_local:
+                metadata = utils.load_yaml(self.metadata_uri.path)
             else:
-                r = requests.get(str(self.metadata_url))
+                r = requests.get(str(self.metadata_uri))
                 metadata = utils.load_yaml_str(r.content.decode("utf-8"))
         except Exception as exc:
             raise errors.SWUpdateRepoSourceError(
-                str(self.metadata_url),
-                f"Failed to load '{self.metadata_url}' file: {exc}"
+                str(self.metadata_uri),
+                f"Failed to load '{self.metadata_uri}' file: {exc}"
             )
 
         return metadata

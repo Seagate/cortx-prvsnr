@@ -121,7 +121,7 @@ class GetRelease(CommandParserFillerMixin):
         if not source.exists():
             raise errors.ReleaseFileNotFoundError()
 
-        return CortxRelease(metadata_url=source)
+        return CortxRelease(metadata_uri=source)
 
     def run(self, factory=False):
         return self.cortx_release(factory=factory).metadata
