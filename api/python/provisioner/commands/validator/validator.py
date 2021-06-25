@@ -818,8 +818,8 @@ class CompatibilityValidator:
 
         # NOTE: the first line of `yum -q list installed` command is
         #  'Installed Packages' skip it via `tail -n +2`
-        cmd = (f"yum -q list installed {packages} | tail -n +2 | "
-               "awk '{print $1\" \"$2}'")
+        cmd = (f"yum -q list installed {', '.join(packages)} 2>/dev/null |"
+               f" tail -n +2 | awk '{{print $1\" \"$2}}'")
 
         try:
             res = cmd_run(cmd, targets=local_minion_id())
@@ -833,7 +833,8 @@ class CompatibilityValidator:
         if res:
             logger.debug(f"List of installed CORTX packages: {res}")
         else:
-            logger.error(f"There are no installed CORTX packages")
+            logger.warning(f"There are no installed CORTX packages")
+            return  # Nothing to validate since there are not CORTX packages
 
         res = res.split('\n')
 

@@ -992,8 +992,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         repo = f"sw_upgrade_{repo_name}_{release}"
 
-        cmd = (f"yum repo-pkgs {repo} list 2>/dev/null | "
-               f"grep '{repo}' | awk '{{print $1\" \"$2}}'")
+        # NOTE: use --enablerepo to suspend message
+        #  Repo sw_upgrade_cortx_iso_candidate has been automatically enabled.
+        #  in case of candidate repo
+        cmd = (f"yum --enablerepo={repo_name} repo-pkgs {repo} list "
+               f"2>/dev/null | grep '{repo}' | awk '{{print $1\" \"$2}}'")
 
         res = cmd_run(cmd, targets=local_minion_id(),
                       fun_kwargs=dict(python_shell=True))
@@ -1024,6 +1027,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #  compatibility with old versions
         for entry in packages:
             pkg, ver = entry.split(" ")
+            # package architecture (.noarch, .x86_64 is not needed in
+            # the name of the package
+            pkg = pkg.split('.')[0]
             res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
 
         return res
