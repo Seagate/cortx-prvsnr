@@ -73,6 +73,12 @@ sudo usermod -aG docker $USER
 
 **Note** you will need to re-login to make your groups updated.
 
+**Note** On some systems you may need to start docker daemon:
+
+```bash
+sudo systemctl start docker
+```
+
 ## Installation
 
 Run the following in activated python3 virtualenv
@@ -269,8 +275,8 @@ scope of pipeline docker container management routine (please use `sudo`
 if needed):
 
 ```bash
-mkdir /var/lib/jenkins
-chown $USER:$USER /var/lib/jenkins
+sudo mkdir /var/lib/jenkins
+sudo chown $USER:$USER /var/lib/jenkins
 ```
 
 Run:

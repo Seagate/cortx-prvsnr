@@ -100,7 +100,13 @@ def get_agent_config(server, agent):
     req = requests.Request(
         'GET', f"{server.server}/computer/{agent}/jenkins-agent.jnlp"
     )
-    resp = server.jenkins_request(req)
+    req_old = requests.Request(
+        'GET', f"{server.server}/computer/{agent}/slave-agent.jnlp"
+    )
+    try:
+        resp = server.jenkins_request(req)
+    except jenkins.NotFoundException:
+        resp = server.jenkins_request(req_old)
 
     # TODO use xml parser (??? known XML vulnerabilities)
     match = defs.AGENT_CONFIG_REGEX.search(resp.text)
