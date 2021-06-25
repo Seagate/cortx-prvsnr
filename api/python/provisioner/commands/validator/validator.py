@@ -20,9 +20,12 @@ from hmac import compare_digest
 from pathlib import Path
 from typing import Dict, Callable, Optional, Union, Type
 
+from packaging import version
+
 from provisioner import utils
 from provisioner.salt import local_minion_id, cmd_run
-from provisioner.config import ContentType, HashType
+from provisioner.config import ContentType, HashType, SWUpgradeInfoFields, \
+    ComparisonOperators
 
 from provisioner.vendor import attr
 from provisioner.errors import ValidationError
@@ -784,3 +787,128 @@ class ThirdPartyReleaseInfoValidator(ReleaseInfoValidatorBase):
         self.content_validator = ContentFileValidator(
                 scheme=ThirdPartyReleaseInfoContentScheme,
                 content_type=self.content_type)
+
+
+@attr.s(auto_attribs=True)
+class CompatibilityValidator:
+
+    """
+    Validator that checks if all SW upgrade packages are compatible with
+    installed ones.
+    """
+
+    @staticmethod
+    def _compare_versions(a: str, b: str, operator: str) -> bool:
+        """
+        Compare two version using packaging.version.parse method
+
+        Parameters
+        ----------
+        a: str
+            The first operand
+        b: str
+            The second operand
+        operator: str
+            String representation of the operator
+
+        Returns
+        -------
+        bool:
+            return True if comparison is true and False otherwise
+
+        """
+        operator = ComparisonOperators(operator)
+
+        if operator == ComparisonOperators.GREATER:
+            return version.parse(a) > version.parse(b)
+        elif operator == ComparisonOperators.LOWER:
+            return version.parse(a) < version.parse(b)
+        elif operator == ComparisonOperators.EQUAL:
+            return version.parse(a) == version.parse(b)
+        elif operator == ComparisonOperators.NOT_EQUAL:
+            return version.parse(a) != version.parse(b)
+        elif operator == ComparisonOperators.GREATER_OR_EQUAL:
+            return version.parse(a) >= version.parse(b)
+        elif operator == ComparisonOperators.LOWER_OR_EQUAL:
+            return version.parse(a) <= version.parse(b)
+        else:
+            raise ValidationError(
+                f"Unexpected comparison operator: '{operator}'")
+
+    def validate(self, iso_info):
+        """
+
+        Parameters
+        ----------
+        iso_info: CortxISOInfo
+            CortxISOInfo instance with all necessary information about
+            SW upgrade ISO
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        packages = list(iso_info.packages.keys())
+
+        # NOTE: the first line of `yum -q list installed` command is
+        #  'Installed Packages' skip it via `tail -n +2`
+        cmd = (f"yum -q list installed {packages} | tail -n +2 | " 
+               "awk '{print $1\" \"$2}'")
+
+        try:
+            res = cmd_run(cmd, targets=local_minion_id())
+        except Exception as e:
+            logger.debug(f'Package compatibility check is failed: "{e}"')
+            raise ValidationError(
+                f'Package compatibility check is failed: "{e}"') from e
+
+        res = res[local_minion_id()].strip()
+
+        if res:
+            logger.debug(f"List of installed CORTX packages: {res}")
+        else:
+            logger.error(f"There are no installed CORTX packages")
+
+        res = res.split('\n')
+
+        packages = dict()
+        for pkg in res:
+            # Aggregate version information of installed CORTX packages
+            pkg_name, version = pkg.split(" ")
+            packages[pkg_name] = version
+
+        error_msg = list()
+        for pkg in iso_info.packages:
+            if (SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
+                    in iso_info.packages[pkg]):
+                compatibility = iso_info.packages[pkg][
+                    SWUpgradeInfoFields.VERSION_COMPATIBILITY.value]
+
+                installed_ver = packages.get(pkg, None)
+                if installed_ver is None:
+                    msg = f"CORTX package {pkg} is not installed"
+                    logger.error(msg)
+                    error_msg.append(msg)
+
+                expected_ver = compatibility[SWUpgradeInfoFields.VERSION.value]
+                operator = compatibility[SWUpgradeInfoFields.OPERATOR.value]
+
+                if self._compare_versions(installed_ver,
+                                          expected_ver,
+                                          operator):
+                    logger.info(f"CORTX package {pkg} satisfies the constraint"
+                                f" version '{operator} {expected_ver}'")
+                else:
+                    msg = (f"CORTX package {pkg} does not satisfies the "
+                           f"constraint version '{operator} {expected_ver}'")
+                    logger.error(msg)
+                    error_msg.append(msg)
+
+        if error_msg:
+            raise ValidationError("During validation some compatibility "
+                                  f"errors were found: {'/n'.join(error_msg)}")

@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
+import re
 import tempfile
 from pathlib import Path
 from typing import Type, Union, Any
@@ -25,6 +26,7 @@ from configparser import ConfigParser
 
 from provisioner.commands import Check
 from provisioner.commands.upgrade import CheckISOAuthenticity
+from provisioner.commands.validator.validator import CompatibilityValidator
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
 from ..set_swupdate_repo import SetSWUpdateRepo
 from .. import inputs, values
@@ -46,7 +48,7 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 ISOKeywordsVer2 as ISOVer2,
                                 UpgradeReposVer2,
                                 CheckVerdict,
-                                Checks
+                                Checks, VERSION_COMPATIBILITY_DELIMITERS
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
@@ -196,6 +198,31 @@ class CortxISOInfo:
 
     packages: dict = attr.ib(validator=attr.validators.instance_of(dict))
     metadata: dict = attr.ib(validator=attr.validators.instance_of(dict))
+
+    def __attrs_post_init__(self):
+        # NOTE: for the convenience we add compatability information to
+        #  packages attribute
+        multiple_delimiters = '|'.join(map(re.escape,
+                                           VERSION_COMPATIBILITY_DELIMITERS))
+        for entry in self.metadata.get(ReleaseInfo.REQUIRES.value, list()):
+            # NOTE: the format are following:
+            #  REQUIRES:
+            #     - "CORTX > 2.0.0"
+            #     - "cortx-motr > 2.0.0-0"
+            pkg_name, version = re.split(multiple_delimiters, entry)
+            operator = entry.replace(pkg_name, '').replace(version, '').strip()
+            pkg_name = pkg_name.strip()
+            version = version.strip()
+            if pkg_name in self.packages:
+                res = {
+                    SWUpgradeInfoFields.VERSION.value: version,
+                    SWUpgradeInfoFields.OPERATOR.value: operator
+                }
+                self.packages[pkg_name][
+                    SWUpgradeInfoFields.VERSION_COMPATIBILITY.value] = res
+            else:
+                logger.warning('Found unbound version compatibility '
+                               f'constraint for package {pkg_name}')
 
     def __str__(self):
         return f"{{'packages': {self.packages}, 'metadata': {self.metadata}}}"
@@ -849,6 +876,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             repo.release = release
 
             packages = self.get_packages_version(REPO_CANDIDATE_NAME)
+
+            # Packages compatibility validation
+            compatibility_validator = CompatibilityValidator()
+            try:
+                compatibility_validator.validate(
+                    CortxISOInfo(packages=packages, metadata=metadata)
+                )
+            except ValidationError as e:
+                logger.debug(
+                    f"Packages compatibility check is failed: {e}"
+                )
+                raise SWUpdateRepoSourceError(
+                    str(candidate_repo.source),
+                    f"Packages compatibility check is failed {e}"
+                ) from e
+            else:
+                logger.info("Packages compatibility check succeeded")
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED

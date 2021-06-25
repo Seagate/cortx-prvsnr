@@ -486,6 +486,7 @@ class Checks(Enum):
     NETWORK_HCA = "network_hca"
     UPGRADE_ISO_VERSION = "upgrade_iso_version"
     ACTIVE_UPGRADE_ISO = "active_upgrade_iso"
+    PACKAGES_COMPATIBILITY = "packages_compatibility"
 
 
 class GroupChecks(Enum):
@@ -596,6 +597,7 @@ class ReleaseInfo(Enum):
     KERNEL = 'KERNEL'
     COMPONENTS = 'COMPONENTS'
     RELEASE = 'RELEASE'
+    REQUIRES = 'REQUIRES'
 
 
 # NOTE: for more convenient usage of check.CheckResult.get_checks method
@@ -679,7 +681,29 @@ class SWUpgradeInfoFields(Enum):
     """Named fields for meta information about SW upgrade repository"""
 
     VERSION = "version"
-    VERSION_CONSTRAINT = "version_constraint"
+    VERSION_COMPATIBILITY = "version_compatibility"
+    OPERATOR = "operator"
+
+
+class ComparisonOperators(Enum):
+    """List of comparison operators used in version compatibility."""
+
+    GREATER = '>'
+    LOWER = '<'
+    EQUAL = '=='
+    NOT_EQUAL = '!='
+    GREATER_OR_EQUAL = '>='
+    LOWER_OR_EQUAL = '<='
+
+
+VERSION_COMPATIBILITY_DELIMITERS = (
+    ComparisonOperators.GREATER.value,
+    ComparisonOperators.LOWER.value,
+    ComparisonOperators.EQUAL.value,
+    ComparisonOperators.NOT_EQUAL.value,
+    ComparisonOperators.GREATER_OR_EQUAL.value,
+    ComparisonOperators.LOWER_OR_EQUAL.value
+)
 
 
 class CortxFlows(Enum):
