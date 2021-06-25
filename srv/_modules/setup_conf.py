@@ -103,6 +103,10 @@ def _call_cmd(cmd, env=None):
     if isinstance(cmd, (list, tuple)):
         cmd = ' '.join(cmd)
 
+    logger.debug(
+        f"'{cmd}' command would be called"
+    )
+
     __salt__ = _salt_salt()
     return __salt__["cmd.run"](
         cmd, output_loglevel="trace", python_shell=True, env=env
