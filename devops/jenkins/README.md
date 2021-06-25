@@ -71,8 +71,7 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
 
-**Note** you will need to relogin to your current sessions to make
-your groups updated.
+**Note** you will need to re-login to make your groups updated.
 
 ## Installation
 
