@@ -48,7 +48,7 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 ISOKeywordsVer2 as ISOVer2,
                                 UpgradeReposVer2,
                                 CheckVerdict,
-                                Checks, VERSION_COMPATIBILITY_DELIMITERS,
+                                Checks,
                                 VERSION_DELIMITERS
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
