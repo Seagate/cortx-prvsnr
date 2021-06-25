@@ -127,7 +127,7 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             Cortx repo metadata
 
         """
-        run_args = GetSWUpgradeInfoArgs(iso_path, release)
+        run_args = self._run_args_type(iso_path, release)
 
         local_minion = local_minion_id()
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()

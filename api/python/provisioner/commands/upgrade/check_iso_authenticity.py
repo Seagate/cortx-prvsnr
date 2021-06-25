@@ -120,7 +120,7 @@ class CheckISOAuthenticity(CommandParserFillerMixin):
 
         """
         # to make converters and validators work
-        run_args = CheckISOAuthenticityArgs(
+        run_args = self._run_args_type(
             iso_path, sig_file, gpg_pub_key, import_pub_key
         )
 
