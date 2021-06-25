@@ -1,8 +1,8 @@
 include LICENSE README.md
 
 recursive-include cortx_jenkins LICENSE LICENSE* *LICENSE*
-include cortx_jenkin/cortx-jenkins.toml.example
-exclude cortx_jenkin/cortx-jenkins.toml
+include cortx_jenkins/cortx-jenkins.toml.example
+exclude cortx_jenkins/cortx-jenkins.toml
 
 graft cortx_jenkins/server
 graft cortx_jenkins/agent
