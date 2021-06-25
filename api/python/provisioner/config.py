@@ -14,7 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
+import re
 from enum import Enum
 from pathlib import Path
 import os
@@ -682,28 +682,10 @@ class SWUpgradeInfoFields(Enum):
 
     VERSION = "version"
     VERSION_COMPATIBILITY = "version_compatibility"
-    OPERATOR = "operator"
 
 
-class ComparisonOperators(Enum):
-    """List of comparison operators used in version compatibility."""
-
-    GREATER = '>'
-    LOWER = '<'
-    EQUAL = '=='
-    NOT_EQUAL = '!='
-    GREATER_OR_EQUAL = '>='
-    LOWER_OR_EQUAL = '<='
-
-
-VERSION_COMPATIBILITY_DELIMITERS = (
-    ComparisonOperators.GREATER.value,
-    ComparisonOperators.LOWER.value,
-    ComparisonOperators.EQUAL.value,
-    ComparisonOperators.NOT_EQUAL.value,
-    ComparisonOperators.GREATER_OR_EQUAL.value,
-    ComparisonOperators.LOWER_OR_EQUAL.value
-)
+VERSION_DELIMITERS = '|'.join(map(re.escape,
+                                  ('>', '<', '==', '!=', '>=', '<=')))
 
 
 class CortxFlows(Enum):

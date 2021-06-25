@@ -48,7 +48,8 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 ISOKeywordsVer2 as ISOVer2,
                                 UpgradeReposVer2,
                                 CheckVerdict,
-                                Checks, VERSION_COMPATIBILITY_DELIMITERS
+                                Checks, VERSION_COMPATIBILITY_DELIMITERS,
+                                VERSION_DELIMITERS
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
@@ -202,24 +203,19 @@ class CortxISOInfo:
     def __attrs_post_init__(self):
         # NOTE: for the convenience we add compatability information to
         #  packages attribute
-        multiple_delimiters = '|'.join(map(re.escape,
-                                           VERSION_COMPATIBILITY_DELIMITERS))
         for entry in self.metadata.get(ReleaseInfo.REQUIRES.value, list()):
             # NOTE: the format are following:
             #  REQUIRES:
             #     - "CORTX > 2.0.0"
             #     - "cortx-motr > 2.0.0-0"
-            pkg_name, version = re.split(multiple_delimiters, entry)
-            operator = entry.replace(pkg_name, '').replace(version, '').strip()
+            pkg_name = re.split(VERSION_DELIMITERS, entry)[0]
+            # NOTE: the format of compatibility_version variable is the
+            #  following:  "> 2.0.0"
+            compatibility_version = entry.replace(pkg_name, '').strip()
             pkg_name = pkg_name.strip()
-            version = version.strip()
             if pkg_name in self.packages:
-                res = {
-                    SWUpgradeInfoFields.VERSION.value: version,
-                    SWUpgradeInfoFields.OPERATOR.value: operator
-                }
-                self.packages[pkg_name][
-                    SWUpgradeInfoFields.VERSION_COMPATIBILITY.value] = res
+                key = SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
+                self.packages[pkg_name][key] = compatibility_version
             else:
                 logger.warning('Found unbound version compatibility '
                                f'constraint for package {pkg_name}')

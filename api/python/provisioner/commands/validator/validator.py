@@ -20,13 +20,12 @@ from hmac import compare_digest
 from pathlib import Path
 from typing import Dict, Callable, Optional, Union, Type
 
-from packaging import version
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
 from provisioner import utils
 from provisioner.salt import local_minion_id, cmd_run
-from provisioner.config import ContentType, HashType, SWUpgradeInfoFields, \
-    ComparisonOperators
-
+from provisioner.config import ContentType, HashType, SWUpgradeInfoFields
 from provisioner.vendor import attr
 from provisioner.errors import ValidationError
 
@@ -797,44 +796,6 @@ class CompatibilityValidator:
     installed ones.
     """
 
-    @staticmethod
-    def _compare_versions(a: str, b: str, operator: str) -> bool:
-        """
-        Compare two version using packaging.version.parse method
-
-        Parameters
-        ----------
-        a: str
-            The first operand
-        b: str
-            The second operand
-        operator: str
-            String representation of the operator
-
-        Returns
-        -------
-        bool:
-            return True if comparison is true and False otherwise
-
-        """
-        operator = ComparisonOperators(operator)
-
-        if operator == ComparisonOperators.GREATER:
-            return version.parse(a) > version.parse(b)
-        elif operator == ComparisonOperators.LOWER:
-            return version.parse(a) < version.parse(b)
-        elif operator == ComparisonOperators.EQUAL:
-            return version.parse(a) == version.parse(b)
-        elif operator == ComparisonOperators.NOT_EQUAL:
-            return version.parse(a) != version.parse(b)
-        elif operator == ComparisonOperators.GREATER_OR_EQUAL:
-            return version.parse(a) >= version.parse(b)
-        elif operator == ComparisonOperators.LOWER_OR_EQUAL:
-            return version.parse(a) <= version.parse(b)
-        else:
-            raise ValidationError(
-                f"Unexpected comparison operator: '{operator}'")
-
     def validate(self, iso_info):
         """
 
@@ -879,8 +840,8 @@ class CompatibilityValidator:
         packages = dict()
         for pkg in res:
             # Aggregate version information of installed CORTX packages
-            pkg_name, version = pkg.split(" ")
-            packages[pkg_name] = version
+            pkg_name, pkg_version = pkg.split(" ")
+            packages[pkg_name] = pkg_version
 
         error_msg = list()
         for pkg in iso_info.packages:
@@ -895,17 +856,12 @@ class CompatibilityValidator:
                     logger.error(msg)
                     error_msg.append(msg)
 
-                expected_ver = compatibility[SWUpgradeInfoFields.VERSION.value]
-                operator = compatibility[SWUpgradeInfoFields.OPERATOR.value]
-
-                if self._compare_versions(installed_ver,
-                                          expected_ver,
-                                          operator):
+                if Version(installed_ver) in SpecifierSet(compatibility):
                     logger.info(f"CORTX package {pkg} satisfies the constraint"
-                                f" version '{operator} {expected_ver}'")
+                                f" version '{compatibility}'")
                 else:
                     msg = (f"CORTX package {pkg} does not satisfies the "
-                           f"constraint version '{operator} {expected_ver}'")
+                           f"constraint version '{compatibility}'")
                     logger.error(msg)
                     error_msg.append(msg)
 
