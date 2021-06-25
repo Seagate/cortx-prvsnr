@@ -14,20 +14,17 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API for configuring cluster network
 
-from pathlib import Path
+
 from cortx_setup.commands.command import Command
+from cortx_setup.commands.common_utils import (
+    get_cluster_id
+)
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.validate import ipv4, host
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
-
-
-prvsnr_cluster_path = Path(
-    '/opt/seagate/cortx_configs/provisioner_cluster.json'
-)
-
-
-"""Cortx Setup API for configuring network"""
 
 
 class ClusterNetworkConfig(Command):
@@ -42,20 +39,22 @@ class ClusterNetworkConfig(Command):
             'type': host,
             'nargs': '+',
             'optional': True,
-            'help': 'List of search domains for provided network '
+            'help': 'List of search domains for provided network, given space-separated'
         },
         'dns_servers': {
             'type': str,
             'nargs': '+',
             'optional': True,
-            'help': 'List of DNS for provided network '
+            'help': 'List of DNS for provided network, given space-separated'
         }
     }
 
     def run(self, **kwargs):
+        cluster_id = get_cluster_id()
+        index = 'node_info_index'
         Conf.load(
-            'node_info_index',
-            f'json://{prvsnr_cluster_path}'
+            index,
+            f'json://{CONFSTORE_CLUSTER_FILE}'
         )
         for key, value in kwargs.items():
             if value:
@@ -69,9 +68,9 @@ class ClusterNetworkConfig(Command):
                 )
                 Conf.set(
                     'node_info_index',
-                    f'cluster>{key}',
+                    f'cluster>{cluster_id}>{key}',
                     value
                 )
 
-        Conf.save('node_info_index')
-        self.logger.debug("Done")
+        Conf.save(index)
+        self.logger.debug("Success: Cluster configuration")
