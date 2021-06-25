@@ -857,7 +857,7 @@ class CompatibilityValidator:
 
         # NOTE: the first line of `yum -q list installed` command is
         #  'Installed Packages' skip it via `tail -n +2`
-        cmd = (f"yum -q list installed {packages} | tail -n +2 | " 
+        cmd = (f"yum -q list installed {packages} | tail -n +2 | "
                "awk '{print $1\" \"$2}'")
 
         try:
