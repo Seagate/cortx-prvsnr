@@ -240,7 +240,6 @@ PRVSNR_CORTX_COMPONENTS = [
     'haproxy',
     'keepalived',
     'openldap',
-    'rabbitmq',
     'release',
     'rsyslog',
     's3clients',

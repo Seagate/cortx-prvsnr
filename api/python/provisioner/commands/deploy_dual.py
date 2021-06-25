@@ -55,7 +55,6 @@ deploy_states = dict(
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
         "misc_pkgs.openldap",
-        "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
         "misc_pkgs.kafka",
         "misc_pkgs.elasticsearch",
@@ -63,9 +62,6 @@ deploy_states = dict(
         "misc_pkgs.statsd",
         "misc_pkgs.consul.install",
         "misc_pkgs.lustre"
-    ],
-    sync=[
-        "sync.software.rabbitmq"
     ],
     iopath=[
         "motr",
@@ -179,7 +175,6 @@ class DeployDual(Deploy):
                     self._apply_state(f"components.{state}", primary, stages)
 
                 elif state in (
-                    "sync.software.rabbitmq",
                     "sync.software.openldap",
                     "system.storage.multipath",
                     "sync.files"

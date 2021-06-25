@@ -80,9 +80,6 @@ deploy_states = dict(
     utils=[
         "cortx_utils"
     ],
-    sync=[
-        "sync.software.rabbitmq"
-    ],
     iopath=[
         "motr",
         "s3server",
@@ -300,7 +297,6 @@ class Deploy(CommandParserFillerMixin):
                     self._apply_state(f"components.{state}", primary, stages)
 
                 elif state in (
-                    "sync.software.rabbitmq",
                     "sync.software.openldap",
                     "system.storage.multipath",
                     "sync.files",

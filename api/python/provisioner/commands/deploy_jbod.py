@@ -53,7 +53,6 @@ deploy_states = dict(
         'misc_pkgs.consul.install',
         'misc_pkgs.openldap.prepare',
         'misc_pkgs.openldap.install',
-        'misc_pkgs.rabbitmq.install',
         'misc_pkgs.nodejs.install',
         'misc_pkgs.elasticsearch.install',
         'misc_pkgs.elasticsearch.config',
