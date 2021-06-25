@@ -541,6 +541,16 @@ class ThirdPartyReleaseInfoContentScheme(ReleaseInfoCommonContentScheme):
         validator=attr.validators.instance_of(dict),
         kw_only=True
     )
+    # FIXME remove once RE team fixes upgrade.iso
+    BUILD: Optional[str] = attr.ib(
+        # regex is based on the current representation of `BUILD` number.
+        # It is 1 or more numbers
+        validator=attr.validators.optional(
+            attr.validators.matches_re(r"^[0-9]+$")
+        ),
+        converter=attr.converters.optional(str),
+        default=None
+    )
 
 
 @attr.s(auto_attribs=True)
