@@ -18,11 +18,12 @@
 # Cortx Setup API for configuring network
 
 from cortx_setup.commands.command import Command
-from cortx_setup.config import CONFSTORE_CLUSTER_FILE
-from cortx_setup.commands.common_utils import get_machine_id
+from cortx_setup.config import CONFSTORE_CLUSTER_FILE, BMC_COMPONENT
+from cortx_setup.commands.common_utils import get_machine_id, encrypt_secret
 from cortx.utils.conf_store import Conf
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
+from cortx_setup.validate import ipv4
 
 
 class NetworkConfig(Command):
@@ -33,6 +34,24 @@ class NetworkConfig(Command):
             'optional': True,
             'choices': ['lnet', 'libfabric', 'tcp', 'o2ib'],
             'help': 'Network transport or interface type'
+        },
+        'bmc': {
+            'type': ipv4,
+            'default': None,
+            'optional': True,
+            'help': 'BMC IP for the system'
+        },
+        'user': {
+            'type': str,
+            'default': None,
+            'optional': True,
+            'help': 'BMC user for system'
+        },
+        'password': {
+            'type': str,
+            'default': None,
+            'optional': True,
+            'help': 'BMC password for system'
         },
         'type': {
             'type': str,
@@ -50,7 +69,8 @@ class NetworkConfig(Command):
         }
     }
 
-    def run(self, mode=None, network_type=None, interfaces=None):
+    def run(self, mode=None, network_type=None, interfaces=None,
+            bmc=None, user=None, password=None):
 
         """Network config execution method.
 
@@ -69,6 +89,50 @@ class NetworkConfig(Command):
             'node_config_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )
+
+        if bmc is not None:
+            self.logger.debug(
+                f"Set BMC IP to {bmc}"
+            )
+            PillarSet().run(
+                f'cluster/{node_id}/bmc/ip',
+                f'{bmc}',
+                local=True
+            )
+            Conf.set(
+                'node_config_index',
+                f'server_node>{machine_id}>bmc>ip',
+                bmc
+            )
+        if user is not None:
+            self.logger.debug(
+                f"Set BMC user to {user}"
+            )
+            PillarSet().run(
+                f'cluster/{node_id}/bmc/user',
+                f'{user}',
+                local=True
+            )
+            Conf.set(
+                'node_config_index',
+                f'server_node>{machine_id}>bmc>user',
+                user
+            )
+        if password is not None:
+            self.logger.debug(
+                f"Set BMC password to {password}"
+            )
+            PillarSet().run(
+                f'cluster/{node_id}/bmc/secret',
+                f'{password}',
+                local=True
+            )
+            secret = encrypt_secret(password, BMC_COMPONENT, machine_id)
+            Conf.set(
+                'node_config_index',
+                f'server_node>{machine_id}>bmc>secret',
+                secret
+            )
 
         if mode is not None:
             mode_type = 'transport_type' if mode in ['lnet', 'libfabric'] else 'interface_type'
