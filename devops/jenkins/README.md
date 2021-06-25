@@ -229,7 +229,11 @@ Jenkins agents are created as a docker containers.
 
 **Assumption** Jenkins server has got a configured set
 of persistent Java Web Start (aka JNLP)
-[Jenkins agents](https://www.jenkins.io/projects/remoting/).
+[Jenkins agents](https://www.jenkins.io/projects/remoting/). In particular:
+
+*   `Remote root directory`: `/var/lib/jenkins`
+*   `Labels`: `cortx-prvsnr-ci`
+*   `Launch method`: `Launch agent by connection it to the master`
 
 Base command: `cortx-jenkins agent`.
 
