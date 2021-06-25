@@ -115,7 +115,7 @@ class StorageEnclosureConfig(Command):
             'type': int,
             'default': -1,
             'optional': True,
-            'help': 'Cyllinder Volume Group number.'
+            'help': 'Cylinder Volume Group number.'
         },
         'data_devices': {
             'type': str,
