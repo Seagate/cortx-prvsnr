@@ -26,8 +26,8 @@ from provisioner.vendor import attr
 from provisioner.commands._basic import (
     RunArgs, RunArgsBase, CommandParserFillerMixin
 )
-from provisioner.commands import (
-    GetReleaseVersion
+from provisioner.commands.release import (
+    GetRelease
 )
 from provisioner.commands.mini_api import (
     HookCaller,
@@ -113,7 +113,7 @@ class SWUpgradeNode(CommandParserFillerMixin):
     ):
         # FIXME what if the following returns different versions
         #       than cluster level logic
-        cortx_version = GetReleaseVersion.cortx_version()
+        cortx_version = GetRelease.cortx_version()
         upgrade_version = GetSWUpgradeInfo.cortx_version()
         ctx_vars = dict(
             CORTX_VERSION=cortx_version,

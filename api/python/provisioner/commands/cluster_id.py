@@ -24,7 +24,10 @@ from typing import Type
 from . import (
      CommandParserFillerMixin
 )
-from .. import inputs
+from .. import (
+    inputs,
+    values
+)
 from provisioner.api import grains_get
 
 from provisioner.commands import (
@@ -112,10 +115,11 @@ class ClusterId(CommandParserFillerMixin):
         res = None
         try:
             cluster_data = PillarGet().run('cluster', targets)
-            cluster_id = []
-
+            cluster_id= []
             for node in cluster_data:
-                if "cluster_id" in cluster_data[node]["cluster"]:
+                if cluster_data[node]["cluster"] is values.MISSED:
+                    res = None
+                else :
                     cluster_id.append(
                       cluster_data[node]["cluster"]["cluster_id"]
                     )

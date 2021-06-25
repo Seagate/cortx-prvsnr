@@ -142,24 +142,61 @@ class ClusterManagerPCS(ClusterManagerBase):
         self._run_cmd('pcs cluster unstandby --all')
 
 
+def converter_str_lower(value: str):
+    return value.lower()
+
+
 @attr.s(auto_attribs=True)
 class HAResponse:
-    status: str
+
+    status: str = attr.ib(converter=converter_str_lower)
     output: str
     error: str
+
+    @classmethod
+    def from_raw(cls, raw: str):
+        res = load_json_str(raw)
+        _res = dict(
+            status=res.get('status'),
+            # Note. comptibility with older versions of Cortx HA
+            output=res.get('output', res.get('msg')),
+            # Note. compatibility as well - error could be missed
+            #       in older versions
+            error=res.get('error', '')
+        )
+
+        not_found = [k for k, v in _res.items() if v is None]
+
+        if not_found:
+            raise ValueError(
+                f"'{not_found}' keys are missed in Cortx HA response '{raw}'"
+            )
+
+        ret = cls(**_res)
+        try:
+            HACmdResult(ret.status)
+        except ValueError:
+            logger.warning(
+                f"unexpected Cortx HA response status '{res['status']}'"
+            )
+
+        return ret
 
 
 class ClusterManagerCortxBase(ClusterManagerBase):
 
     @staticmethod
     def parse_ret(ret: str) -> HAResponse:
-        ret = load_json_str(ret)
-        ret = HAResponse(**ret)
-        if ret.status == HACmdResult.FAILED.value:
+        resp = HAResponse.from_raw(ret)
+        if resp.status == HACmdResult.FAILED.value:
+            error = resp.error or resp.output
+            if 'is not implemented' in error.lower():
+                raise NotImplementedError(error)
+
             raise errors.ProvisionerError(
-                "HA command failed with error: '{ret.error}'"
+                "HA command failed with error: '{error}'"
             )
-        return ret
+        return resp
 
     def _run_api(self, api: str):
         raise NotImplementedError

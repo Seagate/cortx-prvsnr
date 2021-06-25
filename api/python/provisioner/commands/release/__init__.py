@@ -15,11 +15,26 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  #- components.misc_pkgs.consul
-  - components.misc_pkgs.elasticsearch
-  - components.misc_pkgs.kibana
-  - components.misc_pkgs.nodejs
-  #- components.misc_pkgs.rabbitmq
-  - components.misc_pkgs.rsyslog
-  - components.misc_pkgs.statsd
+from .release import (
+    CortxReleaseUrl,
+    CortxReleaseInfo,
+    CortxRelease
+)
+from .get_release import (
+    GetRelease,
+    GetReleaseLegacy,
+    GetFactoryLegacy,
+)
+from .set_release import SetRelease
+from .release_cmd import CortxReleaseCmd
+
+__all__ = [
+    "CortxReleaseUrl",
+    "CortxReleaseInfo",
+    "CortxRelease",
+    "GetRelease",
+    "GetReleaseLegacy",
+    "GetFactoryLegacy",
+    "SetRelease",
+    "CortxReleaseCmd"
+]

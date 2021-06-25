@@ -15,11 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  #- components.misc_pkgs.consul
-  - components.misc_pkgs.elasticsearch
-  - components.misc_pkgs.kibana
-  - components.misc_pkgs.nodejs
-  #- components.misc_pkgs.rabbitmq
-  - components.misc_pkgs.rsyslog
-  - components.misc_pkgs.statsd
+from pathlib import Path
+from provisioner.config import (
+     CLUSTER_ID_FILE
+)
+
+def cluster_id():
+    """Populates cluster_id to grains."""
+    grains = {"cluster_id": None}
+
+    id_file = Path(CLUSTER_ID_FILE)
+    if id_file.is_file():
+        grains['cluster_id'] = id_file.read_text().strip()
+
+    return grains

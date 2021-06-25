@@ -55,7 +55,6 @@ deploy_states = dict(
         "misc_pkgs.ssl_certs",
         "ha.haproxy",
         "misc_pkgs.openldap",
-        "misc_pkgs.rabbitmq",
         "misc_pkgs.nodejs",
         "misc_pkgs.kafka",
         "misc_pkgs.elasticsearch",
@@ -65,9 +64,6 @@ deploy_states = dict(
     ],
     utils=[
         "cortx_utils"
-    ],
-    sync=[
-        "sync.software.rabbitmq"
     ],
     iopath=[
         "misc_pkgs.lustre",
@@ -128,7 +124,6 @@ class DeployVM(Deploy):
                     self._apply_state(f"components.{state}", primary, stages)
 
                 elif state in (
-                    "sync.software.rabbitmq",
                     "sync.software.openldap",
                     "csm",
                     "ha.cortx-ha"
