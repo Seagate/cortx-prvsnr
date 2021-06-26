@@ -23,7 +23,7 @@ execution:
       - system.storage
       - misc_pkgs.rsyslog
       - system.logrotate
-    3rd_party:
+    prerequisites:
       - misc_pkgs.sos
       - misc_pkgs.ipmi.bmc_watchdog
       - misc_pkgs.ssl_certs
@@ -50,6 +50,3 @@ execution:
       - sspl
       - uds
       - csm
-    ha:
-      - ha.cortx-ha
-

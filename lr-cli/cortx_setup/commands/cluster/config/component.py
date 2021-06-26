@@ -37,10 +37,9 @@ class ClusterConfigComponent(Command):
             'optional': True,
             'default': None,
             'dest': 'component_group',
-            'choices': ['foundation', 'iopath', 'controlpath', 'ha'],
+            'choices': ['prerequisites', 'foundation', 'iopath', 'controlpath', 'ha'],
             'help': 'Component group to deploy'
         }
-
     }
 
     def _configure(self, components: List, stages: Optional[List] = None):
@@ -70,20 +69,43 @@ class ClusterConfigComponent(Command):
             cortx_components = get_cortx_states()
 
             if component_group is None:
-                for component_group in noncortx_components:
+                self.logger.debug(f"Deploying prerequisites components on nodes")
+                self._configure(
+                    noncortx_components['prerequisites']
+                )
+                for component_group in cortx_components:
                     self.logger.debug(f"Deploying {component_group} components on nodes")
                     self._configure(
-                        noncortx_components[component_group]
+                        cortx_components[component_group],
+                        stages=['config.config', 'config.init_mod']
                     )
+                self.logger.debug(f"Deploying ha components on nodes")
+                self._configure(
+                    ['ha.cortx-ha'],
+                    stages=[
+                        'config.post_install','config.prepare',
+                        'config.config', 'config.init_mod']
+                )
+            elif component_group in noncortx_components:
+                self.logger.debug(f"Deploying prerequisites components on nodes")
+                self._configure(
+                    noncortx_components['prerequisites']
+                )                        
             elif component_group in cortx_components:
                 self.logger.debug(f"Deploying {component_group} components on nodes")
                 self._configure(
                     cortx_components[component_group],
                     stages=['config.config', 'config.init_mod']
                 )
-
-            self.logger.info(f"Deployment done for {component_group} components")
-
+            elif component_group == 'ha':
+                self.logger.debug(f"Deploying prerequisites components on nodes")
+                self._configure(
+                    ['ha.cortx-ha'],
+                    stages=[
+                        'config.post_install','config.prepare',
+                        'config.config', 'config.init_mod']
+                )          
+            self.logger.debug(f"Deployment done")  
         except ValueError as exc:
             raise ValueError(
               f"Cluster Config Failed. Reason: {str(exc)}"
