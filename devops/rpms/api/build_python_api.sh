@@ -24,10 +24,12 @@ repo_root_dir="$(realpath $script_dir/../../../)"
 docker_image_name="seagate/cortx-prvsnr:fpm"
 
 in_docker=false
-input_dir="$repo_root_dir/api/python"
+input_dir_api="$repo_root_dir/api/python"
+input_dir_lrcli="$repo_root_dir/lr-cli"
 output_dir=.
 output_type=rpm
-fpm_tool=fpm
+fpm_tool_api=fpm
+fpm_tool_lrcli=fpm
 pkg_version=
 verbosity=0
 
@@ -44,8 +46,6 @@ Options:
        --fpm-tool       fpm tool path or docker image name,
                             default: $fpm_tool
   -h,  --help           print this help and exit
-  -i,  --in-dir DIR     path to provisioner API directory,
-                            default: $input_dir
   -o,  --out-dir DIR    output dir,
                             default: $output_dir
   -r,  --pkg-ver        package version (release tag),
@@ -67,7 +67,7 @@ function parse_args {
     fi
 
     local _opts=hdi:o:t:r:v
-    local _long_opts=help,docker,in-dir:,out-dir:,out-type:,fpm-tool:,pkg-ver:,verbose
+    local _long_opts=help,docker,out-dir:,out-type:,fpm-tool:,pkg-ver:,verbose
 
     local _getopt_res
     ! _getopt_res=$(getopt --name "$0" --options=$_opts --longoptions=$_long_opts -- "$@")
@@ -88,14 +88,6 @@ function parse_args {
                 in_docker=true
                 shift
                 ;;
-            -i|--in-dir)
-                input_dir="$2"
-                if [[ ! -d "$input_dir" ]]; then
-                    >&2 echo "'$input_dir' not a directory"
-                    exit 5
-                fi
-                shift 2
-                ;;
             -o|--out-dir)
                 output_dir="$2"
                 if [[ ! -d "$output_dir" ]]; then
@@ -110,7 +102,8 @@ function parse_args {
                 shift 2
                 ;;
             --fpm-tool)
-                fpm_tool="$2"
+                fpm_tool_api="$2"
+                fpm_tool_lrcli="$2"
                 shift 2
                 ;;
             -r|--pkg-ver)
@@ -146,7 +139,6 @@ fi
 if [[ "$verbosity" -ge 1 ]]; then
     parsed_args=""
     parsed_args+="\toutput_dir=$output_dir\n\toutput_type=$output_type"
-    parsed_args+="\n\tin_docker=$in_docker\n\tinput_dir=$input_dir"
     parsed_args+="\n\tfpm_tool=$fpm_tool\n\tverbosity=$verbosity"
     parsed_args+="\n\trelease=$pkg_version"
 
@@ -159,35 +151,52 @@ if [[ -n "$pkg_version" ]]; then
     iteration="--iteration $pkg_version"
 fi
 
-tmp_dir="$(mktemp -d)"
-cp -r "${input_dir}/." "${tmp_dir}"
-input_dir="$tmp_dir"
+tmp_dir_api="$(mktemp -d)"
+cp -r "${input_dir_api}/." "${tmp_dir_api}"
+input_dir_api="$tmp_dir_api"
+
+tmp_dir_lrcli="$(mktemp -d)"
+cp -r "${input_dir_lrcli}/." "${tmp_dir_lrcli}"
+input_dir_lrcli="$tmp_dir_lrcli"
 
 pushd "$output_dir"
     rm -f python3*-cortx-prvsnr*
 popd
 
 if [[ "$in_docker" == true ]]; then
-    docker_build_dir="${tmp_dir}/docker"
+    docker_build_dir_api="${tmp_dir_api}/docker"
+    docker_build_dir_lrcli="${tmp_dir_lrcli}/docker"
 
     pushd $script_dir
-        mkdir "$docker_build_dir"
-        cp "${repo_root_dir}/images/docker/setup_fpm.sh" Dockerfile "$docker_build_dir"
-        docker build -t $docker_image_name "$docker_build_dir"
+        mkdir "$docker_build_dir_api"
+        cp "${repo_root_dir}/images/docker/setup_fpm.sh" Dockerfile "$docker_build_dir_api"
+        docker build -t $docker_image_name "$docker_build_dir_api"
+
+        mkdir "$docker_build_dir_lrcli"
+        cp "${repo_root_dir}/images/docker/setup_fpm.sh" Dockerfile "$docker_build_dir_lrcli"
+        docker build -t $docker_image_name "$docker_build_dir_lrcli"
     popd
 
-    input_dir="$(realpath $input_dir)"
+    input_dir_api="$(realpath $input_dir_api)"
     output_dir="$(realpath $output_dir)"
-    fpm_tool="docker run --rm -u $(id -u):$(id -g) -v $input_dir:/tmp/in -v $output_dir:/tmp/out $docker_image_name"
-    input_dir="/tmp/in"
+    fpm_tool_api="docker run --rm -u $(id -u):$(id -g) -v $input_dir_api:/tmp/in_api -v $output_dir:/tmp/out $docker_image_name"
+    input_dir_api="/tmp/in_api"
     output_dir="/tmp/out"
+
+    input_dir_lrcli="$(realpath $input_dir_lrcli)"
+    output_dir="$(realpath $output_dir)"
+    fpm_tool_lrcli="docker run --rm -u $(id -u):$(id -g) -v $input_dir_lrcli:/tmp/in_lrcli -v $output_dir:/tmp/out $docker_image_name"
+    input_dir_lrcli="/tmp/in_lrcli"
+    output_dir="/tmp/out"
+
 fi
     # FIXME 'python-disable-dependency' params
     #       are dirty hacks just to quickly resolve issues
     #       that depends on other Cortx components, need to
     #       remove later
     # --depends "salt >= 3002" \
-$fpm_tool --input-type "python" \
+echo -e "Packaging api directory"
+$fpm_tool_api --input-type "python" \
     --output-type "$output_type" \
     --architecture "amd64" \
     --verbose \
@@ -201,15 +210,36 @@ $fpm_tool --input-type "python" \
     --exclude "*.pyc" \
     --exclude "*.pyo" \
     --rpm-auto-add-directories \
-    --before-install "$input_dir/provisioner/srv/salt/provisioner/files/pre_setup.sh" \
-    --after-install "$input_dir/provisioner/srv/salt/provisioner/files/post_setup.sh" \
+    --before-install "$input_dir_api/provisioner/srv/salt/provisioner/files/pre_setup.sh" \
+    --after-install "$input_dir_api/provisioner/srv/salt/provisioner/files/post_setup.sh" \
     --package "${output_dir}" \
     $iteration \
-    "${input_dir}"
+    "${input_dir_api}"
+
+echo -e "Packaging lr-cli directory"
+$fpm_tool_lrcli --input-type "python" \
+    --output-type "$output_type" \
+    --architecture "amd64" \
+    --verbose \
+    --python-install-lib "/usr/lib/python3.6/site-packages" \
+    --python-install-bin "/usr/bin" \
+    --python-package-name-prefix "python36" \
+    --python-bin "python3" \
+    --python-disable-dependency salt \
+    --python-disable-dependency Jinja2 \
+    --no-python-downcase-dependencies \
+    --exclude "*.pyc" \
+    --exclude "*.pyo" \
+    --rpm-auto-add-directories \
+    --package "${output_dir}" \
+    $iteration \
+    "${input_dir_lrcli}"
+
 
 
 # TODO remove it anyway even if some upper fails (kind of finally routine)
-rm -rf "${tmp_dir}"
+rm -rf "${tmp_dir_api}"
+rm -rf "${tmp_dir_lrcli}"
 
 # TODO other options if needed
 #    --depends
