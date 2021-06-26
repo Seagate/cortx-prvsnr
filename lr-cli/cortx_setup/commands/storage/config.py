@@ -187,10 +187,6 @@ class StorageEnclosureConfig(Command):
             local=True
         )
 
-        # encrypt password and store
-        if(key == 'password'):
-            value = self.encrypt_password(value)
-
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -327,7 +323,8 @@ class StorageEnclosureConfig(Command):
                 # store user
                 self.update_pillar_and_conf('user', user)
 
-                #store password
+                # encrypt password and store
+                password = self.encrypt_password(password)
                 self.update_pillar_and_conf('password', password)
 
                 # store ip and port as primary
@@ -348,7 +345,7 @@ class StorageEnclosureConfig(Command):
                         f"Please provide 'user' and 'passowrd' together")
                     raise RuntimeError("Imcomplete arguments provided")
 
-                if (ip and not mode) or (port and not mode):
+                if (ip and not self.mode) or (port and not self.mode):
                     #ip and port can not be provided with 'mode' argument
                     self.logger.error(
                         f"Please use 'mode' option to provide 'ip' or 'port'\n"

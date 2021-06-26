@@ -35,6 +35,17 @@ def _import_cipher():
     from cortx.utils.security import cipher
     return cipher
 
+def get_cipher_key(pillar_name):
+    if(pillar_name=='storage'):
+        enclosure_id = getattr(sys.modules[__name__], '__grains__')['enclosure_id']
+        cipher_key = Cipher.generate_key(enclosure_id, pillar_name)
+    elif(pillar_name=='cluster'):
+        machine_id = getattr(sys.modules[__name__], '__grains__')['machine_id']
+        cipher_key = Cipher.generate_key(machine_id, pillar_name)
+    else:
+        cluster_id = getattr(sys.modules[__name__], '__grains__')['cluster_id']
+        cipher_key = Cipher.generate_key(cluster_id, pillar_name)
+    return cipher_key
 
 def encrypt(decrypt=False):
 
@@ -43,17 +54,15 @@ def encrypt(decrypt=False):
     __pillar__ = getattr(sys.modules[__name__], '__pillar__')
     cipher = _import_cipher()
     pillar_list = __pillar__.keys()
-    cluster_id = getattr(sys.modules[__name__], '__grains__')['cluster_id']
     new_passwd = _generate_secret()
     logger.debug(f"generated password for blank entries: {new_passwd}")
 
     for pillar_name in pillar_list:
         logger.debug(f"processing pillar: {pillar_name}")
-        cipher_key = cipher.Cipher.generate_key(cluster_id, pillar_name)
+        cipher_key = get_cipher_key(pillar_name)
         _update(
             __pillar__[pillar_name],
             pillar_name,
-            cluster_id,
             new_passwd,
             cipher,
             cipher_key,
@@ -63,12 +72,12 @@ def encrypt(decrypt=False):
     return True
 
 
-def _update(data, path, cluster_id, new_passwd, cipher, cipher_key, decrypt):
+def _update(data, path, new_passwd, cipher, cipher_key, decrypt):
 
     for key, val in data.items():
         logger.debug(f"Updating pillar {key}::{val}")
         if isinstance(val, dict):
-            data[key] = _update(val, path + '/' + key, cluster_id,
+            data[key] = _update(val, path + '/' + key,
                                 new_passwd, cipher, cipher_key, decrypt)
         else:
             if ("secret" in key):

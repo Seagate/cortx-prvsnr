@@ -30,9 +30,21 @@ sys.path.append(os.path.join(
 
 import provisioner
 from provisioner.utils import run_subprocess_cmd
+from cortx.utils.security.cipher import Cipher
 
 logger = logging.getLogger(__name__)
 
+def get_cipher_key(pillar_name):
+    if(pillar_name=='storage'):
+        enclosure_id = getattr(sys.modules[__name__], '__grains__')['enclosure_id']
+        cipher_key = Cipher.generate_key(enclosure_id, pillar_name)
+    elif(pillar_name=='cluster'):
+        machine_id = getattr(sys.modules[__name__], '__grains__')['machine_id']
+        cipher_key = Cipher.generate_key(machine_id, pillar_name)
+    else:
+        cluster_id = getattr(sys.modules[__name__], '__grains__')['cluster_id']
+        cipher_key = Cipher.generate_key(cluster_id, pillar_name)
+    return cipher_key
 
 def decrypt(component, secret):
     """Decrypt secret.
@@ -40,11 +52,9 @@ def decrypt(component, secret):
     Args:
       secret: Secret to be decrypted.
     """
-    from cortx.utils.security.cipher import Cipher
 
     retval = None
-    cluster_id = getattr(sys.modules[__name__], '__grains__')['cluster_id']
-    cipher_key = Cipher.generate_key(cluster_id, component)
+    cipher_key = get_cipher_key(component)
 
     if secret:
         retval = (Cipher.decrypt(cipher_key, secret.encode("utf-8"))).decode("utf-8")

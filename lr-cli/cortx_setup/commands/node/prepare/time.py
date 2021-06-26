@@ -24,7 +24,10 @@ from provisioner.salt import (
     local_minion_id,
     StatesApplier
 )
-
+from cortx_setup.commands.common_utils import (
+    get_pillar_data
+)
+import socket
 
 class NodePrepareTime(Command):
     """Cortx Setup API for configuring time"""
@@ -67,10 +70,10 @@ class NodePrepareTime(Command):
         node_id = local_minion_id()
         ntp_server = kwargs.get('server')
         ntp_timezone = kwargs.get('timezone')
-
+        ntp_server_host= socket.gethostbyname(ntp_server)
         PillarSet().run(
             'system/ntp/time_server',
-            ntp_server,
+            ntp_server_host,
             local=True
         )
 
@@ -81,6 +84,12 @@ class NodePrepareTime(Command):
         )
 
         try:
+            grains_file = open("/etc/salt/grains", "a")
+            if "primary" in get_pillar_data(f"cluster/{node_id}/roles"):
+                grains_file.write("roles:\n -primary")
+            else:
+                grains_file.write("roles:\n -secondary")
+            grains_file.close()
             self.logger.debug(f"Setting time on node with server={ntp_server} & timezone={ntp_timezone}")
             self.set_server_time()
             machine_id = get_machine_id(node_id)
