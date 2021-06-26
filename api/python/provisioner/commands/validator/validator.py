@@ -842,6 +842,8 @@ class CompatibilityValidator:
         for pkg in res:
             # Aggregate version information of installed CORTX packages
             pkg_name, pkg_version = pkg.split(" ")
+            # remove architecture post-fix from the package name
+            pkg_name = pkg_name.split(".")[0]
             packages[pkg_name] = pkg_version
 
         error_msg = list()
@@ -856,6 +858,7 @@ class CompatibilityValidator:
                     msg = f"CORTX package {pkg} is not installed"
                     logger.error(msg)
                     error_msg.append(msg)
+                    continue
 
                 if Version(installed_ver) in SpecifierSet(compatibility):
                     logger.info(f"CORTX package {pkg} satisfies the constraint"
