@@ -201,14 +201,14 @@ class ClusterCreate(Command):
             self.logger.debug("Creating service user")
             create_service_user.CreateServiceUser.run(user="cortxub")
 
-            self.logger.debug("Refreshing enclosure id on the system")
-            RefreshEnclosureId().run()
-
             self.logger.debug("Setting up Cluster ID on the system")
             cluster_id.ClusterId().run()
 
             self.logger.debug("Encrypting config data")
             EncryptSecrets().run()
+
+            self.logger.debug("Refreshing enclosure id on the system")
+            RefreshEnclosureId().run()
 
             self.logger.debug("Exporting to Confstore")
             confstore_export.ConfStoreExport().run()
