@@ -59,7 +59,9 @@ cluster:
   show:
     ClusterShow
   encrypt:
-    EncryptPillar
+    EncryptSecrets
+  generate:
+    GenerateCluster 
   config:
     network:
       ClusterNetworkConfig
@@ -101,3 +103,6 @@ storageset:
 enclosure:
   refresh:
     RefreshEnclosureId
+
+prepare_confstore:
+  PrepareConfstore

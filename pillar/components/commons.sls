@@ -25,7 +25,6 @@ commons:
     erlang: latest
     opendistroforelasticsearch-kibana: 1.12.0-1
     nodejs: v12.13.0
-    rabbitmq: latest
     rsyslog: 8.40.0-1.el7
     rsyslog-elasticsearch: 8.40.0-1.el7
     rsyslog-mmjsonparse: 8.40.0-1.el7

@@ -1,0 +1,9 @@
+support>user={{ pillar['system']['service-user']['name'] }}
+support>password=Seagate123!
+cortx>software>csm>user={{ pillar['system']['service-user']['name'] }}
+cortx>software>openldap>root>user={{ pillar['cortx']['software']['openldap']['root']['user'] }}
+cortx>software>openldap>sgiam>user={{ pillar['cortx']['software']['openldap']['sgiam']['user'] }}
+cortx>software>corosync>user={{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
+cortx>software>common>message_bus_type=kafka
+cortx>release>setup={{ pillar['cortx']['release']['setup'] }}
+cortx>release>product={{ pillar['cortx']['release']['product'] }}

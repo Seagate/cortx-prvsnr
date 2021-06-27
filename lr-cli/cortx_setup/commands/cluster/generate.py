@@ -14,29 +14,36 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+# Cortx Setup API to generate cluster
 
-__title__ = 'cortx-jenkins'
-__version__ = '0.0.2'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'CORTX Jenkins configuration automation'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "Seagate"  # TODO
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+from ..command import Command
+from cortx_setup.config import (
+    ALL_MINIONS
+)
+from provisioner.salt import (
+    pillar_refresh,
+    StatesApplier
+)
+
+class GenerateCluster(Command):
+    """
+    Generate Cluster with sync'ed data
+    """
+
+    def run(self, targets=ALL_MINIONS):
+        try:
+            self.logger.debug("Generating cluster pillar")
+
+            StatesApplier.apply(
+                       ['components.system.config.generate_cluster_pillar'],
+                       targets=ALL_MINIONS
+            )
+
+            self.logger.debug("Refreshing config")
+            pillar_refresh(targets=ALL_MINIONS)
+
+        except Exception as exc:
+            self.logger.error(
+               f"Error in cluster generation. Reason: '{str(exc)}'"
+            )

@@ -19,22 +19,29 @@ ssl_verify = true
   smeeio_channel = ''
 
   [server.properties]
+  # admin password
+  ADMIN_PASSWORD = ''
+
   # email address to use for jenkins admin notifications
   # "Notification e-mails from Jenkins to project owners will be
   # sent with this address in the from header. This can be just
   # "foo@acme.org" or it could be something like "Jenkins Daemon <foo@acme.org>""
-  ADMIN_EMAIL_ADDRESS = ''
+  ADMIN_EMAIL_ADDRESS = 'cortx-prvsnr-jenkins@seagate.com'
 
   # jenkins server url
   # "This value is used to let Jenkins know how to refer to itself,
   # ie. to display images or to create links in emails."
   JENKINS_URL = ''
 
-  # smtp server to use for email notifications
-  SMTP_SERVER = ''
+  # smtp server host to use for email notifications
+  SMTP_SERVER = 'mailhost.seagate.com'
+  # smtp server port to use for email notifications
+  SMTP_PORT = '25'
+  SMTP_SSL = false
+  SMTP_TLS = false
 
   # smtp credentials
-  SMTP_USER = ''
+  SMTP_USER = 'cortx-prvsnr-jenkins@seagate.com'
   SMTP_PASSWORD = ''
 
   # CREDENTIALS

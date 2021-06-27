@@ -865,8 +865,10 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
 
-        logger.info("Configuring Firewall")
-        ssh_client.state_apply('firewall')
+#        # Firewall must be configured initially
+#        # via Salt only, so commenting here
+#        logger.info("Configuring Firewall")
+#        ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
@@ -1030,6 +1032,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             else:
                 url = run_args.target_build
 
+            # TODO use SetRelease instead
             if url.startswith(('http://', 'https://')):
                 ssh_client.cmd_run(
                     (
