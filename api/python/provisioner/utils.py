@@ -605,3 +605,26 @@ def make_salt_logs_quiet():
     salt_logger = logging.getLogger('salt.fileclient')
     if salt_logger:
         salt_logger.setLevel(logging.WARNING)
+
+
+def normalize_rpm_version(rpm_version: str):
+    """
+    Normalize the given rpm version according to PEP-440
+
+    Parameters
+    ----------
+    rpm_version: str
+        The given rpm version
+
+    Return
+    ------
+    str:
+        version of format <version>-<build>, where <version> and <build> are
+        integer numbers
+
+    """
+    version, release = rpm_version.split("-")
+    # Leave only the build number, remove distributive tag (el7) and other tags
+    build = release.split(".")[0]
+
+    return f"{version.strip()}-{build.strip()}"

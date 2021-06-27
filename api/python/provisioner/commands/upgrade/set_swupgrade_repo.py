@@ -58,7 +58,9 @@ from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
 from provisioner.utils import (load_yaml,
                                load_checksum_from_file,
                                load_checksum_from_str,
-                               HashInfo, load_yaml_str
+                               HashInfo,
+                               load_yaml_str,
+                               normalize_rpm_version
                                )
 from ..validator import (DirValidator,
                          FileValidator,
@@ -217,8 +219,9 @@ class CortxISOInfo:
                 key = SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
                 self.packages[pkg_name][key] = compatibility_version
             else:
-                logger.warning('Found unbound version compatibility '
-                               f'constraint for package {pkg_name}')
+                logger.warning('Found version compatibility constraint '
+                               f'for the package "{pkg_name}" not listed in '
+                               'CORTX repository')
 
     def __str__(self):
         return f"{{'packages': {self.packages}, 'metadata': {self.metadata}}}"
@@ -764,7 +767,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        params
+        params:
             Input repository parameters
         targets: str
             Salt target to perform base mount and validation logic
@@ -903,8 +906,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         """
         Setup Python index
 
-        ----------
         Parameters
+        ----------
         repo: inputs.SWUpgradeRepo
             SW upgrade repository parameters
 
@@ -973,12 +976,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        release : str
+        release: str
             SW upgrade repository version
 
         Returns
         -------
-        dict
+        dict:
             return dictionary with CORTX packages and their versions
 
         """
@@ -995,7 +998,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # NOTE: use --enablerepo to suspend message
         #  Repo sw_upgrade_cortx_iso_candidate has been automatically enabled.
         #  in case of candidate repo
-        cmd = (f"yum --enablerepo={repo_name} repo-pkgs {repo} list "
+        cmd = (f"yum --enablerepo={repo} repo-pkgs {repo} list "
                f"2>/dev/null | grep '{repo}' | awk '{{print $1\" \"$2}}'")
 
         res = cmd_run(cmd, targets=local_minion_id(),
@@ -1030,6 +1033,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             # package architecture (.noarch, .x86_64 is not needed in
             # the name of the package
             pkg = pkg.split('.')[0]
+            ver = normalize_rpm_version(ver)
             res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
 
         return res

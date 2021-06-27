@@ -844,7 +844,7 @@ class CompatibilityValidator:
             pkg_name, pkg_version = pkg.split(" ")
             # remove architecture post-fix from the package name
             pkg_name = pkg_name.split(".")[0]
-            packages[pkg_name] = pkg_version
+            packages[pkg_name] = utils.normalize_rpm_version(pkg_version)
 
         error_msg = list()
         for pkg in iso_info.packages:
@@ -855,16 +855,18 @@ class CompatibilityValidator:
 
                 installed_ver = packages.get(pkg, None)
                 if installed_ver is None:
-                    msg = f"CORTX package {pkg} is not installed"
-                    logger.error(msg)
-                    error_msg.append(msg)
+                    msg = (f"There is version constraint '{compatibility}' for "
+                           f"the CORTX package '{pkg}' that is not installed")
+                    logger.debug(msg)
                     continue
 
                 if Version(installed_ver) in SpecifierSet(compatibility):
-                    logger.info(f"CORTX package {pkg} satisfies the constraint"
-                                f" version '{compatibility}'")
+                    logger.info(f"The CORTX package '{pkg}' of version "
+                                f"'{installed_ver}' satisfies the constraint "
+                                f"version '{compatibility}'")
                 else:
-                    msg = (f"CORTX package {pkg} does not satisfies the "
+                    msg = (f"The CORTX package '{pkg}' of version "
+                           f"'{installed_ver}' does not satisfies the "
                            f"constraint version '{compatibility}'")
                     logger.error(msg)
                     error_msg.append(msg)
