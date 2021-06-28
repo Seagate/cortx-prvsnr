@@ -827,6 +827,9 @@ class CompatibilityValidator:
         """
         packages = list(iso_info.packages.keys())
 
+        if not packages:
+            return  # nothing to validate
+
         # NOTE: the first line of `yum -q list installed` command is
         #  'Installed Packages' skip it via `tail -n +2`
         cmd = (f"yum -q list installed {' '.join(packages)} 2>/dev/null |"
@@ -866,8 +869,8 @@ class CompatibilityValidator:
 
                 installed_ver = packages.get(pkg, None)
                 if installed_ver is None:
-                    msg = (f"There is version constraint '{compatibility}' for "
-                           f"the CORTX package '{pkg}' that is not installed")
+                    msg = (f"There is version constraint '{compatibility}' for"
+                           f" the CORTX package '{pkg}' that is not installed")
                     logger.debug(msg)
                     continue
 
