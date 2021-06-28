@@ -35,6 +35,12 @@ class ClusterNetworkConfig(Command):
             'optional': True,
             'help': 'Cluster vip'
         },
+        'mgmt_vip': {
+            'type': ipv4,
+            'default': None,
+            'optional': True,
+            'help': 'Mgmt vip'
+        },
         'search_domains': {
             'type': host,
             'nargs': '+',
