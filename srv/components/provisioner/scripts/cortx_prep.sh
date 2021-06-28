@@ -23,10 +23,6 @@ mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 localhost_ip="127.0.0.1"
 minion_id="srvnode-0"
-user_name=
-uid=
-group=
-gid=
 repo_url=
 ISO_CORTX_PATH="/opt/isos/cortx-*-single.iso"
 ISO_OS_PATH="/opt/isos/cortx-os-*.iso"
@@ -60,7 +56,7 @@ parse_args()
                 shift 2
                 ;;
             -h|--help)
-                usage; exit 0
+                usage; exit 0;;
             *) echo "Invalid option $1"; usage; exit 1;;
         esac
     done
