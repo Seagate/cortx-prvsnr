@@ -90,7 +90,7 @@ class ClusterConfigComponent(Command):
                 self.logger.debug(f"Deploying prerequisites components on nodes")
                 self._configure(
                     noncortx_components['prerequisites']
-                )                        
+                )
             elif component_group in cortx_components:
                 self.logger.debug(f"Deploying {component_group} components on nodes")
                 self._configure(
@@ -98,14 +98,14 @@ class ClusterConfigComponent(Command):
                     stages=['config.config', 'config.init_mod']
                 )
             elif component_group == 'ha':
-                self.logger.debug(f"Deploying prerequisites components on nodes")
+                self.logger.debug(f"Deploying cortx ha components on nodes")
                 self._configure(
                     ['ha.cortx-ha'],
                     stages=[
                         'config.post_install','config.prepare',
                         'config.config', 'config.init_mod']
-                )          
-            self.logger.debug(f"Deployment done")  
+                )
+            self.logger.debug(f"Deployment done")
         except ValueError as exc:
             raise ValueError(
               f"Cluster Config Failed. Reason: {str(exc)}"
