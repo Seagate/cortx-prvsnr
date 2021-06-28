@@ -189,6 +189,10 @@ class StorageEnclosureConfig(Command):
 
         if(key=='password'):
             value = self.encrypt_password(value)
+
+        if pillar_key_map[key] == "cvg":
+            value = str(value)
+
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -494,7 +498,7 @@ class StorageEnclosureConfig(Command):
                                 "Please provide the correct device")
             cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
             self.cvg_count = self.cvg_count + 1
-            self.update_pillar_and_conf('cvg', str(self.cvg_count))
+            self.update_pillar_and_conf('cvg', self.cvg_count)
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
