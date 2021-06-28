@@ -175,8 +175,8 @@ class ClusterCreate(Command):
                         elif "os" in name:
                             ISO_OS_FILE = name
                     kwargs['iso_cortx'] = ISO_SINGLE_FILE
-                    kwargs['iso_os'] = ISO_OS_PATH
-                    if not (ISO_SINGLE_FILE.exists() or ISO_OS_PATH.exists()):
+                    kwargs['iso_os'] = ISO_OS_FILE
+                    if not (ISO_SINGLE_FILE.exists() or ISO_OS_FILE.exists()):
                         raise ValueError(
                             "iso single file and iso os file paths are mandatory "
                             "to bootstrap. Please mount them in expected paths "
