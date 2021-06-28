@@ -28,14 +28,17 @@ from provisioner.commands import (
     # SWUpdateDecisionMaker,
     # _apply_provisioner_config,
     # _restart_salt_minions,
-    GetReleaseVersion,
     PillarSet
+)
+from provisioner.commands.release import (
+    GetRelease,
+    SetRelease
 )
 from provisioner.commands.mini_api import (
     HookCaller,
     MiniAPIHook
 )
-from provisioner.errors import SWUpdateError
+from provisioner.errors import SWUpgradeError
 from provisioner.salt import (
     StatesApplier,
     local_minion_id,
@@ -57,7 +60,7 @@ from provisioner.cortx_ha import (
 
 
 from .sw_upgrade_node import SWUpgradeNode
-from .get_swupgrade_info import GetSWUpgradeInfo
+from .get_iso_version import GetISOVersion
 
 
 logger = logging.getLogger(__name__)
@@ -94,7 +97,7 @@ class SWUpgrade(CommandParserFillerMixin):
     def validate(self):
         logger.info('SW Upgrade Validation')
         if not is_cluster_healthy():
-            raise errors.ProvisionerError('cluster is not healthy')
+            raise errors.SWUpgradeError('cluster is not healthy')
 
         logger.info("Ensure update repos are configured")
         self._ensure_upgrade_repos_configuration()
@@ -148,17 +151,24 @@ class SWUpgrade(CommandParserFillerMixin):
         # logger.info('Upgrading Orchestrator on all the nodes')
         # cmd_run('provisioner sw_upgrade_node --sw orchestrator')
 
+        logger.info('Syncing salt minions')
+        cmd_run('salt-call saltutil.sync_all')
+
     def delegate(self, flow=config.CortxFlows.UPGRADE):
         logger.info(
             "SW Upgrade: delegating remaing phases"
             " to upgraded orchestrator logic"
         )
+
+        cmd = "provisioner sw_upgrade --noprepare"
+        if flow == config.CortxFlows.UPGRADE_OFFLINE:
+            cmd += ' --offline'
+
         return cmd_run(
-            "provisioner sw_upgrade --noprepare"
-            f"{'' if (flow == config.CortxFlows.UPGRADE) else ' --offline'}"
+            cmd, targets=config.LOCAL_MINION
         )
 
-    def plan_upgrade(self, flow):
+    def plan_upgrade(self, flow) -> List[List[str]]:
         res = []
 
         logger.info("SW Upgrade Plan Build")
@@ -230,7 +240,7 @@ class SWUpgrade(CommandParserFillerMixin):
 
     def upgrade(self, flow, from_ver, to_ver):
         # TODO: can skip that if no changes for Orchestrator
-        ret = cmd_run('provisioner --version')
+        ret = cmd_run('provisioner --version', targets=config.LOCAL_MINION)
         new_prvsnr_version = next(iter(ret.values()))
         # Note. assumption: case new version < old version is validated
         #       as part of validate stage
@@ -277,6 +287,7 @@ class SWUpgrade(CommandParserFillerMixin):
         #     except Exception:
         #         logger.exception('failed to restart salt minions')
 
+        SetRelease(to_ver).run()
 
     def run(self, offline=False, noprepare=False):  # noqa
         # TODO:
@@ -308,9 +319,13 @@ class SWUpgrade(CommandParserFillerMixin):
 
         ret = None
         try:
+            cortx_version = GetRelease.cortx_version()
+            upgrade_version = GetISOVersion.run()
+
+            if not upgrade_version:
+                raise SWUpgradeError("no upgrade release is available")
+
             if not noprepare:
-                cortx_version = GetReleaseVersion.cortx_version()
-                upgrade_version = GetSWUpgradeInfo.cortx_version()
                 logger.info(
                     f"Starting"
                     f" {'rolling' if (flow == config.CortxFlows.UPGRADE) else 'offline'}"  # noqa: E501
@@ -323,23 +338,24 @@ class SWUpgrade(CommandParserFillerMixin):
             ret = self.upgrade(flow, cortx_version, upgrade_version)
 
             # final check of upgraded version
-            cortx_version = GetReleaseVersion.cortx_version()
+            cortx_version = GetRelease.cortx_version()
 
-            if cortx_version == upgrade_version:
-                logger.info(
-                    f"Upgrade is done."
-                    f" Current version of CORTX: '{cortx_version}'"
-                )
-            else:
+            if cortx_version != upgrade_version:
                 msg = (
                     "Upgraded to not expected version: "
                     f"'{cortx_version}' instead of '{upgrade_version}'"
                 )
                 logger.error(msg)
-                raise errors.ProvisionerError(msg)
+                raise errors.SWUpgradeError(msg)
+
+            logger.info(
+                f"Upgrade is done."
+                f" Current version of CORTX: '{cortx_version}'"
+            )
 
             return ret
+
         except Exception as update_exc:
             # TODO TEST
             logger.exception('SW Upgrade failed')
-            raise SWUpdateError(update_exc) from update_exc
+            raise SWUpgradeError(update_exc) from update_exc

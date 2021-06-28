@@ -16,15 +16,20 @@
 #
 
 from cortx_setup.commands.command import Command
-from cortx_setup.commands.storage.commons import Commons
+from cortx_setup.commands.storage.enclosure_info import EnclosureInfo
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import get_pillar_data
 from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
-from provisioner.salt import function_run
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
 
+node_id = local_minion_id()
+enc_num = "enclosure-" + ((node_id).split('-'))[1]
+
+enc_id_on_node = get_pillar_data(
+    f'storage/{enc_num}/enclosure_id'
+)
 
 class NodePrepareStorage(Command):
     """Cortx Setup API for Preparing Storage in field"""
@@ -41,9 +46,28 @@ class NodePrepareStorage(Command):
         }
     }
 
-    def validate_credentials(
-            self, targets=None, enc_num=None, user=None, passwd=None
-    ):
+    def decrypt_passwd(self, encr_pass):
+        """Returns decrypted password"""
+
+        _component = "storage"
+        try:
+            cipher_key = Cipher.generate_key(enc_id_on_node, _component)
+            return (
+                Cipher.decrypt(
+                    cipher_key, encr_pass.encode("utf-8")
+                )
+            ).decode("utf-8")
+        except Exception as exc:
+            self.logger.error(
+                "Could not decrypt the password stored in the configuration\n"
+            )
+            raise exc
+
+    def validate_credentials(self, user=None, passwd=None):
+        """
+            Compares user and password values provided by the user as input to
+            that of the user and password values present in the pillar.
+        """
 
         self.logger.debug(
             f"Validating the provided credentials ({user}/{passwd})"
@@ -54,28 +78,16 @@ class NodePrepareStorage(Command):
         _ctrl_secret_enc = get_pillar_data(
             f'storage/{enc_num}/controller/secret'
         )
-        try:
-            # Decrypt the secret read from the storage pillar
-            _component = "storage"
-            _result = function_run('grains.get', fun_args=['cluster_id'],
-                                    targets=targets)
-            _cluster_id = _result[f'{targets}']
-        except Exception as exc:
-            self.logger.error(
-                "Could not fetch cluster id from grains"
-            )
-            raise exc
 
-        try:
-            _cipher_key = Cipher.generate_key(_cluster_id, _component)
-            _ctrl_secret = (Cipher.decrypt(
-                                _cipher_key, _ctrl_secret_enc.encode("utf-8")
-                            )).decode("utf-8")
-        except Exception as exc:
+        # Decrypt the secret read from the storage pillar
+
+        if not enc_id_on_node:
             self.logger.error(
-                "Could not decrypt the password stored in the configuration\n"
+                "Could not fetch enclosure_id id from pillar"
             )
-            raise exc
+            raise ValueError("Enclosure ID is not set on node")
+
+        _ctrl_secret = self.decrypt_passwd(_ctrl_secret_enc)
 
         _user_check = True
         _passwd_check = True
@@ -116,22 +128,24 @@ class NodePrepareStorage(Command):
         `cortx_setup node prepare storage --user <user> --password <password>`
         """
 
-        _node_id = local_minion_id()
-        _enc_num = "enclosure-" + ((_node_id).split('-'))[1]
-        _enc_id_on_node = Commons().fetch_enc_id(_node_id)
         _enc_user = kwargs.get('user')
         _enc_passwd = kwargs.get('password')
 
-
         try:
-            self.validate_credentials(_node_id, _enc_num, _enc_user, _enc_passwd)
+            self.validate_credentials(_enc_user, _enc_passwd)
 
             # Fetch enclosure id from the enclosure
             # This will use the user/password from pillar
             # and keep the enclosure id in /etc/enclosure-id
             # TODO: use the credentials provided by user
-            _force_get_enc_id = True
-            _enc_id_on_enc = Commons().get_enc_id(_node_id, _force_get_enc_id)
+            _enc_ip = get_pillar_data(
+                f'storage/{enc_num}/controller/primary/ip',
+            )
+            _enc_port = get_pillar_data(
+                f'storage/{enc_num}/controller/primary/port',
+            )
+
+            _enc_id_on_enc = EnclosureInfo(_enc_ip, _enc_user, _enc_passwd, _enc_port).fetch_enclosure_serial()
         except Exception as e:
             self.logger.error(
                 f"Could not fetch the enclosure id:\n"
@@ -149,7 +163,7 @@ class NodePrepareStorage(Command):
 
         # Compare the enclosure id fetched from the enclosure with the
         # one generated in factory (and stored in grains).
-        if _enc_id_on_enc != _enc_id_on_node:
+        if _enc_id_on_enc != enc_id_on_node:
             self.logger.warning(
                 "The enclosure id from enclosure don't match with"
                 " the enclosure id stored on the node"
@@ -165,7 +179,7 @@ class NodePrepareStorage(Command):
                 f"Updating the enclosure id {_enc_id_on_enc} in pillar"
             )
             PillarSet().run(
-                f'storage/{_enc_num}/enclosure_id',
+                f'storage/{enc_num}/enclosure_id',
                 _enc_id_on_enc,
                 local=True
             )

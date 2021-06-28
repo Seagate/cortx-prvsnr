@@ -31,7 +31,7 @@ from cortx_setup.commands.common_utils import (
 node_id = local_minion_id()
 
 
-class NodePrepare(Command):
+class ClusterPrepare(Command):
     """Cortx Setup API for preparing node"""
     _args = {}
 
@@ -56,7 +56,7 @@ class NodePrepare(Command):
         It would deploy platform states and prepare cortx components.
 
         Execution:
-        `cortx_setup node prepare software`
+        `cortx_setup cluster prepare`
         """
 
         provisioner_components = get_provisioner_states()

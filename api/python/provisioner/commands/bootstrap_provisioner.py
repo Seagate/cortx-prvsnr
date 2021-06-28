@@ -364,19 +364,6 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         else:
             masters = load_yaml(masters_pillar_path)
 
-        # TODO IMPROVE many hard coded values
-
-        cluster_id_path = all_minions_dir / 'cluster_id'
-
-        # TODO: This new cluster_id generation step must be removed
-        # as it is handled in last step of bootstrap (cluster_id API)
-
-        if not cluster_id_path.exists():
-            cluster_uuid = str(uuid.uuid4())
-            dump_yaml(cluster_id_path, dict(cluster_id=cluster_uuid))
-        else:
-            cluster_uuid = load_yaml(cluster_id_path)['cluster_id']
-
         #   TODO IMPROVE EOS-8473 use salt caller and file-managed instead
         #   (locally) prepare minion config
         #   FIXME not valid for non 'local' source
@@ -438,7 +425,6 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 node_pillar_dir / 'setup.sls'
             )
 
-            enclosure_id = "enc_id"
 
             if run_args.rediscover or not setup_pillar_path.exists():
                 data = {
@@ -452,9 +438,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                                 'primary' if (node is run_args.primary)
                                 else 'secondary'
                             ]},
-                            {'cluster_id': cluster_uuid},
                             {'node_id': node_uuid},
-                            {'enclosure_id': enclosure_id},
                             {'hostname_status': hostnamectl_status},
                         ]
                     }
@@ -865,8 +849,10 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
 
-        logger.info("Configuring Firewall")
-        ssh_client.state_apply('firewall')
+#        # Firewall must be configured initially
+#        # via Salt only, so commenting here
+#        logger.info("Configuring Firewall")
+#        ssh_client.state_apply('firewall')
 
         logger.info("Installing SaltStack")
         ssh_client.state_apply('saltstack')
@@ -1030,6 +1016,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             else:
                 url = run_args.target_build
 
+            # TODO use SetRelease instead
             if url.startswith(('http://', 'https://')):
                 ssh_client.cmd_run(
                     (

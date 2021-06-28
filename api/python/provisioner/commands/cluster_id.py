@@ -24,7 +24,10 @@ from typing import Type
 from . import (
      CommandParserFillerMixin
 )
-from .. import inputs
+from .. import (
+    inputs,
+    values
+)
 from provisioner.api import grains_get
 
 from provisioner.commands import (
@@ -35,7 +38,10 @@ from provisioner.config import (
      CLUSTER_ID_FILE,
      ALL_MINIONS
 )
-from provisioner.salt import local_minion_id
+from provisioner.salt import (
+     local_minion_id,
+     StatesApplier
+)
 from provisioner.vendor import attr
 
 logger = logging.getLogger(__name__)
@@ -45,7 +51,7 @@ logger = logging.getLogger(__name__)
 class ClusterId(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
 
-    def _initial_check(self, role):
+    def _initial_check(self, role, pillar_cluster_id):
         """Pre-checks
 
         checks:
@@ -61,17 +67,25 @@ class ClusterId(CommandParserFillerMixin):
                 cluster_id = CLUSTER_ID_FILE.read_text().replace('\n', '')
 
             else:
-                if role != "primary":
-                    raise ValueError(
-                       "ClusterID can be set only on the Primary node "
-                       f"of the cluster. Role of current node: '{role}'. "
-                       "Execute the same command from the Primary node."
-                    )
-                else:
-                    logger.info("ClusterID file does not exist "
-                                "or is empty. Generating an ID to set..")
+                # Case: When adding a new node to cluster, id is set
+                # in pillar, but cluster-id file is not created.
+                if pillar_cluster_id:
+                    logger.debug("ClusterID file to be created and value written.")
+                    cluster_id = pillar_cluster_id
 
-                    cluster_id = str(uuid.uuid4())
+                else:
+                    if role != "primary":
+                        raise ValueError(
+                           "ClusterID can be set only on the Primary node "
+                           f"of the cluster. Role of current node: '{role}'. "
+                           "Execute the same command from the Primary node."
+                        )
+                    else:
+                        logger.debug("ClusterID file does not exist "
+                                    "or is empty. Generating an ID to set..")
+
+                        cluster_id = str(uuid.uuid4())
+
 
             return cluster_id
 
@@ -101,10 +115,11 @@ class ClusterId(CommandParserFillerMixin):
         res = None
         try:
             cluster_data = PillarGet().run('cluster', targets)
-            cluster_id = []
-
+            cluster_id= []
             for node in cluster_data:
-                if "cluster_id" in cluster_data[node]["cluster"]:
+                if cluster_data[node]["cluster"] is values.MISSED:
+                    res = None
+                else :
                     cluster_id.append(
                       cluster_data[node]["cluster"]["cluster_id"]
                     )
@@ -151,29 +166,33 @@ class ClusterId(CommandParserFillerMixin):
                 local_minion_id()
             )[local_minion_id()]["roles"]            # displays as a list
 
+            cluster_id_from_pillar = self._get_cluster_id()
+
             if node_role[0] != "primary":
                 logger.info(
-                     f"Node role received: '{node_role[0]}'."
+                     f"Role of current node: '{node_role[0]}'."
                 )
-                cluster_id_from_setup = self._initial_check(node_role[0])
+                cluster_id_from_setup = self._initial_check(
+                                        node_role[0],
+                                        cluster_id_from_pillar)
 
             else:
-                logger.info("This is the Primary node of the cluster.")
-
-                cluster_id_from_pillar = self._get_cluster_id()
+                logger.debug("This is the Primary node of the cluster.")
 
                 if not cluster_id_from_pillar:
-                    logger.info(
+                    logger.debug(
                        "ClusterID not set in pillar data. "
                        "Checking setup file.."
                     )
 
                 # double verification
-                cluster_id_from_setup = self._initial_check(node_role[0])
+                cluster_id_from_setup = self._initial_check(
+                                        node_role[0],
+                                        cluster_id_from_pillar)
 
                 if cluster_id_from_setup == cluster_id_from_pillar:
-                    logger.info(
-                      "Bootstrapping completed and ClusterID is set!"
+                    logger.debug(
+                      "A unique ClusterID is already set!"
                     )
 
                 elif (cluster_id_from_pillar and
@@ -189,6 +208,12 @@ class ClusterId(CommandParserFillerMixin):
                     'cluster/cluster_id',
                     f'{cluster_id_from_setup}',
                     targets=targets
+                )
+
+                # Ensure cluster-id file is created in all nodes
+                StatesApplier.apply(
+                       ['components.provisioner.config.cluster_id'],
+                       targets=ALL_MINIONS
                 )
 
             return f"cluster_id: {cluster_id_from_setup}"
