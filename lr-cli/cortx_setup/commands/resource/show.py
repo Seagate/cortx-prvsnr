@@ -39,9 +39,8 @@ class ResourceShow(Command):
         else:
             return resource_map
 
-
     def parse_resource_file(self, resource_map_path: str):
-        file_type, file_path=resource_map_path.split("://")
+        file_type, file_path = resource_map_path.split("://")
         if "json" in file_type:
             with open(file_path, "r") as f:
                 return json.loads(f.read())
@@ -52,18 +51,16 @@ class ResourceShow(Command):
         key_list = resource_type.split('>')
         for key in key_list:
             if "[" in key:
-                index = key[key.find("[")+1:key.find("]")]
+                index = key[key.find("[") + 1:key.find("]")]
                 key = key[:key.find("[")]
                 if index.isdigit():
-                    index=int(index)
+                    index = int(index)
                 resource_dict = resource_dict[key][index]
-            else:        
-                resource_dict=resource_dict[key]
+            else:
+                resource_dict = resource_dict[key]
         return resource_dict
 
-
-
-    _args={
+    _args = {
         'manifest': {
             'action': 'store_true',
             'optional': True,
@@ -78,7 +75,7 @@ class ResourceShow(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Resource type for which resource map is to be fetched e.g node.compute.0.hw.disks or node.compute.0.hw'
+            'help': 'Resource type for which resource map is to be fetched e.g node>compute[0]>hw>disks or node>compute[0]'
         },
         'resource_state': {
             'type': str,
@@ -98,12 +95,12 @@ class ResourceShow(Command):
             # kwargs['resource_type'])
             resource_map_path = get_pillar_data(
                 'provisioner/common_config/resource_map_path')
-            resource_dict=self.parse_resource_file(resource_map_path)
-            resource_dict=self.filter_resource_type(
+            resource_dict = self.parse_resource_file(resource_map_path)
+            resource_dict = self.filter_resource_type(
                 kwargs['resource_type'], resource_dict)
 
             if kwargs['resource_state']:
-                resource_dict=self.resource_filter_status(
+                resource_dict = self.resource_filter_status(
                     kwargs['resource_state'], resource_dict)
 
             self.logger.info(json.dumps(resource_dict, indent=4))
