@@ -49,7 +49,8 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 UpgradeReposVer2,
                                 CheckVerdict,
                                 Checks,
-                                VERSION_DELIMITERS
+                                VERSION_DELIMITERS,
+                                CORTX_VERSION
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
@@ -205,6 +206,7 @@ class CortxISOInfo:
     def __attrs_post_init__(self):
         # NOTE: for the convenience we add compatability information to
         #  packages attribute
+        key = SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
         for entry in self.metadata.get(ReleaseInfo.REQUIRES.value, list()):
             # NOTE: the format are following:
             #  REQUIRES:
@@ -216,8 +218,9 @@ class CortxISOInfo:
             compatibility_version = entry.replace(pkg_name, '').strip()
             pkg_name = pkg_name.strip()
             if pkg_name in self.packages:
-                key = SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
                 self.packages[pkg_name][key] = compatibility_version
+            elif pkg_name == CORTX_VERSION:
+                self.packages[pkg_name] = {key: compatibility_version}
             else:
                 logger.warning('Found version compatibility constraint '
                                f'for the package "{pkg_name}" not listed in '

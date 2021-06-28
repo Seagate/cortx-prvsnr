@@ -24,8 +24,13 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from provisioner import utils
+from provisioner.commands.release import GetRelease
 from provisioner.salt import local_minion_id, cmd_run
-from provisioner.config import ContentType, HashType, SWUpgradeInfoFields
+from provisioner.config import (
+    ContentType,
+    HashType,
+    SWUpgradeInfoFields,
+    CORTX_VERSION)
 from provisioner.vendor import attr
 from provisioner.errors import ValidationError
 
@@ -807,7 +812,8 @@ class CompatibilityValidator:
     installed ones.
     """
 
-    def validate(self, iso_info):
+    @staticmethod
+    def validate(iso_info):
         """
 
         Parameters
@@ -861,6 +867,22 @@ class CompatibilityValidator:
             packages[pkg_name] = utils.normalize_rpm_version(pkg_version)
 
         error_msg = list()
+
+        compatibility = iso_info.packages.get(CORTX_VERSION, {}).get(
+            SWUpgradeInfoFields.VERSION_COMPATIBILITY.value, None)
+        if compatibility:
+            cortx_version = GetRelease.cortx_version()
+            if Version(cortx_version) in SpecifierSet(compatibility):
+                logger.info(
+                    f"The CORTX release version '{cortx_version}'"
+                    f"satisfies the constraint version '{compatibility}'"
+                )
+            else:
+                msg = (f"The CORTX release version '{cortx_version}' does not"
+                       f"satisfy the constraint version '{compatibility}'")
+                logger.error(msg)
+                error_msg.append(msg)
+
         for pkg in iso_info.packages:
             if (SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
                     in iso_info.packages[pkg]):

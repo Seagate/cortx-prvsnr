@@ -692,6 +692,10 @@ class SWUpgradeInfoFields(Enum):
 VERSION_DELIMITERS = '|'.join(map(re.escape,
                                   ('>', '<', '==', '!=', '>=', '<=')))
 
+# The special package name from the RELEASE.INFO:REQUIRES section that sets
+# compatibility requirement for the minimum CORTX version
+CORTX_VERSION = "CORTX"
+
 
 class CortxFlows(Enum):
 
