@@ -14,7 +14,7 @@ For that cases mocked deployment should help. It comes with the following mocks 
   - singlerepo bundle that might be used for a deployment
   - upgrade bundle that might be used for an upgrade routine verification
 
-# SaltStack states
+## SaltStack states
 
 There is a set of SaltStack states that can be applied to:
 - mock a system
@@ -48,7 +48,7 @@ salt "srvnode-1" state.apply components.misc_pkgs.mocks.cortx.build_upgrade \
     pillar='{"inline": {"upgrade_repo_dir": "/tmp/cortx-upgrade"}}'
 ```
 
-# CLI
+## CLI
 
 Under the hood the states above use [buildbundle.sh](srv/components/misc_pkgs/mocks/cortx/files/scripts/buildbundle.sh) script.
 

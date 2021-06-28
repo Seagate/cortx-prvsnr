@@ -135,4 +135,4 @@ yum repolist
 
 ## References
 
-#### [Passing crdedentials to CLI](../../api/python/README.md#passing-crdedentials-to-cli)
+### [Passing crdedentials to CLI](../../api/python/README.md#passing-crdedentials-to-cli)

@@ -1,4 +1,4 @@
-# Provisioner Testing Approaches
+# Provisioner Support for Mini Provisioner API
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@
 
 ## Overview
 
-Provisioner support mini-provisioner interfaces exposed by CORTX componnents
+Provisioner supports mini-provisioner interfaces exposed by CORTX componnents
 (including Provisioner itself).
 
 These interfaces are defined using specification files located in

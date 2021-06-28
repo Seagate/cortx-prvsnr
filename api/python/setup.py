@@ -25,6 +25,7 @@ from setuptools import setup, find_packages
 INSTALL_REQ_F_NAME = 'install.txt'
 TESTS_REQ_F_NAME = 'tests.txt'
 CODACY_REQ_F_NAME = 'codacy.txt'
+DOCS_REQ_F_NAME = 'docs.txt'
 
 try:
     here = os.path.abspath(os.path.dirname(__file__))
@@ -53,6 +54,7 @@ def parse_requirements_f(req_f_name):
 
 tests_require = parse_requirements_f(TESTS_REQ_F_NAME)
 codacy_require = parse_requirements_f(CODACY_REQ_F_NAME)
+docs_require = parse_requirements_f(DOCS_REQ_F_NAME)
 
 
 # requiring pytest-runner only when pytest is invoked
@@ -102,6 +104,7 @@ setup(
         'test': tests_require,
         'tests': tests_require,
         'codacy': codacy_require,
+        'docs': docs_require,
     },
     tests_require=tests_require
 )
