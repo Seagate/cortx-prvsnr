@@ -21,15 +21,15 @@ from pathlib import Path
 from typing import Type, Union, Any
 from urllib.parse import urlparse, unquote
 
-import requests
 from configparser import ConfigParser
 
+from provisioner.vendor import attr
 from provisioner.commands import Check
 from provisioner.commands.upgrade import CheckISOAuthenticity
 from provisioner.commands.validator.validator import CompatibilityValidator
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
-from ..set_swupdate_repo import SetSWUpdateRepo
-from .. import inputs, values
+from provisioner.commands.set_swupdate_repo import SetSWUpdateRepo
+from provisioner import inputs, values
 from provisioner.config import (REPO_CANDIDATE_NAME,
                                 IS_REPO_KEY,
                                 RELEASE_INFO_FILE,
@@ -55,21 +55,23 @@ from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
                                 SWUpdateError
                                 )
-from provisioner.utils import (load_yaml,
-                               load_checksum_from_file,
-                               load_checksum_from_str,
-                               HashInfo,
-                               load_yaml_str,
-                               normalize_rpm_version
-                               )
-from ..validator import (DirValidator,
-                         FileValidator,
-                         FileSchemeValidator,
-                         ReleaseInfoValidator,
-                         ThirdPartyReleaseInfoValidator,
-                         YumRepoDataValidator,
-                         HashSumValidator)
-from provisioner.vendor import attr
+from provisioner.utils import (
+    load_checksum_from_file,
+    load_checksum_from_str,
+    HashInfo,
+    load_yaml_str,
+    normalize_rpm_version
+)
+from provisioner.commands.validator import (
+    DirValidator,
+    FileValidator,
+    FileSchemeValidator,
+    ReleaseInfoValidator,
+    ThirdPartyReleaseInfoValidator,
+    YumRepoDataValidator,
+    HashSumValidator
+)
+from provisioner.commands.release import CortxRelease
 
 
 logger = logging.getLogger(__name__)
@@ -91,8 +93,7 @@ SW_UPGRADE_BUNDLE_SCHEME_VER1 = {
         required=True),
     CORTX_PYTHON_ISO_DIR: DirValidator(
         {
-            # FIXME upgrade iso lacks that
-            "index.html": FileValidator(required=False)
+            "index.html": FileValidator(required=True)
         },
         required=False),
     OS_ISO_DIR: DirValidator(
@@ -145,7 +146,7 @@ SW_UPGRADE_BUNDLE_SCHEME_VER2 = {
                 {
                     THIRD_PARTY_RELEASE_INFO_FILE:
                         ThirdPartyReleaseInfoValidator(),
-                    ISOVer2.PYTHON:  DirValidator(
+                    ISOVer2.PYTHON: DirValidator(
                         {
                             "index.html": FileValidator(required=True)
                         },
@@ -174,8 +175,7 @@ SW_UPGRADE_BUNDLE_SCHEME_VER2 = {
                                 empty=True
                             )
                         },
-                        required=True
-                    )
+                        required=True)
                 },
                 required=False,
                 empty=True
@@ -501,17 +501,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             )
             logger.warning(err_msg)
 
-            # TODO IMPROVE later raise and error
-            if False:
-                raise SWUpdateRepoSourceError(
-                    # FIXME repo is undefined here
-                    # str(repo.source),
-                    str(repo_name),
-                    (
-                        "SW upgrade repository for the release "
-                        f"'{release}' has been already enabled"
-                    )
+            raise SWUpdateRepoSourceError(
+                str(repo_name),
+                (
+                    f"SW upgrade repository '{repo_name}' for the release "
+                    f"'{release}' has been already enabled"
                 )
+            )
 
     @staticmethod
     def _validate_python_index(index_path: Path):
@@ -541,7 +537,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         pkgs = (p for p in index_path.iterdir() if p.is_dir())
         try:
-            test_package_name = next(pkgs)
+            test_package_name = next(pkgs).name
         except StopIteration:
             logger.debug("Python index is empty, skip the validation")
             return
@@ -704,7 +700,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # NOTE: yum repoinfo supports the wildcards in the name of a searching
         #  repository
         if not dry_run and self._does_repo_exist(
-                    f'sw_upgrade_*_{params.release}'):
+            f'sw_upgrade_*_{params.release}'
+        ):
             logger.warning(
               'other repo candidate was found, proceeding with force removal'
             )
@@ -841,34 +838,22 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             self._base_repo_validation(candidate_repo, base_dir, dry_run)
 
-            if candidate_repo.is_remote():
-                iso_root_dir = f'{candidate_repo.source}'
-            else:
-                iso_root_dir = base_dir / REPO_CANDIDATE_NAME
-
-            release_file = self.get_release_file_path(iso_root_dir)
-            metadata = self.load_metadata(release_file,
-                                          candidate_repo.is_remote())
+            cortx_release = CortxRelease(REPO_CANDIDATE_NAME)
+            metadata = cortx_release.metadata
 
             repo.metadata = metadata
             logger.debug(f"Resolved metadata {metadata}")
 
-            # the metadata file includes release info
-            # TODO IMPROVE: maybe it is good to verify that 'RELEASE'-field
-            #  well formed
-            release = metadata.get(ReleaseInfo.RELEASE.value, None)
-
-            if release is None:
-                try:
-                    release = (
-                        f'{metadata[ReleaseInfo.VERSION.value]}-'
-                        f'{metadata[ReleaseInfo.BUILD.value]}'
-                    )
-                except KeyError:
-                    raise SWUpdateRepoSourceError(
-                            str(repo.source),
-                            f"No release data found in '{RELEASE_INFO_FILE}'"
-                    )
+            try:
+                # TODO here cortx_release.version returns 'candidate',
+                #      it doesn't match metadata version info,
+                #      might be a case for improvement
+                release = cortx_release.release_info.version
+            except KeyError:
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"No release data found in '{RELEASE_INFO_FILE}'"
+                )
 
             self._post_repo_validation(candidate_repo, base_dir, dry_run)
 
@@ -922,7 +907,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         if (
             python_index_path.exists()
-            and any(p for p in python_index_path.iterdir() if p.is_dir())
+            and any(
+                p for p in python_index_path.iterdir() if p.is_dir()
+            )
         ):
             config = ConfigParser()
             config.read(PIP_CONFIG_FILE)
@@ -1037,33 +1024,3 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
 
         return res
-
-    @staticmethod
-    def load_metadata(release_file_path: str, remote: bool = False):
-        """
-
-        Parameters
-        ----------
-        release_file_path
-        remote
-
-        Returns
-        -------
-        dict:
-            dictionary with Cortx repository metadata (content of RELEASE.INFO
-            file)
-
-        """
-        try:
-            if remote:
-                r = requests.get(release_file_path)
-                metadata = load_yaml_str(r.content.decode("utf-8"))
-            else:
-                metadata = load_yaml(release_file_path)
-        except Exception as exc:
-            raise SWUpdateRepoSourceError(
-                        str(release_file_path),
-                        f"Failed to load '{release_file_path}' file: {exc}"
-                    )
-
-        return metadata

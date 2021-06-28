@@ -176,11 +176,7 @@ def validator__subclass_of(
 
 
 def load_yaml_str(data):
-    try:
-        return yaml.safe_load(data)
-    except yaml.YAMLError as exc:
-        logger.exception("Failed to load pillar data")
-        raise BadPillarDataError(str(exc))
+    return yaml.safe_load(data)
 
 
 def dump_yaml_str(
@@ -221,11 +217,7 @@ def dump_yaml_str(
 # TODO streamed read
 def load_yaml(path):
     path = Path(str(path))
-    try:
-        return load_yaml_str(path.read_text())
-    except yaml.YAMLError as exc:
-        logger.exception("Failed to load pillar data")
-        raise BadPillarDataError(str(exc))
+    return load_yaml_str(path.read_text())
 
 
 def load_json_str(data: str):

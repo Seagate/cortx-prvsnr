@@ -15,28 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-jenkins'
-__version__ = '0.0.2'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'CORTX Jenkins configuration automation'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "Seagate"  # TODO
+from pathlib import Path
+from provisioner.config import (
+     CLUSTER_ID_FILE
+)
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+def cluster_id():
+    """Populates cluster_id to grains."""
+    grains = {"cluster_id": None}
+
+    id_file = Path(CLUSTER_ID_FILE)
+    if id_file.is_file():
+        grains['cluster_id'] = id_file.read_text().strip()
+
+    return grains

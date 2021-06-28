@@ -41,8 +41,7 @@ from ..errors import (
     ClusterMaintenanceDisableError,
     HAPostUpdateError,
     ClusterNotHealthyError,
-    SSLCertsUpdateError,
-    ReleaseFileNotFoundError,
+    SSLCertsUpdateError
 )
 from ..config import (
     ALL_MINIONS,
@@ -814,90 +813,6 @@ class GetNodeId(CommandParserFillerMixin):
             fun_args=['node_id'],
             targets=targets
         )
-
-
-# TODO TEST
-@attr.s(auto_attribs=True)
-class GetReleaseVersion(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsBase
-    _installed_rpms: List = attr.ib(init=False, default=None)
-
-    @classmethod
-    def cortx_version(
-        cls, release_metadata: Optional[Union[str, dict]] = None
-    ):
-        if release_metadata is None:
-            release_metadata = cls().run(targets=local_minion_id())
-
-        if isinstance(release_metadata, str):
-            release_metadata = json.loads(release_metadata)
-
-        return (
-            f"{release_metadata[ReleaseInfo.VERSION.value]}-"
-            f"{release_metadata[ReleaseInfo.BUILD.value]}"
-        )
-
-    @property
-    def installed_rpms(self) -> List:
-        if self._installed_rpms is None:
-            exclude_rpms = 'cortx-py|prvsnr-cli|cortx-sspl-test'
-            res = salt_cmd_run(f"rpm -qa|grep '^cortx-'|grep -Ev '{exclude_rpms}'",  # noqa: E501
-                               targets=LOCAL_MINION)
-            rpms = res[next(iter(res))].split("\n")
-            self._installed_rpms = [f'{rpm}.rpm' for rpm in rpms if rpm]
-        return self._installed_rpms
-
-    def _get_rpms_from_release(self, source):
-        return load_yaml(source)['COMPONENTS']
-
-    def _compare_rpms_info(self, release_rpms):
-        return (release_rpms and
-                set(self.installed_rpms).issubset(release_rpms))
-
-    def _get_release_info_path(self):
-        release_info = ''
-        update_repo = PillarKey('release/upgrade')
-        pillar = PillarResolver(LOCAL_MINION).get([update_repo])
-        pillar = next(iter(pillar.values()))
-        upgrade_data = pillar[update_repo]
-        base_dir = Path(upgrade_data['base_dir'])
-        repos = upgrade_data['repos']
-        for version in reversed(list(repos)):
-            if version == REPO_CANDIDATE_NAME:
-                continue
-            release_info = base_dir / f'{version}/RELEASE.INFO'
-            # FIXME upgrade iso now may lack release file on top level
-            if not release_info.exists():
-                release_info = (
-                    base_dir / f'{version}/{CORTX_ISO_DIR}/RELEASE.INFO'
-                )
-            if release_info.exists():
-                release_rpms = self._get_rpms_from_release(release_info)
-                if self._compare_rpms_info(release_rpms):
-                    return release_info
-
-    def run(self, targets):
-        update_path = self._get_release_info_path()
-        if update_path:
-            source = update_path
-        else:
-            source = Path("/etc/yum.repos.d/RELEASE_FACTORY.INFO")
-        return json.dumps(load_yaml(source))
-
-
-@attr.s(auto_attribs=True)
-class GetFactoryVersion(CommandParserFillerMixin):
-    input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = RunArgsBase
-
-    def run(self, targets):
-        source = "/etc/yum.repos.d/RELEASE_FACTORY.INFO"
-        try:
-            with open(source, 'r') as filehandle:
-                return json.dumps(yaml.load(filehandle))
-        except Exception as exc:
-            raise ReleaseFileNotFoundError(exc) from exc
 
 
 # TODO TEST

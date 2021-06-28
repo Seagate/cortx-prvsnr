@@ -37,37 +37,39 @@ class NodePrepareServer(NodePrepareServerConfig):
 
     def run(self, **kwargs):
         super().run(**kwargs)
-        node = local_minion_id()
-        mgmt_vip = kwargs.get('mgmt_vip')
 
-        try:
-            if "primary" in get_pillar_data(f"cluster/{node}/roles"):
-                if self._ip_not_pingable(mgmt_vip):
-                    self.logger.debug(
-                        f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
-                    state = "components.system.network.mgmt.ip_alias"
-                    self.logger.debug(f"Applying {state} on {node}")
-                    StatesApplier.apply([state])
-                else:
-                    raise Exception(
-                        f"Unable to alias IP to management network . The IP {mgmt_vip} is already in use")
+        if kwargs.get('mgmt_vip'):
+            node = local_minion_id()
+            mgmt_vip = kwargs['mgmt_vip']
 
-            self.logger.debug("Updating salt-minion file")
-            StateFunExecuter.execute(
-                'file.managed',
-                fun_kwargs=dict(
-                    name="/etc/salt/minion",
-                    source=str(PRVSNR_ROOT_DIR) +
-                    '/srv/components/provisioner/salt_minion/files/minion_factory',
-                    template='jinja'
+            try:
+                if "primary" in get_pillar_data(f"cluster/{node}/roles"):
+                    if self._ip_not_pingable(mgmt_vip):
+                        self.logger.debug(
+                            f"Aliasing {mgmt_vip} to public managemnt Interface on primary node")
+                        state = "components.system.network.mgmt.ip_alias"
+                        self.logger.debug(f"Applying {state} on {node}")
+                        StatesApplier.apply([state])
+                    else:
+                        raise Exception(
+                            f"Unable to alias IP to management network . The IP {mgmt_vip} is already in use")
+
+                self.logger.debug("Updating salt-minion file")
+                StateFunExecuter.execute(
+                    'file.managed',
+                    fun_kwargs=dict(
+                        name="/etc/salt/minion",
+                        source=str(PRVSNR_ROOT_DIR) +
+                        '/srv/components/provisioner/salt_minion/files/minion_factory',
+                        template='jinja'
+                    )
                 )
-            )
-            self.logger.debug("Restarting salt-minion")
-            cmd_run(
-                "systemctl restart salt-minion",
-                background=True,
-                targets=node
-            )
+                self.logger.debug("Restarting salt-minion")
+                cmd_run(
+                    "salt-call service.restart salt-minion",
+                    background=True,
+                    targets=node
+                )
 
-        except Exception as e:
-            raise e
+            except Exception as e:
+                raise e
