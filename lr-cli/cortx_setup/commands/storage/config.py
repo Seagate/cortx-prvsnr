@@ -461,7 +461,13 @@ class StorageEnclosureConfig(Command):
                     " are missing")
                 raise RuntimeError("Incomplete arguments provided")
 
-            self.update_pillar_and_conf('cvg', self.cvg_count)
+            current_cvg_count = Conf.get (
+                'node_info_index',
+                f'server_node>{self.machine_id}>storage>cvg_count'
+            )
+            if current_cvg_count is MISSED:
+                current_cvg_count = 0
+
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
             if cvg_list is MISSED:
                 cvg_list = []
@@ -487,6 +493,8 @@ class StorageEnclosureConfig(Command):
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
             cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            self.cvg_count = self.cvg_count + 1
+            self.update_pillar_and_conf('cvg', str(self.cvg_count))
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
