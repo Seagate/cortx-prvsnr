@@ -28,7 +28,8 @@ from cortx_setup.config import (
 )
 from cortx_setup.commands.command import Command
 from cortx_setup.commands.common_utils import (
-    get_cluster_id
+    get_cluster_id,
+    get_machine_id
 )
 from cortx_setup.commands.pillar_sync import (
     PillarSync
@@ -45,8 +46,6 @@ from cortx_setup.commands.cluster.generate import (
 from cortx_setup.commands.node.prepare.time import (
     NodePrepareTime
 )
-from cortx_setup.commands.common_utils import get_machine_id
-
 from cortx.utils.conf_store import Conf
 
 from provisioner.commands import (
@@ -57,10 +56,9 @@ from provisioner.commands import (
     create_service_user,
     reset_machine_id
 )
-from provisioner.salt import (
-    local_minion_id,
-)
+from provisioner.salt import local_minion_id
 from provisioner.api import grains_get
+
 
 class ClusterCreate(Command):
 
@@ -87,7 +85,7 @@ class ClusterCreate(Command):
         'source': {
             'type': str,
             'optional': True,
-            'default': 'rpm',
+            'default': 'iso',
             'help': ('Source of build to use for bootstrap. '
                      'e.g: {local|rpm|iso}')
         },
@@ -135,6 +133,7 @@ class ClusterCreate(Command):
         try:
             index = 'node_info_index'
             local_fqdn = socket.gethostname()
+            node_id = local_minion_id()
             cluster_args = ['name', 'site_count', 'storageset_count']
 
             # Ref: `nodes` will be removed from this args list. Read more on https://github.com/Seagate/cortx-prvsnr/tree/pre-cortx-1.0/docs/design_updates.md#field-api-design-changes
@@ -168,9 +167,20 @@ class ClusterCreate(Command):
             # ISO files validation
             if kwargs['source'] == 'iso':
                 if not (kwargs['iso_cortx'] or kwargs['iso_os']):
-                    raise ValueError(
-                         "iso single file and iso os file paths are mandatory "
-                         "to bootstrap. Please provide valid paths in command.")
+                    iso_files = [fn for fn in os.listdir("/opt/isos/")
+                                 if fn.endswith('.iso')]
+                    for name in iso_files:
+                        if "single" in name:
+                            ISO_SINGLE_FILE = name
+                        elif "os" in name:
+                            ISO_OS_FILE = name
+                    kwargs['iso_cortx'] = ISO_SINGLE_FILE
+                    kwargs['iso_os'] = ISO_OS_PATH
+                    if not (ISO_SINGLE_FILE.exists() or ISO_OS_PATH.exists()):
+                        raise ValueError(
+                            "iso single file and iso os file paths are mandatory "
+                            "to bootstrap. Please mount them in expected paths "
+                            "(OR) provide valid mounted paths in command.")
 
             cluster_dict = {key:kwargs[key]
                            for key in kwargs if key in cluster_args}
@@ -213,17 +223,17 @@ class ClusterCreate(Command):
             self.logger.debug("Refreshing enclosure id on the system")
             RefreshEnclosureId().run()
 
-            #NTP workaround for now(need to move this to time.py after encryption issue)
-            self.logger.debug(f"Setting time on node with server & timezone")
-            node_id = local_minion_id()
+            # NTP workaround.
+            # TODO: move this to time.py after encryption issue
+            self.logger.debug("Setting time on node with server & timezone")
+
             NodePrepareTime().set_server_time()
             machine_id = get_machine_id(node_id)
             enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
             if enclosure_id:
                 if not machine_id in enclosure_id:   # check if the system is VM or HW
-                    self.logger.debug(f"Setting time on enclosure with server & timezone")
+                    self.logger.debug("Setting time on enclosure with server & timezone")
                     NodePrepareTime().set_enclosure_time()
-
 
             self.logger.debug("Exporting to Confstore")
             confstore_export.ConfStoreExport().run()
