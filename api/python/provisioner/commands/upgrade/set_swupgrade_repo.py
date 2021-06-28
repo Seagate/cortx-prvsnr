@@ -861,22 +861,22 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             packages = self.get_packages_version(REPO_CANDIDATE_NAME)
 
-            # Packages compatibility validation
-            compatibility_validator = CompatibilityValidator()
-            try:
-                compatibility_validator.validate(
-                    CortxISOInfo(packages=packages, metadata=metadata)
-                )
-            except ValidationError as e:
-                logger.debug(
-                    f"Packages compatibility check is failed: {e}"
-                )
-                raise SWUpdateRepoSourceError(
-                    str(candidate_repo.source),
-                    f"Packages compatibility check is failed {e}"
-                ) from e
-            else:
-                logger.info("Packages compatibility check succeeded")
+            cortx_info = CortxISOInfo(packages=packages, metadata=metadata)
+            if not dry_run:
+                # Packages compatibility validation
+                compatibility_validator = CompatibilityValidator()
+                try:
+                    compatibility_validator.validate(cortx_info)
+                except ValidationError as e:
+                    logger.debug(
+                        f"Packages compatibility check is failed: {e}"
+                    )
+                    raise SWUpdateRepoSourceError(
+                        str(candidate_repo.source),
+                        f"Packages compatibility check is failed {e}"
+                    ) from e
+                else:
+                    logger.info("Packages compatibility check succeeded")
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
@@ -884,7 +884,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.info("Post-validation cleanup")
             self._apply(candidate_repo, targets, local=False)
 
-        return CortxISOInfo(packages=packages, metadata=repo.metadata)
+        return cortx_info
 
     @staticmethod
     def _setup_python_index(repo: inputs.SWUpgradeRepo):
