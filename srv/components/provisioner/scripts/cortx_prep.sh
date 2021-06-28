@@ -42,7 +42,7 @@ Configure Cortx prerequisites locally.
 General options:
 
 Options:
-  -t|--target-build BUILD_URL            Target Cortx build to deploy
+  -t|--target-build BUILD_URL        Target Cortx build to deploy
 "
 }
 
@@ -52,13 +52,15 @@ parse_args()
 
     while [[ $# -gt 0 ]]; do
         case $1 in
-            target-build)
+            -t|--target-build)
                 if [[ -z "$2" ]]; then
                     echo "Error: URL for target cortx build not provided" && usage && exit 1;
                 fi
                 repo_url=$2
                 shift 2
                 ;;
+            -h|--help)
+                usage; exit 0
             *) echo "Invalid option $1"; usage; exit 1;;
         esac
     done
