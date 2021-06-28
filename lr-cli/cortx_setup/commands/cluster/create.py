@@ -42,6 +42,10 @@ from cortx_setup.commands.cluster.encrypt import (
 from cortx_setup.commands.cluster.generate import (
     GenerateCluster
 )
+from cortx_setup.commands.node.prepare.time import (
+    NodePrepareTime
+)
+from cortx_setup.commands.common_utils import get_machine_id
 
 from cortx.utils.conf_store import Conf
 
@@ -53,7 +57,10 @@ from provisioner.commands import (
     create_service_user,
     reset_machine_id
 )
-
+from provisioner.salt import (
+    local_minion_id,
+)
+from provisioner.api import grains_get
 
 class ClusterCreate(Command):
 
@@ -127,10 +134,6 @@ class ClusterCreate(Command):
         """
         try:
             index = 'node_info_index'
-            Conf.load(
-                index,
-                f'json://{CONFSTORE_CLUSTER_FILE}'
-            )
             local_fqdn = socket.gethostname()
             cluster_args = ['name', 'site_count', 'storageset_count']
 
@@ -201,20 +204,36 @@ class ClusterCreate(Command):
             self.logger.debug("Creating service user")
             create_service_user.CreateServiceUser.run(user="cortxub")
 
-            self.logger.debug("Refreshing enclosure id on the system")
-            RefreshEnclosureId().run()
-
             self.logger.debug("Setting up Cluster ID on the system")
             cluster_id.ClusterId().run()
 
             self.logger.debug("Encrypting config data")
             EncryptSecrets().run()
 
+            self.logger.debug("Refreshing enclosure id on the system")
+            RefreshEnclosureId().run()
+
+            #NTP workaround for now(need to move this to time.py after encryption issue)
+            self.logger.debug(f"Setting time on node with server & timezone")
+            node_id = local_minion_id()
+            NodePrepareTime().set_server_time()
+            machine_id = get_machine_id(node_id)
+            enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
+            if enclosure_id:
+                if not machine_id in enclosure_id:   # check if the system is VM or HW
+                    self.logger.debug(f"Setting time on enclosure with server & timezone")
+                    NodePrepareTime().set_enclosure_time()
+
+
             self.logger.debug("Exporting to Confstore")
             confstore_export.ConfStoreExport().run()
 
             self.logger.info("Environment set up! Proceeding to create a cluster..")
 
+            Conf.load(
+                index,
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
             clust_id = get_cluster_id()
             for key, value in cluster_dict.items():
                 if value:
