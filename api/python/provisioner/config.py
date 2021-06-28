@@ -692,6 +692,9 @@ class SWUpgradeInfoFields(Enum):
 VERSION_DELIMITERS = '|'.join(map(re.escape,
                                   ('>', '<', '==', '!=', '>=', '<=')))
 
+# release delimiters that are used for parse the package build version
+RELEASE_DELIMITERS = '|'.join(map(re.escape, ('.', '_')))
+
 # The special package name from the RELEASE.INFO:REQUIRES section that sets
 # compatibility requirement for the minimum CORTX version
 CORTX_VERSION = "CORTX"

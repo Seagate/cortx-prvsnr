@@ -874,11 +874,11 @@ class CompatibilityValidator:
             cortx_version = GetRelease.cortx_version()
             if Version(cortx_version) in SpecifierSet(compatibility):
                 logger.info(
-                    f"The CORTX release version '{cortx_version}'"
+                    f"The CORTX release version '{cortx_version}' "
                     f"satisfies the constraint version '{compatibility}'"
                 )
             else:
-                msg = (f"The CORTX release version '{cortx_version}' does not"
+                msg = (f"The CORTX release version '{cortx_version}' does not "
                        f"satisfy the constraint version '{compatibility}'")
                 logger.error(msg)
                 error_msg.append(msg)
@@ -895,6 +895,22 @@ class CompatibilityValidator:
                            f" the CORTX package '{pkg}' that is not installed")
                     logger.debug(msg)
                     continue
+
+                # NOTE: we used for comparison normalized values of RPM version
+                #  For more details, please, review
+                #  `provisioner.utils.normalize_rpm_version`
+                #  There is some interesting behavior of packaging API for
+                #  versions comparison:
+                #  >>> Version('2.0.0-275') in SpecifierSet('> 2.0.0')
+                #  False
+                #  >>> Version('2.0.0-275') in SpecifierSet('>= 2.0.0')
+                #  True
+                #  >>> Version('2.0.0-275') in SpecifierSet('== 2.0.0')
+                #  False
+                #  >>> Version('2.0.0-275') in SpecifierSet('> 2.0.0-0')
+                #  True
+                # >>> version.parse('2.0.0-275') > version.parse('2.0.0')
+                # True
 
                 if Version(installed_ver) in SpecifierSet(compatibility):
                     logger.info(f"The CORTX package '{pkg}' of version "

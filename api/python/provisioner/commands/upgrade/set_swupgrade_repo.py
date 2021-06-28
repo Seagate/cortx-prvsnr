@@ -217,6 +217,11 @@ class CortxISOInfo:
             #  following:  "> 2.0.0"
             compatibility_version = entry.replace(pkg_name, '').strip()
             pkg_name = pkg_name.strip()
+            # NOTE: normalize the constraint version: add build number
+            #  if missed
+            compatibility_version = normalize_rpm_version(
+                compatibility_version
+            )
             if pkg_name in self.packages:
                 self.packages[pkg_name][key] = compatibility_version
             elif pkg_name == CORTX_VERSION:
@@ -988,8 +993,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         # NOTE: use --enablerepo to suspend message
         #  Repo sw_upgrade_cortx_iso_candidate has been automatically enabled.
         #  in case of candidate repo
-        cmd = (f"yum --enablerepo={repo} repo-pkgs {repo} list "
-               f"2>/dev/null | grep '{repo}' | awk '{{print $1\" \"$2}}'")
+        cmd = (f"yum --enablerepo={repo} --showduplicates repo-pkgs {repo} "
+               f"list 2>/dev/null | grep '{repo}' | awk '{{print $1\" \"$2}}'")
 
         res = cmd_run(cmd, targets=local_minion_id(),
                       fun_kwargs=dict(python_shell=True))

@@ -14,7 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
+import re
 from typing import (
     Tuple,
     Union,
@@ -38,6 +38,7 @@ from shlex import quote
 from pathlib import Path, PosixPath
 import yaml
 from packaging.version import Version
+from provisioner.config import RELEASE_DELIMITERS
 
 from . import config
 
@@ -615,8 +616,13 @@ def normalize_rpm_version(rpm_version: str):
         integer numbers
 
     """
-    version, release = rpm_version.split("-")
-    # Leave only the build number, remove distributive tag (el7) and other tags
-    build = release.split(".")[0]
+    if "-" in rpm_version:
+        version, release = rpm_version.split("-")
+        # Leave only the build number, remove distributive tag (el7)
+        # and other tags
+        build = re.split(RELEASE_DELIMITERS, release)[0]
+    else:
+        version = rpm_version
+        build = "0"
 
     return f"{version.strip()}-{build.strip()}"
