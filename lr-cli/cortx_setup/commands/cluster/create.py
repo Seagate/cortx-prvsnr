@@ -134,10 +134,6 @@ class ClusterCreate(Command):
         """
         try:
             index = 'node_info_index'
-            Conf.load(
-                index,
-                f'json://{CONFSTORE_CLUSTER_FILE}'
-            )
             local_fqdn = socket.gethostname()
             cluster_args = ['name', 'site_count', 'storageset_count']
 
@@ -234,6 +230,10 @@ class ClusterCreate(Command):
 
             self.logger.info("Environment set up! Proceeding to create a cluster..")
 
+            Conf.load(
+                index,
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
             clust_id = get_cluster_id()
             for key, value in cluster_dict.items():
                 if value:

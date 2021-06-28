@@ -50,8 +50,6 @@ node:
       NodePrepareNetwork
     storage:
       NodePrepareStorage
-    software:
-      NodePrepare
 
 cluster:
   create:
@@ -62,6 +60,8 @@ cluster:
     EncryptSecrets
   generate:
     GenerateCluster 
+  prepare:
+    ClusterPrepare
   config:
     network:
       ClusterNetworkConfig
