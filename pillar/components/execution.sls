@@ -19,7 +19,6 @@ execution:
   noncortx_components:
     platform:
       - system
-      - system.storage.multipath
       - system.storage
       - misc_pkgs.rsyslog
       - system.logrotate
