@@ -1,11 +1,6 @@
 # Framework of Southbound API
 
-Table of contents:
-
-- [Framework of Southbound API](#framework-of-southbound-api)
-  - [Summary of Southbound API](#summary-of-southbound-api)
-  - [`setup.yaml` File Sections Explained](#setupyaml-file-sections-explained)
-
+## Table of Contents
 
 ## Summary of Southbound API
 
