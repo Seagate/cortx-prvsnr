@@ -17,7 +17,7 @@
 
 from provisioner.salt import local_minion_id, function_run
 from provisioner.commands import reset_machine_id
-
+from cortx.utils.security.cipher import Cipher
 from provisioner.pillar import (
     PillarResolver,
     PillarKey
@@ -108,3 +108,9 @@ def get_cortx_states():
 
     """
     return get_pillar_data('execution/cortx_components')
+
+
+def encrypt_secret(secret, component, key):
+    key_cipher = Cipher.generate_key(key, component)
+    return Cipher.encrypt(key_cipher, secret.encode("utf-8")).decode("utf-8")
+

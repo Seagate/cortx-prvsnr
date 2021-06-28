@@ -20,12 +20,14 @@
     name: global
 
     github_org: Seagate
+    github_credentials_id: github-user-and-token
     defaut_commit_id: main
     jenkinsfile-path: 'devops/ci/Jenkinsfile.ci'
 
     default_topic:
     level_regex: (unit|integration_mocked|integration|system)
     topic_regex: (^$|deploy|config|upgrade|upgrade_bundle)
+
 
     # github pull request builder trigger defaults
     ghprb_cron: 'H/5 * * * *'

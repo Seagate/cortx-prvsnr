@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,28 +16,34 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-__title__ = 'cortx-jenkins'
-__version__ = '0.0.2'
-__author__ = "Seagate"
-__author_email__ = 'support@seagate.com'  # TODO
-__maintainer__ = 'Seagate'
-__maintainer_email__ = __author_email__
-__url__ = 'https://github.com/Seagate/cortx-prvsnr'
-__description__ = 'CORTX Jenkins configuration automation'
-__long_description__ = __description__
-__download_url__ = f"{__url__}"
-__license__ = "Seagate"  # TODO
 
-__all__ = [
-    '__title__',
-    '__version__',
-    '__author__',
-    '__author_email__',
-    '__maintainer__',
-    '__maintainer_email__',
-    '__url__',
-    '__description__',
-    '__long_description__',
-    '__download_url__',
-    '__license__',
-]
+set -eux
+
+echo 'http://12345' | sed 's~https://~~'
+
+
+JENKINS_URL="${JENKINS_URL:-}"
+JENKINS_URL_TRUSTED="${JENKINS_URL_TRUSTED:-}"
+JENKINS_CERT='jenkins.cert'
+
+
+if [[ -z "$JENKINS_URL_TRUSTED" ]]; then
+    echo "$0: not trusted url, exiting"
+    exit 0
+fi
+
+if [[ -z "$JENKINS_URL" ]]; then
+    echo "$0: No url, exiting"
+    exit 0
+fi
+
+j_url=$(echo "$JENKINS_URL" | sed 's~https://~~; s~/\+$~~g')
+
+echo -n | openssl s_client -connect "$j_url" | \
+    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > "$JENKINS_CERT"
+
+
+keytool -import -trustcacerts -keystore "${JAVA_HOME}/jre/lib/security/cacerts" \
+    -storepass changeit -noprompt -alias jenkinscert -file "$JENKINS_CERT"
+
+rm -f "$JENKINS_CERT"

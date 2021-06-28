@@ -168,6 +168,17 @@ jenkins:
     local:
       allowsSignup: true
       enableCaptcha: false
+      users:
+      - id: "admin"
+        name: "admin"
+        password: "${ADMIN_PASSWORD}"
+      #   properties:
+      #   - "apiToken"
+      #   - "mailer"
+      #   - "myView"
+      #   - preferredProvider:
+      #       providerId: "default"
+      #   - "timezone"
 
 unclassified:
   location:
@@ -184,15 +195,17 @@ unclassified:
       - $BUILD_STATUS!
     mailAccount:
       smtpHost: "${SMTP_SERVER}"
-      smtpPort: "465"
-      useSsl: true
+      smtpPort: "${SMTP_PORT}"
+      useSsl: "${SMTP_SSL}"
+      useTls: "${SMTP_TLS}"
       smtpUsername: "${SMTP_USER}"
       smtpPassword: "${SMTP_PASSWORD}"
 
   mailer:
     smtpHost: "${SMTP_SERVER}"
-    smtpPort: "465"
-    useSsl: true
+    smtpPort: "${SMTP_PORT}"
+    useSsl: "${SMTP_SSL}"
+    useTls: "${SMTP_TLS}"
     authentication:
       username: "${SMTP_USER}"
       password: "${SMTP_PASSWORD}"

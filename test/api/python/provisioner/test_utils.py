@@ -220,7 +220,7 @@ def test_load_yaml_str_raises_exception(mocker, patch_logging):
         autospec=True, side_effect=yaml.YAMLError
     )
 
-    with pytest.raises(errors.BadPillarDataError):
+    with pytest.raises(yaml.YAMLError):
         utils.load_yaml_str(data)
 
 
@@ -304,7 +304,7 @@ def test_load_yaml_raises_exception(mocker, patch_logging):
         utils, 'load_yaml_str', autospec=True, side_effect=yaml.YAMLError
     )
 
-    with pytest.raises(errors.BadPillarDataError):
+    with pytest.raises(yaml.YAMLError):
         utils.load_yaml(data_file)
 
 
