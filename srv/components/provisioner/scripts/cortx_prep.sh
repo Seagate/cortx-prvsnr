@@ -48,7 +48,7 @@ Options:
 
 parse_args()
 {
-    echo "parse_args(): parsing input arguments" >> $LOG_FILE
+    echo "DEBUG: parse_args(): parsing input arguments" >> $LOG_FILE
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -68,7 +68,6 @@ parse_args()
 
 config_local_salt()
 {
-
     # 1. Point minion to local host master in /etc/salt/minion
     # 2. Restart salt-minion service
     # 3. Check if 'salt srvnode-0 test.ping' works
@@ -97,7 +96,7 @@ config_local_salt()
     systemctl restart salt-minion
     echo "Done" | tee -a ${LOG_FILE}
 
-    echo "INFO: Waiting for key of $minion_id to become connected to salt-master" >> ${LOG_FILE}
+    echo "DEBUG: Waiting for key of $minion_id to become connected to salt-master" >> ${LOG_FILE}
     try=1; max_tries=10
     until salt-key --list-all | grep "srvnode-0" >/dev/null 2>&1
     do
@@ -110,8 +109,8 @@ config_local_salt()
         try=$(( $try + 1 ))
         sleep 5
     done
-    echo "Key for $minion_id is listed." >> ${LOG_FILE}
-    echo "Accepting the salt key for minion $minion_id" >> ${LOG_FILE}
+    echo "DEBUG: Key for $minion_id is listed." >> ${LOG_FILE}
+    echo "DEBUG: Accepting the salt key for minion $minion_id" >> ${LOG_FILE}
     salt-key -y -a $minion_id
 
     # Check if salt '*' test.ping works
@@ -120,31 +119,14 @@ config_local_salt()
     until salt -t 1 $minion_id test.ping >/dev/null 2>&1
     do
         if [[ "$try" -gt "$max_tries" ]]; then
-            echo "ERROR: minion srvnode-0 seems still not ready after $max_tries attempts." >> ${LOG_FILE}
+            echo "ERROR: Minion $minion_id seems still not ready after $max_tries attempts." >> ${LOG_FILE}
             echo "ERROR: Provisioner configuration manager failed to connect to local server" | tee -a ${LOG_FILE}
             exit 1
         fi
         try=$(( $try + 1 ))
     done
-    echo "Minion on Server A started successfully" >> ${LOG_FILE}
+    echo "DEBUG: Salt configuration done successfully" >> ${LOG_FILE}
     echo "Done" | tee -a ${LOG_FILE}
-}
-
-create_factory_user()
-{
-    user_nodeadmin="nodeadmin"
-    user_support="support"
-
-    echo "Creating user: $user_nodeadmin" | tee -a ${LOG_FILE}
-    #groupadd -g ${gid} ${group}
-    useradd -c "$user_nodeadmin" -d /home/${user_nodeadmin}
-    echo "Done" | tee -a ${LOG_FILE}
-
-    echo "Creating user: $user_support" | tee -a ${LOG_FILE}
-    #groupadd -g ${gid} ${group}
-    useradd -c "$user_suport" -d /home/${user_support}
-    echo "Done" | tee -a ${LOG_FILE}
-
 }
 
 setup_repos()
@@ -161,11 +143,11 @@ setup_repos()
     yum clean all
 }
 
-install_cortx_pkgs()
+install_dependency_pkgs()
 {
 
-    echo "Installing Cortx packages" | tee -a ${LOG_FILE}
-    cortx_pkgs=(
+    echo "Installing dependency packages" | tee -a ${LOG_FILE}
+    dependency_pkgs=(
         "java-1.8.0-openjdk-headless"
         "cortx-cli.x86_64"
         "python3 sshpass"
@@ -173,6 +155,29 @@ install_cortx_pkgs()
         "salt"
         "salt-master"
         "salt-minion"
+    )
+    for pkg in ${dependency_pkgs[@]}; do
+        echo "Installing $pkg" | tee -a ${LOG_FILE}
+        rpm --quiet -qi $pkg ||  yum install --nogpgcheck -y -q $pkg  && \
+            echo "Package $pkg is already installed."
+    done
+
+    echo "Installing nodejs" | tee -a ${LOG_FILE}
+    echo "DEBUG: Downloading nodeja tarball" >> ${LOG_FILE}
+    wget ${nodejs_tar}
+    echo "DEBUG: Extracting the tarball" >> ${LOG_FILE}
+    mkdir /opt/nodejs
+    tar -C /opt/nodejs/ -xvf node-v12.13.0-linux-x64.tar.xz
+    echo "DEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> ${LOG_FILE}
+    rm -rf ${nodejs_tar}
+    echo "Done" | tee -a ${LOG_FILE}
+}
+
+install_cortx_pkgs()
+{
+
+    echo "Installing Cortx packages" | tee -a ${LOG_FILE}
+    cortx_pkgs=(
         "cortx-prereq"
         "python36-cortx-prvsnr"
         "cortx-csm_agent.x86_64"
@@ -192,8 +197,8 @@ install_cortx_pkgs()
         "cortx-sspl.noarch"
         "cortx-sspl-cli.noarch"
         "python36-cortx-prvsnr.x86_64"
-        "stats_utils.x86_64"
         "udx-discovery.x86_64"
+        "stats_utils.x86_64"
     )
 
     for pkg in ${cortx_pkgs[@]}; do
@@ -201,15 +206,6 @@ install_cortx_pkgs()
         rpm --quiet -qi $pkg ||  yum install --nogpgcheck -y -q $pkg  && \
             echo "Package $pkg is already installed."
     done
-
-    echo "Installing nodejs" | tee -a ${LOG_FILE}
-    echo "Downloading nodeja tarball" >> ${LOG_FILE}
-    wget ${nodejs_tar}
-    echo "Extracting the tarball" >> ${LOG_FILE}
-    mkdir /opt/nodejs
-    tar -C /opt/nodejs/ -xvf node-v12.13.0-linux-x64.tar.xz
-    echo "The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> ${LOG_FILE}
-    rm -rf ${nodejs_tar}
 
     echo "Done" | tee -a ${LOG_FILE}
 }
@@ -234,7 +230,7 @@ main()
     #TODO: uncomment once ready
     #    create_factory_user $user_name $uid $group $gid
     if hostnamectl status | grep Chassis | grep -q server; then
-        echo "This is Hardware" >> ${LOG_FILE}
+        echo "DEBUG: This is Hardware" >> ${LOG_FILE}
         if systemctl list-units | grep scsi-network-relay; then
             systemctl start scsi-network-relay
         else
@@ -257,7 +253,7 @@ main()
             #WORKAROUND: Use hosted repos until download_isos function is ready
             setup_repos $repo_url
         else
-            echo "Using the ISO files set up by kickstart " >> ${LOG_FILE}
+            echo "DEBUG: Using the ISO files set up by kickstart " >> ${LOG_FILE}
             #TODO: use the same isos downloaded by KS file to install the packages
             # configure repos from iso files
 
@@ -274,6 +270,8 @@ main()
             exit 1
         fi
     fi
+
+    install_dependency_pkgs
     install_cortx_pkgs
     config_local_salt
 
