@@ -187,6 +187,8 @@ class StorageEnclosureConfig(Command):
             local=True
         )
 
+        if(key=='password'):
+            value = self.encrypt_password(value)
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -323,8 +325,7 @@ class StorageEnclosureConfig(Command):
                 # store user
                 self.update_pillar_and_conf('user', user)
 
-                # encrypt password and store
-                password = self.encrypt_password(password)
+                # store password
                 self.update_pillar_and_conf('password', password)
 
                 # store ip and port as primary
