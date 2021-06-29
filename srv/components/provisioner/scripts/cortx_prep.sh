@@ -227,6 +227,7 @@ EOL
                 " are installed at correct location and environment variable PATH is updated." | tee -a ${LOG_FILE}
                 exit 1
             fi
+        fi
     fi
     echo "Done" | tee -a ${LOG_FILE}
 }
@@ -236,10 +237,10 @@ download_isos()
     CORTX_RELEASE_REPO=$1
     echo "Downloading the ISOs" | tee -a ${LOG_FILE}
     mkdir /opt/isos
-    cortx_iso=\$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' ' | grep 'single.iso')
-    curl -O ${CORTX_RELEASE_REPO}/iso/\${cortx_iso}
-    os_iso=\$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  "cortx-os")
-    curl -O ${CORTX_RELEASE_REPO}/iso/\${os_iso}
+    cortx_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' ' | grep 'single.iso')
+    curl -O ${CORTX_RELEASE_REPO}/iso/${cortx_iso}
+    os_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  "cortx-os")
+    curl -O ${CORTX_RELEASE_REPO}/iso/${os_iso}
     #CORTX_PREP=\$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  ".sh")
     #curl -O ${CORTX_RELEASE_REPO}/iso/\${CORTX_PREP}
 }
@@ -295,11 +296,8 @@ main()
     install_dependency_pkgs
     install_cortx_pkgs
     config_local_salt
-
-
-    if command -v cortx_setup; then
-        cortx_setup prepare_confstore
-    fi
+    salt-call state.apply components.provisioner.config.machine_id.reset
+    cortx_setup prepare_confstore
 }
 
 main $@
