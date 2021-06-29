@@ -19,6 +19,8 @@ from typing import Type, List
 
 from provisioner import __version__
 from provisioner import config
+from provisioner.commands.check import SWUpgradeDecisionMaker
+from provisioner.config import GroupChecks
 from provisioner.vendor import attr
 from provisioner.attr_gen import attr_ib
 from provisioner import inputs
@@ -28,7 +30,8 @@ from provisioner.commands import (
     # SWUpdateDecisionMaker,
     # _apply_provisioner_config,
     # _restart_salt_minions,
-    PillarSet
+    PillarSet,
+    Check
 )
 from provisioner.commands.release import (
     GetRelease,
@@ -102,16 +105,16 @@ class SWUpgrade(CommandParserFillerMixin):
         logger.info("Ensure update repos are configured")
         self._ensure_upgrade_repos_configuration()
 
-        # TODO FIXME verify and activate
-        # checker = Check()
-        # try:
-        #     check_res = checker.run(GroupChecks.SWUPGRADE_CHECKS.value)
-        # except Exception as e:
-        #     logger.warning("During pre-flight checks error happened: "
-        #                    f"{str(e)}")
-        # else:
-        #     decision_maker = SWUpdateDecisionMaker()
-        #     decision_maker.make_decision(check_result=check_res)
+        checker = Check()
+        try:
+            check_res = checker.run(GroupChecks.SWUPGRADE_CHECKS.value)
+        except Exception as e:
+            logger.error(f"During pre-flight checks error happened: '{e}'")
+            raise errors.SWUpgradeError(
+                f"Pre-flight checks failed: '{e}'") from e
+        else:
+            decision_maker = SWUpgradeDecisionMaker()
+            decision_maker.make_decision(check_result=check_res)
 
         # TODO FIXME ??? check ISO is compatible with all the nodes
         #      (even if it was checked during ISO setup)
