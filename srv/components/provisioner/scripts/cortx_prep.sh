@@ -106,10 +106,10 @@ config_local_salt()
     done
     echo "DEBUG: Key for $minion_id is listed." >> "${LOG_FILE}"
     echo "DEBUG: Accepting the salt key for minion $minion_id" >> "${LOG_FILE}"
-    salt-key -y -a "$minion_id" "$salt_opts"
+    salt-key -y -a "$minion_id"
 
     # Check if salt '*' test.ping works
-    echo "Waiting for Provisioner configuratoin manager to become ready" | tee -a "${LOG_FILE}"
+    echo "Waiting for Provisioner configuration manager to become ready" | tee -a "${LOG_FILE}"
     try=1; max_tries=10
     until salt -t 1 "$minion_id" test.ping >/dev/null 2>&1
     do
@@ -247,6 +247,7 @@ install_cortx_pkgs()
 download_isos()
 {
     #PLACEHOLDER
+    echo "THIS IS PLACEHOLDER FUNCTION"
     # CORTX_RELEASE_REPO="$1"
     # echo "Downloading the ISOs" | tee -a "${LOG_FILE}"
     # mkdir /opt/isos
