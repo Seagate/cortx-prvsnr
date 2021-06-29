@@ -291,6 +291,8 @@ LOG_FULL_FORMATTER = 'full'
 #   TODO move to some parent type instead
 LOG_FORCED_LOGFILE_CMDS = [
     'set_network',
+    'set_swupgrade_repo',
+    'sw_upgrade',
     'set_swupdate_repo',
     'sw_update',
     'fw_update',
