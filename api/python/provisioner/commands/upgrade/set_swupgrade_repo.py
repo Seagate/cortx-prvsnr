@@ -653,17 +653,26 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         """
         if not params.is_remote():
-            if params.sig_file:
-                self._check_iso_authenticity(params)
-            elif params.hash:
+            if params.sig_file is None:
+                logger.info("Signature file is not specified")
+                suffix = params.source.suffix + ".sig"
+                params.sig_file = Path(str(params.source)).with_suffix(suffix)
+
+                if not params.sig_file.exists():
+                    raise SWUpdateRepoSourceError(
+                        str(params.source),
+                        f"Signature file '{params.sig_file}' is not found"
+                    )
+
+            self._check_iso_authenticity(params)
+
+            if params.hash:
                 logger.warning('Only integrity check is available.')
                 logger.info("`hash` parameter is setup. Start checksum "
                             "validation for the whole ISO file")
                 hash_info = self._get_hash_params(params)
                 self._check_iso_integrity(params, hash_info)
-            else:
-                logger.warning('Neither authenticity nor integrity validation'
-                               ' is possible (no inputs)')
+
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other
