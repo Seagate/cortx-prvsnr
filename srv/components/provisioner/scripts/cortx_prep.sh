@@ -23,23 +23,29 @@ mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 localhost_ip="127.0.0.1"
 minion_id="srvnode-0"
+salt_opts="--no-color --out-file=$LOG_FILE --out-file-append"
 repo_url=
 ISO_CORTX_PATH="/opt/isos/cortx-*-single.iso"
 ISO_OS_PATH="/opt/isos/cortx-os-*.iso"
 nodejs_tar="http://cortx-storage.colo.seagate.com/releases/cortx/github/integration-custom-ci/centos-7.8.2003/custom-build-1969/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
 
+
+_usage()
+{
+    echo "
+Options:
+  -t|--target-build BUILD_URL        Target Cortx build to deploy
+"
+
+}
+
 usage()
 {
     echo "
 Usage: Usage: $0 [options]
-
 Configure Cortx prerequisites locally.
-
-General options:
-
-Options:
-  -t|--target-build BUILD_URL        Target Cortx build to deploy
 "
+    _usage
 }
 
 parse_args()
@@ -49,9 +55,13 @@ parse_args()
     while [[ $# -gt 0 ]]; do
         case $1 in
             -t|--target-build)
+                set +u
                 if [[ -z "$2" ]]; then
-                    echo "Error: URL for target cortx build not provided" && usage && exit 1;
+                    echo "Error: URL for target cortx build not provided"
+                    _usage
+                    exit 1
                 fi
+                set -u
                 repo_url=$2
                 shift 2
                 ;;
@@ -79,12 +89,6 @@ config_local_salt()
     yes | cp -f "${master_file}" /etc/salt/master
     yes | cp -f "${minion_file}" /etc/salt/minion
 
-    #local line_to_replace=$(grep -m1 -noP "master: " /etc/salt/minion|tail -1|cut -d: -f1)
-    #echo "Setting minion to local master in /etc/salt/minon" >> ${LOG_FILE}
-    #yes | cp -f /etc/salt/minion /etc/salt/minion.bkp
-    #sed -i "${line_to_replace}s|^master:.*|master: ${localhost_ip}|" /etc/salt/minion
-    echo "Done" | tee -a ${LOG_FILE}
-
     echo $minion_id > /etc/salt/minion_id
 
     echo "Restarting the required services" | tee -a ${LOG_FILE}
@@ -107,7 +111,7 @@ config_local_salt()
     done
     echo "DEBUG: Key for $minion_id is listed." >> ${LOG_FILE}
     echo "DEBUG: Accepting the salt key for minion $minion_id" >> ${LOG_FILE}
-    salt-key -y -a $minion_id
+    salt-key -y -a $minion_id $salt_opts
 
     # Check if salt '*' test.ping works
     echo "Waiting for Provisioner configuratoin manager to become ready" | tee -a ${LOG_FILE}
@@ -127,25 +131,32 @@ config_local_salt()
 
 setup_repos()
 {
-    #repo="http://cortx-storage.colo.seagate.com/releases/cortx/github/main/centos-7.8.2003/1291/prod/"
-
     repo=$1
-    yum install -y yum-utils
+    echo "Cleaning yum cache" | tee -a ${LOG_FILE}
+    yum clean all
+    rm -rf /var/cache/yum/* || true
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a ${LOG_FILE}
     yum-config-manager --add-repo "${repo}/3rd_party/"
     echo "Configuring the repository: ${repo}/cortx_iso" | tee -a ${LOG_FILE}
     yum-config-manager --add-repo "${repo}/cortx_iso/"
 
-    yum clean all
+    echo "DEBUG: Preparing the pip.conf" >> ${LOG_FILE}
+    cat << EOL > /etc/pip.conf
+[global]
+timeout: 60
+index-url: $repo_url/python_deps/
+trusted-host: cortx-storage.colo.seagate.com
+EOL
+    echo "DEBUG: generated pip3 conf file" >> ${LOG_FILE}
+    cat /etc/pip.conf >> ${LOG_FILE}
+
 }
 
 install_dependency_pkgs()
 {
-
     echo "Installing dependency packages" | tee -a ${LOG_FILE}
     dependency_pkgs=(
         "java-1.8.0-openjdk-headless"
-        "cortx-cli.x86_64"
         "python3 sshpass"
         "python36-m2crypto"
         "salt"
@@ -153,54 +164,64 @@ install_dependency_pkgs()
         "salt-minion"
     )
     for pkg in ${dependency_pkgs[@]}; do
-        echo "Installing $pkg" | tee -a ${LOG_FILE}
-        rpm --quiet -qi $pkg ||  yum install --nogpgcheck -y -q $pkg  && \
+        if rpm -qi --quiet $pkg; then
             echo "Package $pkg is already installed."
+        else
+            echo "Installing $pkg" | tee -a ${LOG_FILE}
+            yum install --nogpgcheck -y -q $pkg | tee -a ${LOG_FILE}
+        fi
     done
 
-    echo "Installing nodejs" | tee -a ${LOG_FILE}
-    echo "DEBUG: Downloading nodeja tarball" >> ${LOG_FILE}
-    wget ${nodejs_tar}
-    echo "DEBUG: Extracting the tarball" >> ${LOG_FILE}
-    mkdir /opt/nodejs
-    tar -C /opt/nodejs/ -xvf node-v12.13.0-linux-x64.tar.xz
-    echo "DEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> ${LOG_FILE}
-    rm -rf ${nodejs_tar}
-    echo "Done" | tee -a ${LOG_FILE}
+    if [[ -d "/opt/nodejs/node-v12.13.0-linux-x64" ]]; then
+        echo "nodejs already installed" | tee -a ${LOG_FILE}
+    else
+        echo "Installing nodejs" | tee -a ${LOG_FILE}
+        echo "DEBUG: Downloading nodeja tarball" >> ${LOG_FILE}
+        wget ${nodejs_tar}
+        mkdir /opt/nodejs
+        echo "DEBUG: Extracting the tarball" >> ${LOG_FILE}
+        tar -C /opt/nodejs/ -xf node-v12.13.0-linux-x64.tar.xz >> ${LOG_FILE}
+        echo "DEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> ${LOG_FILE}
+        rm -rf ${nodejs_tar}
+        echo "Done" | tee -a ${LOG_FILE}
+    fi
 }
 
 install_cortx_pkgs()
 {
-
     echo "Installing Cortx packages" | tee -a ${LOG_FILE}
     cortx_pkgs=(
         "cortx-prereq"
         "python36-cortx-prvsnr"
-        "cortx-csm_agent.x86_64"
-        "cortx-csm_web.x86_64"
-        "cortx-ha.x86_64"
-        "cortx-hare.x86_64"
-        "cortx-libsspl_sec.x86_64"
-        "cortx-libsspl_sec-method_none.x86_64"
-        "cortx-libsspl_sec-method_pki.x86_64"
-        "cortx-motr.x86_64"
-        "cortx-motr-ivt.x86_64"
-        "cortx-prereq.x86_64"
-        "cortx-prvsnr.x86_64"
-        "cortx-prvsnr-cli.x86_64"
-        "cortx-py-utils.noarch"
-        "cortx-s3server.x86_64"
-        "cortx-sspl.noarch"
-        "cortx-sspl-cli.noarch"
-        "python36-cortx-prvsnr.x86_64"
-        "udx-discovery.x86_64"
-        "stats_utils.x86_64"
+        "cortx-prvsnr"
+        "cortx-cli"
+        "cortx-py-utils"
+        "cortx-csm_agent"
+        "cortx-csm_web"
+        "cortx-ha"
+        "cortx-hare"
+        "cortx-libsspl_sec"
+        "cortx-libsspl_sec-method_none"
+        "cortx-libsspl_sec-method_pki"
+        "cortx-motr"
+        "cortx-motr-ivt"
+        "cortx-prereq"
+        "cortx-prvsnr-cli"
+        "cortx-s3server"
+        "cortx-sspl"
+        "cortx-sspl-cli"
+        "python36-cortx-prvsnr"
+        "udx-discovery"
+        "stats_utils"
     )
 
     for pkg in ${cortx_pkgs[@]}; do
-        echo "Installing $pkg" | tee -a ${LOG_FILE}
-        rpm --quiet -qi $pkg ||  yum install --nogpgcheck -y -q $pkg  && \
-            echo "Package $pkg is already installed."
+        if rpm -qi --quiet $pkg; then
+            echo "Package $pkg is already installed." | tee -a ${LOG_FILE}
+        else
+            echo "Installing $pkg" | tee -a ${LOG_FILE}
+            yum install --nogpgcheck -y -q $pkg | tee -a ${LOG_FILE}
+        fi
     done
 
     if ! command -v cortx_setup; then
@@ -208,15 +229,6 @@ install_cortx_pkgs()
         echo "Preparing the Cortx ConfStore with default configuration" | tee -a ${LOG_FILE}
         echo "WARNING: python36-cortx-setup package is not installed" | tee -a ${LOG_FILE}
         echo "Installing cortx_setup commands using pip" | tee -a ${LOG_FILE}
-        echo "DEBUG: Preparing the pip.conf" >> ${LOG_FILE} 
-        cat << EOL > /etc/pip.conf
-[global]
-timeout: 60
-index-url: $repo_url
-trusted-host: cortx-storage.colo.seagate.com
-EOL
-        echo "DEBUG: generated pip3 conf file" >> ${LOG_FILE} 
-        cat /etc/pip.conf >> ${LOG_FILE}
         pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/
         if ! command -v cortx_setup; then
             echo "DEBUG: Updating the path variable" >> ${LOG_FILE}
@@ -229,6 +241,11 @@ EOL
             fi
         fi
     fi
+    if ! command -v provisioner; then
+        echo "ERROR: Could not find the provisioner command" | tee -a ${LOG_FILE}
+        echo "ERROR: Ensure the appropriate package is installed and then try again" | tee -a ${LOG_FILE}
+        exit 1
+    fi
     echo "Done" | tee -a ${LOG_FILE}
 }
 
@@ -238,16 +255,16 @@ download_isos()
     echo "Downloading the ISOs" | tee -a ${LOG_FILE}
     mkdir /opt/isos
     cortx_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' ' | grep 'single.iso')
-    curl -O ${CORTX_RELEASE_REPO}/iso/${cortx_iso}
+    curl -O ${CORTX_RELEASE_REPO}/iso/\${cortx_iso}
     os_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  "cortx-os")
-    curl -O ${CORTX_RELEASE_REPO}/iso/${os_iso}
-    #CORTX_PREP=\$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  ".sh")
+    curl -O ${CORTX_RELEASE_REPO}/iso/\${os_iso}
+    #CORTX_PREP=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  ".sh")
     #curl -O ${CORTX_RELEASE_REPO}/iso/\${CORTX_PREP}
 }
 
 main()
 {
-    echo "Running Cortx-prep script" | tee -a ${LOG_FILE}
+    echo "DEBUG: Running Cortx-prep script" >> ${LOG_FILE}
     parse_args $@
     #TODO: uncomment once ready
     #    create_factory_user $user_name $uid $group $gid
@@ -264,7 +281,7 @@ main()
             # Remove the ISOs set up by Kickstart
             # download the iso from provided build url
             # mount the iso
-            
+
             #echo "Removing the ISOs setup by Kickstart" | tee -a ${LOG_FILE}
             #TODO:
                 #remove_isos
@@ -296,9 +313,13 @@ main()
     install_dependency_pkgs
     install_cortx_pkgs
     config_local_salt
-    salt-call state.apply components.provisioner.config.machine_id.reset
+    echo "Resetting the machine id" | tee -a ${LOG_FILE}
+    salt-call state.apply components.provisioner.config.machine_id.reset $salt_opts
+    echo "Done" | tee -a ${LOG_FILE}
+    echo "Preparing the Cortx ConfStore with default values" | tee -a ${LOG_FILE}
     cortx_setup prepare_confstore
+    echo "Done" | tee -a ${LOG_FILE}
 }
 
 main $@
-echo "Done"
+echo "Cortx prep script run successfully" | tee -a ${LOG_FILE}
