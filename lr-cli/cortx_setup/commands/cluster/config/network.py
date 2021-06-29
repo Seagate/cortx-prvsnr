@@ -35,12 +35,6 @@ class ClusterNetworkConfig(Command):
             'optional': True,
             'help': 'Cluster vip'
         },
-        'mgmt_vip': {
-            'type': ipv4,
-            'default': None,
-            'optional': True,
-            'help': 'Mgmt vip'
-        },
         'search_domains': {
             'type': host,
             'nargs': '+',
@@ -63,7 +57,7 @@ class ClusterNetworkConfig(Command):
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )
         for key, value in kwargs.items():
-            if value:
+            if value and key not in 'virtual_host':
                 self.logger.debug(
                     f"Updating {key} to {value} in confstore"
                 )
@@ -74,7 +68,21 @@ class ClusterNetworkConfig(Command):
                 )
                 Conf.set(
                     'node_info_index',
-                    f'cluster>{cluster_id}>{key}',
+                    f'cluster>{cluster_id}>network>{key}',
+                    value
+                )
+            if value and 'virtual_host' in key:
+                self.logger.debug(
+                    f"Updating {key} to {value} in confstore"
+                )
+                PillarSet().run(
+                    f'cluster/mgmt_vip',
+                    value,
+                    local=True
+                )
+                Conf.set(
+                    'node_info_index',
+                    f'cluster>{cluster_id}>network>management>{key}',
                     value
                 )
 

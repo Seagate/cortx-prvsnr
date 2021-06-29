@@ -116,13 +116,19 @@ class ClusterId(CommandParserFillerMixin):
         try:
             cluster_data = PillarGet().run('cluster', targets)
             cluster_id= []
-            for node in cluster_data:
-                if cluster_data[node]["cluster"] is values.MISSED:
-                    res = None
-                else :
-                    cluster_id.append(
-                      cluster_data[node]["cluster"]["cluster_id"]
-                    )
+            if cluster_data[local_minion_id()]["cluster"] is values.MISSED:
+                logger.debug(
+                    "Cluster data is not yet formed and ClusterID not found"
+                )
+            else:
+                for node in cluster_data:
+                    if ("cluster_id" not in cluster_data[node]["cluster"] or
+                        cluster_data[node]["cluster"]["cluster_id"] is values.MISSED):
+                        logger.debug("Cluster data is partially formed and ClusterID not found")
+                    else:
+                        cluster_id.append(
+                           cluster_data[node]["cluster"]["cluster_id"]
+                        )
 
             if cluster_id:
                 if len(set(cluster_id)) != 1:

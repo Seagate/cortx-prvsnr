@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from api.python.provisioner.config import ALL_MINIONS
+from provisioner.config import ALL_MINIONS
 from cortx_setup.commands.command import Command
 # from provisioner.api import grains_get
 from cortx_setup.validate import host

@@ -37,7 +37,7 @@ class ClusterConfigComponent(Command):
             'optional': True,
             'default': None,
             'dest': 'component_group',
-            'choices': ['prerequisites', 'foundation', 'iopath', 'controlpath', 'ha'],
+            'choices': ['foundation', 'iopath', 'controlpath', 'ha'],
             'help': 'Component group to deploy'
         }
     }
@@ -65,14 +65,14 @@ class ClusterConfigComponent(Command):
         """
         try:
             # Getting provisioner states for deployment
-            noncortx_components = get_provisioner_states()
+            # noncortx_components = get_provisioner_states()
             cortx_components = get_cortx_states()
 
             if component_group is None:
-                self.logger.debug(f"Deploying prerequisites components on nodes")
-                self._configure(
-                    noncortx_components['prerequisites']
-                )
+                # self.logger.debug(f"Deploying prerequisites components on nodes")
+                # self._configure(
+                #     noncortx_components['prerequisites']
+                # )
                 for component_group in cortx_components:
                     self.logger.debug(f"Deploying {component_group} components on nodes")
                     self._configure(
@@ -86,11 +86,11 @@ class ClusterConfigComponent(Command):
                         'config.post_install','config.prepare',
                         'config.config', 'config.init_mod']
                 )
-            elif component_group in noncortx_components:
-                self.logger.debug(f"Deploying prerequisites components on nodes")
-                self._configure(
-                    noncortx_components['prerequisites']
-                )
+            # elif component_group in noncortx_components:
+            #     self.logger.debug(f"Deploying prerequisites components on nodes")
+            #     self._configure(
+            #         noncortx_components['prerequisites']
+            #     )
             elif component_group in cortx_components:
                 self.logger.debug(f"Deploying {component_group} components on nodes")
                 self._configure(

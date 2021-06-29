@@ -131,7 +131,7 @@ class StorageEnclosureConfig(Command):
 
     def __init__(self):
         super().__init__()
-        self.machine_id = get_machine_id(node_id)
+        self.machine_id = None
         self.enclosure_id = None
         self.mode = None
         self.cvg_count = -1
@@ -183,7 +183,6 @@ class StorageEnclosureConfig(Command):
         PillarSet().run(
             pillar_key_map[key],
             value,
-            targets=node_id,
             local=True
         )
 
@@ -241,6 +240,7 @@ class StorageEnclosureConfig(Command):
         if input_metadata_devices:
             metadata_devices = input_metadata_devices.split(",")
 
+        self.machine_id = get_machine_id(node_id)
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
@@ -350,7 +350,7 @@ class StorageEnclosureConfig(Command):
                         f"Please provide 'user' and 'passowrd' together")
                     raise RuntimeError("Imcomplete arguments provided")
 
-                if (ip and not mode) or (port and not mode):
+                if (ip and not self.mode) or (port and not self.mode):
                     #ip and port can not be provided with 'mode' argument
                     self.logger.error(
                         f"Please use 'mode' option to provide 'ip' or 'port'\n"
