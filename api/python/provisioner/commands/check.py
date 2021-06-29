@@ -18,6 +18,7 @@ import logging
 from typing import Type, Union, List, Optional, Any
 import json
 
+from provisioner import salt
 from provisioner.commands.validator.validator import CompatibilityValidator
 
 from ._basic import CommandParserFillerMixin
@@ -564,12 +565,13 @@ class Check(CommandParserFillerMixin):
     @staticmethod
     def _communicability(
             *, args: str,
-            targets: Union[list, tuple, set] = PENDING_SERVERS) -> CheckEntry:
+            targets: Optional[Union[list, tuple, set]] = None) -> CheckEntry:
         """
         Check if nodes can communicate using `salt test.ping`
 
         :param args: communicability check specific parameters and arguments
-        :param targets: target nodes where network checks will be executed
+        :param Optional[Union[list, tuple, set]] targets:
+               target nodes where network checks will be executed
         :return:
         """
         res: CheckEntry = CheckEntry(cfg.Checks.COMMUNICABILITY.value)
@@ -577,6 +579,8 @@ class Check(CommandParserFillerMixin):
         # TODO: need to resolve cfg.ALL_MINIONS alias
         #  to the list of minions
         # TODO: create check and return list of nodes which are down
+        if targets is None:
+            targets = list(salt.pillar_get())
         if check_salt_minions_are_ready(targets=targets):
             res.set_passed(checked_target=local_minion_id())
         else:
