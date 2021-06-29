@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
+import re
 import tempfile
 from pathlib import Path
 from typing import Type, Union, Any
@@ -25,6 +26,7 @@ from configparser import ConfigParser
 from provisioner.vendor import attr
 from provisioner.commands import Check
 from provisioner.commands.upgrade import CheckISOAuthenticity
+from provisioner.commands.validator.validator import CompatibilityValidator
 from provisioner.salt import copy_to_file_roots, cmd_run, local_minion_id
 from provisioner.commands.set_swupdate_repo import SetSWUpdateRepo
 from provisioner import inputs, values
@@ -33,6 +35,7 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 RELEASE_INFO_FILE,
                                 CORTX_RELEASE_INFO_FILE,
                                 THIRD_PARTY_RELEASE_INFO_FILE,
+                                ReleaseInfo,
                                 PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR,
                                 CORTX_ISO_DIR,
                                 CORTX_3RD_PARTY_ISO_DIR,
@@ -45,7 +48,9 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 ISOKeywordsVer2 as ISOVer2,
                                 UpgradeReposVer2,
                                 CheckVerdict,
-                                Checks
+                                Checks,
+                                VERSION_DELIMITERS,
+                                CORTX_VERSION
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
@@ -54,7 +59,9 @@ from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
 from provisioner.utils import (
     load_checksum_from_file,
     load_checksum_from_str,
-    HashInfo
+    HashInfo,
+    load_yaml_str,
+    normalize_rpm_version
 )
 from provisioner.commands.validator import (
     DirValidator,
@@ -195,6 +202,34 @@ class CortxISOInfo:
 
     packages: dict = attr.ib(validator=attr.validators.instance_of(dict))
     metadata: dict = attr.ib(validator=attr.validators.instance_of(dict))
+
+    def __attrs_post_init__(self):
+        # NOTE: for the convenience we add compatability information to
+        #  packages attribute
+        key = SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
+        for entry in self.metadata.get(ReleaseInfo.REQUIRES.value, list()):
+            # NOTE: the format are following:
+            #  REQUIRES:
+            #     - "CORTX > 2.0.0"
+            #     - "cortx-motr > 2.0.0-0"
+            pkg_name = re.split(VERSION_DELIMITERS, entry)[0]
+            # NOTE: the format of compatibility_version variable is the
+            #  following:  "> 2.0.0"
+            compatibility_version = entry.replace(pkg_name, '').strip()
+            pkg_name = pkg_name.strip()
+            # NOTE: normalize the constraint version: add build number
+            #  if missed
+            compatibility_version = normalize_rpm_version(
+                compatibility_version
+            )
+            if pkg_name in self.packages:
+                self.packages[pkg_name][key] = compatibility_version
+            elif pkg_name == CORTX_VERSION:
+                self.packages[pkg_name] = {key: compatibility_version}
+            else:
+                logger.warning('Found version compatibility constraint '
+                               f'for the package "{pkg_name}" not listed in '
+                               'CORTX repository')
 
     def __str__(self):
         return f"{{'packages': {self.packages}, 'metadata': {self.metadata}}}"
@@ -737,7 +772,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        params
+        params:
             Input repository parameters
         targets: str
             Salt target to perform base mount and validation logic
@@ -833,6 +868,23 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             repo.release = release
 
             packages = self.get_packages_version(REPO_CANDIDATE_NAME)
+
+            cortx_info = CortxISOInfo(packages=packages, metadata=metadata)
+            if not dry_run:
+                # Packages compatibility validation
+                compatibility_validator = CompatibilityValidator()
+                try:
+                    compatibility_validator.validate(cortx_info)
+                except ValidationError as e:
+                    logger.debug(
+                        f"Packages compatibility check is failed: {e}"
+                    )
+                    raise SWUpdateRepoSourceError(
+                        str(candidate_repo.source),
+                        f"Packages compatibility check is failed {e}"
+                    ) from e
+                else:
+                    logger.info("Packages compatibility check succeeded")
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
@@ -840,15 +892,15 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.info("Post-validation cleanup")
             self._apply(candidate_repo, targets, local=False)
 
-        return CortxISOInfo(packages=packages, metadata=repo.metadata)
+        return cortx_info
 
     @staticmethod
     def _setup_python_index(repo: inputs.SWUpgradeRepo):
         """
         Setup Python index
 
-        ----------
         Parameters
+        ----------
         repo: inputs.SWUpgradeRepo
             SW upgrade repository parameters
 
@@ -919,12 +971,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         Parameters
         ----------
-        release : str
+        release: str
             SW upgrade repository version
 
         Returns
         -------
-        dict
+        dict:
             return dictionary with CORTX packages and their versions
 
         """
@@ -938,8 +990,11 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         repo = f"sw_upgrade_{repo_name}_{release}"
 
-        cmd = (f"yum repo-pkgs {repo} list 2>/dev/null | "
-               f"grep '{repo}' | awk '{{print $1\" \"$2}}'")
+        # NOTE: use --enablerepo to suspend message
+        #  Repo sw_upgrade_cortx_iso_candidate has been automatically enabled.
+        #  in case of candidate repo
+        cmd = (f"yum --enablerepo={repo} --showduplicates repo-pkgs {repo} "
+               f"list 2>/dev/null | grep '{repo}' | awk '{{print $1\" \"$2}}'")
 
         res = cmd_run(cmd, targets=local_minion_id(),
                       fun_kwargs=dict(python_shell=True))
@@ -970,6 +1025,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         #  compatibility with old versions
         for entry in packages:
             pkg, ver = entry.split(" ")
+            # package architecture (.noarch, .x86_64 is not needed in
+            # the name of the package
+            pkg = pkg.split('.')[0]
+            ver = normalize_rpm_version(ver)
             res[pkg] = {SWUpgradeInfoFields.VERSION.value: ver}
 
         return res

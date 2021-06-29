@@ -14,7 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
+import re
 from enum import Enum
 from pathlib import Path
 import os
@@ -491,6 +491,7 @@ class Checks(Enum):
     NETWORK_HCA = "network_hca"
     UPGRADE_ISO_VERSION = "upgrade_iso_version"
     ACTIVE_UPGRADE_ISO = "active_upgrade_iso"
+    PACKAGES_COMPATIBILITY = "packages_compatibility"
 
 
 class GroupChecks(Enum):
@@ -529,16 +530,10 @@ SWUPDATE_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value
 }
 
-SWUPGRADE_CHECKS = {
-    Checks.NETWORK.value,
-    Checks.CONNECTIVITY.value,
-    Checks.BMC_ACCESSIBILITY.value,
+SWUPGRADE_CHECKS = (
     Checks.COMMUNICABILITY.value,
-    Checks.CLUSTER_STATUS.value,
-    Checks.LOGS_ARE_GOOD.value,
-    Checks.PASSWORDLESS_SSH_ACCESS.value,
     Checks.UPGRADE_ISO_VERSION.value
-}
+)
 
 REPLACENODE_CHECKS = {
     Checks.STORAGE_LUNS.value,
@@ -601,6 +596,7 @@ class ReleaseInfo(Enum):
     KERNEL = 'KERNEL'
     COMPONENTS = 'COMPONENTS'
     RELEASE = 'RELEASE'
+    REQUIRES = 'REQUIRES'
 
 
 # NOTE: for more convenient usage of check.CheckResult.get_checks method
@@ -684,7 +680,18 @@ class SWUpgradeInfoFields(Enum):
     """Named fields for meta information about SW upgrade repository"""
 
     VERSION = "version"
-    VERSION_CONSTRAINT = "version_constraint"
+    VERSION_COMPATIBILITY = "version_compatibility"
+
+
+VERSION_DELIMITERS = '|'.join(map(re.escape,
+                                  ('>', '<', '==', '!=', '>=', '<=')))
+
+# release delimiters that are used for parse the package build version
+RELEASE_DELIMITERS = '|'.join(map(re.escape, ('.', '_')))
+
+# The special package name from the RELEASE.INFO:REQUIRES section that sets
+# compatibility requirement for the minimum CORTX version
+CORTX_VERSION = "CORTX"
 
 
 class CortxFlows(Enum):
