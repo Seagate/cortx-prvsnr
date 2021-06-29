@@ -20,10 +20,17 @@ from hmac import compare_digest
 from pathlib import Path
 from typing import Dict, Callable, Optional, Union, Type
 
-from provisioner import utils
-from provisioner.salt import local_minion_id, cmd_run
-from provisioner.config import ContentType, HashType
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
+from provisioner import utils
+from provisioner.commands.release import GetRelease
+from provisioner.salt import local_minion_id, cmd_run
+from provisioner.config import (
+    ContentType,
+    HashType,
+    SWUpgradeInfoFields,
+    CORTX_VERSION)
 from provisioner.vendor import attr
 from provisioner.errors import ValidationError
 
@@ -795,3 +802,127 @@ class ThirdPartyReleaseInfoValidator(ReleaseInfoValidatorBase):
         self.content_validator = ContentFileValidator(
                 scheme=ThirdPartyReleaseInfoContentScheme,
                 content_type=self.content_type)
+
+
+@attr.s(auto_attribs=True)
+class CompatibilityValidator:
+
+    """
+    Validator that checks if all SW upgrade packages are compatible with
+    installed ones.
+    """
+
+    @staticmethod
+    def validate(iso_info):
+        """
+
+        Parameters
+        ----------
+        iso_info: CortxISOInfo
+            CortxISOInfo instance with all necessary information about
+            SW upgrade ISO
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        packages = list(iso_info.packages.keys())
+
+        if not packages:
+            return  # nothing to validate
+
+        # NOTE: the first line of `yum -q list installed` command is
+        #  'Installed Packages' skip it via `tail -n +2`
+        cmd = (f"yum -q list installed {' '.join(packages)} 2>/dev/null |"
+               f" tail -n +2 | awk '{{print $1\" \"$2}}'")
+
+        try:
+            res = cmd_run(cmd, targets=local_minion_id())
+        except Exception as e:
+            logger.debug(f'Package compatibility check is failed: "{e}"')
+            raise ValidationError(
+                f'Package compatibility check is failed: "{e}"') from e
+
+        res = res[local_minion_id()].strip()
+
+        if res:
+            logger.debug(f"List of installed CORTX packages: {res}")
+        else:
+            logger.warning(f"There are no installed CORTX packages")
+            return  # Nothing to validate since there are not CORTX packages
+
+        res = res.split('\n')
+
+        packages = dict()
+        for pkg in res:
+            # Aggregate version information of installed CORTX packages
+            pkg_name, pkg_version = pkg.split(" ")
+            # remove architecture post-fix from the package name
+            pkg_name = pkg_name.split(".")[0]
+            packages[pkg_name] = utils.normalize_rpm_version(pkg_version)
+
+        error_msg = list()
+
+        compatibility = iso_info.packages.get(CORTX_VERSION, {}).get(
+            SWUpgradeInfoFields.VERSION_COMPATIBILITY.value, None)
+        if compatibility:
+            cortx_version = GetRelease.cortx_version()
+            if Version(cortx_version) in SpecifierSet(compatibility):
+                logger.info(
+                    f"The CORTX release version '{cortx_version}' "
+                    f"satisfies the constraint version '{compatibility}'"
+                )
+            else:
+                msg = (f"The CORTX release version '{cortx_version}' does not "
+                       f"satisfy the constraint version '{compatibility}'")
+                logger.error(msg)
+                error_msg.append(msg)
+
+        for pkg in iso_info.packages:
+            if (SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
+                    in iso_info.packages[pkg]):
+                compatibility = iso_info.packages[pkg][
+                    SWUpgradeInfoFields.VERSION_COMPATIBILITY.value]
+
+                installed_ver = packages.get(pkg, None)
+                if installed_ver is None:
+                    msg = (f"There is version constraint '{compatibility}' for"
+                           f" the CORTX package '{pkg}' that is not installed")
+                    logger.debug(msg)
+                    continue
+
+                # NOTE: we used for comparison normalized values of RPM version
+                #  For more details, please, review
+                #  `provisioner.utils.normalize_rpm_version`
+                #  There is some interesting behavior of packaging API for
+                #  versions comparison:
+                #  >>> Version('2.0.0-275') in SpecifierSet('> 2.0.0')
+                #  False
+                #  >>> Version('2.0.0-275') in SpecifierSet('>= 2.0.0')
+                #  True
+                #  >>> Version('2.0.0-275') in SpecifierSet('== 2.0.0')
+                #  False
+                #  >>> Version('2.0.0-275') in SpecifierSet('> 2.0.0-0')
+                #  True
+                # >>> version.parse('2.0.0-275') > version.parse('2.0.0')
+                # True
+
+                if Version(installed_ver) in SpecifierSet(compatibility):
+                    logger.info(f"The CORTX package '{pkg}' of version "
+                                f"'{installed_ver}' satisfies the constraint "
+                                f"version '{compatibility}'")
+                else:
+                    msg = (f"The CORTX package '{pkg}' of version "
+                           f"'{installed_ver}' does not satisfies the "
+                           f"constraint version '{compatibility}'")
+                    logger.error(msg)
+                    error_msg.append(msg)
+
+        if error_msg:
+            raise ValidationError("During validation some compatibility "
+                                  f"errors were found: {'/n'.join(error_msg)}")
