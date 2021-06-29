@@ -841,7 +841,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             repo.release = release
 
-            if (version.parse(release)
+            if (not dry_run and version.parse(release)
                     < version.parse(GetRelease.cortx_version())):
                 raise SWUpdateRepoSourceError(
                     str(repo.source),
