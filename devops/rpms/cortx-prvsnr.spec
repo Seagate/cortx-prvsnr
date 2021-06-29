@@ -1,6 +1,6 @@
 Name:       cortx-prvsnr
 Version:    %{_cortx_prvsnr_version}
-Release:    %{_build_number}_%{_cortx_prvsnr_git_ver}_%{?dist:el7}
+Release:    %{_build_number}.%{_cortx_prvsnr_git_ver}.%{?dist:el7}
 Summary:    CORTX Provisioning.
 
 Group:      Tools
