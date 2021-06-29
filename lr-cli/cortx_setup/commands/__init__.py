@@ -23,6 +23,7 @@ from .network.config import NetworkConfig
 from .node.initialize import NodeInitialize
 from .node.prepare.server import NodePrepareServer
 from .node.finalize import NodeFinalize
+from .node.prepare.finalize import NodePrepareFinalize
 from .cluster.create import ClusterCreate
 from .cluster.encrypt import EncryptSecrets
 from .cluster.generate import GenerateCluster
@@ -61,6 +62,7 @@ __all__ = [
     'CreateStorageSet',
     'DurabilityConfig',
     'EncryptSecrets',
+    'NodePrepareFinalize',
     'GenerateCluster',
     'GetSignature',
     'Hostname',
