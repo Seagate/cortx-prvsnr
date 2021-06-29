@@ -18,7 +18,7 @@
 
 from ..command import Command
 from provisioner.commands import deploy
-from provisioner.salt import local_minion_id
+from provisioner.salt import local_minion_id, cmd_run
 from cortx_setup.commands.common_utils import (
     get_cortx_states
 )
@@ -34,7 +34,7 @@ class NodeInitialize(Command):
     def run(self):
         node_id = local_minion_id()
         cortx_components = get_cortx_states()
-
+        cmd_run(f"salt {node_id} saltutil.sync_all")
         for component in cortx_components:
             states = cortx_components[component]
             for state in states:

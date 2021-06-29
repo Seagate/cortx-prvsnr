@@ -201,6 +201,8 @@ install_cortx_pkgs()
         "cortx-motr-ivt"
         "cortx-prereq"
         "cortx-prvsnr-cli"
+        "uds-pyi"
+        "cortx-s3iamcli"
         "cortx-s3server"
         "cortx-sspl"
         "cortx-sspl-cli"
