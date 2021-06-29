@@ -94,7 +94,11 @@ class SWUpgradeNode(CommandParserFillerMixin):
         return sw_data
 
     def backup(self, flow, no_hooks=False, targets=config.ALL_TARGETS):
-        if not no_hooks:
+        # TODO activate later
+        #      Note. some componets have wrong backup hooks declaration
+        #            (e.g. use --location $URL but fail
+        #            due to unknown arg '--location')
+        if False and not no_hooks:
             logger.info("Trigger 'backup' hook (node level)")
             mini_hook = MiniAPIHook(
                 name=config.MiniAPIHooks.BACKUP,
