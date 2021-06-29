@@ -195,9 +195,6 @@ class ClusterCreate(Command):
             )
             PillarSync().run()
 
-            self.logger.debug("Refreshing machine id on the system")
-            reset_machine_id.ResetMachineId.run()
-
             self.logger.debug("Generating cluster")
             GenerateCluster().run()
 

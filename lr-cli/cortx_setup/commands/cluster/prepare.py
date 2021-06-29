@@ -15,20 +15,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+from provisioner.config import ALL_MINIONS
 from cortx_setup.commands.command import Command
 from provisioner.commands import (
     deploy
 )
-from provisioner.salt import (
-    local_minion_id
-)
 from cortx_setup.commands.common_utils import (
     get_provisioner_states,
     get_cortx_states,
-    get_pillar_data
 )
 
-node_id = local_minion_id()
 
 
 class ClusterPrepare(Command):
@@ -43,10 +39,10 @@ class ClusterPrepare(Command):
             for state in states:
                 try:
                     self.logger.debug(
-                        f"Running {state} for {node_id}"
+                        f"Running {state} for ALL_MINIONS"
                     )
                     deploy.Deploy()._apply_state(
-                        f'components.{state}', targets=node_id, stages=stage
+                        f'components.{state}', targets= ALL_MINIONS, stages=stage
                     )
                 except Exception as ex:
                     raise ex
