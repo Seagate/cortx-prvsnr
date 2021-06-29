@@ -194,7 +194,7 @@ class ClusterManagerCortxBase(ClusterManagerBase):
                 raise NotImplementedError(error)
 
             raise errors.ProvisionerError(
-                "HA command failed with error: '{error}'"
+                f"HA command failed with error: '{error}'"
             )
         return resp
 
