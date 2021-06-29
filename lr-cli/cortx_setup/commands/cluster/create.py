@@ -195,9 +195,6 @@ class ClusterCreate(Command):
             )
             PillarSync().run()
 
-            self.logger.debug("Refreshing machine id on the system")
-            reset_machine_id.ResetMachineId.run()
-
             self.logger.debug("Generating cluster")
             GenerateCluster().run()
 
@@ -245,9 +242,13 @@ class ClusterCreate(Command):
                         value,
                         local=True
                     )
+                    if 'storageset_count' in key:
+                        conf_key = f'cluster>{clust_id}>site>storage_set_count'
+                    else:
+                        conf_key = f'cluster>{clust_id}>{key}'
                     Conf.set(
                         index,
-                        f'cluster>{clust_id}>{key}',
+                        conf_key,
                         value
                     )
             Conf.save(index)
