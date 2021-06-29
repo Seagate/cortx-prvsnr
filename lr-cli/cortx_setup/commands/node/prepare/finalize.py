@@ -22,10 +22,10 @@ from cortx_setup.commands import SaltCleanup
 class NodePrepareFinalize(Command):
     _args = {
         'force': {
+            'type': bool,
             'default': False,
             'optional': True,
-            'action': 'store_true',
-            'help': 'Forcefully apply configuration.'
+            'help': 'Over-ride finalize validation checks'
         }
     }
 
