@@ -188,6 +188,10 @@ class StorageEnclosureConfig(Command):
 
         if(key=='password'):
             value = self.encrypt_password(value)
+
+        if key == "cvg":
+            value = str(value)
+
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -461,9 +465,15 @@ class StorageEnclosureConfig(Command):
                     " are missing")
                 raise RuntimeError("Incomplete arguments provided")
 
-            self.update_pillar_and_conf('cvg', self.cvg_count)
+            current_cvg_count = Conf.get (
+                'node_info_index',
+                f'server_node>{self.machine_id}>storage>cvg_count'
+            )
+            if not current_cvg_count:
+                current_cvg_count = 0
+
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
-            if cvg_list is MISSED:
+            if not cvg_list or cvg_list is MISSED:
                 cvg_list = []
             elif isinstance(cvg_list[0], OrderedDict):
                 for i,key in enumerate(cvg_list):
@@ -487,6 +497,8 @@ class StorageEnclosureConfig(Command):
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
             cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            self.cvg_count = self.cvg_count + 1
+            self.update_pillar_and_conf('cvg', self.cvg_count)
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
