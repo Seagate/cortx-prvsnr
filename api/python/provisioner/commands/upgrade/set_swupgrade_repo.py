@@ -50,7 +50,7 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
-                                SWUpdateError
+                                SWUpgradeError
                                 )
 from provisioner.utils import (
     load_checksum_from_file,
@@ -783,9 +783,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                            f"error happened: {str(e)}")
         else:
             if check_res.is_failed:
-                raise SWUpdateError("An active SW upgrade ISO is detected."
-                                    "Please, finish the current upgrade before"
-                                    " start the new one")
+                raise SWUpgradeError(
+                    "An active SW upgrade ISO is detected. Please, finish "
+                    "the current upgrade before start the new one"
+                )
 
         self._source_version = repo.source_version
         logger.info("SW upgrade ISO struction version is "
