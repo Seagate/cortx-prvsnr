@@ -372,15 +372,15 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     )
 
 
-def sw_upgrade(targets=ALL_MINIONS, nowait=False):
+def sw_upgrade(offline: bool = False, nowait=False):
     """Runs software update logic.
 
     Updates components one by one.
 
     Parameters
     ----------
-    targets:
-        (optional) A host to update. Default: all minions
+    offline:
+        (optional) perform offline upgrade
     nowait: bool
         (optional) Run asynchronously. Default: False
 
@@ -389,7 +389,7 @@ def sw_upgrade(targets=ALL_MINIONS, nowait=False):
     None
 
     """
-    return _api_call('sw_upgrade', targets=targets, nowait=nowait)
+    return _api_call('sw_upgrade', offline=offline, nowait=nowait)
 
 
 def get_swupgrade_info(release: str = None, iso_path: str = None,
