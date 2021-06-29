@@ -652,7 +652,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             Raise this exception if candidate repository validation fails
 
         """
-        if not params.is_remote():
+        if not dry_run and not params.is_remote():
             if params.sig_file is None:
                 logger.info("Signature file is not specified")
                 suffix = params.source.suffix + ".sig"
