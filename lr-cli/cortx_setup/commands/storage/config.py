@@ -190,7 +190,7 @@ class StorageEnclosureConfig(Command):
         if(key=='password'):
             value = self.encrypt_password(value)
 
-        if pillar_key_map[key] == "cvg":
+        if key == "cvg":
             value = str(value)
 
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
@@ -469,11 +469,11 @@ class StorageEnclosureConfig(Command):
                 'node_info_index',
                 f'server_node>{self.machine_id}>storage>cvg_count'
             )
-            if current_cvg_count is MISSED:
+            if not current_cvg_count:
                 current_cvg_count = 0
 
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
-            if cvg_list is MISSED:
+            if not cvg_list:
                 cvg_list = []
             elif isinstance(cvg_list[0], OrderedDict):
                 for i,key in enumerate(cvg_list):
