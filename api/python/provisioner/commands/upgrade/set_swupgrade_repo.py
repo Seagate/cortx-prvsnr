@@ -22,6 +22,7 @@ from typing import Type, Union, Any
 from urllib.parse import urlparse, unquote
 
 from configparser import ConfigParser
+from packaging import version
 
 from provisioner.vendor import attr
 from provisioner.commands import Check
@@ -54,7 +55,7 @@ from provisioner.config import (REPO_CANDIDATE_NAME,
                                 )
 from provisioner.errors import (SaltCmdResultError, SWUpdateRepoSourceError,
                                 ValidationError,
-                                SWUpdateError
+                                SWUpgradeError
                                 )
 from provisioner.utils import (
     load_checksum_from_file,
@@ -72,8 +73,7 @@ from provisioner.commands.validator import (
     YumRepoDataValidator,
     HashSumValidator
 )
-from provisioner.commands.release import CortxRelease
-
+from provisioner.commands.release import CortxRelease, GetRelease
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +202,10 @@ class CortxISOInfo:
 
     packages: dict = attr.ib(validator=attr.validators.instance_of(dict))
     metadata: dict = attr.ib(validator=attr.validators.instance_of(dict))
+    exceptions: list = attr.ib(
+        validator=attr.validators.instance_of(list),
+        default=list()
+    )
 
     def __attrs_post_init__(self):
         # NOTE: for the convenience we add compatability information to
@@ -232,7 +236,8 @@ class CortxISOInfo:
                                'CORTX repository')
 
     def __str__(self):
-        return f"{{'packages': {self.packages}, 'metadata': {self.metadata}}}"
+        return (f"{{'packages': {self.packages}, 'metadata': {self.metadata}, "
+                f"'exceptions': {self.exceptions} }}")
 
 
 @attr.s(auto_attribs=True)
@@ -285,9 +290,8 @@ class SetSWUpgradeRepoVer1(ProxyCommand):
         base_dir: Path
             Path to base SW upgrade directory
         dry_run: bool
-            If this parameter is set to `True` this method skips some
-            validations and returns only SW upgrade ISO bundle metadata
-            (content of RELEASE.INFO).
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Raises
         ------
@@ -296,7 +300,7 @@ class SetSWUpgradeRepoVer1(ProxyCommand):
 
         """
         iso_mount_dir = base_dir / REPO_CANDIDATE_NAME
-        if not dry_run and not candidate_repo.is_remote():
+        if not candidate_repo.is_remote():
             # NOTE: this block only for local SW upgrade ISO bundles
             repo_map = candidate_repo.pillar_value
             for dir_entry in (entry for entry in
@@ -317,9 +321,10 @@ class SetSWUpgradeRepoVer1(ProxyCommand):
                     continue
                 if repo_info[IS_REPO_KEY]:
                     self._single_repo_validation(candidate_repo.release,
-                                                 dir_entry.name)
+                                                 dir_entry.name,
+                                                 dry_run)
                 elif dir_entry.name == CORTX_PYTHON_ISO_DIR:
-                    self._validate_python_index(dir_entry)
+                    self._validate_python_index(dir_entry, dry_run)
 
     @staticmethod
     def get_release_file_path(iso_root_dir: Path):
@@ -354,10 +359,9 @@ class SetSWUpgradeRepoVer2(ProxyCommand):
             Candidate SW upgrade repository parameters
         base_dir: Path
             Path to base SW upgrade directory
-        dry_run: bool
-            If this parameter is set to `True` this method skips some
-            validations and returns only SW upgrade ISO bundle metadata
-            (content of RELEASE.INFO).
+       dry_run: bool
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Raises
         ------
@@ -365,7 +369,7 @@ class SetSWUpgradeRepoVer2(ProxyCommand):
             Raise this exception if candidate repository validation fails
 
         """
-        if not dry_run and not candidate_repo.is_remote():
+        if not candidate_repo.is_remote():
             # NOTE: this block only for local SW upgrade ISO bundles
             for repo_name, repo_info in candidate_repo.pillar_value.items():
                 res = urlparse(repo_info['source'])
@@ -375,9 +379,10 @@ class SetSWUpgradeRepoVer2(ProxyCommand):
                         # NOTE: start repo validation if path to the repo
                         #  exists and directory is not empty
                         self._single_repo_validation(candidate_repo.release,
-                                                     repo_name)
+                                                     repo_name,
+                                                     dry_run)
                 elif repo_name == ISOVer2.PYTHON:
-                    self._validate_python_index(repo_path)
+                    self._validate_python_index(repo_path, dry_run)
 
     @staticmethod
     def get_release_file_path(iso_root_dir: Path):
@@ -413,6 +418,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         self._version_proxy = dict()
         self._version_proxy[ISOVersion.VERSION1] = SetSWUpgradeRepoVer1(self)
         self._version_proxy[ISOVersion.VERSION2] = SetSWUpgradeRepoVer2(self)
+        self._exceptions = list()  # list of exceptions for dry_run=True mode
 
     def __getattr__(self, item):
         """
@@ -475,7 +481,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             logger.debug(f"Copying {repo.source} to file roots")
             copy_to_file_roots(repo.source, dest)
 
-    def _single_repo_validation(self, release, repo_name):
+    def _single_repo_validation(self, release, repo_name,
+                                dry_run: bool = False):
         """
         Separate private method for basic single repo validations.
 
@@ -485,6 +492,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             Single Upgrade ISO release version
         repo_name: str
             Repository name
+        dry_run: bool
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Returns
         -------
@@ -498,8 +508,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._check_repo_is_valid(REPO_CANDIDATE_NAME,
                                       f"sw_upgrade_{repo_name}")
         except SaltCmdResultError as exc:
-            raise SWUpdateRepoSourceError(repo_name,
+            exc = SWUpdateRepoSourceError(repo_name,
                                           f"malformed repo: '{exc}'")
+            if dry_run:
+                self._exceptions.append(exc)
+            else:
+                raise exc
 
         # there is no the same release repo is already active
         if self._is_repo_enabled(f'sw_upgrade_{repo_name}_{release}'):
@@ -509,16 +523,19 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             )
             logger.warning(err_msg)
 
-            raise SWUpdateRepoSourceError(
+            exc = SWUpdateRepoSourceError(
                 str(repo_name),
                 (
                     f"SW upgrade repository '{repo_name}' for the release "
                     f"'{release}' has been already enabled"
                 )
             )
+            if dry_run:
+                self._exceptions.append(exc)
+            else:
+                raise exc
 
-    @staticmethod
-    def _validate_python_index(index_path: Path):
+    def _validate_python_index(self, index_path: Path, dry_run: bool = False):
         """
         Perform the dynamic validation for SW upgrade Python index by
         the given index path `index_path`
@@ -557,8 +574,14 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 cmd_run(cmd, targets=local_minion_id(),
                         fun_kwargs=dict(python_shell=True))
             except Exception as e:
-                raise SWUpdateRepoSourceError(
-                    index_path, "Python index validation failed: "f"{e}")
+                exc = SWUpdateRepoSourceError(
+                    index_path,
+                    "Python index validation failed: "f"{e}"
+                )
+                if dry_run:
+                    self._exceptions.append(exc)
+                else:
+                    raise exc
 
         logger.debug("Python index validation succeeded")
 
@@ -600,14 +623,18 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         return hash_info
 
-    @staticmethod
-    def _check_iso_authenticity(params: inputs.SWUpgradeRepo):
+    def _check_iso_authenticity(self, params: inputs.SWUpgradeRepo,
+                                dry_run: bool = False):
         """
         SW upgrade repository pre-validation.
 
         Parameters
         ----------
-        params
+        params: inputs.SWUpgradeRepo:
+            inputs parameters for a SW upgrade ISO
+        dry_run: bool
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Returns
         -------
@@ -628,17 +655,20 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         if res[ISOValidationFields.STATUS.value] == CheckVerdict.FAIL.value:
             logger.warning(f"ISO signature validation is failed: "
                            f"'{res[ISOValidationFields.MSG.value]}'")
-            raise SWUpdateRepoSourceError(
+            exc = SWUpdateRepoSourceError(
                 str(params.source),
                 "ISO signature validation error occurred: "
                 f"'{res[ISOValidationFields.MSG.value]}'"
             )
+            if dry_run:
+                self._exceptions.append(exc)
+            else:
+                raise exc
         else:
             logger.info('ISO signature validation succeeded')
 
-    @staticmethod
-    def _check_iso_integrity(params: inputs.SWUpgradeRepo,
-                             hash_info: HashInfo):
+    def _check_iso_integrity(self, params: inputs.SWUpgradeRepo,
+                             hash_info: HashInfo, dry_run: bool = False):
         """
 
         Parameters
@@ -646,6 +676,10 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         params: inputs.SWUpgradeRepo
 
         hash_info: HashInfo
+            context with all user defined hash parameters
+        dry_run: bool
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Returns
         -------
@@ -660,10 +694,13 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             upgrade_bundle_hash_validator.validate(params.source)
         except ValidationError as e:
             logger.warning(f"Check sum validation error occurred: {e}")
-            raise SWUpdateRepoSourceError(
+            exc = SWUpdateRepoSourceError(
                 str(params.source),
-                f"Check sum validation error occurred: '{e}'"
-            ) from e
+                f"Check sum validation error occurred: '{e}'")
+            if dry_run:
+                self._exceptions.append(exc)
+            else:
+                raise exc from e
         else:
             logger.info('Check sum validation succeeded')
 
@@ -677,9 +714,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         params: inputs.SWUpgradeRepo
             Input repository parameters
         dry_run: bool
-            If this parameter is set to `True` this method skips some
-            validations and returns only SW upgrade ISO bundle metadata
-            (content of RELEASE.INFO).
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Raises
         ------
@@ -688,17 +724,30 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         """
         if not params.is_remote():
-            if params.sig_file:
-                self._check_iso_authenticity(params)
-            elif params.hash:
+            if params.sig_file is None:
+                logger.info("Signature file is not specified")
+                suffix = params.source.suffix + ".sig"
+                params.sig_file = Path(str(params.source)).with_suffix(suffix)
+
+                if not params.sig_file.exists():
+                    exc = SWUpdateRepoSourceError(
+                        str(params.source),
+                        f"Signature file '{params.sig_file}' is not found"
+                    )
+                    if dry_run:
+                        self._exceptions.append(exc)
+                    else:
+                        raise exc
+
+            self._check_iso_authenticity(params, dry_run)
+
+            if params.hash:
                 logger.warning('Only integrity check is available.')
                 logger.info("`hash` parameter is setup. Start checksum "
                             "validation for the whole ISO file")
                 hash_info = self._get_hash_params(params)
-                self._check_iso_integrity(params, hash_info)
-            else:
-                logger.warning('Neither authenticity nor integrity validation'
-                               ' is possible (no inputs)')
+                self._check_iso_integrity(params, hash_info, dry_run)
+
         # TODO IMPROVE VALIDATION EOS-14350
         #   - there is no other candidate that is being verified:
         #     if found makes sense to raise an error in case the other
@@ -729,9 +778,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         base_dir: Path
             Path to base SW upgrade directory
         dry_run: bool
-            If this parameter is set to `True` this method skips some
-            validations and returns only SW upgrade ISO bundle metadata
-            (content of RELEASE.INFO).
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Returns
         -------
@@ -758,10 +806,14 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                     logger.debug(
                         f"Catalog structure validation error occurred: {e}"
                     )
-                    raise SWUpdateRepoSourceError(
+                    exc = SWUpdateRepoSourceError(
                         str(candidate_repo.source),
                         f"Catalog structure validation error occurred:{e}"
-                    ) from e
+                    )
+                    if dry_run:
+                        self._exceptions.append(exc)
+                    else:
+                        raise exc from e
                 else:
                     logger.info("Catalog structure validation succeeded")
 
@@ -777,9 +829,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         targets: str
             Salt target to perform base mount and validation logic
         dry_run: bool
-            If this parameter is set to `True` this method skips some
-            validations and returns only SW upgrade ISO bundle metadata
-            (content of RELEASE.INFO).
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them. In dry mode command doesn't enable
+            any candidate repos and doesn't create yum repo files.
 
         Returns
         -------
@@ -809,9 +861,14 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                            f"error happened: {str(e)}")
         else:
             if check_res.is_failed:
-                raise SWUpdateError("An active SW upgrade ISO is detected."
-                                    "Please, finish the current upgrade before"
-                                    " start the new one")
+                exc = SWUpgradeError(
+                    "An active SW upgrade ISO is detected. Please, finish "
+                    "the current upgrade before start the new one"
+                )
+                if dry_run:
+                    self._exceptions.append(exc)
+                else:
+                    raise exc
 
         self._source_version = repo.source_version
         logger.info("SW upgrade ISO struction version is "
@@ -858,33 +915,55 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
                 #      might be a case for improvement
                 release = cortx_release.release_info.version
             except KeyError:
-                raise SWUpdateRepoSourceError(
+                exc = SWUpdateRepoSourceError(
                     str(repo.source),
                     f"No release data found in '{RELEASE_INFO_FILE}'"
                 )
+                if dry_run:
+                    self._exceptions.append(exc)
+                    release = None
+                else:
+                    raise exc
 
             self._post_repo_validation(candidate_repo, base_dir, dry_run)
 
             repo.release = release
 
-            packages = self.get_packages_version(REPO_CANDIDATE_NAME)
-
-            cortx_info = CortxISOInfo(packages=packages, metadata=metadata)
-            if not dry_run:
-                # Packages compatibility validation
-                compatibility_validator = CompatibilityValidator()
-                try:
-                    compatibility_validator.validate(cortx_info)
-                except ValidationError as e:
-                    logger.debug(
-                        f"Packages compatibility check is failed: {e}"
-                    )
-                    raise SWUpdateRepoSourceError(
-                        str(candidate_repo.source),
-                        f"Packages compatibility check is failed {e}"
-                    ) from e
+            if (version.parse(release)
+                    < version.parse(GetRelease.cortx_version())):
+                exc = SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"ISO version '{release}' should be greater than current "
+                    f"one {GetRelease.cortx_version()}"
+                )
+                if dry_run:
+                    self._exceptions.append(exc)
                 else:
-                    logger.info("Packages compatibility check succeeded")
+                    raise exc
+
+            packages = self.get_packages_version(REPO_CANDIDATE_NAME, dry_run)
+
+            cortx_info = CortxISOInfo(packages=packages, metadata=metadata,
+                                      exceptions=self._exceptions)
+
+            # Packages compatibility validation
+            compatibility_validator = CompatibilityValidator()
+            try:
+                compatibility_validator.validate(cortx_info)
+            except ValidationError as e:
+                logger.debug(
+                    f"Packages compatibility check is failed: {e}"
+                )
+                exc = SWUpdateRepoSourceError(
+                    str(candidate_repo.source),
+                    f"Packages compatibility check is failed {e}"
+                )
+                if dry_run:
+                    cortx_info.exceptions.append(exc)
+                else:
+                    raise exc from e
+            else:
+                logger.info("Packages compatibility check succeeded")
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
@@ -964,7 +1043,8 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         self._setup_python_index(repo)
         return repo.metadata
 
-    def get_packages_version(self, release: str) -> dict:
+    def get_packages_version(self, release: str,
+                             dry_run: bool = False) -> dict:
         """
         Static method returns information about CORTX packages and
         their versions. Public method.
@@ -973,6 +1053,9 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         ----------
         release: str
             SW upgrade repository version
+        dry_run: bool
+            If this parameter is set to `True` this method doesn't raise
+            Exceptions, just collects them
 
         Returns
         -------
@@ -985,8 +1068,12 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         elif self._source_version == ISOVersion.VERSION2:
             repo_name = UpgradeReposVer2.CORTX.value
         else:
-            raise ValueError(f"Unsupported source version: "
+            exc = ValueError(f"Unsupported source version: "
                              f"{self._source_version}")
+            if dry_run:
+                self._exceptions.append(exc)
+            else:
+                raise exc
 
         repo = f"sw_upgrade_{repo_name}_{release}"
 

@@ -120,9 +120,16 @@ class CheckISOAuthenticity(CommandParserFillerMixin):
 
         """
         # to make converters and validators work
-        run_args = self._run_args_type(
-            iso_path, sig_file, gpg_pub_key, import_pub_key
-        )
+        try:
+            run_args = self._run_args_type(
+                iso_path, sig_file, gpg_pub_key, import_pub_key
+            )
+        except ValueError as e:
+            logger.warning(f"Input parameters issue: '{e}'")
+            return {
+                ISOValidationFields.STATUS.value: CheckVerdict.FAIL.value,
+                ISOValidationFields.MSG.value: f'{e}'
+            }
 
         if run_args.import_pub_key and run_args.gpg_pub_key is not None:
             self._import_gpg_public_key(run_args.gpg_pub_key)
