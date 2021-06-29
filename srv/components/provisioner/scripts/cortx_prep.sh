@@ -203,6 +203,31 @@ install_cortx_pkgs()
             echo "Package $pkg is already installed."
     done
 
+    if ! command -v cortx_setup; then
+        ## WORKAROUND UNTIL EOS_21317 IS ADDRESSED.
+        echo "Preparing the Cortx ConfStore with default configuration" | tee -a ${LOG_FILE}
+        echo "WARNING: python36-cortx-setup package is not installed" | tee -a ${LOG_FILE}
+        echo "Installing cortx_setup commands using pip" | tee -a ${LOG_FILE}
+        echo "DEBUG: Preparing the pip.conf" >> ${LOG_FILE} 
+        cat << EOL > /etc/pip.conf
+[global]
+timeout: 60
+index-url: $repo_url
+trusted-host: cortx-storage.colo.seagate.com
+EOL
+        echo "DEBUG: generated pip3 conf file" >> ${LOG_FILE} 
+        cat /etc/pip.conf >> ${LOG_FILE}
+        pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/
+        if ! command -v cortx_setup; then
+            echo "DEBUG: Updating the path variable" >> ${LOG_FILE}
+            export PATH=${PATH}:/usr/local/bin/
+            if ! command -v cortx_setup; then
+                echo "ERROR: cortx_setup command still not available " | tee -a ${LOG_FILE}
+                echo "ERROR: Please check if cortx_setup commands"\
+                " are installed at correct location and environment variable PATH is updated." | tee -a ${LOG_FILE}
+                exit 1
+            fi
+    fi
     echo "Done" | tee -a ${LOG_FILE}
 }
 
@@ -273,11 +298,7 @@ main()
 
 
     if command -v cortx_setup; then
-        echo "Preparing the Cortx ConfStore with default configuration" | tee -a ${LOG_FILE}
         cortx_setup prepare_confstore
-    else
-        echo "WARNING: cortx_setup commands are not installed" | tee -a ${LOG_FILE}
-        echo "Please install the cortx_setup commands and run: 'cortx_setup prepare_confstore' manually"
     fi
 }
 
