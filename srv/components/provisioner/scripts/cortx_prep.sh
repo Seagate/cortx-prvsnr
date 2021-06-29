@@ -21,7 +21,6 @@ export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/node_prep.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 minion_id="srvnode-0"
-salt_opts="--no-color --out-file=$LOG_FILE --out-file-append"
 repo_url=
 nodejs_tar="http://cortx-storage.colo.seagate.com/releases/cortx/github/integration-custom-ci/centos-7.8.2003/custom-build-1969/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
 
@@ -106,7 +105,7 @@ config_local_salt()
     done
     echo "DEBUG: Key for $minion_id is listed." >> "${LOG_FILE}"
     echo "DEBUG: Accepting the salt key for minion $minion_id" >> "${LOG_FILE}"
-    salt-key -y -a "$minion_id"
+    salt-key -y -a "$minion_id" --no-color --out-file="${LOG_FILE}" --out-file-append
 
     # Check if salt '*' test.ping works
     echo "Waiting for Provisioner configuration manager to become ready" | tee -a "${LOG_FILE}"
@@ -285,7 +284,7 @@ main()
                 #configure repos from iso files
 
             #WORKAROUND: Use hosted repos until download_isos function is ready
-            setup_repos $repo_url
+            setup_repos "$repo_url"
         else
             echo "DEBUG: Using the ISO files set up by kickstart " >> "${LOG_FILE}"
             #TODO: use the same isos downloaded by KS file to install the packages
@@ -309,7 +308,7 @@ main()
     install_cortx_pkgs
     config_local_salt
     echo "Resetting the machine id" | tee -a "${LOG_FILE}"
-    salt-call state.apply components.provisioner.config.machine_id.reset $salt_opts
+    salt-call state.apply components.provisioner.config.machine_id.reset --no-color --out-file="${LOG_FILE}" --out-file-append
     echo "Done" | tee -a "${LOG_FILE}"
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
