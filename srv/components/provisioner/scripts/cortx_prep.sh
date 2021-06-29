@@ -45,7 +45,7 @@ Configure Cortx prerequisites locally.
 
 parse_args()
 {
-    echo "DEBUG: parse_args(): parsing input arguments" >> $LOG_FILE
+    echo "DEBUG: parse_args(): parsing input arguments" >> "${LOG_FILE}"
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -106,12 +106,12 @@ config_local_salt()
     done
     echo "DEBUG: Key for $minion_id is listed." >> "${LOG_FILE}"
     echo "DEBUG: Accepting the salt key for minion $minion_id" >> "${LOG_FILE}"
-    salt-key -y -a $minion_id $salt_opts
+    salt-key -y -a "$minion_id" "$salt_opts"
 
     # Check if salt '*' test.ping works
     echo "Waiting for Provisioner configuratoin manager to become ready" | tee -a "${LOG_FILE}"
     try=1; max_tries=10
-    until salt -t 1 $minion_id test.ping >/dev/null 2>&1
+    until salt -t 1 "$minion_id" test.ping >/dev/null 2>&1
     do
         if [[ "$try" -gt "$max_tries" ]]; then
             echo "ERROR: Minion $minion_id seems still not ready after $max_tries attempts." >> "${LOG_FILE}"
@@ -159,11 +159,11 @@ install_dependency_pkgs()
         "salt-minion"
     )
     for pkg in ${dependency_pkgs[@]}; do
-        if rpm -qi --quiet $pkg; then
+        if rpm -qi --quiet "$pkg"; then
             echo "Package $pkg is already installed."
         else
             echo "Installing $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q $pkg | tee -a "${LOG_FILE}"
+            yum install --nogpgcheck -y -q "$pkg" | tee -a "${LOG_FILE}"
         fi
     done
 
@@ -172,12 +172,12 @@ install_dependency_pkgs()
     else
         echo "Installing nodejs" | tee -a "${LOG_FILE}"
         echo "DEBUG: Downloading nodeja tarball" >> "${LOG_FILE}"
-        wget ${nodejs_tar}
+        wget "${nodejs_tar}"
         mkdir /opt/nodejs
         echo "DEBUG: Extracting the tarball" >> "${LOG_FILE}"
         tar -C /opt/nodejs/ -xf node-v12.13.0-linux-x64.tar.xz >> "${LOG_FILE}"
         echo "DEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> "${LOG_FILE}"
-        rm -rf ${nodejs_tar}
+        rm -rf "${nodejs_tar}"
         echo "Done" | tee -a "${LOG_FILE}"
     fi
 }
@@ -211,11 +211,11 @@ install_cortx_pkgs()
     )
 
     for pkg in ${cortx_pkgs[@]}; do
-        if rpm -qi --quiet $pkg; then
+        if rpm -qi --quiet "$pkg"; then
             echo "Package $pkg is already installed." | tee -a "${LOG_FILE}"
         else
             echo "Installing $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q $pkg | tee -a "${LOG_FILE}"
+            yum install --nogpgcheck -y -q "$pkg" | tee -a "${LOG_FILE}"
         fi
     done
 
@@ -246,15 +246,14 @@ install_cortx_pkgs()
 
 download_isos()
 {
-    CORTX_RELEASE_REPO=$1
-    echo "Downloading the ISOs" | tee -a "${LOG_FILE}"
-    mkdir /opt/isos
-    cortx_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' ' | grep 'single.iso')
-    curl -O ${CORTX_RELEASE_REPO}/iso/\${cortx_iso}
-    os_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  "cortx-os")
-    curl -O ${CORTX_RELEASE_REPO}/iso/\${os_iso}
-    #CORTX_PREP=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  ".sh")
-    #curl -O ${CORTX_RELEASE_REPO}/iso/\${CORTX_PREP}
+    #PLACEHOLDER
+    # CORTX_RELEASE_REPO="$1"
+    # echo "Downloading the ISOs" | tee -a "${LOG_FILE}"
+    # mkdir /opt/isos
+    # cortx_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' ' | grep 'single.iso')
+    # curl -O ${CORTX_RELEASE_REPO}/iso/${cortx_iso}
+    # os_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  "cortx-os")
+    # curl -O ${CORTX_RELEASE_REPO}/iso/${os_iso}
 }
 
 main()
@@ -296,8 +295,8 @@ main()
         fi
     else
         echo "This is VM" >> "${LOG_FILE}"
-        if [[ ! -z $repo_url ]]; then
-            setup_repos $repo_url
+        if [[ ! -z "$repo_url" ]]; then
+            setup_repos "$repo_url"
         else
             echo "ERROR: target-build not provided, it's mandetary option for VM"
             echo "ERROR: Please provide the target-build " | tee -a "${LOG_FILE}"
