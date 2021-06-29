@@ -142,7 +142,6 @@ class StorageEnclosureConfig(Command):
                 with open(enc_file_path, "r") as file:
                     self.enclosure_id = file.read().replace('\n', '')
 
-        self.refresh_key_map()
 
     def refresh_key_map(self):
         """updates values in the pillar_key_map and conf_key_map dictionary"""
@@ -241,6 +240,8 @@ class StorageEnclosureConfig(Command):
             metadata_devices = input_metadata_devices.split(",")
 
         self.machine_id = get_machine_id(node_id)
+        self.refresh_key_map()
+
         Conf.load(
             'node_info_index',
             f'json://{prvsnr_cluster_path}'
