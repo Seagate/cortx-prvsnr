@@ -245,9 +245,13 @@ class ClusterCreate(Command):
                         value,
                         local=True
                     )
+                    if 'storageset_count' in key:
+                        conf_key = f'cluster>{clust_id}>site>storage_set_count'
+                    else:
+                        conf_key = f'cluster>{clust_id}>{key}'
                     Conf.set(
                         index,
-                        f'cluster>{clust_id}>{key}',
+                        conf_key,
                         value
                     )
             Conf.save(index)
