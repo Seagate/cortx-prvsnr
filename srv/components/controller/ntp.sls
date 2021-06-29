@@ -16,9 +16,10 @@
 #
 
 {%- if "physical" in grains['virtual'] %}
-{%- set ctrl_a_ip = pillar['storage']['enclosure-1']['controller']['primary']['ip'] %}
-{%- set user = pillar['storage']['enclosure-1']['controller']['user'] %}
-{%- set secret = pillar['storage']['enclosure-1']['controller']['secret'] %}
+{% set current_enclosure = "enclosure-" + ((grains['id']).split('-'))[1] %}
+{%- set ctrl_a_ip = pillar['storage'][current_enclosure]['controller']['primary']['ip'] %}
+{%- set user = pillar['storage'][current_enclosure]['controller']['user'] %}
+{%- set secret = pillar['storage'][current_enclosure]['controller']['secret'] %}
 {%- set ntp_server = pillar['system']['ntp']['time_server'] %}
 {%- set time_zone = pillar['system']['ntp']['time_zone'] %}
 

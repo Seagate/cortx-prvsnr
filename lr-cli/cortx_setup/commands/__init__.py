@@ -28,11 +28,11 @@ from .cluster.encrypt import EncryptSecrets
 from .cluster.generate import GenerateCluster
 from .cluster.show import ClusterShow
 from .cluster.config.network import ClusterNetworkConfig
+from .cluster.prepare import ClusterPrepare
 from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
 from .resource.discover import ResourceDiscover
-from .node.prepare.software import NodePrepare
 from .node.prepare.firewall import NodePrepareFirewall
 from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
@@ -55,6 +55,7 @@ __all__ = [
     'Commons',
     'ClusterCreate',
     'ClusterNetworkConfig',
+    'ClusterPrepare',
     'ClusterConfigComponent',
     'ClusterShow',
     'CreateStorageSet',
@@ -66,7 +67,6 @@ __all__ = [
     'NetworkConfig',
     'NodeInitialize',
     'NodeFinalize',
-    'NodePrepare',
     'NodePrepareFirewall',
     'NodePrepareNetwork',
     'NodePrepareServer',
