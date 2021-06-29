@@ -19,16 +19,11 @@
 set -euE
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/node_prep.log}"
 mkdir -p $(dirname "${LOG_FILE}")
-
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
-localhost_ip="127.0.0.1"
 minion_id="srvnode-0"
 salt_opts="--no-color --out-file=$LOG_FILE --out-file-append"
 repo_url=
-
-ISO_OS_PATH="/opt/isos/cortx-os-*.iso"
 nodejs_tar="http://cortx-storage.colo.seagate.com/releases/cortx/github/integration-custom-ci/centos-7.8.2003/custom-build-1969/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
-
 
 _usage()
 {
@@ -123,7 +118,7 @@ config_local_salt()
             echo "ERROR: Provisioner configuration manager failed to connect to local server" | tee -a "${LOG_FILE}"
             exit 1
         fi
-        try=$(( $try + 1 ))
+        try=$(( try + 1 ))
     done
     echo "DEBUG: Salt configuration done successfully" >> "${LOG_FILE}"
     echo "Done" | tee -a "${LOG_FILE}"
