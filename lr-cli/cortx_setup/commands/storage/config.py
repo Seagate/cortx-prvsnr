@@ -473,7 +473,7 @@ class StorageEnclosureConfig(Command):
                 current_cvg_count = 0
 
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
-            if not cvg_list:
+            if not cvg_list or cvg_list is MISSED:
                 cvg_list = []
             elif isinstance(cvg_list[0], OrderedDict):
                 for i,key in enumerate(cvg_list):
