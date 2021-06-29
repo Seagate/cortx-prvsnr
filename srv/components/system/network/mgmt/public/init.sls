@@ -38,6 +38,7 @@ Public management network configuration:
     - userctl: no
     - hwaddr: {{ grains['hwaddr_interfaces'][mgmt_if] }}
     - defroute: yes
+    - noifupdown: True
 {% if pillar['cluster'][node]['network']['mgmt']['public_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['mgmt']['public_ip'] }}
