@@ -18,6 +18,8 @@ import logging
 from typing import Type, Union, List, Optional, Any
 import json
 
+from provisioner.commands.validator.validator import CompatibilityValidator
+
 from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
@@ -1320,6 +1322,40 @@ class Check(CommandParserFillerMixin):
             else:
                 res.set_fail(checked_target=local_minion_id(),
                              comment="An active upgrade ISO is detected")
+
+        return res
+
+    @staticmethod
+    def _packages_compatibility(args: str) -> CheckEntry:
+        """
+        Validate that SW upgrade packages are compatible with installed ones
+
+        Parameters
+        ----------
+        args: str
+            Specific parameters and arguments for package compatibility
+            validation
+
+        Returns
+        -------
+        CheckEntry:
+            CheckEntry instance with validation result
+
+        """
+        from provisioner.commands.upgrade import GetSWUpgradeInfo
+
+        res: CheckEntry = CheckEntry(cfg.Checks.PACKAGES_COMPATIBILITYO.value)
+
+        iso_info = GetSWUpgradeInfo().run()  # check the latest SW upgrade
+
+        try:
+            CompatibilityValidator().validate(iso_info)
+        except ValidationError as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=local_minion_id(),
+                           comment='Packages compatibility check succeeded')
 
         return res
 
