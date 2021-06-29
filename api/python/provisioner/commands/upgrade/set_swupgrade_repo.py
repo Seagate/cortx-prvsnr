@@ -202,7 +202,7 @@ class CortxISOInfo:
 
     packages: dict = attr.ib(validator=attr.validators.instance_of(dict))
     metadata: dict = attr.ib(validator=attr.validators.instance_of(dict))
-    exceptions: dict = attr.ib(
+    exceptions: list = attr.ib(
         validator=attr.validators.instance_of(list),
         default=list()
     )
@@ -655,7 +655,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
         if res[ISOValidationFields.STATUS.value] == CheckVerdict.FAIL.value:
             logger.warning(f"ISO signature validation is failed: "
                            f"'{res[ISOValidationFields.MSG.value]}'")
-            exc =  SWUpdateRepoSourceError(
+            exc = SWUpdateRepoSourceError(
                 str(params.source),
                 "ISO signature validation error occurred: "
                 f"'{res[ISOValidationFields.MSG.value]}'"
@@ -945,21 +945,25 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
             cortx_info = CortxISOInfo(packages=packages, metadata=metadata,
                                       exceptions=self._exceptions)
-            if not dry_run:
-                # Packages compatibility validation
-                compatibility_validator = CompatibilityValidator()
-                try:
-                    compatibility_validator.validate(cortx_info)
-                except ValidationError as e:
-                    logger.debug(
-                        f"Packages compatibility check is failed: {e}"
-                    )
-                    raise SWUpdateRepoSourceError(
-                        str(candidate_repo.source),
-                        f"Packages compatibility check is failed {e}"
-                    ) from e
+
+            # Packages compatibility validation
+            compatibility_validator = CompatibilityValidator()
+            try:
+                compatibility_validator.validate(cortx_info)
+            except ValidationError as e:
+                logger.debug(
+                    f"Packages compatibility check is failed: {e}"
+                )
+                exc = SWUpdateRepoSourceError(
+                    str(candidate_repo.source),
+                    f"Packages compatibility check is failed {e}"
+                )
+                if dry_run:
+                    cortx_info.exceptions.append(exc)
                 else:
-                    logger.info("Packages compatibility check succeeded")
+                    raise exc from e
+            else:
+                logger.info("Packages compatibility check succeeded")
         finally:
             # remove the repo
             candidate_repo.source = values.UNDEFINED
