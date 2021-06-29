@@ -21,6 +21,7 @@ from typing import Type, Union, Any
 from urllib.parse import urlparse, unquote
 
 from configparser import ConfigParser
+from packaging import version
 
 from provisioner.vendor import attr
 from provisioner.commands import Check
@@ -65,8 +66,7 @@ from provisioner.commands.validator import (
     YumRepoDataValidator,
     HashSumValidator
 )
-from provisioner.commands.release import CortxRelease
-
+from provisioner.commands.release import CortxRelease, GetRelease
 
 logger = logging.getLogger(__name__)
 
@@ -840,6 +840,14 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
             self._post_repo_validation(candidate_repo, base_dir, dry_run)
 
             repo.release = release
+
+            if (version.parse(release)
+                    < version.parse(GetRelease.cortx_version())):
+                raise SWUpdateRepoSourceError(
+                    str(repo.source),
+                    f"ISO version '{release}' should be greater than current "
+                    f"one {GetRelease.cortx_version()}"
+                )
 
             packages = self.get_packages_version(REPO_CANDIDATE_NAME)
         finally:
