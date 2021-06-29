@@ -530,16 +530,10 @@ SWUPDATE_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value
 }
 
-SWUPGRADE_CHECKS = {
-    Checks.NETWORK.value,
-    Checks.CONNECTIVITY.value,
-    Checks.BMC_ACCESSIBILITY.value,
+SWUPGRADE_CHECKS = (
     Checks.COMMUNICABILITY.value,
-    Checks.CLUSTER_STATUS.value,
-    Checks.LOGS_ARE_GOOD.value,
-    Checks.PASSWORDLESS_SSH_ACCESS.value,
     Checks.UPGRADE_ISO_VERSION.value
-}
+)
 
 REPLACENODE_CHECKS = {
     Checks.STORAGE_LUNS.value,

@@ -23,8 +23,11 @@ from provisioner.commands.validator.validator import CompatibilityValidator
 from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
-from ..errors import (SaltCmdResultError, ValidationError,
-                      CriticalValidationError)
+from ..errors import (
+    SaltCmdResultError,
+    ValidationError,
+    CriticalValidationError,
+    SWUpgradeError)
 from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import local_minion_id, cmd_run
@@ -452,6 +455,31 @@ class SWUpdateDecisionMaker(DecisionMaker):
                            f"{warning_msg}")
         else:
             logger.info("All SW Update pre-flight checks are passed")
+
+
+class SWUpgradeDecisionMaker(DecisionMaker):
+    """Class analyses `CheckResult` structure and will decide to continue or
+       to stop SW Upgrade routine.
+    """
+
+    def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision for SW Upgrade based on `CheckResult` analysis
+
+        :param CheckResult check_result: instance with all checks needed for
+                                         to make a decision
+        :return:
+        """
+        if check_result.is_failed:
+            # Threat all errors as warnings
+            errors = check_result.get_checks(failed=True)
+            errors_msg = self.format_checks(*errors)
+            logger.error("Some SW Update pre-flight checks are failed: "
+                         f"{errors_msg}")
+            raise SWUpgradeError(
+                f"The following checks are failed: '{errors_msg}'")
+        else:
+            logger.info("All SW Upgrade pre-flight checks are passed")
 
 
 @attr.s(auto_attribs=True)
