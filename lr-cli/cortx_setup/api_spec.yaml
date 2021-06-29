@@ -44,6 +44,8 @@ node:
       NodePrepareServer
     firewall:
       NodePrepareFirewall
+    finalize:
+      NodePrepareFinalize
     time:
       NodePrepareTime
     network:
