@@ -855,7 +855,7 @@ class SetSWUpgradeRepo(SetSWUpdateRepo):
 
         checker = Check()
         try:
-            check_res = checker.run(Checks.ACTIVE_UPGRADE_ISO.value)
+            check_res = checker.run(Checks.NO_ACTIVE_UPGRADE_ISO.value)
         except Exception as e:
             logger.warning("During the detection of the active SW upgrade ISO "
                            f"error happened: {str(e)}")

@@ -1313,7 +1313,7 @@ class Check(CommandParserFillerMixin):
         return res
 
     @staticmethod
-    def _active_upgrade_iso(*, args: str) -> CheckEntry:
+    def _no_active_upgrade_iso(*, args: str) -> CheckEntry:
         """
         Ensure that no active upgrade ISO is available
 
@@ -1334,7 +1334,7 @@ class Check(CommandParserFillerMixin):
         #  SetSWUpgradeRepo imports Set class.
         from provisioner.commands.upgrade import GetISOVersion
 
-        res: CheckEntry = CheckEntry(cfg.Checks.ACTIVE_UPGRADE_ISO.value)
+        res: CheckEntry = CheckEntry(cfg.Checks.NO_ACTIVE_UPGRADE_ISO.value)
 
         try:
             iso_version = GetISOVersion().run()
