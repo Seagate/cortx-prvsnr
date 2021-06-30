@@ -32,8 +32,15 @@ class NetworkConfig(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'choices': ['lnet', 'libfabric', 'tcp', 'o2ib'],
-            'help': 'Network transport or interface type'
+            'choices': ['tcp', 'o2ib'],
+            'help': 'Network interface type'
+        },
+        'transport': {
+            'type': str,
+            'default': None,
+            'optional': True,
+            'choices': ['lnet', 'libfabric'],
+            'help': 'Network transport type'
         },
         'bmc': {
             'type': ipv4,
@@ -69,13 +76,13 @@ class NetworkConfig(Command):
         }
     }
 
-    def run(self, mode=None, network_type=None, interfaces=None,
+    def run(self, mode=None, transport=None, network_type=None, interfaces=None,
             bmc=None, user=None, password=None):
 
         """Network config execution method.
 
         Execution:
-        `cortx_setup network config --mode lent`
+        `cortx_setup network config --transport lnet`
         `cortx_setup network config --mode tcp`
         `cortx_setup network config --type mgmt --interfaces eth0`
         `cortx_setup network config --type data --interfaces eth1 eth2`
@@ -135,19 +142,34 @@ class NetworkConfig(Command):
             )
 
         if mode is not None:
-            mode_type = 'transport_type' if mode in ['lnet', 'libfabric'] else 'interface_type'
+            conf_key = 'interface_type'
             self.logger.debug(
-                f"Set {mode_type} to {mode}"
+                f"Set {conf_key} to {mode}"
             )
             PillarSet().run(
-                f'cluster/{node_id}/network/data/{mode_type}',
+                f'cluster/{node_id}/network/data/{conf_key}',
                 f'{mode}',
                 local=True
             )
             Conf.set(
                 'node_config_index',
-                f'server_node>{machine_id}>network>data>{mode_type}',
+                f'server_node>{machine_id}>network>data>{conf_key}',
                 mode
+            )
+        if transport is not None:
+            conf_key = 'transport_type'
+            self.logger.debug(
+                f"Set {conf_key} to {transport}"
+            )
+            PillarSet().run(
+                f'cluster/{node_id}/network/data/{conf_key}',
+                f'{transport}',
+                local=True
+            )
+            Conf.set(
+                'node_config_index',
+                f'server_node>{machine_id}>network>data>{conf_key}',
+                transport
             )
         if interfaces is not None:
             if network_type == 'data' or network_type == 'private':
