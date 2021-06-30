@@ -22,10 +22,27 @@ ALL_MINIONS = '*'
 CONFSTORE_CLUSTER_FILE = Path(
     '/opt/seagate/cortx_configs/provisioner_cluster.json'
 )
+PRVSNR_PILLAR_DIR = Path(
+    '/opt/seagate/cortx/provisioner/pillar'
+)
 
-local_pillars  = ['cluster', 'storage', 'system', 'firewall']
+local_pillars = ['cluster', 'storage', 'system', 'firewall']
 
 # Will be changed to confstore yaml path
 CONFIG_PATH = Path('/root/config.ini')
 
 ENCLOSURE_ID = Path('/etc/enclosure-id')
+CERT_PATH = Path('/etc/ssl/stx')
+
+# resource map generation and manifest generation
+RETRIES = 30
+WAIT = 30
+HEALTH_PATH = 'provisioner/common_config/resource_map_path'
+MANIFEST_PATH = 'provisioner/common_config/manifest_path'
+
+HW_TYPE = 'HW'
+VM_TYPE = 'VM'
+SOURCE_PATH = PRVSNR_PILLAR_DIR / 'components' / 'storage.sls'
+DEST_PATH = PRVSNR_PILLAR_DIR / 'samples' / 'storage.sls'
+
+BMC_COMPONENT = 'server_node'

@@ -233,7 +233,6 @@ class DestroyNode(Deploy):
                     "provisioner.teardown",
                     "provisioner.passwordless_remove",
                     "misc_pkgs.openldap.teardown",
-                    "misc_pkgs.rabbitmq.teardown",
                     "ha.cortx-ha.teardown"
                 ):
 

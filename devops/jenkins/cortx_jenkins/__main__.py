@@ -132,8 +132,8 @@ def parse_args():
         '-n', '--name',
         default=None,
         help=(
-            "an agent name to use, required for 'connect' action."
-            " For 'init' action might be detected automatically"
+            "an agent name to use for connection."
+            " Detected automatically if not specified."
         )
     )
     parser_agent.add_argument(

@@ -17,7 +17,7 @@
 
 {% if not salt['file.file_exists']('/opt/seagate/cortx_configs/provisioner_generated/{0}.kibana'.format(grains['id'])) %}
 include:
-  - components.misc_pkgs.kibana.prepare
+  # - components.misc_pkgs.kibana.prepare
   - components.misc_pkgs.kibana.install
   - components.misc_pkgs.kibana.config
   - components.misc_pkgs.kibana.start

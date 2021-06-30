@@ -26,8 +26,8 @@ from provisioner.vendor import attr
 from provisioner.commands._basic import (
     RunArgs, RunArgsBase, CommandParserFillerMixin
 )
-from provisioner.commands import (
-    GetReleaseVersion
+from provisioner.commands.release import (
+    GetRelease
 )
 from provisioner.commands.mini_api import (
     HookCaller,
@@ -94,7 +94,11 @@ class SWUpgradeNode(CommandParserFillerMixin):
         return sw_data
 
     def backup(self, flow, no_hooks=False, targets=config.ALL_TARGETS):
-        if not no_hooks:
+        # TODO activate later
+        #      Note. some componets have wrong backup hooks declaration
+        #            (e.g. use --location $URL but fail
+        #            due to unknown arg '--location')
+        if False and not no_hooks:
             logger.info("Trigger 'backup' hook (node level)")
             mini_hook = MiniAPIHook(
                 name=config.MiniAPIHooks.BACKUP,
@@ -113,7 +117,7 @@ class SWUpgradeNode(CommandParserFillerMixin):
     ):
         # FIXME what if the following returns different versions
         #       than cluster level logic
-        cortx_version = GetReleaseVersion.cortx_version()
+        cortx_version = GetRelease.cortx_version()
         upgrade_version = GetSWUpgradeInfo.cortx_version()
         ctx_vars = dict(
             CORTX_VERSION=cortx_version,

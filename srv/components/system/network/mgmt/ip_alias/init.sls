@@ -15,17 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set mgmt_vip = pillar['cluster']['mgmt_vip'] -%}
+{% if mgmt_vip %}
+{% if not salt['network.ping'](mgmt_vip, return_boolean=True, timeout=1) %}
 {% set node = grains['id'] %}
 {% set mgmt_if = pillar['cluster'][node]['network']['mgmt']['interfaces'][0] %}
 {% set mgmt_netmask = grains['ip4_netmask'][mgmt_if] %}
-{% set mgmt_vip = pillar['cluster']['mgmt_vip'] -%}
-
-
-{% if mgmt_vip %}
 
 IP alias of mgmt_vip with {{ mgmt_if }}:
   cmd.run:
     - name: ip a add {{mgmt_vip}}/{{mgmt_netmask}} dev {{mgmt_if}}
+
+{% else %}
+
+IP already in use:
+  test.show_notification:
+    - text: "Specified management VIP {{ mgmt_vip }} is already in use. So unable to create alias."
+
+{% endif %}
 
 {% endif %}
 

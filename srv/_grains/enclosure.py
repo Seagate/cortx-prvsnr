@@ -26,6 +26,6 @@ def enclosure_id():
 
     id_file = Path(FILENAME)
     if id_file.is_file():
-        grains['enclosure_id'] = id_file.read_text()
+        grains['enclosure_id'] = id_file.read_text().strip()
 
     return grains

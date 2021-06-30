@@ -14,7 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
+import re
 from enum import Enum
 from pathlib import Path
 import os
@@ -112,8 +112,15 @@ PRVSNR_PILLAR_CONFIG_INI = str(
 
 
 REPO_CANDIDATE_NAME = 'candidate'
+RELEASE_FACTORY_INFO_FILE = 'RELEASE_FACTORY.INFO'
 RELEASE_INFO_FILE = 'RELEASE.INFO'
 THIRD_PARTY_RELEASE_INFO_FILE = 'THIRD_PARTY_RELEASE.INFO'
+CORTX_RELEASE_INFO_FILE = 'CORTX_RELEASE.INFO'
+
+CORTX_RELEASE_FACTORY_INFO_PATH = (
+    Path('/etc/yum.repos.d/') / RELEASE_FACTORY_INFO_FILE
+)
+CORTX_RELEASE_INFO_PATH = CORTX_ROOT_DIR / RELEASE_INFO_FILE
 
 SALT_MASTER_CONFIG_DEFAULT = '/etc/salt/master'
 SALT_MINION_CONFIG_DEFAULT = '/etc/salt/minion'
@@ -126,6 +133,52 @@ OS_ISO_DIR = 'os'
 CORTX_ISO_DIR = 'cortx_iso'
 CORTX_3RD_PARTY_ISO_DIR = '3rd_party'
 CORTX_PYTHON_ISO_DIR = 'python_deps'
+
+
+class ISOVersion(Enum):
+
+    """Simple class enumeration that defines different ISO bundle
+    scheme versions.
+    """
+
+    VERSION1 = "1.0.0"
+    VERSION2 = "2.0.0"
+
+
+class ISOKeywordsVer2:
+
+    """Directory names, file names and other important keywords for ISO
+    structure of version 2.
+
+    This class is used for simple grouping of common names for ISO structure
+    of version 2. It should help to avoid hard cording such names directly in
+    code.
+
+    """
+
+    FW = "fw"
+    SERVER = "server"
+    STORAGE = "storage"
+    OS = "os"
+    PATCHES = "patches"
+    SW = "sw"
+    CORTX = "cortx"
+    EXTERNAL = "external"
+    PYTHON = "python"
+    RPM = "rpm"
+    EPEL_7 = "EPEL-7"
+    COMMONS = "commons"
+    PERFORMANCE = "performance"
+
+
+class UpgradeReposVer2(Enum):
+
+    """Names of upgrade repositories from SW upgrade ISO bundle of version 2"""
+
+    CORTX = ISOKeywordsVer2.CORTX
+    EPEL_7 = ISOKeywordsVer2.EPEL_7
+    COMMONS = ISOKeywordsVer2.COMMONS
+    PERFORMANCE = ISOKeywordsVer2.PERFORMANCE
 
 
 PRVSNR_CORTX_REPOS_BASE_DIR = (
@@ -193,7 +246,6 @@ PRVSNR_CORTX_COMPONENTS = [
     'haproxy',
     'keepalived',
     'openldap',
-    'rabbitmq',
     'release',
     'rsyslog',
     's3clients',
@@ -239,6 +291,8 @@ LOG_FULL_FORMATTER = 'full'
 #   TODO move to some parent type instead
 LOG_FORCED_LOGFILE_CMDS = [
     'set_network',
+    'set_swupgrade_repo',
+    'sw_upgrade',
     'set_swupdate_repo',
     'sw_update',
     'fw_update',
@@ -438,6 +492,8 @@ class Checks(Enum):
     NETWORK_DRIVERS = "network_drivers"
     NETWORK_HCA = "network_hca"
     UPGRADE_ISO_VERSION = "upgrade_iso_version"
+    ACTIVE_UPGRADE_ISO = "active_upgrade_iso"
+    PACKAGES_COMPATIBILITY = "packages_compatibility"
 
 
 class GroupChecks(Enum):
@@ -476,16 +532,10 @@ SWUPDATE_CHECKS = {
     Checks.PASSWORDLESS_SSH_ACCESS.value
 }
 
-SWUPGRADE_CHECKS = {
-    Checks.NETWORK.value,
-    Checks.CONNECTIVITY.value,
-    Checks.BMC_ACCESSIBILITY.value,
+SWUPGRADE_CHECKS = (
     Checks.COMMUNICABILITY.value,
-    Checks.CLUSTER_STATUS.value,
-    Checks.LOGS_ARE_GOOD.value,
-    Checks.PASSWORDLESS_SSH_ACCESS.value,
     Checks.UPGRADE_ISO_VERSION.value
-}
+)
 
 REPLACENODE_CHECKS = {
     Checks.STORAGE_LUNS.value,
@@ -548,6 +598,7 @@ class ReleaseInfo(Enum):
     KERNEL = 'KERNEL'
     COMPONENTS = 'COMPONENTS'
     RELEASE = 'RELEASE'
+    REQUIRES = 'REQUIRES'
 
 
 # NOTE: for more convenient usage of check.CheckResult.get_checks method
@@ -603,12 +654,21 @@ class LockMetaDataFields(Enum):
     SOURCE_TARGET = "source_target"
 
 
-class HareStatus(Enum):
-    """Hare output statuses"""
+class HACmdResult(Enum):
+    """HA output for command results."""
 
-    FAILED = 'Failed'
-    SUCCEEDED = 'Succeeded'
-    IN_PROGRESS = 'InProgress'
+    FAILED = 'failed'
+    SUCCEEDED = 'succeeded'
+    IN_PROGRESS = 'inprogress'
+
+
+class HAClusterStatus(Enum):
+    """HA output for cluster statuses."""
+
+    ONLINE = 'online'
+    OFFLINE = 'offline'
+    STANDBY = 'standby'
+    DEGRADED = 'degraded'
 
 
 class ISOValidationFields(Enum):
@@ -622,7 +682,18 @@ class SWUpgradeInfoFields(Enum):
     """Named fields for meta information about SW upgrade repository"""
 
     VERSION = "version"
-    VERSION_CONSTRAINT = "version_constraint"
+    VERSION_COMPATIBILITY = "version_compatibility"
+
+
+VERSION_DELIMITERS = '|'.join(map(re.escape,
+                                  ('>', '<', '==', '!=', '>=', '<=')))
+
+# release delimiters that are used for parse the package build version
+RELEASE_DELIMITERS = '|'.join(map(re.escape, ('.', '_')))
+
+# The special package name from the RELEASE.INFO:REQUIRES section that sets
+# compatibility requirement for the minimum CORTX version
+CORTX_VERSION = "CORTX"
 
 
 class CortxFlows(Enum):

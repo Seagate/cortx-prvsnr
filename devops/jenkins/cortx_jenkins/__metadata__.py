@@ -16,7 +16,7 @@
 #
 
 __title__ = 'cortx-jenkins'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __author__ = "Seagate"
 __author_email__ = 'support@seagate.com'  # TODO
 __maintainer__ = 'Seagate'

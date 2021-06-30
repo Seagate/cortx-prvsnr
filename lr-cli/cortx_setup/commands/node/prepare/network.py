@@ -140,7 +140,6 @@ class NodePrepareNetwork(Command):
                         mgmt_public_ip=ip_address,
                         mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
-                        mgmt_interfaces=interfaces,
                         local=True
                     )
                 elif network_type == 'data':
@@ -148,13 +147,11 @@ class NodePrepareNetwork(Command):
                         data_public_ip=ip_address,
                         data_netmask=netmask,
                         data_gateway=gateway,
-                        data_public_interfaces=interfaces,
                         local=True
                     )
                 elif network_type == 'private':
                     set_private_data_network(
                         data_private_ip=ip_address,
-                        data_private_interfaces=interfaces,
                         local=True
                     )
             except Exception as ex:

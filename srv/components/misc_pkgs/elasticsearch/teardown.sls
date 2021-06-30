@@ -23,8 +23,19 @@ Remove ES and related pkgs:
     - pkgs:
       - rsyslog-elasticsearch
       - rsyslog-mmjsonparse
-      - elasticsearch-oss
+      - opendistroforelasticsearch
       - java-1.8.0-openjdk-headless
+      - elasticsearch-oss
+      - opendistro-alerting
+      - opendistro-anomaly-detection
+      - opendistro-index-management
+      - opendistro-job-scheduler
+      - opendistro-knn
+      - opendistro-knnlib
+      - opendistro-performance-analyzer
+      - opendistro-reports-scheduler
+      - opendistro-security
+      - opendistro-sql
 
 Remove elasticsearch config:
   file.absent:
@@ -33,6 +44,10 @@ Remove elasticsearch config:
 Remove elasticsearch data:
   file.absent:
     - name: /var/lib/elasticsearch
+
+Remove elasticsearch logs:
+  file.absent:
+    - name: /var/log/elasticsearch
 
 Delete elasticsearch checkpoint flag:
   file.absent:

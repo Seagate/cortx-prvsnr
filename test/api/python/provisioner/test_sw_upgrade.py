@@ -14,15 +14,19 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
+import pathlib
 import re
 from pathlib import Path
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 import yaml
+from provisioner.commands.check import CheckResult, CheckEntry
+from provisioner.commands.release import GetRelease
 
 from provisioner.commands.upgrade import GetSWUpgradeInfo, SetSWUpgradeRepo
-from provisioner.config import ReleaseInfo, SWUpgradeInfoFields
+from provisioner.commands.upgrade.set_swupgrade_repo import Check
+from provisioner.config import ReleaseInfo, SWUpgradeInfoFields, Checks
 
 from .test_validator import RELEASE_INFO
 
@@ -88,7 +92,7 @@ class LockMock:
 
 
 @pytest.mark.unit
-def test_get_swupgrade_info():
+def test_get_swupgrade_info(tmpdir_function):
     """
     Test for Provisioner wrapper over HA cluster stop command.
 
@@ -100,26 +104,56 @@ def test_get_swupgrade_info():
                         'get_swupgrade_info.local_minion_id')
     local_minion_id2 = ('provisioner.commands.upgrade.'
                         'set_swupgrade_repo.local_minion_id')
-    load_yaml = 'provisioner.commands.upgrade.set_swupgrade_repo.load_yaml'
-    cmd_run = 'provisioner.commands.upgrade.set_swupgrade_repo.cmd_run'
+    local_minion_id3 = ('provisioner.commands.validator.'
+                        'validator.local_minion_id')
+    cortx_release_cls = (
+        'provisioner.commands.upgrade.set_swupgrade_repo.CortxRelease'
+    )
+    cmd_run1 = 'provisioner.commands.upgrade.set_swupgrade_repo.cmd_run'
+    cmd_run2 = 'provisioner.commands.validator.validator.cmd_run'
+
+    check_res = CheckResult()
+    check_entry = CheckEntry(Checks.ACTIVE_UPGRADE_ISO.value)
+    check_entry.set_passed(checked_target='srvnode-1',
+                           comment="Everything is ok")
+    check_res.add_checks(check_entry)
     with patch.object(SetSWUpgradeRepo, '_prepare_single_iso_for_apply',
                       new=lambda self, x: None), \
             patch.object(SetSWUpgradeRepo, '_get_mount_dir',
                          new=lambda self: BASE_DIR), \
             patch.object(SetSWUpgradeRepo, '_apply',
                          new=lambda self, x, targets, local: None), \
+            patch.object(Check, 'run', new=lambda self, x: check_res), \
+            patch.object(pathlib.Path, 'iterdir', new=lambda self: []), \
+            patch.object(GetRelease, 'cortx_version', new=lambda: '2.0.0-0'), \
             patch(local_minion_id1, MagicMock()), \
             patch(local_minion_id2, MagicMock()) as local_minion_id2_mock, \
+            patch(local_minion_id3, MagicMock()) as local_minion_id3_mock, \
             patch('provisioner.lock.Lock', LockMock) as api_lock_mock, \
-            patch(load_yaml,
-                  MagicMock()) as load_yaml_mock, \
-            patch(cmd_run, MagicMock()) as cmd_run_mock:
-        load_yaml_mock.return_value = yaml.safe_load(RELEASE_INFO)
+            patch(
+                f"{cortx_release_cls}.metadata",
+                new_callable=PropertyMock
+            ) as metadata_mock, \
+            patch(
+                f"{cortx_release_cls}.release_info",
+                new_callable=PropertyMock
+            ) as release_info_mock, \
+            patch(cmd_run1, MagicMock()) as cmd_run_mock1, \
+            patch(cmd_run2, MagicMock()) as cmd_run_mock2:
+
+        metadata = yaml.safe_load(RELEASE_INFO)
+        metadata_mock.return_value = metadata
+        release_info_mock.return_value = MagicMock(version='2.0.1-277')
         api_lock_mock.return_value = lambda fun: fun
         local_minion_id2_mock.return_value = LOCAL_MINION_ID
+        local_minion_id3_mock.return_value = LOCAL_MINION_ID
 
-        cmd_run_mock.return_value = get_packages_versions()
+        cmd_run_mock1.return_value = get_packages_versions()
+        cmd_run_mock2.return_value = {LOCAL_MINION_ID: ''}
 
-        cortx_info = GetSWUpgradeInfo().run(iso_path='/path/to/single.iso')
-        assert cortx_info.metadata == yaml.safe_load(RELEASE_INFO)
+        # FIXME avoid creation of files
+        iso_path = tmpdir_function / 'single.iso'
+        iso_path.touch()
+        cortx_info = GetSWUpgradeInfo().run(iso_path=iso_path)
+        assert cortx_info.metadata == metadata
         assert cortx_info.packages == get_cortx_packages()

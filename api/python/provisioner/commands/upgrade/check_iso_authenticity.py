@@ -41,8 +41,7 @@ class CheckISOAuthenticityArgs:
                 'help': "Path to the SW upgrade single ISO bundle"
             }
         },
-        converter=utils.converter_path_resolved,
-        default=None
+        converter=utils.converter_path_resolved
     )
     sig_file: str = attr.ib(
         metadata={
@@ -52,7 +51,7 @@ class CheckISOAuthenticityArgs:
         },
         validator=attr.validators.optional(utils.validator_path_exists),
         converter=utils.converter_path_resolved,
-        default=None
+        default=None  # TODO: construct the default sig path based on ISO path
     )
     gpg_pub_key: str = attr.ib(
         metadata={
@@ -120,15 +119,30 @@ class CheckISOAuthenticity(CommandParserFillerMixin):
         -------
 
         """
-        if import_pub_key and gpg_pub_key is not None:
-            self._import_gpg_public_key(gpg_pub_key)
-            gpg_pub_key = None  # NOTE: GPG public key is already imported
+        # to make converters and validators work
+        try:
+            run_args = self._run_args_type(
+                iso_path, sig_file, gpg_pub_key, import_pub_key
+            )
+        except ValueError as e:
+            logger.warning(f"Input parameters issue: '{e}'")
+            return {
+                ISOValidationFields.STATUS.value: CheckVerdict.FAIL.value,
+                ISOValidationFields.MSG.value: f'{e}'
+            }
 
-        auth_validator = AuthenticityValidator(signature=sig_file,
-                                               gpg_public_key=gpg_pub_key)
+        if run_args.import_pub_key and run_args.gpg_pub_key is not None:
+            self._import_gpg_public_key(run_args.gpg_pub_key)
+            # NOTE: GPG public key is already imported
+            run_args.gpg_pub_key = None
+
+        auth_validator = AuthenticityValidator(
+            signature=run_args.sig_file,
+            gpg_public_key=run_args.gpg_pub_key
+        )
 
         try:
-            output = auth_validator.validate(iso_path)
+            output = auth_validator.validate(run_args.iso_path)
         except ValidationError as e:
             logger.warning(f"ISO authenticity check is failed: '{e}'")
             return {

@@ -34,15 +34,13 @@ get_params:
 get_node_id:
   type: GetNodeId
 get_release_version:
-  type: GetReleaseVersion
+  type: release.GetReleaseLegacy
 get_factory_version:
-  type: GetFactoryVersion
+  type: release.GetFactoryLegacy
 get_setup_info:
   type: GetSetupInfo
 check:
   type: Check
-mini_api:
-  type: mini_api.MiniAPI
 
 # config commands
 pillar_set:
@@ -210,3 +208,9 @@ deploy_dual:
 # others
 helper:
   type: Helper
+
+mini_api:
+  type: mini_api.MiniAPI
+
+release:
+  type: release.CortxReleaseCmd

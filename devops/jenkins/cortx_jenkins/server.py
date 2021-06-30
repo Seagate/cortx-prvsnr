@@ -27,12 +27,7 @@ import docker
 
 from . import defs, utils
 
-docker_client = docker.from_env()
-
 logger = logging.getLogger(__name__)
-
-
-docker_client = docker.from_env()
 
 
 ServerCmdArgs = attr.make_class(
@@ -58,9 +53,11 @@ def start_docker_server():
     # TODO use docker python wrapper
     utils.run_subprocess_cmd([
         'docker', 'run', '-d',
+        # TODO make that configurable
         '-p', '8083:8083',
         '-p', '50000:50000',
         '-v', f"{defs.SERVER_VOLUME_NAME}:{defs.SERVER_JENKINS_HOME}",
+        '--env', 'JAVA_OPTS=-Djenkins.install.runSetupWizard=false',
         '--name', defs.SERVER_CONTAINER_NAME,
         defs.SERVER_IMAGE_NAME_FULL
     ])
@@ -124,7 +121,7 @@ def gen_self_signed_cert(ssl_cn, ctx_dir=defs.SERVER_CTX_DIR, force=False):
 
 def get_container(name):
     try:
-        return docker_client.containers.get(name)
+        return docker.from_env().containers.get(name)
     except docker.errors.NotFound:
         logger.debug(
             f"Docker container '{name}' is not found"
@@ -233,7 +230,8 @@ def manage_server(cmd_args: ServerCmdArgs):
     start_server(server_config)
     logger.info("Jenkins Server infra started")
 
-    j_server_container = get_server_container()
-    smeeio_container = get_smeeio_container()
-    res = [j_server_container, smeeio_container]
+    res = [get_server_container()]
+    if server_config['smeeio_channel']:
+        res.append(get_smeeio_container())
+
     return [(cont.name, cont.short_id) for cont in res]
