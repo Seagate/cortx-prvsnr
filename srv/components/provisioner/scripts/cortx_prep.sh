@@ -16,7 +16,8 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-set -euE
+set -euE -o pipefail
+
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/node_prep.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
@@ -24,13 +25,22 @@ minion_id="srvnode-0"
 repo_url=
 nodejs_tar="http://cortx-storage.colo.seagate.com/releases/cortx/github/integration-custom-ci/centos-7.8.2003/custom-build-1969/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
 
+function trap_handler {
+    exit_code=$?
+    if [[ 0 != ${exit_code} ]]; then
+      echo "***** ERROR! *****"
+      echo "For detailed error logs, please see: $LOG_FILE"
+      echo "******************"
+    fi
+}
+trap trap_handler ERR EXIT
+
 _usage()
 {
     echo "
 Options:
   -t|--target-build BUILD_URL        Target Cortx build to deploy
 "
-
 }
 
 usage()
@@ -58,6 +68,14 @@ parse_args()
                 set -u
                 repo_url=$2
                 shift 2
+                export CORTX_RELEASE_REPO="$repo_url"
+                if grep -wq CORTX_RELEASE_REPO /etc/environment; then
+                    line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/environment | tail -1 | cut -d: -f1)
+                    echo "DEBUG: line_to_replace: $line_to_replace" >> ${LOG_FILE}
+                    sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO="$repo_url"|" /etc/environment
+                else
+                    echo "CORTX_RELEASE_REPO="$repo_url"" >> /etc/environment
+                fi
                 ;;
             -h|--help)
                 usage; exit 0;;
@@ -130,8 +148,8 @@ setup_repos()
     yum clean all
     rm -rf /var/cache/yum/* || true
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
-    yum-config-manager --add-repo "${repo}/3rd_party/"
-    echo "Configuring the repository: ${repo}/cortx_iso" | tee -a "${LOG_FILE}"
+    yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
+    echo "Configuring the repository: ${repo}/cortx_iso" >> "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/cortx_iso/"
 
     echo "DEBUG: Preparing the pip.conf" >> "${LOG_FILE}"
@@ -156,13 +174,15 @@ install_dependency_pkgs()
         "salt"
         "salt-master"
         "salt-minion"
+        "glusterfs-server"
+        "glusterfs-client"
     )
     for pkg in ${dependency_pkgs[@]}; do
         if rpm -qi --quiet "$pkg"; then
             echo "Package $pkg is already installed."
         else
             echo "Installing $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q "$pkg" | tee -a "${LOG_FILE}"
+            yum install --nogpgcheck -y -q "$pkg" >> "${LOG_FILE}" 2>&1
         fi
     done
 
@@ -171,7 +191,7 @@ install_dependency_pkgs()
     else
         echo "Installing nodejs" | tee -a "${LOG_FILE}"
         echo "DEBUG: Downloading nodeja tarball" >> "${LOG_FILE}"
-        wget "${nodejs_tar}"
+        wget "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
         mkdir /opt/nodejs
         echo "DEBUG: Extracting the tarball" >> "${LOG_FILE}"
         tar -C /opt/nodejs/ -xf node-v12.13.0-linux-x64.tar.xz >> "${LOG_FILE}"
@@ -216,7 +236,7 @@ install_cortx_pkgs()
             echo "Package $pkg is already installed." | tee -a "${LOG_FILE}"
         else
             echo "Installing $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q "$pkg" | tee -a "${LOG_FILE}"
+            yum install --nogpgcheck -y -q "$pkg" >> "${LOG_FILE}" 2>&1
         fi
     done
 
@@ -225,7 +245,7 @@ install_cortx_pkgs()
         echo "Preparing the Cortx ConfStore with default configuration" | tee -a "${LOG_FILE}"
         echo "WARNING: python36-cortx-setup package is not installed" | tee -a "${LOG_FILE}"
         echo "Installing cortx_setup commands using pip" | tee -a "${LOG_FILE}"
-        pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/
+        pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/ >> "${LOG_FILE}" 2>&1
         if ! command -v cortx_setup; then
             echo "DEBUG: Updating the path variable" >> "${LOG_FILE}"
             export PATH=${PATH}:/usr/local/bin/
@@ -260,7 +280,11 @@ download_isos()
 
 main()
 {
-    echo "DEBUG: Running Cortx-prep script" >> "${LOG_FILE}"
+    time_stamp=$(date)
+    echo "*********************************************************" | tee -a ${LOG_FILE}
+    echo "          Running CORTX prep script                      " | tee -a ${LOG_FILE}
+    echo "*********************************************************" | tee -a ${LOG_FILE}
+    echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
     parse_args $@
     #TODO: uncomment once ready
     #    create_factory_user $user_name $uid $group $gid
@@ -318,4 +342,10 @@ main()
 }
 
 main $@
-echo "Cortx prep script run successfully" | tee -a "${LOG_FILE}"
+echo "\
+************************* SUCCESS!!! **************************************
+
+CORTX prep is run successfully !!
+
+The detailed logs can be seen at: "$LOG_FILE"
+***************************************************************************" | tee -a "${LOG_FILE}"
