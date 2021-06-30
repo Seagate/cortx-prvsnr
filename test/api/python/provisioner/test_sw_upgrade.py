@@ -113,7 +113,7 @@ def test_get_swupgrade_info(tmpdir_function):
     cmd_run2 = 'provisioner.commands.validator.validator.cmd_run'
 
     check_res = CheckResult()
-    check_entry = CheckEntry(Checks.ACTIVE_UPGRADE_ISO.value)
+    check_entry = CheckEntry(Checks.NO_ACTIVE_UPGRADE_ISO.value)
     check_entry.set_passed(checked_target='srvnode-1',
                            comment="Everything is ok")
     check_res.add_checks(check_entry)
