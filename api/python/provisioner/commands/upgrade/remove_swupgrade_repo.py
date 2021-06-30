@@ -18,7 +18,14 @@ import logging
 from typing import Type
 
 from provisioner import ALL_MINIONS
+from provisioner.api_spec import param_spec
+from provisioner.inputs import ParamDictItemInputBase
 from provisioner.lock import api_lock
+from provisioner.pillar import (PillarKey,
+                                PillarUpdater,
+                                PillarResolver)
+from provisioner.salt import local_minion_id
+from provisioner.vendor import attr
 
 from .set_swupgrade_repo import SetSWUpgradeRepo
 from .. import inputs
@@ -26,13 +33,85 @@ from .. import inputs
 logger = logging.getLogger(__name__)
 
 
+@attr.s(auto_attribs=True)
+class RemoveSWUpgradeItems(ParamDictItemInputBase):
+
+    _param_di = param_spec['swupgrade/repo']
+    _values = None
+    params: inputs.SWUpgradeRemoveRepo = attr.ib(init=True)
+    targets: str = attr.ib(default=ALL_MINIONS)
+
+    @property
+    def pillar_key(self):
+        return ''  # keep it empty since we use the root path from _param_di
+
+    @property
+    def pillar_value(self):
+        pillar_path = 'release/upgrade/repos'
+        pillars = PillarResolver(self.targets).get(
+            [PillarKey(pillar_path)],
+            fail_on_undefined=True
+        )
+
+        repos = pillars[local_minion_id()][PillarKey(pillar_path)]
+
+        deleted = repos.pop(self.params.release)
+
+        logger.debug(f"Delete block of pillar values: "
+                     f"'{{ {self.params.release}: {deleted} }}'")
+
+        return repos
+
+
 class RemoveSWUpgradeRepo(SetSWUpgradeRepo):
 
     input_type: Type[inputs.SWUpgradeRemoveRepo] = inputs.SWUpgradeRemoveRepo
 
+    @staticmethod
+    def _clean_up_pillars(params: inputs.SWUpgradeRemoveRepo,
+                          targets=ALL_MINIONS, local=False):
+        """
+        Clean up unused and unnecessary pillar values for SW upgrade
+
+        Parameters
+        ----------
+        params: inputs.SWUpgradeRemoveRepo
+            input parameters for remove command
+        targets: str
+            List of targets where pillar values are suggested for removal.
+
+        Returns
+        -------
+        None
+
+        """
+
+        pillar_updater = PillarUpdater(targets, local=local)
+
+        update_values = RemoveSWUpgradeItems(targets=targets, params=params)
+        pillar_updater.update(update_values)
+        pillar_updater.apply()
+
     @api_lock
     def run(self, *args, targets=ALL_MINIONS, dry_run=False,
             local=False, **kwargs):
+        """
+        Base command for SW upgrade repository removal.
+
+        Parameters
+        ----------
+        targets: str
+            List of targets where pillar values are suggested for removal.
+        dry_run: bool
+            Parse parameters and doesn't remove repositories
+        local: bool
+            Specifies locality of SW upgrade Pillar values
+
+        Returns
+        -------
+        None
+
+        """
         # static validation
         if len(args) == 1 and isinstance(args[0], self.input_type):
             params = args[0]
@@ -52,6 +131,10 @@ class RemoveSWUpgradeRepo(SetSWUpgradeRepo):
                     f"'{params.release}'")
 
         self._apply(params, targets=targets, local=local)
+        logger.info("Yum repo files are successfully removed. "
+                    "Start pillars cleaning up procedure...")
+
+        self._clean_up_pillars(params, targets)
 
         logger.info(f"SW upgrade repo of release '{params.release}' "
                     f"was successfully removed")
