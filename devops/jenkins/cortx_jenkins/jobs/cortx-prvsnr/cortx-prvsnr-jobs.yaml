@@ -65,8 +65,14 @@
       - ghprb-trigger:
           <<: *ghprb-trigger-params
 
+
+- defaults:
+    name: provisioner_jobs
+    folder: Provisioner
+
 - job-template:
     name: '{name}-ci-{type}'
+    defaults: provisioner_jobs
     project-type: multibranch
     script-path: '{jenkinsfile-path}'
     periodic-folder-trigger: '{ghsource_periodic_folder_trigger}'
@@ -82,7 +88,7 @@
           repo: cortx-prvsnr
           repo-owner: '{github_org}'
           # TODO make jinja template
-          credentials-id: github-user-and-token
+          credentials-id: '{github_credentials_id}'
           branch-discovery: '{ghsource_branch_discovery}'
 
           head-filter-regex: '{ghsource_head_filter_regex}'

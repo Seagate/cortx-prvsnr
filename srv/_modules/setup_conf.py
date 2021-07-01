@@ -27,6 +27,8 @@ import sys
 import subprocess
 import logging
 
+from salt.exceptions import CommandExecutionError
+
 from pathlib import Path
 
 __virtualname__ = 'setup_conf'
@@ -60,7 +62,6 @@ else:
 if HAS_PROVISIONER:
     from provisioner.commands.mini_api import SpecRenderer
     from provisioner.config import MiniAPISpecFields
-    from provisioner.errors import ProvisionerError
 
 
 def __virtual__():  # noqa: N807
@@ -103,9 +104,17 @@ def _call_cmd(cmd, env=None):
     if isinstance(cmd, (list, tuple)):
         cmd = ' '.join(cmd)
 
+    logger.debug(
+        f"'{cmd}' command would be called"
+    )
+
     __salt__ = _salt_salt()
     return __salt__["cmd.run"](
-        cmd, output_loglevel="trace", python_shell=True, env=env
+        cmd,
+        output_loglevel="trace",
+        python_shell=True,
+        env=env,
+        raise_err=True
     )
 
 
@@ -208,7 +217,7 @@ def hook(
                 excs[sw] = (cmd, exc)
 
     if excs:
-        raise ProvisionerError(
+        raise CommandExecutionError(
             f"Hook '{hook}' calls failed for '{list(excs)}': '{excs}'"
         )
 

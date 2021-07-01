@@ -20,14 +20,25 @@ from hmac import compare_digest
 from pathlib import Path
 from typing import Dict, Callable, Optional, Union, Type
 
-from provisioner import utils
-from provisioner.salt import local_minion_id, cmd_run
-from provisioner.config import ContentType, HashType
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
+from provisioner import utils
+from provisioner.commands.release import GetRelease
+from provisioner.salt import local_minion_id, cmd_run
+from provisioner.config import (
+    ContentType,
+    HashType,
+    SWUpgradeInfoFields,
+    CORTX_VERSION)
 from provisioner.vendor import attr
 from provisioner.errors import ValidationError
 
 logger = logging.getLogger(__name__)
+
+
+ARMOR_HEADER = "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+ARMOR_TAIL = "-----END PGP PUBLIC KEY BLOCK-----"
 
 
 class PathValidator(ABC):
@@ -173,6 +184,9 @@ class DirValidator(PathValidator):
         if True validation raises an Exception if the directory
         doesn't exist
 
+    empty: bool
+        If False validation raises an Exception if the directory is empty
+
     Notes
     -----
     TBD: other possible parameters
@@ -200,6 +214,10 @@ class DirValidator(PathValidator):
         default=None,
     )
     required: bool = attr.ib(
+        validator=attr.validators.instance_of(bool),
+        default=False
+    )
+    empty: bool = attr.ib(
         validator=attr.validators.instance_of(bool),
         default=False
     )
@@ -235,6 +253,8 @@ class DirValidator(PathValidator):
             raise ValidationError(reason=f"'{path}' is not a directory")
 
         if self.files_scheme:
+            if self.empty and not any(path.iterdir()):
+                return
             for sub_path, validator in self.files_scheme.items():
                 validator.validate(path / sub_path)
 
@@ -464,6 +484,7 @@ class ReleaseInfoCommonContentScheme(FileContentScheme):
         validator=attr.validators.optional(
             attr.validators.instance_of(str)
         ),
+        converter=attr.converters.optional(str),
         default=None
     )
 
@@ -526,6 +547,16 @@ class ThirdPartyReleaseInfoContentScheme(ReleaseInfoCommonContentScheme):
     THIRD_PARTY_COMPONENTS: dict = attr.ib(
         validator=attr.validators.instance_of(dict),
         kw_only=True
+    )
+    # FIXME remove once RE team fixes upgrade.iso
+    BUILD: Optional[str] = attr.ib(
+        # regex is based on the current representation of `BUILD` number.
+        # It is 1 or more numbers
+        validator=attr.validators.optional(
+            attr.validators.matches_re(r"^[0-9]+$")
+        ),
+        converter=attr.converters.optional(str),
+        default=None
     )
 
 
@@ -629,7 +660,6 @@ class ReleaseInfoValidatorBase(FileValidator):
 
 @attr.s(auto_attribs=True)
 class AuthenticityValidator(PathValidator):
-
     """
     Class for file authenticity validation using GPG tool
 
@@ -651,6 +681,59 @@ class AuthenticityValidator(PathValidator):
         converter=utils.converter_path_resolved,
         default=None
     )
+
+    @staticmethod
+    def _convert_key_to_open_pgp_format(pub_key_path: Path) -> Path:
+        """
+        Check if GPG Public key in ASCII Armor format. If so format it to
+        OpenPGP format.
+
+        Parameters
+        ----------
+        pub_key_path: Path
+            Path to GPG public key
+
+        Returns
+        -------
+        Path:
+            path to the file with GPG public key in OpenPGP format
+
+        """
+        # NOTE: for the ASCII Armor format, please, refer to RFC4880
+        #  https://datatracker.ietf.org/doc/html/rfc4880#section-6.2
+
+        # NOTE: return given path itself if it is in OpenPGP format already
+        res = pub_key_path
+        with open(pub_key_path, "rb") as fh:
+            # NOTE: read file as binary file since OpenPGP is binary format
+            content = fh.readlines()
+            armor_header = content[0]
+            armor_tail = content[-1]
+
+        # NOTE: we check that the armor header and armor tail in binary
+        #  representation exist in the first and the last line of
+        #  the pub key file.
+        if (ARMOR_HEADER.encode() in armor_header
+                and ARMOR_TAIL.encode() in armor_tail):
+            # NOTE: it means that provided public key is in ASCII Armor format
+            cmd = f"gpg --yes --dearmor {pub_key_path.resolve()}"
+            try:
+                # NOTE: by default gpg tool converts the given file to the file
+                #  with the same name + '.gpg' extension at the end.
+                #  Directory is the same
+                cmd_run(cmd, targets=local_minion_id())
+            except Exception as e:
+                logger.error("Can't convert ASCII Armor GPG public key "
+                             f"'{pub_key_path.resolve()}'"
+                             f"to OpenPGP format: '{e}'")
+                raise ValidationError(
+                    f'Public key conversion error: "{e}"') from e
+            else:
+                # NOTE: because .with_suffix method replaces the last suffix
+                suffix = pub_key_path.suffix + ".gpg"
+                res = pub_key_path.with_suffix(suffix)
+
+        return res
 
     def validate(self, path: Path) -> str:
         """
@@ -675,14 +758,19 @@ class AuthenticityValidator(PathValidator):
         logger.debug(f"Start '{path}' file authenticity validation")
 
         if self.gpg_public_key is not None:
-            cmd = (f"gpg --no-default-keyring --keyring {self.gpg_public_key} "
+            # NOTE: for validation signature with the custom GPG pub key
+            #  it is required to use pub key in OpenPGP format, not in
+            #  ASCII Armor format (--armor option of gpg tool)
+            open_pgp_key = self._convert_key_to_open_pgp_format(
+                self.gpg_public_key
+            )
+            cmd = (f"gpg --no-default-keyring --keyring {open_pgp_key} "
                    f"--verify {self.signature} {path}")
         else:
             cmd = f"gpg --verify {self.signature} {path}"
 
         try:
-            res = cmd_run(cmd, targets=local_minion_id(),
-                          fun_kwargs=dict(python_shell=True))
+            res = cmd_run(cmd, targets=local_minion_id())
         except Exception as e:
             logger.debug(f'Authenticity check is failed: "{e}"')
             raise ValidationError(
@@ -714,3 +802,127 @@ class ThirdPartyReleaseInfoValidator(ReleaseInfoValidatorBase):
         self.content_validator = ContentFileValidator(
                 scheme=ThirdPartyReleaseInfoContentScheme,
                 content_type=self.content_type)
+
+
+@attr.s(auto_attribs=True)
+class CompatibilityValidator:
+
+    """
+    Validator that checks if all SW upgrade packages are compatible with
+    installed ones.
+    """
+
+    @staticmethod
+    def validate(iso_info):
+        """
+
+        Parameters
+        ----------
+        iso_info: CortxISOInfo
+            CortxISOInfo instance with all necessary information about
+            SW upgrade ISO
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValidationError
+            If validation is failed.
+        """
+        packages = list(iso_info.packages.keys())
+
+        if not packages:
+            return  # nothing to validate
+
+        # NOTE: the first line of `yum -q list installed` command is
+        #  'Installed Packages' skip it via `tail -n +2`
+        cmd = (f"yum -q list installed {' '.join(packages)} 2>/dev/null |"
+               f" tail -n +2 | awk '{{print $1\" \"$2}}'")
+
+        try:
+            res = cmd_run(cmd, targets=local_minion_id())
+        except Exception as e:
+            logger.debug(f'Package compatibility check is failed: "{e}"')
+            raise ValidationError(
+                f'Package compatibility check is failed: "{e}"') from e
+
+        res = res[local_minion_id()].strip()
+
+        if res:
+            logger.debug(f"List of installed CORTX packages: {res}")
+        else:
+            logger.warning(f"There are no installed CORTX packages")
+            return  # Nothing to validate since there are not CORTX packages
+
+        res = res.split('\n')
+
+        packages = dict()
+        for pkg in res:
+            # Aggregate version information of installed CORTX packages
+            pkg_name, pkg_version = pkg.split(" ")
+            # remove architecture post-fix from the package name
+            pkg_name = pkg_name.split(".")[0]
+            packages[pkg_name] = utils.normalize_rpm_version(pkg_version)
+
+        error_msg = list()
+
+        compatibility = iso_info.packages.get(CORTX_VERSION, {}).get(
+            SWUpgradeInfoFields.VERSION_COMPATIBILITY.value, None)
+        if compatibility:
+            cortx_version = GetRelease.cortx_version()
+            if Version(cortx_version) in SpecifierSet(compatibility):
+                logger.info(
+                    f"The CORTX release version '{cortx_version}' "
+                    f"satisfies the constraint version '{compatibility}'"
+                )
+            else:
+                msg = (f"The CORTX release version '{cortx_version}' does not "
+                       f"satisfy the constraint version '{compatibility}'")
+                logger.error(msg)
+                error_msg.append(msg)
+
+        for pkg in iso_info.packages:
+            if (SWUpgradeInfoFields.VERSION_COMPATIBILITY.value
+                    in iso_info.packages[pkg]):
+                compatibility = iso_info.packages[pkg][
+                    SWUpgradeInfoFields.VERSION_COMPATIBILITY.value]
+
+                installed_ver = packages.get(pkg, None)
+                if installed_ver is None:
+                    msg = (f"There is version constraint '{compatibility}' for"
+                           f" the CORTX package '{pkg}' that is not installed")
+                    logger.debug(msg)
+                    continue
+
+                # NOTE: we used for comparison normalized values of RPM version
+                #  For more details, please, review
+                #  `provisioner.utils.normalize_rpm_version`
+                #  There is some interesting behavior of packaging API for
+                #  versions comparison:
+                #  >>> Version('2.0.0-275') in SpecifierSet('> 2.0.0')
+                #  False
+                #  >>> Version('2.0.0-275') in SpecifierSet('>= 2.0.0')
+                #  True
+                #  >>> Version('2.0.0-275') in SpecifierSet('== 2.0.0')
+                #  False
+                #  >>> Version('2.0.0-275') in SpecifierSet('> 2.0.0-0')
+                #  True
+                # >>> version.parse('2.0.0-275') > version.parse('2.0.0')
+                # True
+
+                if Version(installed_ver) in SpecifierSet(compatibility):
+                    logger.info(f"The CORTX package '{pkg}' of version "
+                                f"'{installed_ver}' satisfies the constraint "
+                                f"version '{compatibility}'")
+                else:
+                    msg = (f"The CORTX package '{pkg}' of version "
+                           f"'{installed_ver}' does not satisfies the "
+                           f"constraint version '{compatibility}'")
+                    logger.error(msg)
+                    error_msg.append(msg)
+
+        if error_msg:
+            raise ValidationError("During validation some compatibility "
+                                  f"errors were found: {'/n'.join(error_msg)}")

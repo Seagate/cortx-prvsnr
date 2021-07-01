@@ -18,11 +18,17 @@ import logging
 from typing import Type, Union, List, Optional, Any
 import json
 
+from provisioner import salt
+from provisioner.commands.validator.validator import CompatibilityValidator
+
 from ._basic import CommandParserFillerMixin
 from .. import inputs
 from .. import config as cfg, values
-from ..errors import (SaltCmdResultError, ValidationError,
-                      CriticalValidationError)
+from ..errors import (
+    SaltCmdResultError,
+    ValidationError,
+    CriticalValidationError,
+    SWUpgradeError)
 from ..hare import ensure_cluster_is_healthy
 from ..pillar import KeyPath, PillarKey, PillarResolver
 from ..salt import local_minion_id, cmd_run
@@ -452,6 +458,31 @@ class SWUpdateDecisionMaker(DecisionMaker):
             logger.info("All SW Update pre-flight checks are passed")
 
 
+class SWUpgradeDecisionMaker(DecisionMaker):
+    """Class analyses `CheckResult` structure and will decide to continue or
+       to stop SW Upgrade routine.
+    """
+
+    def make_decision(self, check_result: CheckResult):
+        """
+        Make a decision for SW Upgrade based on `CheckResult` analysis
+
+        :param CheckResult check_result: instance with all checks needed for
+                                         to make a decision
+        :return:
+        """
+        if check_result.is_failed:
+            # Threat all errors as warnings
+            errors = check_result.get_checks(failed=True)
+            errors_msg = self.format_checks(*errors)
+            logger.error("Some SW Update pre-flight checks are failed: "
+                         f"{errors_msg}")
+            raise SWUpgradeError(
+                f"The following checks are failed: '{errors_msg}'")
+        else:
+            logger.info("All SW Upgrade pre-flight checks are passed")
+
+
 @attr.s(auto_attribs=True)
 class CheckArgs:
     check_name: str = attr.ib(
@@ -534,12 +565,13 @@ class Check(CommandParserFillerMixin):
     @staticmethod
     def _communicability(
             *, args: str,
-            targets: Union[list, tuple, set] = PENDING_SERVERS) -> CheckEntry:
+            targets: Optional[Union[list, tuple, set]] = None) -> CheckEntry:
         """
         Check if nodes can communicate using `salt test.ping`
 
         :param args: communicability check specific parameters and arguments
-        :param targets: target nodes where network checks will be executed
+        :param Optional[Union[list, tuple, set]] targets:
+               target nodes where network checks will be executed
         :return:
         """
         res: CheckEntry = CheckEntry(cfg.Checks.COMMUNICABILITY.value)
@@ -547,6 +579,8 @@ class Check(CommandParserFillerMixin):
         # TODO: need to resolve cfg.ALL_MINIONS alias
         #  to the list of minions
         # TODO: create check and return list of nodes which are down
+        if targets is None:
+            targets = list(salt.pillar_get())
         if check_salt_minions_are_ready(targets=targets):
             res.set_passed(checked_target=local_minion_id())
         else:
@@ -1275,6 +1309,85 @@ class Check(CommandParserFillerMixin):
                                      'upgrade ISO version')
             else:
                 res.set_passed(checked_target=local_minion_id())
+
+        return res
+
+    @staticmethod
+    def _active_upgrade_iso(*, args: str) -> CheckEntry:
+        """
+        Ensure that no active upgrade ISO is available
+
+        Parameters
+        ----------
+        args: str
+            Active upgrade ISO validation specific arguments and parameters
+
+        Returns
+        -------
+        CheckEntry:
+            CheckEntry instance with validation result
+
+        """
+        # TODO: dynamic import is needed here to solve cross imports issues
+        #  between: `api/python/provisioner/commands/__init__.py` and
+        #  `api/python/provisioner/commands/upgrade/set_swupgrade_repo.py`:
+        #  SetSWUpgradeRepo imports Set class.
+        from provisioner.commands.upgrade import GetISOVersion
+
+        res: CheckEntry = CheckEntry(cfg.Checks.ACTIVE_UPGRADE_ISO.value)
+
+        try:
+            iso_version = GetISOVersion().run()
+        except Exception as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            if iso_version is None:
+                # NOTE: GetISOVersion returns None in two cases:
+                #  1. release version is equal to upgrade version, e.g. last
+                #     upgrade ISO was applied
+                #  2. there are no configured ISOs for the SW upgrade
+                #  Both cases mean that there are no active upgrade ISO
+                res.set_passed(checked_target=local_minion_id(),
+                               comment='There are no active SW upgrade ISO'
+                                       'detected')
+            else:
+                res.set_fail(checked_target=local_minion_id(),
+                             comment="An active upgrade ISO is detected")
+
+        return res
+
+    @staticmethod
+    def _packages_compatibility(args: str) -> CheckEntry:
+        """
+        Validate that SW upgrade packages are compatible with installed ones
+
+        Parameters
+        ----------
+        args: str
+            Specific parameters and arguments for package compatibility
+            validation
+
+        Returns
+        -------
+        CheckEntry:
+            CheckEntry instance with validation result
+
+        """
+        from provisioner.commands.upgrade import GetSWUpgradeInfo
+
+        res: CheckEntry = CheckEntry(cfg.Checks.PACKAGES_COMPATIBILITYO.value)
+
+        iso_info = GetSWUpgradeInfo().run()  # check the latest SW upgrade
+
+        try:
+            CompatibilityValidator().validate(iso_info)
+        except ValidationError as exc:
+            res.set_fail(checked_target=local_minion_id(),
+                         comment=str(exc))
+        else:
+            res.set_passed(checked_target=local_minion_id(),
+                           comment='Packages compatibility check succeeded')
 
         return res
 

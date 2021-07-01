@@ -1185,11 +1185,125 @@ class SWUpgradeRepo(SWUpdateRepo):
         },
         default=False
     )
+    # NOTE: source version parameter defines SW Upgrade ISO structure
+    source_version: config.ISOVersion = ParamDictItemInputBase._attr_ib(
+        descr="SW upgrade source version",
+        validator=attr.validators.optional(
+            attr.validators.in_(config.ISOVersion)
+        ),
+        converter=lambda x: config.ISOVersion(str(x)),
+        default=config.ISOVersion.VERSION1.value  # Legacy version by default
+    )
     _param_di = param_spec['swupgrade/repo']
     # file path to base directory for SW upgrade
     _target_build: str = attr.ib(default=None)
     # parameter to enable or disabled repository
     _enabled: bool = attr.ib(default=False)
+
+    @property
+    def _pillar_values_ver1(self):
+        # source = 'iso' if self.source.is_file() else 'dir'
+        iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+        return {
+            f'{self.release}': {
+                'source': f'salt://{iso_dir}/{self.release}.iso',
+                'version': f'{self.source_version.value}',
+                'is_repo': False
+            },
+            f'{config.OS_ISO_DIR}': {
+                'source': (f'file://{self.target_build}/{self.release}/'
+                           f'{config.OS_ISO_DIR}'),
+                'is_repo': True,
+                # FIXME upgrade iso currently may lack repodata
+                # 'enabled': self.enabled
+                'enabled': False
+            },
+            f'{config.CORTX_ISO_DIR}': {
+                'source': (f'file://{self.target_build}/{self.release}/'
+                           f'{config.CORTX_ISO_DIR}'),
+                'is_repo': True,
+                'enabled': self.enabled
+            },
+            f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
+                'source': (f'file://{self.target_build}/{self.release}/'
+                           f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
+                'is_repo': True,
+                'enabled': self.enabled
+            },
+            f'{config.CORTX_PYTHON_ISO_DIR}': {
+                'source': f'file://{self.target_build}/{self.release}/'
+                          f'{config.CORTX_PYTHON_ISO_DIR}',
+                'is_repo': False
+            }
+        }
+
+    @property
+    def _pillar_values_ver2(self):
+        """
+        Construct the map of pillar values for SW upgrade ISO of version 2
+        Returns
+        -------
+
+        """
+        # source = 'iso' if self.source.is_file() else 'dir'
+        iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
+        return {
+            f'{self.release}': {
+                'source': f'salt://{iso_dir}/{self.release}.iso',
+                'version': f'{self.source_version.value}',
+                'is_repo': False
+            },
+            f'{config.ISOKeywordsVer2.FW}': {
+                'source': (f'file://{self.target_build}/{self.release}/'
+                           f'{config.ISOKeywordsVer2.FW}'),
+                'is_repo': False,  # fw is not a repo
+                'enabled': self.enabled
+            },
+            f'{config.ISOKeywordsVer2.OS}': {
+                'source': (f'file://{self.target_build}/{self.release}/'
+                           f'{config.ISOKeywordsVer2.OS}'),
+                'is_repo': False,  # os contains only system patches
+                'enabled': self.enabled
+            },
+            f'{config.UpgradeReposVer2.CORTX.value}': {
+                'source': (f'file://{self.target_build}/{self.release}/'
+                           f'{config.ISOKeywordsVer2.SW}/'
+                           f'{config.UpgradeReposVer2.CORTX.value}'),
+                'is_repo': True,
+                'enabled': self.enabled
+            },
+            f'{config.ISOKeywordsVer2.PYTHON}': {
+                'source': f'file://{self.target_build}/{self.release}/'
+                          f'{config.ISOKeywordsVer2.SW}/'
+                          f'{config.ISOKeywordsVer2.EXTERNAL}/'
+                          f'{config.ISOKeywordsVer2.PYTHON}',
+                'is_repo': False
+            },
+            f'{config.UpgradeReposVer2.EPEL_7.value}': {
+                'source': f'file://{self.target_build}/{self.release}/'
+                          f'{config.ISOKeywordsVer2.SW}/'
+                          f'{config.ISOKeywordsVer2.EXTERNAL}/'
+                          f'{config.ISOKeywordsVer2.RPM}/'
+                          f'{config.UpgradeReposVer2.EPEL_7.value}',
+                'is_repo': True
+            },
+            f'{config.UpgradeReposVer2.COMMONS.value}': {
+                'source': f'file://{self.target_build}/{self.release}/'
+                          f'{config.ISOKeywordsVer2.SW}/'
+                          f'{config.ISOKeywordsVer2.EXTERNAL}/'
+                          f'{config.ISOKeywordsVer2.RPM}/'
+                          f'{config.UpgradeReposVer2.COMMONS.value}',
+                'is_repo': True
+            },
+            f'{config.UpgradeReposVer2.PERFORMANCE.value}': {
+                'source': f'file://{self.target_build}/{self.release}/'
+                          f'{config.ISOKeywordsVer2.SW}/'
+                          f'{config.ISOKeywordsVer2.EXTERNAL}/'
+                          f'{config.ISOKeywordsVer2.RPM}/'
+                          f'{config.UpgradeReposVer2.PERFORMANCE.value}',
+                'is_repo': True
+            }
+        }
 
     @property
     def pillar_key(self):
@@ -1210,6 +1324,8 @@ class SWUpgradeRepo(SWUpdateRepo):
 
             return res
         elif self.is_remote():
+            # TODO: EOS-20669: Need to save version of remote repo structure,
+            #  e.g. self.source_version.
             return {
                 f'{config.OS_ISO_DIR}': {
                     'source': f'{self.source}/{config.OS_ISO_DIR}',
@@ -1233,39 +1349,9 @@ class SWUpgradeRepo(SWUpdateRepo):
                 }
             }
         else:
-            # source = 'iso' if self.source.is_file() else 'dir'
-            iso_dir = config.PRVSNR_USER_FILES_SWUPGRADE_REPOS_DIR
-            return {
-                f'{self.release}': {
-                    'source': f'salt://{iso_dir}/{self.release}.iso',
-                    'is_repo': False
-                },
-                f'{config.OS_ISO_DIR}': {
-                    'source': (f'file://{self.target_build}/{self.release}/'
-                               f'{config.OS_ISO_DIR}'),
-                    'is_repo': True,
-                    # FIXME upgrade iso currently may lack repodata
-                    # 'enabled': self.enabled
-                    'enabled': False
-                },
-                f'{config.CORTX_ISO_DIR}': {
-                    'source': (f'file://{self.target_build}/{self.release}/'
-                               f'{config.CORTX_ISO_DIR}'),
-                    'is_repo': True,
-                    'enabled': self.enabled
-                },
-                f'{config.CORTX_3RD_PARTY_ISO_DIR}': {
-                    'source': (f'file://{self.target_build}/{self.release}/'
-                               f'{config.CORTX_3RD_PARTY_ISO_DIR}'),
-                    'is_repo': True,
-                    'enabled': self.enabled
-                },
-                f'{config.CORTX_PYTHON_ISO_DIR}': {
-                    'source': f'file://{self.target_build}/{self.release}/'
-                              f'{config.CORTX_PYTHON_ISO_DIR}',
-                    'is_repo': False
-                }
-            }
+            return (self._pillar_values_ver1
+                    if self.source_version == config.ISOVersion.VERSION1
+                    else self._pillar_values_ver2)
 
 
 @attr.s(auto_attribs=True)

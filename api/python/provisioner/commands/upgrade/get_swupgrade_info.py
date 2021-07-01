@@ -15,26 +15,22 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 import logging
-from configparser import ConfigParser
 from typing import Type, Union, Optional
-from urllib.parse import urlparse, unquote
 import json
 
 from packaging import version
 
-from provisioner import inputs, errors
+from provisioner import inputs, errors, utils
 from provisioner.commands.upgrade.set_swupgrade_repo import (CortxISOInfo,
                                                              SetSWUpgradeRepo)
 from provisioner.config import (
-    CORTX_ISO_DIR,
-    REPO_CANDIDATE_NAME,
-    RELEASE_INFO_FILE,
-    ReleaseInfo
+    REPO_CANDIDATE_NAME
 )
 from provisioner.pillar import PillarResolver, PillarKey
 
 from provisioner.salt import local_minion_id
 from provisioner.commands import CommandParserFillerMixin, commands
+from provisioner.commands.release import CortxRelease
 from provisioner.vendor import attr
 
 
@@ -49,6 +45,8 @@ class GetSWUpgradeInfoArgs:
                 'help': "Path to SW upgrade single ISO bundle"
             }
         },
+        validator=attr.validators.optional(utils.validator_path_exists),
+        converter=utils.converter_path_resolved,
         default=None
     )
     release: str = attr.ib(
@@ -82,17 +80,17 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             try:
                 release_metadata = cls().run(
                     iso_path=iso_path, release=release
-                ).metadata
+                )
+                if release_metadata is None:
+                    return None
+                release_metadata = release_metadata.metadata
             except errors.BadPillarDataError:
                 return None  # NOTE: there are no configured SW upgrade repos
 
         if isinstance(release_metadata, str):
             release_metadata = json.loads(release_metadata)
 
-        return (
-            f"{release_metadata[ReleaseInfo.VERSION.value]}-"
-            f"{release_metadata[ReleaseInfo.BUILD.value]}"
-        )
+        return CortxRelease(metadata=release_metadata).version
 
     @staticmethod
     def _get_set_swupgrade_repo_obj() -> SetSWUpgradeRepo:
@@ -108,39 +106,6 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
         # NOTE: get `SetSWUpgradeRepo` from list of commands since all
         #  objects are correctly defined (post- and pre- states)
         return commands['set_swupgrade_repo']
-
-    def _get_repo_metadata(self, release: str) -> dict:
-        """
-        Load Cortx repository metadata for the given release
-
-        Parameters
-        ----------
-        release : str
-            SW upgrade repository version
-
-        Returns
-        -------
-        dict:
-            return dict with Cortx repository metadata
-
-        """
-        repo = f'sw_upgrade_{CORTX_ISO_DIR}_{release}'
-
-        config = ConfigParser()
-        config.read(f'/etc/yum.repos.d/{repo}.repo')
-        repo_uri = config.get(repo, 'baseurl', fallback=None)
-
-        if repo_uri is None:
-            logger.warning(f"'baseurl' option is missed for repo: '{repo}'")
-            return dict()
-
-        res = urlparse(f'{repo_uri}/{RELEASE_INFO_FILE}')
-
-        set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
-
-        return set_swupgrade_repo.load_metadata(
-                    release_file_path=unquote(res.path),
-                    remote=res.scheme != 'file')
 
     def run(self, iso_path: str = None,
             release: str = None) -> Union[CortxISOInfo, None]:
@@ -162,14 +127,19 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
             Cortx repo metadata
 
         """
+        run_args = self._run_args_type(iso_path, release)
+
         local_minion = local_minion_id()
         set_swupgrade_repo = self._get_set_swupgrade_repo_obj()
+        iso_version = None
 
-        if iso_path is not None:
+        if run_args.iso_path is not None:
             # if the `iso_path` is set up, we ignore the `release` parameter
-            return set_swupgrade_repo.run(iso_path, dry_run=True)
+            return set_swupgrade_repo.run(run_args.iso_path, dry_run=True)
 
-        if release is None:
+        if run_args.release is not None:
+            cortx_release = CortxRelease(version=run_args.release)
+        else:
             # NOTE: take the latest release from SW upgrade repositories
 
             # TODO: make get pillar API public and available for others to
@@ -180,8 +150,8 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
                 fail_on_undefined=True
             )
 
-            upgrade_releases = list(pillars[local_minion][
-                PillarKey(pillar_path)].keys())
+            repos_info = pillars[local_minion][PillarKey(pillar_path)]
+            upgrade_releases = list(repos_info.keys())
 
             upgrade_releases.remove(REPO_CANDIDATE_NAME)
 
@@ -191,9 +161,16 @@ class GetSWUpgradeInfo(CommandParserFillerMixin):
 
             # NOTE: Assumption: we expect that SW Upgrade release version
             # is formatted according to PEP-440
-            release = max(upgrade_releases, key=version.parse)
+            run_args.release = max(upgrade_releases, key=version.parse)
 
-        packages = set_swupgrade_repo.get_packages_version(release)
-        metadata = self._get_repo_metadata(release)
+            cortx_release = CortxRelease(version=run_args.release)
 
-        return CortxISOInfo(packages=packages, metadata=metadata)
+        iso_version = cortx_release.iso_version
+
+        set_swupgrade_repo.set_source_version(iso_version)
+        packages = set_swupgrade_repo.get_packages_version(run_args.release)
+
+        return CortxISOInfo(
+            packages=packages,
+            metadata=cortx_release.metadata
+        )

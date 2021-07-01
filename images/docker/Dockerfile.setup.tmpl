@@ -16,7 +16,7 @@ RUN bash /tmp/setup_pipenv.sh \
     && rm -f /tmp/setup_pipenv.sh
 
 ARG PYTHON_PROJECT
-ENV PYTHON_PROJECT=${{PYTHON_PROJECT:-/tmp/project}}
+ENV PYTHON_PROJECT=${{PYTHON_PROJECT:-/var/lib/provisioner/api}}
 
 RUN mkdir -p ${{PYTHON_PROJECT}} \
     && cd ${{PYTHON_PROJECT}} \

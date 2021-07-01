@@ -30,8 +30,6 @@ import docker
 
 from . import defs, utils
 
-docker_client = docker.from_env()
-
 logger = logging.getLogger(__name__)
 
 
@@ -49,8 +47,6 @@ AgentCmdArgs = attr.make_class(
 )
 
 
-docker_client = docker.from_env()
-
 AgentConfig = attr.make_class(
     'AgentConfig', (
         'secret', 'work_dir'
@@ -64,7 +60,7 @@ AgentData = attr.make_class(
 )
 
 
-def build_docker_image():
+def build_docker_image(j_url: str, j_url_ssl_trusted: bool = False):
     uid = os.getuid()
     gid = os.getgid()
     docker_gid = grp.getgrnam('docker').gr_gid
@@ -76,12 +72,14 @@ def build_docker_image():
         '--build-arg', f"uid={uid}",
         '--build-arg', f"gid={gid}",
         '--build-arg', f"docker_gid={docker_gid}",
+        '--build-arg', f"JENKINS_URL={j_url}",
+        '--build-arg', f"JENKINS_URL_TRUSTED={1 if j_url_ssl_trusted else ''}",
         '-f', str(defs.AGENT_DOCKERFILE),
         str(defs.AGENT_DOCKER_CTX_DIR)
     ])
 
 
-def start_docker_agent(work_dir, j_url, a_secret, a_name):
+def start_docker_agent(work_dir, a_secret, a_name):
     # TODO use docker python wrapper
     utils.run_subprocess_cmd([
         'docker', 'run', '--init', '-d',
@@ -89,7 +87,8 @@ def start_docker_agent(work_dir, j_url, a_secret, a_name):
         '-v', f"{work_dir}:{work_dir}",
         '--name', defs.AGENT_CONTAINER_NAME,
         defs.AGENT_IMAGE_NAME_FULL,
-        '-url', j_url,
+        # not needed since image already have JENKINS_URL env var set
+        # '-url', j_url,
         '-workDir', str(work_dir),
         a_secret, a_name
     ])
@@ -101,7 +100,13 @@ def get_agent_config(server, agent):
     req = requests.Request(
         'GET', f"{server.server}/computer/{agent}/jenkins-agent.jnlp"
     )
-    resp = server.jenkins_request(req)
+    req_old = requests.Request(
+        'GET', f"{server.server}/computer/{agent}/slave-agent.jnlp"
+    )
+    try:
+        resp = server.jenkins_request(req)
+    except jenkins.NotFoundException:
+        resp = server.jenkins_request(req_old)
 
     # TODO use xml parser (??? known XML vulnerabilities)
     match = defs.AGENT_CONFIG_REGEX.search(resp.text)
@@ -141,7 +146,7 @@ def resolve_free_offline_agent(server):
 
 def get_agent_container():
     try:
-        return docker_client.containers.get(
+        return docker.from_env().containers.get(
             defs.AGENT_CONTAINER_NAME
         )
     except docker.errors.NotFound:
@@ -153,14 +158,8 @@ def get_agent_container():
 
 
 def start_agent(j_url, agent_data):
-    if defs.LOCALHOST in j_url:
-        j_server_bridge_ip = utils.get_server_bridge_ip()
-        j_url = j_url.replace(defs.LOCALHOST, j_server_bridge_ip).replace(
-            'https:', 'http:').replace(':8083', ':8080')
-
     start_docker_agent(
         agent_data.config.work_dir,
-        j_url,
         agent_data.config.secret,
         agent_data.name
     )
@@ -226,7 +225,23 @@ def manage_agent(cmd_args: AgentCmdArgs):
     prepare_agent_ctx()
 
     logger.info('Bulding agent docker image')
-    build_docker_image()
+
+    j_agent_url = j_url
+    if defs.LOCALHOST in j_url:
+        j_server_bridge_ip = utils.get_server_bridge_ip()
+        j_agent_url = j_url.replace(
+            defs.LOCALHOST, j_server_bridge_ip
+        ).replace(
+            'https:', 'http:'
+        ).replace(':8083', ':8080')
+
+    build_docker_image(
+        j_agent_url,
+        (
+            j_agent_url.startswith('https')
+            and not global_config['ssl_verify']
+        )
+    )
 
     server = jenkins.Jenkins(
         j_url, username=j_user, password=j_token

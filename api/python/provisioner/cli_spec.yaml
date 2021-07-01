@@ -126,6 +126,9 @@ setup:
   ha: turn on high availability mode
   salt_master: domain name or IP of the salt-master
   vendored: The flag to use setup logic from a vendor
+release:
+  version: CORTX release version
+  factory: return the factory version
 mini_api:
   hook:
     help: mini provisioner hook name

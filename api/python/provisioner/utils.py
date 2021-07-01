@@ -14,7 +14,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-
+import re
 from typing import (
     Tuple,
     Union,
@@ -38,6 +38,7 @@ from shlex import quote
 from pathlib import Path, PosixPath
 import yaml
 from packaging.version import Version
+from provisioner.config import RELEASE_DELIMITERS
 
 from . import config
 
@@ -176,11 +177,7 @@ def validator__subclass_of(
 
 
 def load_yaml_str(data):
-    try:
-        return yaml.safe_load(data)
-    except yaml.YAMLError as exc:
-        logger.exception("Failed to load pillar data")
-        raise BadPillarDataError(str(exc))
+    return yaml.safe_load(data)
 
 
 def dump_yaml_str(
@@ -221,11 +218,7 @@ def dump_yaml_str(
 # TODO streamed read
 def load_yaml(path):
     path = Path(str(path))
-    try:
-        return load_yaml_str(path.read_text())
-    except yaml.YAMLError as exc:
-        logger.exception("Failed to load pillar data")
-        raise BadPillarDataError(str(exc))
+    return load_yaml_str(path.read_text())
 
 
 def load_json_str(data: str):
@@ -374,7 +367,8 @@ def repo_tgz(
     for d in (exclude_dirs or []):
         exclude.extend(['--exclude', str(d)])
 
-    if version != config.REPO_VERSION_RAW:
+    # FIXME: version can be None
+    if version and version != config.REPO_VERSION_RAW:
         # treat the version as git commit/branch/tag ...
         cmd = (
             ['git', 'archive', '--format=tar.gz', version, '-o', str(dest)] +
@@ -604,3 +598,31 @@ def make_salt_logs_quiet():
     salt_logger = logging.getLogger('salt.fileclient')
     if salt_logger:
         salt_logger.setLevel(logging.WARNING)
+
+
+def normalize_rpm_version(rpm_version: str):
+    """
+    Normalize the given rpm version according to PEP-440
+
+    Parameters
+    ----------
+    rpm_version: str
+        The given rpm version
+
+    Return
+    ------
+    str:
+        version of format <version>-<build>, where <version> and <build> are
+        integer numbers
+
+    """
+    if "-" in rpm_version:
+        version, release = rpm_version.split("-")
+        # Leave only the build number, remove distributive tag (el7)
+        # and other tags
+        build = re.split(RELEASE_DELIMITERS, release)[0]
+    else:
+        version = rpm_version
+        build = "0"
+
+    return f"{version.strip()}-{build.strip()}"

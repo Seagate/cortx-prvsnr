@@ -23,13 +23,20 @@ hostname:
 pillar_sync:
   PillarSync
 
+salt_cleanup:
+  SaltCleanup
+  
+server:
+  config:
+    ServerConfig
+
 network:
   config:
     NetworkConfig
 
 node:
   initialize:
-    NodeInitalize
+    NodeInitialize
   finalize:
     NodeFinalize
   prepare:
@@ -37,14 +44,14 @@ node:
       NodePrepareServer
     firewall:
       NodePrepareFirewall
+    finalize:
+      NodePrepareFinalize
     time:
       NodePrepareTime
     network:
       NodePrepareNetwork
     storage:
       NodePrepareStorage
-    software:
-      NodePrepare
 
 cluster:
   create:
@@ -52,7 +59,11 @@ cluster:
   show:
     ClusterShow
   encrypt:
-    EncryptPillar
+    EncryptSecrets
+  generate:
+    GenerateCluster 
+  prepare:
+    ClusterPrepare
   config:
     network:
       ClusterNetworkConfig
@@ -94,3 +105,6 @@ storageset:
 enclosure:
   refresh:
     RefreshEnclosureId
+
+prepare_confstore:
+  PrepareConfstore

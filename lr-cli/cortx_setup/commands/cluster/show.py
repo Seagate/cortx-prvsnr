@@ -15,13 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from provisioner.salt import local_minion_id, cmd_run
-from ..command import Command
 import json
+from ..command import Command
+from provisioner.salt import local_minion_id, cmd_run
 
 
 class ClusterShow(Command):
-    _args = {}
 
     def run(self):
         res = cmd_run('salt-key -L --out=json')
