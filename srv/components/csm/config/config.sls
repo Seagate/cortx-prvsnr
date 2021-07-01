@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-
+{% if not "physical" in grains['virtual'] %}
 Register features to be unsuported:
   module.run:
     - cortx_unsupported_features.register:
@@ -27,6 +27,7 @@ Register features to be unsuported:
         - virtual
         - other
         - JBOD
+{% endif %}
 
 Stage - Config CSM:
   cmd.run:

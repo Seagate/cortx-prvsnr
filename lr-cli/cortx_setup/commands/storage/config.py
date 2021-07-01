@@ -131,7 +131,7 @@ class StorageEnclosureConfig(Command):
 
     def __init__(self):
         super().__init__()
-        self.machine_id = get_machine_id(node_id)
+        self.machine_id = None
         self.enclosure_id = None
         self.mode = None
         self.cvg_count = -1
@@ -142,7 +142,6 @@ class StorageEnclosureConfig(Command):
                 with open(enc_file_path, "r") as file:
                     self.enclosure_id = file.read().replace('\n', '')
 
-        self.refresh_key_map()
 
     def refresh_key_map(self):
         """updates values in the pillar_key_map and conf_key_map dictionary"""
@@ -183,12 +182,15 @@ class StorageEnclosureConfig(Command):
         PillarSet().run(
             pillar_key_map[key],
             value,
-            targets=node_id,
             local=True
         )
 
         if(key=='password'):
             value = self.encrypt_password(value)
+
+        if key == "cvg":
+            value = str(value)
+
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -236,6 +238,9 @@ class StorageEnclosureConfig(Command):
         input_metadata_devices = kwargs.get('metadata_devices')
         if input_metadata_devices:
             metadata_devices = input_metadata_devices.split(",")
+
+        self.machine_id = get_machine_id(node_id)
+        self.refresh_key_map()
 
         Conf.load(
             'node_info_index',
@@ -346,7 +351,7 @@ class StorageEnclosureConfig(Command):
                         f"Please provide 'user' and 'passowrd' together")
                     raise RuntimeError("Imcomplete arguments provided")
 
-                if (ip and not mode) or (port and not mode):
+                if (ip and not self.mode) or (port and not self.mode):
                     #ip and port can not be provided with 'mode' argument
                     self.logger.error(
                         f"Please use 'mode' option to provide 'ip' or 'port'\n"
@@ -461,9 +466,15 @@ class StorageEnclosureConfig(Command):
                     " are missing")
                 raise RuntimeError("Incomplete arguments provided")
 
-            self.update_pillar_and_conf('cvg', self.cvg_count)
+            current_cvg_count = Conf.get (
+                'node_info_index',
+                f'server_node>{self.machine_id}>storage>cvg_count'
+            )
+            if not current_cvg_count:
+                current_cvg_count = 0
+
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
-            if cvg_list is MISSED:
+            if not cvg_list or cvg_list is MISSED:
                 cvg_list = []
             elif isinstance(cvg_list[0], OrderedDict):
                 for i,key in enumerate(cvg_list):
@@ -487,6 +498,8 @@ class StorageEnclosureConfig(Command):
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
             cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            self.cvg_count = self.cvg_count + 1
+            self.update_pillar_and_conf('cvg', self.cvg_count)
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')

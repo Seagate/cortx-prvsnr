@@ -17,7 +17,7 @@
 
 import importlib
 
-from .config import ALL_MINIONS, CONTROLLER_BOTH, HashType
+from .config import ALL_MINIONS, CONTROLLER_BOTH, HashType, ISOVersion
 
 _api = None
 
@@ -232,15 +232,21 @@ def set_swupdate_repo(
     )
 
 
-def set_swupgrade_repo(source, hash_str=None,
-                       hash_type=HashType.MD5, dry_run=False, nowait=False):
+def set_swupgrade_repo(source,
+                       hash_str=None,
+                       hash_type=HashType.MD5,
+                       sig_file=None,
+                       gpg_pub_key=None,
+                       import_pub_key=False,
+                       source_version=ISOVersion.VERSION1.value,
+                       dry_run=False, nowait=False):
     r"""Configures upgrade repository.
 
     Installs or removes a repository for sw upgrade release.
 
     Parameters
     ----------
-    source
+    source:
         A path to a repository. Might be: a local
         directory,  a local iso file or an url to a remote repository.
         If not specified then a repository for a ``release`` will be removed.
@@ -263,23 +269,39 @@ def set_swupgrade_repo(source, hash_str=None,
         <file_name> - a file name to which <hash_type>
                       and <hash_sum> belongs to
 
-    hash_type
+    hash_type:
         (optional) type of hash value. See `config.HashType` for
-        possible values
+        possible values. HashType.MD5 by default
+    sig_file:
+        Path to the file with ISO signature. None by default.
+    gpg_pub_key:
+        (optional) Path to the custom GPG public key. None by default
+    import_pub_key:
+        (optional) Specifies whether to import a given GPG public key or not,
+        False by default.
+    source_version:
+        (optional) SW upgrade source version. ISOVersion.VERSION1 by default.
     dry_run
-        (optional) validate only. Default: False
-    nowait
-        (optional) Run asynchronously. Default: False
+        (optional) validate only. Default: False.
+    nowait:
+        (optional) Run asynchronously. Default: False.
 
     Returns
     -------
-    dict
+    dict:
         repository metadata
 
     """
-    return _api_call('set_swupgrade_repo', source=source,
-                     hash=hash_str, hash_type=hash_type,
-                     dry_run=dry_run, nowait=nowait)
+    return _api_call('set_swupgrade_repo',
+                     source=source,
+                     hash=hash_str,
+                     hash_type=hash_type,
+                     sig_file=sig_file,
+                     gpg_pub_key=gpg_pub_key,
+                     import_pub_key=import_pub_key,
+                     source_version=source_version,
+                     dry_run=dry_run,
+                     nowait=nowait)
 
 
 def remove_swupgrade_repo(release, dry_run=False, nowait=False):
@@ -372,15 +394,15 @@ def sw_rollback(target_version, targets=ALL_MINIONS, nowait=False):
     )
 
 
-def sw_upgrade(targets=ALL_MINIONS, nowait=False):
+def sw_upgrade(offline: bool = False, nowait=False):
     """Runs software update logic.
 
     Updates components one by one.
 
     Parameters
     ----------
-    targets:
-        (optional) A host to update. Default: all minions
+    offline:
+        (optional) perform offline upgrade
     nowait: bool
         (optional) Run asynchronously. Default: False
 
@@ -389,7 +411,7 @@ def sw_upgrade(targets=ALL_MINIONS, nowait=False):
     None
 
     """
-    return _api_call('sw_upgrade', targets=targets, nowait=nowait)
+    return _api_call('sw_upgrade', offline=offline, nowait=nowait)
 
 
 def get_swupgrade_info(release: str = None, iso_path: str = None,

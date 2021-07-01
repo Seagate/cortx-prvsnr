@@ -19,6 +19,9 @@
 
 
 from typing import List, Optional
+from provisioner.salt import (
+    local_minion_id
+)
 
 from cortx_setup.commands.command import Command
 from cortx_setup.commands.common_utils import (
@@ -37,19 +40,25 @@ class ClusterConfigComponent(Command):
             'optional': True,
             'default': None,
             'dest': 'component_group',
-            'choices': ['prerequisites', 'foundation', 'iopath', 'controlpath', 'ha'],
+            'choices': ['foundation', 'iopath', 'controlpath', 'ha'],
             'help': 'Component group to deploy'
         }
     }
 
-    def _configure(self, components: List, stages: Optional[List] = None):
+    def _configure(self, components: List, stages: Optional[List] = None, targets=None):
         for component in components:
             self.logger.debug(f"Applying components.{component} on nodes")
             try:
-                deploy.Deploy()._apply_state(
-                    f"components.{component}",
-                    stages=stages if stages else None
-                )
+                if targets:
+                    deploy.Deploy()._apply_state(
+                        f"components.{component}", targets=targets,
+                        stages=stages if stages else None
+                    )
+                else:
+                    deploy.Deploy()._apply_state(
+                        f"components.{component}",
+                        stages=stages if stages else None
+                    )
             except Exception as exc:
                 raise exc
 
@@ -65,32 +74,44 @@ class ClusterConfigComponent(Command):
         """
         try:
             # Getting provisioner states for deployment
-            noncortx_components = get_provisioner_states()
+            # noncortx_components = get_provisioner_states()
             cortx_components = get_cortx_states()
+            primary = local_minion_id()
+            secondaries = f"not {primary}"
 
             if component_group is None:
-                self.logger.debug(f"Deploying prerequisites components on nodes")
-                self._configure(
-                    noncortx_components['prerequisites']
-                )
+                # self.logger.debug(f"Deploying prerequisites components on nodes")
+                # self._configure(
+                #     noncortx_components['prerequisites']
+                # )
                 for component_group in cortx_components:
                     self.logger.debug(f"Deploying {component_group} components on nodes")
                     self._configure(
                         cortx_components[component_group],
                         stages=['config.config', 'config.init_mod']
                     )
-                self.logger.debug(f"Deploying ha components on nodes")
+                self.logger.debug(f"Deploying cortx ha components on {primary}")
                 self._configure(
                     ['ha.cortx-ha'],
                     stages=[
-                        'config.post_install','config.prepare',
-                        'config.config', 'config.init_mod']
+                        'config.post_install', 'config.prepare',
+                        'config.config', 'config.init_mod'],
+                    targets=primary
                 )
-            elif component_group in noncortx_components:
-                self.logger.debug(f"Deploying prerequisites components on nodes")
+                self.logger.debug(f"Deploying cortx ha components on {secondaries}")
                 self._configure(
-                    noncortx_components['prerequisites']
+                    ['ha.cortx-ha'],
+                    stages=[
+                        'config.post_install', 'config.prepare',
+                        'config.config', 'config.init_mod'],
+                    targets=secondaries
                 )
+
+            # elif component_group in noncortx_components:
+            #     self.logger.debug(f"Deploying prerequisites components on nodes")
+            #     self._configure(
+            #         noncortx_components['prerequisites']
+            #     )
             elif component_group in cortx_components:
                 self.logger.debug(f"Deploying {component_group} components on nodes")
                 self._configure(
@@ -98,12 +119,21 @@ class ClusterConfigComponent(Command):
                     stages=['config.config', 'config.init_mod']
                 )
             elif component_group == 'ha':
-                self.logger.debug(f"Deploying cortx ha components on nodes")
+                self.logger.debug(f"Deploying cortx ha components on {primary}")
                 self._configure(
                     ['ha.cortx-ha'],
                     stages=[
-                        'config.post_install','config.prepare',
-                        'config.config', 'config.init_mod']
+                        'config.post_install', 'config.prepare',
+                        'config.config', 'config.init_mod'],
+                    targets=primary
+                )
+                self.logger.debug(f"Deploying cortx ha components on {secondaries}")
+                self._configure(
+                    ['ha.cortx-ha'],
+                    stages=[
+                        'config.post_install', 'config.prepare',
+                        'config.config', 'config.init_mod'],
+                    targets=secondaries
                 )
             self.logger.debug(f"Deployment done")
         except ValueError as exc:
