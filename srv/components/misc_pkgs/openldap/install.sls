@@ -18,10 +18,11 @@
 Install openldap pkgs:
   pkg.installed:
     - pkgs:
+      - symas-openldap
     {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
-      - openldap-servers
+      - symas-openldap-servers
     {% endif %}
-      - openldap-clients
+      - symas-openldap-clients
 
 Update to latest selinux-policy:
   pkg.installed:
