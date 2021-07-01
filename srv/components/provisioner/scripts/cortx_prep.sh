@@ -16,7 +16,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-set -euE -o pipefail
+set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/node_prep.log}"
 mkdir -p $(dirname "${LOG_FILE}")
@@ -27,13 +27,13 @@ nodejs_tar="http://cortx-storage.colo.seagate.com/releases/cortx/github/integrat
 
 function trap_handler {
     exit_code=$?
-    if [[ 0 != ${exit_code} ]]; then
+    if [[ ${exit_code} != 0 && ${exit_code} != 2 ]]; then
       echo "***** ERROR! *****"
       echo "For detailed error logs, please see: $LOG_FILE"
       echo "******************"
     fi
 }
-trap trap_handler ERR EXIT
+trap trap_handler ERR
 
 _usage()
 {
@@ -63,7 +63,7 @@ parse_args()
                 if [[ -z "$2" ]]; then
                     echo "Error: URL for target cortx build not provided"
                     _usage
-                    exit 1
+                    exit 2
                 fi
                 set -u
                 repo_url=$2
@@ -114,7 +114,7 @@ config_local_salt()
     do
         if [[ "$try" -gt "$max_tries" ]]; then
             echo "ERROR: Key for salt-minion $minion_id not listed after $max_tries attemps." >> "${LOG_FILE}"
-            echo "ERROR: Provisioner configuration manager failed for key acceptance" | tee -a "${LOG_FILE}"
+            echo "ERROR: Cortx provisioner environment configuration failed" | tee -a "${LOG_FILE}"
             salt-key --list-all >&2
             exit 1
         fi
@@ -126,13 +126,13 @@ config_local_salt()
     salt-key -y -a "$minion_id" --no-color --out-file="${LOG_FILE}" --out-file-append
 
     # Check if salt '*' test.ping works
-    echo "Waiting for Provisioner configuration manager to become ready" | tee -a "${LOG_FILE}"
+    echo "Waiting for Provisioner environment to be ready" | tee -a "${LOG_FILE}"
     try=1; max_tries=10
     until salt -t 1 "$minion_id" test.ping >/dev/null 2>&1
     do
         if [[ "$try" -gt "$max_tries" ]]; then
             echo "ERROR: Minion $minion_id seems still not ready after $max_tries attempts." >> "${LOG_FILE}"
-            echo "ERROR: Provisioner configuration manager failed to connect to local server" | tee -a "${LOG_FILE}"
+            echo "ERROR: Cortx provisioner environment configuration failed" | tee -a "${LOG_FILE}"
             exit 1
         fi
         try=$(( try + 1 ))
@@ -145,12 +145,12 @@ setup_repos()
 {
     repo=$1
     echo "Cleaning yum cache" | tee -a "${LOG_FILE}"
-    yum clean all
+    yum clean all >> ${LOG_FILE}
     rm -rf /var/cache/yum/* || true
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
-    echo "Configuring the repository: ${repo}/cortx_iso" >> "${LOG_FILE}"
-    yum-config-manager --add-repo "${repo}/cortx_iso/"
+    echo "Configuring the repository: ${repo}/cortx_iso" | tee -a "${LOG_FILE}"
+    yum-config-manager --add-repo "${repo}/cortx_iso/" >> "${LOG_FILE}"
 
     echo "DEBUG: Preparing the pip.conf" >> "${LOG_FILE}"
     cat << EOL > /etc/pip.conf
@@ -179,9 +179,9 @@ install_dependency_pkgs()
     )
     for pkg in ${dependency_pkgs[@]}; do
         if rpm -qi --quiet "$pkg"; then
-            echo "Package $pkg is already installed."
+            echo -e "\tPackage $pkg is already installed."
         else
-            echo "Installing $pkg" | tee -a "${LOG_FILE}"
+            echo -e "\tInstalling $pkg" | tee -a "${LOG_FILE}"
             yum install --nogpgcheck -y -q "$pkg" >> "${LOG_FILE}" 2>&1
         fi
     done
@@ -189,15 +189,15 @@ install_dependency_pkgs()
     if [[ -d "/opt/nodejs/node-v12.13.0-linux-x64" ]]; then
         echo "nodejs already installed" | tee -a "${LOG_FILE}"
     else
-        echo "Installing nodejs" | tee -a "${LOG_FILE}"
-        echo "DEBUG: Downloading nodeja tarball" >> "${LOG_FILE}"
+        echo -e "\tInstalling nodejs" | tee -a "${LOG_FILE}"
+        echo -e "\tDEBUG: Downloading nodeja tarball" >> "${LOG_FILE}"
         wget "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
         mkdir /opt/nodejs
-        echo "DEBUG: Extracting the tarball" >> "${LOG_FILE}"
+        echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
         tar -C /opt/nodejs/ -xf node-v12.13.0-linux-x64.tar.xz >> "${LOG_FILE}"
-        echo "DEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> "${LOG_FILE}"
+        echo -e "\tDEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> "${LOG_FILE}"
         rm -rf "${nodejs_tar}"
-        echo "Done" | tee -a "${LOG_FILE}"
+        echo -e "\tInstalled all dependency packages successfully" | tee -a "${LOG_FILE}"
     fi
 }
 
@@ -222,7 +222,6 @@ install_cortx_pkgs()
         "cortx-prereq"
         "cortx-prvsnr-cli"
         "uds-pyi"
-        "cortx-s3iamcli"
         "cortx-s3server"
         "cortx-sspl"
         "cortx-sspl-cli"
@@ -233,22 +232,21 @@ install_cortx_pkgs()
 
     for pkg in ${cortx_pkgs[@]}; do
         if rpm -qi --quiet "$pkg"; then
-            echo "Package $pkg is already installed." | tee -a "${LOG_FILE}"
+            echo -e "\tPackage $pkg is already installed." | tee -a "${LOG_FILE}"
         else
-            echo "Installing $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q "$pkg" >> "${LOG_FILE}" 2>&1
+            echo -e "\tInstalling $pkg" | tee -a "${LOG_FILE}"
+            yum install --nogpgcheck -y -q "$pkg" 2>&1 >> "${LOG_FILE}"
         fi
     done
 
     if ! command -v cortx_setup; then
         ## WORKAROUND UNTIL EOS_21317 IS ADDRESSED.
-        echo "Preparing the Cortx ConfStore with default configuration" | tee -a "${LOG_FILE}"
-        echo "WARNING: python36-cortx-setup package is not installed" | tee -a "${LOG_FILE}"
-        echo "Installing cortx_setup commands using pip" | tee -a "${LOG_FILE}"
+        echo -e "\tWARNING: python36-cortx-setup package is not installed" | tee -a "${LOG_FILE}"
+        echo -e "\tInstalling cortx_setup commands using pip" | tee -a "${LOG_FILE}"
         pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/ >> "${LOG_FILE}" 2>&1
         if ! command -v cortx_setup; then
             echo "DEBUG: Updating the path variable" >> "${LOG_FILE}"
-            export PATH=${PATH}:/usr/local/bin/
+            export PATH=${PATH}:/usr/local/bin
             if ! command -v cortx_setup; then
                 echo "ERROR: cortx_setup command still not available " | tee -a "${LOG_FILE}"
                 echo "ERROR: Please check if cortx_setup commands"\
@@ -262,7 +260,7 @@ install_cortx_pkgs()
         echo "ERROR: Ensure the appropriate package is installed and then try again" | tee -a "${LOG_FILE}"
         exit 1
     fi
-    echo "Done" | tee -a "${LOG_FILE}"
+    echo "Installed all Cortx packages successfully" | tee -a "${LOG_FILE}"
 }
 
 download_isos()
@@ -281,11 +279,11 @@ download_isos()
 main()
 {
     time_stamp=$(date)
-    echo "*********************************************************" | tee -a ${LOG_FILE}
-    echo "          Running CORTX prep script                      " | tee -a ${LOG_FILE}
-    echo "*********************************************************" | tee -a ${LOG_FILE}
     echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
     parse_args $@
+    echo "*********************************************************" | tee -a ${LOG_FILE}
+    echo "      Setting up the factory environment for Cortx       " | tee -a ${LOG_FILE}
+    echo "*********************************************************" | tee -a ${LOG_FILE}
     #TODO: uncomment once ready
     #    create_factory_user $user_name $uid $group $gid
     if hostnamectl status | grep Chassis | grep -q server; then
@@ -345,7 +343,7 @@ main $@
 echo "\
 ************************* SUCCESS!!! **************************************
 
-CORTX prep is run successfully !!
+Successfully set up the factory environment for Cortx !!
 
 The detailed logs can be seen at: "$LOG_FILE"
 ***************************************************************************" | tee -a "${LOG_FILE}"
