@@ -19,6 +19,9 @@ execution:
   noncortx_components:
     platform:
       - system
+      - system.config.hosts
+      - system.config.update_ssh_config
+      - system.config.ssh_check
       - system.storage
       - misc_pkgs.rsyslog
       - system.logrotate

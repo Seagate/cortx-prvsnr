@@ -35,11 +35,15 @@ Hostsfile update for manangement interfaces:
         {% if ('mgmt0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['mgmt0'][0]) -%}
         {{ grains['ip4_interfaces']['mgmt0'][0] }}    {{ srvnode }}    {{ srvnode }}.mgmt.public
         {% else -%}
+          {%- if pillar['cluster'][srvnode]['network']['mgmt']['public_ip'] %}
+        {{ pillar['cluster'][srvnode]['network']['mgmt']['public_ip'] }}    {{ srvnode }}.mgmt.public
+          {%- else %}
         {{ ip_data[pillar['cluster'][srvnode]['network']['mgmt']['interfaces'][0]][0] }}    {{ srvnode }}.mgmt.public
+          {%- endif %}
         {%- endif %}
         {% endfor -%}
         {%- endfor %}
-        
+
 Hostsfile update for data interfaces:
   file.blockreplace:
     - name: /etc/hosts
@@ -49,19 +53,27 @@ Hostsfile update for data interfaces:
     - append_if_not_found: True
     - template: jinja
     - content: |
-        {%- for node in server_nodes %}
-        {%- for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
-        {% if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0'][0]) -%}
+        {% for node in server_nodes %}
+        {% for srvnode, ip_data in salt['mine.get'](node, 'node_ip_addrs') | dictsort() %}
+        {%- if ('data0' in grains['ip4_interfaces']) and (grains['ip4_interfaces']['data0'][0]) %}
         {{ grains['ip4_interfaces']['data0'][0] }}    {{ srvnode }}    {{ srvnode }}.data.public
-        {% else -%}
+        {%- else %}
+          {%- if pillar['cluster'][srvnode]['network']['data']['public_ip'] %}
+        {{ pillar['cluster'][srvnode]['network']['data']['public_ip'] }}    {{ srvnode }}    {{ srvnode }}.data.public
+          {%- else %}
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}    {{ srvnode }}.data.public
+          {%- endif %}
           {% if pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0] %}
+            {% if pillar['cluster'][srvnode]['network']['data']['private_ip'] %}
+        {{ pillar['cluster'][srvnode]['network']['data']['private_ip'] }}    {{ srvnode }}    {{ srvnode }}.data.private
+            {% else %}
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['private_interfaces'][0]][0] }}    {{ srvnode }}    {{ srvnode }}.data.private
+            {% endif %}
           {% else %}
         # Private IP is not assigned or the system doesn't have an interface for Private IP
         # Defaulting to lo interface
         127.0.0.2    {{ srvnode }}    {{ srvnode }}.data.private
-          {% endif %}
-        {% endif -%}
-        {% endfor -%}
-        {% endfor -%}
+          {%- endif %}
+        {%- endif -%}
+        {%- endfor -%}
+        {%- endfor -%}

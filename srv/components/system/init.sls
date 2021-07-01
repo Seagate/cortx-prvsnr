@@ -19,7 +19,7 @@ include:
   - components.system.prepare
   - components.system.install
   - components.system.config
-  - components.system.sanity_check
+  # - components.system.sanity_check
   # - components.system.firewall
   # - components.system.logrotate
   # - components.system.ntp
