@@ -31,8 +31,9 @@ disable slapd:
 Remove pkgs:
   pkg.purged:
     - pkgs:
-      - openldap-servers
-      - openldap-clients
+      - symas-openldap
+      - symas-openldap-servers
+      - symas-openldap-clients
     - require:
       - Stop slapd
 
