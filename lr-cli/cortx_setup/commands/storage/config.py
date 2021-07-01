@@ -311,6 +311,7 @@ class StorageEnclosureConfig(Command):
                 )
                 raise RuntimeError("Incomplete arguments provided")
         else:
+#cortx_setup storage config --controller {gallium|indium|virtual} --type {primary|secondary} --ip <ip-address> --port <port-number> --user <user> --password <password>
             if user != None and password != None and ip != None and port != None:
                 # fetch enclosure serial/id
                 self.enclosure_id = EnclosureInfo(
