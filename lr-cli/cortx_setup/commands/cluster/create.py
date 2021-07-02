@@ -19,7 +19,6 @@
 
 import os
 import socket
-import shutil
 
 from cortx_setup.config import (
     CONFSTORE_CLUSTER_FILE,
@@ -28,7 +27,8 @@ from cortx_setup.config import (
 )
 from cortx_setup.commands.command import Command
 from cortx_setup.commands.common_utils import (
-    get_cluster_id
+    get_cluster_id,
+    get_machine_id
 )
 from cortx_setup.commands.pillar_sync import (
     PillarSync
@@ -45,8 +45,6 @@ from cortx_setup.commands.cluster.generate import (
 from cortx_setup.commands.node.prepare.time import (
     NodePrepareTime
 )
-from cortx_setup.commands.common_utils import get_machine_id
-
 from cortx.utils.conf_store import Conf
 
 from provisioner.commands import (
@@ -54,13 +52,14 @@ from provisioner.commands import (
     bootstrap_provisioner,
     confstore_export,
     cluster_id,
-    create_service_user,
-    reset_machine_id
+    create_service_user
 )
 from provisioner.salt import (
     local_minion_id,
+    cmd_run
 )
 from provisioner.api import grains_get
+
 
 class ClusterCreate(Command):
 
@@ -137,7 +136,8 @@ class ClusterCreate(Command):
             local_fqdn = socket.gethostname()
             cluster_args = ['name', 'site_count', 'storageset_count']
 
-            # Ref: `nodes` will be removed from this args list. Read more on https://github.com/Seagate/cortx-prvsnr/tree/pre-cortx-1.0/docs/design_updates.md#field-api-design-changes
+            # Ref: `nodes` will be removed from this args list.
+            # Read more on https://github.com/Seagate/cortx-prvsnr/tree/pre-cortx-1.0/docs/design_updates.md#field-api-design-changes
             nodes = kwargs['nodes']
             target_build = kwargs['target_build']
 
@@ -150,8 +150,6 @@ class ClusterCreate(Command):
                     nodes[idx] = f"srvnode-1:{node}"
                 else:
                     nodes[idx] = f"srvnode-{idx+1}:{node}"
-
-            # TODO: Config validation only when confstore yaml is used
 
             # HA validation
             if len(nodes) > 1:
@@ -186,11 +184,13 @@ class ClusterCreate(Command):
             bootstrap_provisioner.BootstrapProvisioner()._run(**kwargs)
 
             if SOURCE_PATH.exists():
-                self.logger.debug("Cleanup existing storage config")
-                shutil.move(SOURCE_PATH, DEST_PATH)
+                self.logger.debug("Cleanup existing storage config on all nodes")
+                cmd_run(f"mv {SOURCE_PATH} {DEST_PATH}")
+                self.logger.debug("Refreshing config")
+                cmd_run("salt-call saltutil.refresh_pillar")
 
             self.logger.info(
-              "Starting with preparing environment. "
+              "Bootstrap Done. Starting with preparing environment. "
               "Syncing config data now.."
             )
             PillarSync().run()
@@ -210,8 +210,10 @@ class ClusterCreate(Command):
             self.logger.debug("Refreshing enclosure id on the system")
             RefreshEnclosureId().run()
 
-            #NTP workaround for now(need to move this to time.py after encryption issue)
-            self.logger.debug(f"Setting time on node with server & timezone")
+            # NTP workaround.
+            # TODO: move this to time.py after encryption issue
+            self.logger.debug("Setting time on node with server & timezone")
+
             node_id = local_minion_id()
             NodePrepareTime().set_server_time()
             machine_id = get_machine_id(node_id)
@@ -220,7 +222,6 @@ class ClusterCreate(Command):
                 if not machine_id in enclosure_id:   # check if the system is VM or HW
                     self.logger.debug(f"Setting time on enclosure with server & timezone")
                     NodePrepareTime().set_enclosure_time()
-
 
             self.logger.debug("Exporting to Confstore")
             confstore_export.ConfStoreExport().run()
