@@ -275,11 +275,12 @@ class StorageEnclosureConfig(Command):
     
         if self.enclosure_id is None:
             self.enclosure_id = Conf.get (
-                'node_info_index',
+                'node_info_index'
                 f'server_node>{self.machine_id}>storage>enclosure_id'
             )
             self.refresh_key_map()
-            if self.enclosure_id is not None and setup_type == "VM":
+            self.logger.debug(f"enclosure id: {self.enclosure_id}")
+            if self.enclosure_id is None and setup_type == "VM":
                 self.enclosure_id = "enc_" + self.machine_id
                 self.refresh_key_map()
                 self.store_in_file()
@@ -312,6 +313,7 @@ class StorageEnclosureConfig(Command):
                 self.enclosure_id is not None
                 and user is not None
                 and password is not None
+                and setup_type == "HW"
             ):
                 # user has provided all the parameters that fetches the
                 # enclosure id, so reset the enclosure id read from the
@@ -352,17 +354,17 @@ class StorageEnclosureConfig(Command):
                         )
             if self.enclosure_id is not None:
                 if setup_type == "VM":
-                    self.logger.warning("This is VM")
+                    self.logger.warning("WARNING: This is VM")
                     self.logger.warning(
-                        "Adding ip and port in confstore without validation"
+                        "WARNING: Adding ip and port in confstore without validation"
                     )
                 if setup_type == "HW" and not cred_validation:
                     self.logger.warning(
-                        "Adding ip and port in confstore without validation"
-                        "To force the validation, please run: cortx_setup"
-                        " storage config --controller <type> --mode primary"
-                        " --ip <ip> --port <port> --user <user> --password"
-                        " <password>"
+                        "WARNING:  Adding ip and port in confstore without"
+                        " validation To force the validation, please run:"
+                        " cortx_setup storage config --controller <type>"
+                        " --mode primary --ip <ip> --port <port>"
+                        " --user <user> --password <password>"
                     )
                 self.update_pillar_and_conf('ip', ip)
                 self.update_pillar_and_conf('port', port)
@@ -375,14 +377,15 @@ class StorageEnclosureConfig(Command):
                 )
 
         if user is not None or password is not None:
-            if (user and not password) or (password and not user):
+            if (user is None) or (password is None):
                 self.logger.error(
                     f"Please provide 'user' and 'passowrd' together")
                 raise RuntimeError("Imcomplete arguments provided")
             if self.enclosure_id is not None and setup_type == "VM":
-                self.logger.warning("This is VM")
+                self.logger.warning("WARNING: This is VM")
                 self.logger.warning(
-                    "Adding user and password in confstore without validation")
+                    "WARNING: Adding user and password in confstore"
+                    " without validation")
                 self.update_pillar_and_conf('user', user)
                 self.update_pillar_and_conf('password', password)
             elif self.enclosure_id is not None and setup_type == "HW":
@@ -439,7 +442,7 @@ class StorageEnclosureConfig(Command):
             if setup_type == "HW" and controller_type not in valid_ctrl_type:
                 self.logger.error(
                 "Invalid controller provided, please provide the"
-                " supported controller [gallium or indium]")
+                " supported controller type")
                 raise ValueError("Incorrect argument value provided")
             if setup_type == "VM" and controller_type != "virtual":
                 self.logger.error(
