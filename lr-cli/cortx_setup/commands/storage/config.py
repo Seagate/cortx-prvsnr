@@ -272,7 +272,7 @@ class StorageEnclosureConfig(Command):
             ": 'cortx_setup server config type <VM|HW>'"
             )
             raise RuntimeError("Could not find the setup type in conf store")
-    
+
         if self.enclosure_id is None:
             self.enclosure_id = Conf.get (
                 'node_info_index'
