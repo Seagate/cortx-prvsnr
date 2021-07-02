@@ -71,10 +71,10 @@ parse_args()
                 export CORTX_RELEASE_REPO="$repo_url"
                 if grep -wq CORTX_RELEASE_REPO /etc/environment; then
                     line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/environment | tail -1 | cut -d: -f1)
-                    echo "DEBUG: line_to_replace: $line_to_replace" >> ${LOG_FILE}
-                    sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO="$repo_url"|" /etc/environment
+                    echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
+                    sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /etc/environment
                 else
-                    echo "CORTX_RELEASE_REPO="$repo_url"" >> /etc/environment
+                    echo "CORTX_RELEASE_REPO=$repo_url" >> /etc/environment
                 fi
                 ;;
             -h|--help)
@@ -145,7 +145,7 @@ setup_repos()
 {
     repo=$1
     echo "Cleaning yum cache" | tee -a "${LOG_FILE}"
-    yum clean all >> ${LOG_FILE}
+    yum clean all >> "${LOG_FILE}"
     rm -rf /var/cache/yum/* || true
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
@@ -195,7 +195,7 @@ install_dependency_pkgs()
         mkdir /opt/nodejs
         echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
         tar -C /opt/nodejs/ -xf node-v12.13.0-linux-x64.tar.xz >> "${LOG_FILE}"
-        echo -e "\tDEBUG: The extrracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> "${LOG_FILE}"
+        echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> "${LOG_FILE}"
         rm -rf "${nodejs_tar}"
         echo -e "\tInstalled all dependency packages successfully" | tee -a "${LOG_FILE}"
     fi
@@ -279,11 +279,11 @@ download_isos()
 main()
 {
     time_stamp=$(date)
-    echo "DEBUG: run time: $time_stamp" >> ${LOG_FILE}
+    echo "DEBUG: run time: $time_stamp" >> "${LOG_FILE}"
     parse_args $@
-    echo "*********************************************************" | tee -a ${LOG_FILE}
-    echo "      Setting up the factory environment for Cortx       " | tee -a ${LOG_FILE}
-    echo "*********************************************************" | tee -a ${LOG_FILE}
+    echo "*********************************************************" | tee -a "${LOG_FILE}"
+    echo "      Setting up the factory environment for Cortx       " | tee -a "${LOG_FILE}"
+    echo "*********************************************************" | tee -a "${LOG_FILE}"
     #TODO: uncomment once ready
     #    create_factory_user $user_name $uid $group $gid
     if hostnamectl status | grep Chassis | grep -q server; then
@@ -345,5 +345,5 @@ echo "\
 
 Successfully set up the factory environment for Cortx !!
 
-The detailed logs can be seen at: "$LOG_FILE"
+The detailed logs are available at: $LOG_FILE
 ***************************************************************************" | tee -a "${LOG_FILE}"
