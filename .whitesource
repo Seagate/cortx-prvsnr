@@ -1,7 +1,7 @@
 {
   "scanSettings": {
     "configMode": "LOCAL",
-    "baseBranches": ["main","stable"]
+    "baseBranches": ["pre-cortx-1.0","main","stable"]
   },
   "checkRunSettings": {
     "displayMode": "diff",
