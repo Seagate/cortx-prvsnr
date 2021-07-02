@@ -57,7 +57,7 @@ class CreateStorageSet(Command):
             cluster_id = get_cluster_id()
             self.logger.debug(
                 f"Updating storageset '{name}' with "
-                "node count '{count}' in ConfStore"
+                f"node count '{count}' in ConfStore"
             )
 
             PillarSet().run(
