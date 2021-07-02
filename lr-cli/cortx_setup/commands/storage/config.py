@@ -272,12 +272,11 @@ class StorageEnclosureConfig(Command):
             ": 'cortx_setup server config type <VM|HW>'"
             )
             raise RuntimeError("Could not find the setup type in conf store")
-    
+
         if self.enclosure_id is None:
-            self.enclosure_id = Conf.get (
-                'node_info_index'
-                f'server_node>{self.machine_id}>storage>enclosure_id'
-            )
+            self.enclosure_id =  get_pillar_data(pillar_key_map['enclosure_id'])
+            if self.enclosure_id is MISSED:
+                self.enclosure_id= None
             self.refresh_key_map()
             self.logger.debug(f"enclosure id: {self.enclosure_id}")
             if self.enclosure_id is None and setup_type == "VM":
