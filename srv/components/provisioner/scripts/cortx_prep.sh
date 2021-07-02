@@ -90,6 +90,7 @@ config_local_salt()
     # 2. Restart salt-minion service
     # 3. Check if 'salt srvnode-0 test.ping' works
 
+    echo "Starting provisioner environment configuration" | tee -a "${LOG_FILE}"
     if ! rpm -qa | grep -iEwq "salt|salt-master|salt-minion|cortx-prvsnr"; then
         echo "ERROR: salt packages are not installed, please install salt packages and try again." | tee -a "${LOG_FILE}"
         exit 1
@@ -106,8 +107,15 @@ config_local_salt()
     echo "Restarting the required services" | tee -a "${LOG_FILE}"
     systemctl start salt-master
     systemctl restart salt-minion
+    sleep 10
+    status=$(systemctl status salt-minion | grep Active | awk '{ print $2 }')
+    if [[ "$status" != "active" ]]; then
+        echo "Salt minion service failed to start" >> "${LOG_FILE}"
+        echo "Could not start the required services to set up the environment" | tee -a "${LOG_FILE}"
+        exit 1
+    fi
     echo "Done" | tee -a "${LOG_FILE}"
-
+    echo "Verifying the configuraion" | tee -a "${LOG_FILE}"
     echo "DEBUG: Waiting for key of $minion_id to become connected to salt-master" >> "${LOG_FILE}"
     try=1; max_tries=10
     until salt-key --list-all | grep "srvnode-0" >/dev/null 2>&1
@@ -126,7 +134,7 @@ config_local_salt()
     salt-key -y -a "$minion_id" --no-color --out-file="${LOG_FILE}" --out-file-append
 
     # Check if salt '*' test.ping works
-    echo "Waiting for Provisioner environment to be ready" | tee -a "${LOG_FILE}"
+    echo "Testing if the environment is working fine" | tee -a "${LOG_FILE}"
     try=1; max_tries=10
     until salt -t 1 "$minion_id" test.ping >/dev/null 2>&1
     do
@@ -138,6 +146,7 @@ config_local_salt()
         try=$(( try + 1 ))
     done
     echo "DEBUG: Salt configuration done successfully" >> "${LOG_FILE}"
+    echo "Cortx provisioner environment configured successfully" | tee -a "${LOG_FILE}"
     echo "Done" | tee -a "${LOG_FILE}"
 }
 
@@ -244,6 +253,7 @@ install_cortx_pkgs()
         echo -e "\tWARNING: python36-cortx-setup package is not installed" | tee -a "${LOG_FILE}"
         echo -e "\tInstalling cortx_setup commands using pip" | tee -a "${LOG_FILE}"
         pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/ >> "${LOG_FILE}" 2>&1
+        export PATH=${PATH}:/usr/local/bin
         if ! command -v cortx_setup; then
             echo "DEBUG: Updating the path variable" >> "${LOG_FILE}"
             export PATH=${PATH}:/usr/local/bin
@@ -336,6 +346,7 @@ main()
     echo "Done" | tee -a "${LOG_FILE}"
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
+    export PATH=${PATH}:/usr/local/bin
     echo "Done" | tee -a "${LOG_FILE}"
 }
 
