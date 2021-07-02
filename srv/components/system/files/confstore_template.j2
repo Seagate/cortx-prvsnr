@@ -53,7 +53,7 @@ server_node>{{ machine_id }}>network>management>public_fqdn=>{{ pillar['cluster'
 {%- for iface in pillar['cluster'][node]['network']['data']['public_interfaces'] %}
 server_node>{{ machine_id }}>network>data>public_interfaces[{{ loop.index - 1 }}]=>{{ iface }}
 {% set mgmt_netmask = pillar['cluster'][node]['network']['mgmt']['netmask'] %}
-server_node>{{ machine_id }}>network>management>netmask=>{{ mgmt_netmask if mgmt_netmask else salt["grains.get"]('ip4_netmask:{0}'.format(iface)) }}
+server_node>{{ machine_id }}>network>management>netmask=>{{ mgmt_netmask if mgmt_netmask and mgmt_netmask | len > 1 else salt["grains.get"]('ip4_netmask:{0}'.format(iface)) }}
 {%- endfor %}
 {%- for iface in pillar['cluster'][node]['network']['data']['private_interfaces'] %}
 server_node>{{ machine_id }}>network>data>private_interfaces[{{ loop.index - 1 }}]=>{{ iface }}

@@ -50,13 +50,13 @@ class NodePrepareNetwork(Command):
         'gateway': {
             'type': ipv4,
             'optional': True,
-            'default': "",
+            'default': None,
             'help': 'Gateway IP'
         },
         'netmask': {
             'type': ipv4,
             'optional': True,
-            'default': "",
+            'default': None,
             'help': 'Netmask'
         },
         'ip_address': {
