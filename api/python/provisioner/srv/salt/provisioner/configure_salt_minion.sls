@@ -35,6 +35,11 @@ salt_minion_grains_configured:
     - backup: minion
     - template: jinja
 
+# to fix LR CLI cluster_id issue
+salt_minion_id_cleanup:
+   file.absent:
+     - name: /etc/salt/minion_id
+
 # TODO EOS-8473 better content management
 salt_minion_id_set:
   file.prepend:
