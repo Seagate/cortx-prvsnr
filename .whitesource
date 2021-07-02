@@ -1,6 +1,7 @@
 {
   "scanSettings": {
-    "configMode": "AUTO"
+    "configMode": "LOCAL",
+    "baseBranches": ["main","stable"]
   },
   "checkRunSettings": {
     "displayMode": "diff",
