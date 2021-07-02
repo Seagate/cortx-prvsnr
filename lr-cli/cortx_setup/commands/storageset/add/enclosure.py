@@ -89,7 +89,7 @@ class AddStorageEnclosure(Command):
                 enclosure_id.append(get_enclosure_id(node))
 
             self.logger.debug(
-                "Adding enclosure_id '{enclosure_id}' to storageset "
+                f"Adding enclosure_id '{enclosure_id}' to storageset "
                 f"'{storage_set_name}' in ConfStore."
             )
 
