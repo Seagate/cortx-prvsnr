@@ -31,6 +31,7 @@ function trap_handler {
       echo "***** ERROR! *****"
       echo "For detailed error logs, please see: $LOG_FILE"
       echo "******************"
+      exit $exit_code
     fi
 }
 trap trap_handler ERR
@@ -298,12 +299,21 @@ main()
     #    create_factory_user $user_name $uid $group $gid
     if hostnamectl status | grep Chassis | grep -q server; then
         echo "DEBUG: This is Hardware" >> "${LOG_FILE}"
-        if systemctl list-units | grep scsi-network-relay; then
-            systemctl start scsi-network-relay
-        else
-            echo "ERROR scsi-network-relay service is not present" | tee -a "${LOG_FILE}"
-            exit 1
-        fi
+
+        echo "Starting the scsi-network-relay service" | tee -a "${LOG_FILE}"
+        try=0
+        max_tries=30
+        until systemctl list-units | grep scsi-network-relay; >/dev/null 2>&1
+        do
+            if [[ "$try" -gt "$max_tries" ]]; then
+                echo "ERROR: scsi-network-relay is not available" | tee -a "${LOG_FILE}"
+                echo "ERROR: Please install the appropriate package and try again" | tee -a "${LOG_FILE}"
+                exit 1
+            fi
+            try=$(( try + 1 ))
+            sleep 1
+        done
+        systemctl restart scsi-network-relay
         if [[ ! -z $repo_url ]]; then
             # User has provided target-build for HW
             # Remove the ISOs set up by Kickstart
@@ -346,7 +356,10 @@ main()
     echo "Done" | tee -a "${LOG_FILE}"
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
-    export PATH=${PATH}:/usr/local/bin
+    echo "PATH=${PATH}:/usr/local/bin" >> /root/.bashrc
+    echo "CORTX_RELEASE_REPO=$repo_url" >> /etc/environment
+    export PATH="${PATH}:/usr/local/bin"
+    export CORTX_RELEASE_REPO="$repo_url"
     echo "Done" | tee -a "${LOG_FILE}"
 }
 
