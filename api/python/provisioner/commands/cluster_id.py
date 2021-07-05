@@ -218,7 +218,9 @@ class ClusterId(CommandParserFillerMixin):
 
                 # Ensure cluster-id file is created in all nodes
                 StatesApplier.apply(
-                       ['components.provisioner.config.cluster_id'],
+                       ['components.provisioner.config.cluster_id',
+                        'components.system.config.sync_salt'
+                       ],
                        targets=ALL_MINIONS
                 )
 
