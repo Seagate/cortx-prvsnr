@@ -43,7 +43,7 @@ Private data network configuration:
     - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
 {%- endif %}
 {% if pillar['cluster'][node]['network']['data']['gateway'] %}
-    - gateway: {{ pillar['cluster'][grains['id']]['network']['data']['gateway'] }}
+    - gateway: {{ pillar['cluster'][node]['network']['data']['gateway'] }}
 {% endif %}
 {%- else %}
     - proto: dhcp
