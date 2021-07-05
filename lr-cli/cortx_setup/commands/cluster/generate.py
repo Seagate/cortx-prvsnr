@@ -36,7 +36,9 @@ class GenerateCluster(Command):
             self.logger.debug("Generating cluster pillar")
 
             StatesApplier.apply(
-                       ['components.provisioner.config.generate_cluster_pillar'],
+                       ['components.provisioner.config.generate_cluster_pillar',
+                        'components.system.config.sync_salt'
+                       ],
                        targets=ALL_MINIONS
             )
 
