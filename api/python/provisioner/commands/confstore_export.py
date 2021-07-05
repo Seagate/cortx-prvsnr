@@ -115,16 +115,12 @@ class ConfStoreExport(CommandParserFillerMixin):
                 CORTX_CONFIG_DIR /
                 'provisioner_confstore_template')
 
-            # TODO
-            # Not a good way to call primary node with hardcoded value
-            # need to remove it for hostname bug for cortx_setup API
-            node= 'srvnode-1'
             StateFunExecuter.execute(
                 'file.managed',
                 fun_kwargs=dict(
                     name=template_file_path,
                     source='salt://components/system/files/confstore_template.j2',
-                    template='jinja'),targets=node)
+                    template='jinja'))
             logger.info("Pillar confstore template is created at "
                         f"{template_file_path}"
                         )

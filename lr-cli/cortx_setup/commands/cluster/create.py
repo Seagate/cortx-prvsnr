@@ -138,7 +138,6 @@ class ClusterCreate(Command):
         """
         try:
             index = 'node_info_index'
-            local_minion = None
             local_fqdn = socket.gethostname()
             cluster_args = ['name', 'site_count', 'storageset_count']
 
@@ -154,7 +153,6 @@ class ClusterCreate(Command):
             for idx, node in enumerate(nodes):
                 if node == local_fqdn:
                     nodes[idx] = f"srvnode-1:{node}"
-                    local_minion = 'srvnode-1'
                 else:
                     nodes[idx] = f"srvnode-{idx+1}:{node}"
 
@@ -189,7 +187,6 @@ class ClusterCreate(Command):
               f"Starting bootstrap process now with args: {kwargs}"
             )
             bootstrap_provisioner.BootstrapProvisioner()._run(**kwargs)
-            salt._local_minion_id = local_minion
             if SOURCE_PATH.exists():
                 self.logger.debug("Cleanup existing storage config on all nodes")
                 cmd_run(f"mv {SOURCE_PATH} {DEST_PATH}")
@@ -208,9 +205,8 @@ class ClusterCreate(Command):
             self.logger.debug("Creating service user")
             create_service_user.CreateServiceUser.run(user="cortxub")
 
-            node_id = 'srvnode-1'
             self.logger.debug("Setting up Cluster ID on the system")
-            cmd_run('provisioner cluster_id', targets=node_id)
+            cluster_id.ClusterId().run()
 
             self.logger.debug("Encrypting config data")
             EncryptSecrets().run()
@@ -222,7 +218,7 @@ class ClusterCreate(Command):
             # TODO: move this to time.py after encryption issue
             self.logger.debug("Setting time on node with server & timezone")
 
-            # node_id = local_minion_id()
+            node_id = local_minion_id()
             NodePrepareTime().set_server_time()
             machine_id = get_machine_id(node_id)
             enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
