@@ -33,7 +33,8 @@ from provisioner.pillar import (
     PillarResolver
 )
 from provisioner.commands._basic import (
-    CommandParserFillerMixin
+    CommandParserFillerMixin,
+    RunArgsBase
 )
 
 from .release import CortxRelease
@@ -65,7 +66,7 @@ class GetRelease(CommandParserFillerMixin):
     @property
     def installed_rpms(self) -> List:
         if self._installed_rpms is None:
-            exclude_rpms = 'cortx-py|prvsnr-cli|cortx-sspl-test'
+            exclude_rpms = config.EXCLUDE_RPMS_RELEASE_VERSION
             res = cmd_run(
                 f"rpm -qa|grep '^cortx-'|grep -Ev '{exclude_rpms}'",
                 targets=local_minion_id()
@@ -130,16 +131,16 @@ class GetRelease(CommandParserFillerMixin):
 @attr.s(auto_attribs=True)
 class GetReleaseLegacy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = None
+    _run_args_type = RunArgsBase
 
-    def run(self):
+    def run(self, targets):
         return json.dumps(GetRelease().run(factory=False))
 
 
 @attr.s(auto_attribs=True)
 class GetFactoryLegacy(CommandParserFillerMixin):
     input_type: Type[inputs.NoParams] = inputs.NoParams
-    _run_args_type = None
+    _run_args_type = RunArgsBase
 
-    def run(self):
+    def run(self, targets):
         return json.dumps(GetRelease().run(factory=True))
