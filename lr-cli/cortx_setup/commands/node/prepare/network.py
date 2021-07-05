@@ -64,6 +64,12 @@ class NodePrepareNetwork(Command):
             'optional': True,
             'default': "",
             'help': 'IP address'
+        },
+        'mtu': {
+            'type': str,
+            'optional': True,
+            'default': "",
+            'help': 'mtu'
         }
     }
 
@@ -140,6 +146,7 @@ class NodePrepareNetwork(Command):
                         mgmt_public_ip=ip_address,
                         mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
+                        mgmt_mtu=mtu,
                         local=True
                     )
                 elif network_type == 'data':
@@ -147,11 +154,13 @@ class NodePrepareNetwork(Command):
                         data_public_ip=ip_address,
                         data_netmask=netmask,
                         data_gateway=gateway,
+                        data_mtu=mtu,
                         local=True
                     )
                 elif network_type == 'private':
                     set_private_data_network(
                         data_private_ip=ip_address,
+                        data_mtu=mtu,
                         local=True
                     )
             except Exception as ex:
