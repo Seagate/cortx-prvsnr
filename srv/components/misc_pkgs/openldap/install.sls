@@ -15,19 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Install openldap pkgs:
-  pkg.installed:
-    - pkgs:
-      - symas-openldap
-    {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
-      - symas-openldap-servers
-    {% endif %}
-      - symas-openldap-clients
-
-Update to latest selinux-policy:
-  pkg.installed:
-    - name: selinux-policy
-
 # FIXME EOS-12076 the following steps are about configuration, not installation
 
 {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
