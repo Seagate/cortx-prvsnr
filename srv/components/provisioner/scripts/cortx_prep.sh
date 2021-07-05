@@ -357,7 +357,6 @@ main()
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
     echo "PATH=${PATH}:/usr/local/bin" >> /root/.bashrc
-    echo "CORTX_RELEASE_REPO=$repo_url" >> /etc/environment
     export PATH="${PATH}:/usr/local/bin"
     export CORTX_RELEASE_REPO="$repo_url"
     echo "Done" | tee -a "${LOG_FILE}"
