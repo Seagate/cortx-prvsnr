@@ -188,12 +188,8 @@ install_dependency_pkgs()
         "glusterfs-client"
     )
     for pkg in ${dependency_pkgs[@]}; do
-        if rpm -qi --quiet "$pkg"; then
-            echo -e "\tPackage $pkg is already installed."
-        else
-            echo -e "\tInstalling $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q "$pkg" >> "${LOG_FILE}" 2>&1
-        fi
+        echo -e "\tInstalling $pkg" | tee -a "${LOG_FILE}"
+        yum install --nogpgcheck -y -q "$pkg" >> "${LOG_FILE}" 2>&1
     done
 
     if [[ -d "/opt/nodejs/node-v12.13.0-linux-x64" ]]; then
@@ -241,12 +237,8 @@ install_cortx_pkgs()
     )
 
     for pkg in ${cortx_pkgs[@]}; do
-        if rpm -qi --quiet "$pkg"; then
-            echo -e "\tPackage $pkg is already installed." | tee -a "${LOG_FILE}"
-        else
-            echo -e "\tInstalling $pkg" | tee -a "${LOG_FILE}"
-            yum install --nogpgcheck -y -q "$pkg" 2>&1 >> "${LOG_FILE}"
-        fi
+        echo -e "\tInstalling $pkg" | tee -a "${LOG_FILE}"
+        yum install --nogpgcheck -y -q "$pkg" 2>&1 >> "${LOG_FILE}"
     done
 
     if ! command -v cortx_setup; then
