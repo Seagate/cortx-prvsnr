@@ -686,6 +686,14 @@ class PrivateDataNetwork(ParamGroupInputBase):
         _param_group, descr="node data network mtu",
         default=1500
     )
+    data_gateway: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data gateway IP",
+        validator=Validation.check_ip4
+    )
+    data_netmask: str = ParamGroupInputBase._attr_ib(
+        _param_group, descr="node data interface netmask",
+        validator=Validation.check_ip4
+    )
 
 
 class ReleaseParams():
