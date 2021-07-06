@@ -779,3 +779,5 @@ MiniAPIHooks = Enum(
     ),
     module=__name__
 )
+
+EXCLUDE_RPMS_RELEASE_VERSION = 'prvsnr-cli|cortx-sspl-test'
