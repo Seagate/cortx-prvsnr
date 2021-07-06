@@ -133,8 +133,8 @@ class NodePrepareNetwork(Command):
                                 targets=node_id)[f'{node_id}']
             if not server_type:
                 raise Exception("server_type missing in grains")
-            mtu = '9000' if server_type == 'physical' else '1500'
-
+            mtu = '1500' if server_type == 'virtual' or network_type == 'management' else '9000'
+            
             config_method = 'Static' if ip_address else 'DHCP'
             self.logger.debug(
                 f"Configuring {network_type} network using {config_method} method"
