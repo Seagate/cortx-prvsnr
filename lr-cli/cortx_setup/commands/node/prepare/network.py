@@ -27,7 +27,7 @@ from provisioner import (
     set_public_data_network,
     set_private_data_network
 )
-from provisioner.salt import local_minion_id
+from provisioner.salt import local_minion_id, function_run
 from cortx.utils.conf_store import Conf
 
 
@@ -129,6 +129,12 @@ class NodePrepareNetwork(Command):
 
         if network_type is not None:
 
+            server_type = function_run('grains.get', fun_args=['virtual'],
+                                targets=node_id)[f'{node_id}']
+            if not server_type:
+                raise Exception("server_type missing in grains")
+            mtu = '9000' if server_type == 'physical' else '1500'
+
             config_method = 'Static' if ip_address else 'DHCP'
             self.logger.debug(
                 f"Configuring {network_type} network using {config_method} method"
@@ -140,6 +146,7 @@ class NodePrepareNetwork(Command):
                         mgmt_public_ip=ip_address,
                         mgmt_netmask=netmask,
                         mgmt_gateway=gateway,
+                        mgmt_mtu=mtu,
                         local=True
                     )
                 elif network_type == 'data':
@@ -147,11 +154,13 @@ class NodePrepareNetwork(Command):
                         data_public_ip=ip_address,
                         data_netmask=netmask,
                         data_gateway=gateway,
+                        data_mtu=mtu,
                         local=True
                     )
                 elif network_type == 'private':
                     set_private_data_network(
                         data_private_ip=ip_address,
+                        data_mtu=mtu,
                         local=True
                     )
             except Exception as ex:
