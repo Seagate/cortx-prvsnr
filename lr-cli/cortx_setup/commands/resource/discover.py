@@ -31,7 +31,7 @@ class ResourceDiscover(Command):
         self.logger.debug("Running resource discover command")
         # Currently since this is a bug once fixed (EOS-20937)
         # we wont be needing to provide any parameter
-        request_id = int(Discovery.generate_node_health(rpath=resource_type))
+        request_id = Discovery.generate_node_health(rpath=resource_type)
         self.logger.debug(f"Requestid for resource map - {request_id}")
 
         while retries > 0:

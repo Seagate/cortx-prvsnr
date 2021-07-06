@@ -59,7 +59,7 @@ Hostsfile update for data interfaces:
         {{ grains['ip4_interfaces']['data0'][0] }}    {{ srvnode }}    {{ srvnode }}.data.public
         {%- else %}
           {%- if pillar['cluster'][srvnode]['network']['data']['public_ip'] %}
-        {{ pillar['cluster'][srvnode]['network']['data']['public_ip'] }}    {{ srvnode }}    {{ srvnode }}.data.public
+        {{ pillar['cluster'][srvnode]['network']['data']['public_ip'] }}    {{ srvnode }}.data.public
           {%- else %}
         {{ ip_data[pillar['cluster'][srvnode]['network']['data']['public_interfaces'][0]][0] }}    {{ srvnode }}.data.public
           {%- endif %}

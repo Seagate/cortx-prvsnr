@@ -22,6 +22,8 @@ from provisioner.vendor import attr
 from provisioner.salt import cmd_run,local_minion_id
 from provisioner.config import ALL_MINIONS
 from provisioner.api import grains_get
+import psutil
+
 logger = logging.getLogger(__name__)
 
 
@@ -119,6 +121,37 @@ class ConfigValidator:
                         f"Applying config for {node_count}-node setup"
                     )
 
+        except Exception as exc:
+            raise ValueError(f"Config Failed to apply: {str(exc)}")
+
+    def _validate_null_values(self,config):
+        try:
+            for section in config.sections():
+                for option in config.options(section):
+                    if not config.get(section, option):
+                        raise ValueError(
+                            f"'{option}' has no value passed in config.ini under section : '{section}' "
+                        )
+        except Exception as exc:
+            raise ValueError(f"Config Failed to apply: {str(exc)}")
+
+    def _validate_config_interfaces(self,config):
+        try:
+            for section in config.sections() :
+                if ("srvnode" in section):
+                    if (config.has_option(section,'network.data.private_interfaces')):
+                        machine_interface = psutil.net_if_addrs()
+                        user_interfaces = config[section]['network.data.private_interfaces'].split(",")
+                        user_interfaces.extend(config[section]['network.data.public_interfaces'].split(","))
+                        user_interfaces.extend(config[section]['network.mgmt.interfaces'].split(","))
+                        if (set(interface in machine_interface for interface in user_interfaces) == set([True])) :
+                            logger.debug(
+                                "Success: Interfaces Validation done. "
+                            )
+                        else :
+                            raise ValueError(
+                                f"incorrect interfaces passed in config.ini under section : '{section}' "
+                            )
         except Exception as exc:
             raise ValueError(f"Config Failed to apply: {str(exc)}")
 
