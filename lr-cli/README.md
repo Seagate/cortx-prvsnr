@@ -28,21 +28,21 @@ In field it apply network, firewall, ntp and storage changes to each node.
 It is responsible to create cortx cluster as well.
 
 1. main.py: This is entry point for cortx setup commands.
-2. api_spec.yaml: This file incluse mapping of command with actual python class
-3. config.py: Include configuration of cortx setup commands
-4. setup.py: This file is used to bundle cortx_setup command and installed using pip
-5. logs.py: Handled logging for all commands will be available on console and `/var/log/seagate/provisioner/nodecli.log`
-6. validate.py: common validation function example for ipv4, hostnames etc
-7. commands: This folder contain actual implementation of commands
+2. api_spec.yaml: This file include mapping of command with actual python class.
+3. config.py: Include common configs of cortx setup commands.
+4. setup.py: This file is used to bundle cortx_setup command and installed using pip.
+5. logs.py: Handled logging for all commands & logs will be available on console and `/var/log/seagate/provisioner/nodecli.log`.
+6. validate.py: common validation functions, for example: ipv4, hostnames etc.
+7. commands: This folder contains actual implementation of commands.
 
 
 ## Usage examples
 ## CLI
-CLI wraps cortx_setup api. Please refer to its usage help `cortx_setup --help` for more details
+CLI wraps cortx_setup CLI. Please refer to its usage help `cortx_setup --help` for more details
 
 
 ```
-$ cortx_setup -h
+$ cortx_setup --help
 usage: cortx_setup CLI  [-h]
                         {hostname,pillar_sync,salt_cleanup,server,network,node,cluster,resource,security,signature,storage,storageset,enclosure,prepare_confstore}
                         ...
