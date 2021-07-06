@@ -19,9 +19,12 @@ from pathlib import Path
 from ..command import Command
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
-from cortx_setup.commands.common_utils import get_machine_id
+from cortx_setup.commands.common_utils import (
+    get_machine_id,
+    get_pillar_data,
+    encrypt_secret
+)
 from cortx_setup.validate import ipv4
-from cortx_setup.commands.common_utils import get_pillar_data
 from collections import OrderedDict
 from provisioner.commands import PillarSet
 from provisioner.salt import cmd_run, local_minion_id
@@ -187,7 +190,7 @@ class StorageEnclosureConfig(Command):
         )
 
         if(key=='password'):
-            value = self.encrypt_password(value)
+            value = encrypt_secret(value, "storage_enclosure", self.enclosure_id)
 
         if key == "cvg":
             value = str(value)
@@ -206,17 +209,6 @@ class StorageEnclosureConfig(Command):
         file = open(enc_file_path, "w")
         file.write(self.enclosure_id)
         file.close()
-
-    def encrypt_password(self, password):
-        """Returns encrypted password as string"""
-
-        cipher_key = Cipher.generate_key(self.enclosure_id, "storage")
-        return str(
-            Cipher.encrypt(
-                cipher_key, bytes(password, 'utf-8')
-            ),
-            'utf-8'
-        )
 
     def run(self, **kwargs):
         # valid combinations for cortx_setup storage config

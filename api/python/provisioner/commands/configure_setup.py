@@ -278,6 +278,7 @@ class ConfigureSetup(CommandParserFillerMixin):
             f"Config data read from config.ini: \n{content}"
         )
 
+
         # Parse config sections
         parsed = validate._parse_sections(content)
 
@@ -286,8 +287,11 @@ class ConfigureSetup(CommandParserFillerMixin):
             number_of_nodes, parsed
         )
 
+        #validate blank values
+        validate._validate_null_values(config)
 
         #validate network interfaces and data-matadata devices from config.ini
+        validate._validate_config_interfaces(config)
         validate._validate_config_devices(config)
 
         # Process default sections

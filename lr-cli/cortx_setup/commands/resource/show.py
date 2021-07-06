@@ -75,7 +75,7 @@ class ResourceShow(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Resource type for which resource map is to be fetched e.g node>compute[0]>hw>disks or node>compute[0]'
+            'help': "Resource type for which resource map is to be fetched e.g 'node>compute[0]>hw>disks' or 'node>compute[0]' or 'node>storage[0]>hw>controllers'"
         },
         'resource_state': {
             'type': str,
