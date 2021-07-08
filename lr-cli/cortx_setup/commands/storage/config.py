@@ -238,11 +238,11 @@ class StorageEnclosureConfig(Command):
         data_devices = []
         input_data_devices = kwargs.get('data_devices')
         if input_data_devices:
-            data_devices = input_data_devices.split(",")
+            data_devices = [device for device in input_data_devices.split(",") if device and len(device) > 1]
         metadata_devices = []
         input_metadata_devices = kwargs.get('metadata_devices')
         if input_metadata_devices:
-            metadata_devices = input_metadata_devices.split(",")
+            metadata_devices = [device for device in input_metadata_devices.split(",") if device and len(device) > 1]
 
         self.machine_id = get_machine_id(node_id)
         self.refresh_key_map()
