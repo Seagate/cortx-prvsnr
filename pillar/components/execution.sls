@@ -27,7 +27,9 @@ execution:
       - system.logrotate
     prerequisites:
       - misc_pkgs.sos
+      {% if "physical" in grains['virtual'] %}
       - misc_pkgs.ipmi.bmc_watchdog
+      {% endif %}
       - misc_pkgs.ssl_certs
       - ha.haproxy
       - misc_pkgs.openldap
