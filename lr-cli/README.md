@@ -37,7 +37,6 @@ It is responsible to create cortx cluster as well.
 ## Usage examples
 CLI wraps cortx_setup CLI. Please refer to its usage help `cortx_setup --help` for more details
 
-
 ```sh
 $ cortx_setup --help
 usage: cortx_setup CLI  [-h]
@@ -54,12 +53,12 @@ optional arguments:
 
 ## Hostname configuration
 
-```
+```sh
 cortx_setup node prepare network --hostname <hostname>
 ```
 
 ## Server configuration
-```
+```sh
 cortx_setup server config --name <server-name> --type {VM|HW}
 ```
 
