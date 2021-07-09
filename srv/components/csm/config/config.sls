@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-{% if not "physical" in grains['virtual'] %}
+{% if "primary" in grains['roles'] %}
 Register features to be unsuported:
   module.run:
     - cortx_unsupported_features.register:
