@@ -19,7 +19,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='cortx_setup',
+    name='cortx-setup',
     version='2.0.0',
     author='Seagate',
     author_email='support@seagate.com',
