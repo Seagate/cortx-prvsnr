@@ -192,7 +192,6 @@ $fpm_tool --input-type "python" \
     --verbose \
     --python-install-lib "/usr/lib/python3.6/site-packages" \
     --python-install-bin "/usr/bin" \
-    --python-package-name-prefix "python36" \
     --python-bin "python3" \
     --python-disable-dependency salt \
     --python-disable-dependency Jinja2 \
