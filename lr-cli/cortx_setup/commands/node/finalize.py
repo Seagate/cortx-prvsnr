@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from cortx_setup.config import CERT_PATH, HEALTH_PATH, MANIFEST_PATH
+from cortx_setup.config import CERT_PATH, HEALTH_PATH # , MANIFEST_PATH
 from provisioner.salt import local_minion_id
 from provisioner.values import MISSED
 from cortx_setup.validate import CortxSetupError, interfaces, disk_devices
@@ -36,11 +36,12 @@ class NodeFinalize(Command):
 
     def _validate_health_map(self):
         self.logger.debug("Validating node health check")
-        resource_paths = [HEALTH_PATH, MANIFEST_PATH]
+        resource_paths = [HEALTH_PATH]    #[HEALTH_PATH, MANIFEST_PATH]
         for resource in resource_paths:
             path = get_pillar_data(resource)
             if not path or path is MISSED:
                 raise CortxSetupError(f"{resource} resource is not configured")
+            path = path.split('://')[1]
             if not Path(path).is_file():
                 raise CortxSetupError(f"Validation failed: "
                                       f"File not present {path}")
