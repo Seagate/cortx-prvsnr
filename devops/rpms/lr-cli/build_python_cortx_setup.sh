@@ -20,7 +20,7 @@
 set -eu
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-repo_root_dir="$(realpath $script_dir/../../../)"
+repo_root_dir="$(realpath "$script_dir"/../../../)"
 docker_image_name="seagate/cortx-prvsnr:fpm"
 
 in_docker=false
@@ -169,14 +169,14 @@ popd
 if [[ "$in_docker" == true ]]; then
     docker_build_dir="${tmp_dir}/docker"
 
-    pushd $script_dir
+    pushd "$script_dir"
         mkdir "$docker_build_dir"
         cp "${repo_root_dir}/images/docker/setup_fpm.sh" Dockerfile "$docker_build_dir"
         docker build -t $docker_image_name "$docker_build_dir"
     popd
 
-    input_dir="$(realpath $input_dir)"
-    output_dir="$(realpath $output_dir)"
+    input_dir="$(realpath "$input_dir")"
+    output_dir="$(realpath "$output_dir")"
     fpm_tool="docker run --rm -u $(id -u):$(id -g) -v $input_dir:/tmp/in -v $output_dir:/tmp/out $docker_image_name"
     input_dir="/tmp/in"
     output_dir="/tmp/out"
@@ -202,7 +202,7 @@ $fpm_tool --input-type "python" \
     --before-install "$input_dir/install_scripts/pre_setup.sh" \
     --after-install "$input_dir/install_scripts/post_setup.sh" \
     --package "${output_dir}" \
-    $iteration \
+    "$iteration" \
     "${input_dir}"
 
 # TODO remove it anyway even if some upper fails (kind of finally routine)
