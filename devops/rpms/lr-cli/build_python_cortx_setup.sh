@@ -202,7 +202,7 @@ $fpm_tool --input-type "python" \
     --before-install "$input_dir/install_scripts/pre_setup.sh" \
     --after-install "$input_dir/install_scripts/post_setup.sh" \
     --package "${output_dir}" \
-    "$iteration" \
+    $iteration \
     "${input_dir}"
 
 # TODO remove it anyway even if some upper fails (kind of finally routine)
