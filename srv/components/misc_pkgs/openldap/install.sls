@@ -15,6 +15,29 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+{% set ldap_pkgs = ['symas-openldap', 'symas-openldap-clients'] -%}
+{% for ldap_pkg in ldap_pkgs %}
+{% if not salt['cmd.run']('rpm -qa {{ ldap_pkg }}') %}
+
+Install openldap pkg {{ ldap_pkg }}:
+  pkg.installed:
+    - pkgs:
+      - {{ ldap_pkg }}
+    {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
+      - symas-openldap-servers
+    {% endif %}
+
+{%- else -%}
+OpenLDAP pkg {{ ldap_pkg }} already installed:
+  test.show_notification:
+    - text: "OpenLDAP dependent package {{ ldap_pkg }} is already installed"
+{% endif %}
+{% endfor %}
+
+Update to latest selinux-policy:
+  pkg.installed:
+    - name: selinux-policy
+
 # FIXME EOS-12076 the following steps are about configuration, not installation
 
 {% if "openldap_server" in pillar["cluster"][grains['id']]["roles"] %}
