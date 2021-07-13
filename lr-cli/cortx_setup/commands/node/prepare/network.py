@@ -27,8 +27,9 @@ from provisioner import (
     set_public_data_network,
     set_private_data_network
 )
-from provisioner.salt import local_minion_id, function_run
+from provisioner.salt import local_minion_id, function_run, StatesApplier
 from cortx.utils.conf_store import Conf
+from provisioner.commands import PillarSet
 
 
 class NodePrepareNetwork(Command):
@@ -64,7 +65,21 @@ class NodePrepareNetwork(Command):
             'optional': True,
             'default': "",
             'help': 'IP address'
-        }
+        },
+        'dns_servers': {
+            'type': str,
+            'nargs': '+',
+            'optional': True,
+            'default': "",
+            'help': 'DNS server'
+        },
+        'search_domains': {
+            'type': host,
+            'nargs': '+',
+            'optional': True,
+            'default': "",
+            'help': 'Search domain list'
+        },
     }
 
     def update_network_confstore(self, network_type, key, value, target):
@@ -97,7 +112,7 @@ class NodePrepareNetwork(Command):
             )
 
     def run(self, hostname=None, network_type=None, gateway=None, netmask=None,
-        ip_address=None
+        ip_address=None, dns_servers=None, search_domains=None
     ):
 
         """Network prepare execution method.
@@ -105,7 +120,8 @@ class NodePrepareNetwork(Command):
         Execution:
         `cortx_setup node prepare network --hostname <hostname>`
         `cortx_setup node prepare network --type <type> --ip_address <ip_address>
-                --netmask <netmask> --gateway <gateway>`
+                --netmask <netmask> --gateway <gateway> --dns_servers <dns server>
+		--search_domains <search domains>`
         """
 
         node_id = local_minion_id()
@@ -178,6 +194,21 @@ class NodePrepareNetwork(Command):
                 self.update_network_confstore(
                     network_type=network_type, key='gateway', value=gateway, target=node_id
                 )
+        for key, val in {'dns_servers': dns_servers, 'search_domains': search_domains}.items():
+            if val:
+                self.logger.debug(f"Setting up system {key} to {val}")
+                conf_key = f'cluster>networks>{key}'
+                Conf.set(
+                    'node_prepare_index', conf_key, val)
+                PillarSet().run(f'cluster/{key}', val, local=True)
+        function_run('saltutil.refresh_pillar', targets=node_id)
+        if dns_servers and search_domains:
+            StatesApplier.apply(
+                ["components.system.network.resolv_conf"],
+                local_minion_id()
+            )
 
         Conf.save('node_prepare_index')
+        # call state applyer if dns n search doma:wq
+
         self.logger.debug("Done")
