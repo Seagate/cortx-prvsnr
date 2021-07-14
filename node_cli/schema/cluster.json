@@ -1,0 +1,48 @@
+{
+  "name": "cluster",
+  "description": "Cluster commands",
+  "sub_commands": [
+    {
+      "name": "show",
+      "description": "CLuster show command",
+      "permissions_tag": "bypass",
+      "args": [
+           {
+              "flag": "args",
+              "default": [],
+              "suppress_help": true,
+              "nargs": "?",
+              "help": ""
+           },
+           {
+              "flag": "-f",
+              "dest": "format",
+              "help": "Format of Output",
+              "default": "table",
+              "type": "str",
+              "choices": [
+              "table",
+              "xml",
+              "json"
+              ]
+            }
+      ],
+      "comm": {
+              "type": "direct",
+              "target": "cortx_setup.commands",
+              "method": "run",
+              "class": "ClusterShow"
+           },
+      "output": {
+        "table": {
+          "headers": {
+            "cluster_nodes": "cluster nodes",
+            "non_cluster_nodes": "non cluster nodes"
+          }
+        }
+      }
+
+
+   }
+ ]
+}
