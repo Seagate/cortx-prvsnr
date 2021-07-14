@@ -59,11 +59,6 @@ class NodeCli(Cmd):
     def emptyline(self):
         pass
 
-    def precmd(self, command):
-        if command.strip():
-            self.args = shlex.split(command)
-        return command
-
     def process_direct_command(self, command):
         obj = CliClient()
         response = obj.call(command)
@@ -76,6 +71,8 @@ class NodeCli(Cmd):
 
     def default(self, cmd):
         try:
+            if cmd.strip():
+                self.args = shlex.split(cmd)
             parent = Path(__file__).resolve().parent
             cmd_dir = str(Path(parent / 'schema'))
             # permission to fit in cli framework
