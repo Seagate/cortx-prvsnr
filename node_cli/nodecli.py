@@ -86,7 +86,7 @@ class NodeCli(Cmd):
             channel_name = f"""process_{command.comm.get("type", "")}_command"""
             if not hasattr(self, channel_name):
                 err_str = f"Invalid communication protocol {command.comm.get('type','')} selected."
-                sys.stderr(err_str)
+                raise Exception(err_str)
             getattr(self, channel_name)(command)
             Log.debug(f"{cmd}: Command executed")
         except SystemExit:
@@ -96,6 +96,7 @@ class NodeCli(Cmd):
             self.do_exit()
         except Exception as e:
             Log.critical(f"{e}")
+            print(str(e))
 
     def do_exit(self, args=""):
         sys.exit()
