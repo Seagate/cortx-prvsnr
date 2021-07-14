@@ -69,10 +69,10 @@ class NodeCli(Cmd):
             command.process_response(out=sys.stdout, err=sys.stderr,
                                      response=response)
 
-    def default(self, cmd):
+    def default(self, line):
         try:
-            if cmd.strip():
-                self.args = shlex.split(cmd)
+            if line.strip():
+                self.args = shlex.split(line)
             parent = Path(__file__).resolve().parent
             cmd_dir = str(Path(parent / 'schema'))
             # permission to fit in cli framework
@@ -85,7 +85,7 @@ class NodeCli(Cmd):
                 err_str = f"Invalid communication protocol {command.comm.get('type','')} selected."
                 raise Exception(err_str)
             getattr(self, channel_name)(command)
-            Log.debug(f"{cmd}: Command executed")
+            Log.debug(f"{line}: Command executed")
         except SystemExit:
             Log.debug(f" Command executed system exit")
         except KeyboardInterrupt:
