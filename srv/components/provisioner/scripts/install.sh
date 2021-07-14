@@ -77,7 +77,7 @@ parse_args()
                         echo "ERROR: Invalid URL provided: $repo_url" | tee -a "${LOG_FILE}"
                         exit 1
                     fi
-                    if ls -l
+                    #TODO: validate the directory structure of the mount path
                 else
                     #hosted repo, validate the url
                     connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$repo_url")
