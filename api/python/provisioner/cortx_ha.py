@@ -280,6 +280,10 @@ class ClusterManagerCortxAPI(ClusterManagerCortxBase):
     def cluster_unstandby(self):
         super().cluster_unstandby()
 
+    @_call_ha_api_carefully
+    def cluster_start(self):
+        super().cluster_start()
+
 
 class ClusterManagerBroker(ClusterManagerBase):
     _pcs = None
