@@ -236,7 +236,7 @@ class ClusterCreate(Command):
 
             self.logger.info("Environment set up! Proceeding to create a cluster..")
 
-            Conf.load(
+            self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
