@@ -70,14 +70,12 @@ class NodePrepareNetwork(Command):
             'type': str,
             'nargs': '+',
             'optional': True,
-            'default': "",
             'help': 'DNS server'
         },
         'search_domains': {
             'type': host,
             'nargs': '+',
             'optional': True,
-            'default': "",
             'help': 'Search domain list'
         },
     }
