@@ -20,7 +20,6 @@ import os
 import shlex
 from cmd import Cmd
 import pathlib
-from node_cli import config
 from pathlib import Path
 
 
@@ -100,9 +99,10 @@ class NodeCli(Cmd):
 
 
 if __name__ == '__main__':
-    sys.path.append(os.path.join(os.path.dirname(pathlib.Path(__file__)), '..', '..'))
-    sys.path.append(os.path.join(os.path.dirname(pathlib.Path(os.path.realpath(__file__))), '..', '..'))
+    sys.path.append(os.path.join(os.path.dirname(pathlib.Path(__file__)), '..'))
+    sys.path.append(os.path.join(os.path.dirname(pathlib.Path(os.path.realpath(__file__))), '..'))
     from cortx.utils.cli_framework.command_factory import CommandFactory
+    from node_cli import config
     from node_cli.client import CliClient
     from cortx.utils.log import Log
     try:
