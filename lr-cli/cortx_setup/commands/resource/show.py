@@ -96,8 +96,10 @@ class ResourceShow(Command):
             resource_map_path = get_pillar_data(
                 'provisioner/common_config/resource_map_path')
             resource_dict = self.parse_resource_file(resource_map_path)
-            resource_dict = self.filter_resource_type(
-                kwargs['resource_type'], resource_dict)
+
+            if kwargs['resource_type']:
+                resource_dict = self.filter_resource_type(
+                    kwargs['resource_type'], resource_dict)
 
             if kwargs['resource_state']:
                 resource_dict = self.resource_filter_status(
