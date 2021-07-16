@@ -57,7 +57,6 @@ from provisioner.cortx_ha import (
     cluster_stop,
     cluster_standby,
     cluster_start,
-    cluster_unstandby,
     is_cluster_healthy
 )
 
