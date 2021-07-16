@@ -33,7 +33,7 @@ class ResourceShow(Command):
             temp = []
             for i, _ in enumerate(resource_map):
                 if "health" in resource_map[i].keys():
-                    if resource_state in resource_map[i]['health']['status']:
+                    if resource_state.lower() in resource_map[i]['health']['status'].lower():
                         temp.append(resource_map[i])
             return temp
         else:
