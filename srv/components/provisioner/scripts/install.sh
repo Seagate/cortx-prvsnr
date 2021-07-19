@@ -17,11 +17,11 @@
 
 set -euE
 
-export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/node_prep.log}"
+export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/install.log}"
 mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 minion_id="srvnode-0"
-repo_url=
+repo_url="file:///mnt/cortx"
 nodejs_tar=
 use_local_repo=false
 
@@ -68,65 +68,88 @@ parse_args()
                 set -u
                 repo_url="$2"
                 shift 2
-                if echo "${repo_url}" | grep -q file; then
-                    # local iso path
-                    use_local_repo=true
-                    iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
-                    if [[ ! -d "${iso_mount_path}" ]]; then
-                        echo "ERROR: Invalid URL provided: $repo_url" | tee -a "${LOG_FILE}"
-                        exit 1
-                    fi
-                    # Validate the directory structure of the mount path
-                    # Validation for cortx iso
-                    if [[ ! -f "${iso_mount_path}/components/3rd_party/repodata/repomd.xml" ]]; then
-                        echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Could not find ${iso_mount_path}/components/3rd_party/repodata/repomd.xml" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components" | tee -a "${LOG_FILE}"
-                        exit 1
-                    fi
-                    if [[ ! -f "${iso_mount_path}/components/cortx_iso/repodata/repomd.xml" ]]; then
-                        echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Could not find ${iso_mount_path}/components/cortx_iso/repodata/repomd.xml" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components" | tee -a "${LOG_FILE}"
-                        exit 1
-                    fi
-                    if [[ ! -f "${iso_mount_path}/components/python_deps/index.html" ]]; then
-                        echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Could not find ${iso_mount_path}/components/python_deps/index.html" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components" | tee -a "${LOG_FILE}"
-                        exit 1
-                    fi
-
-                    # Validation for os iso
-                    if [[ ! -f "${iso_mount_path}/dependencies/repodata/repomd.xml" ]]; then
-                        echo "ERROR: Invalid Cortx-OS ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Could not find ${iso_mount_path}/dependencies/repodata/repomd.xml" | tee -a "${LOG_FILE}"
-                        echo "ERROR: Please ensure the Cortx-OS ISO is mounted at /mnt/cortx/dependencies" | tee -a "${LOG_FILE}"
-                        exit 1
-                    fi
-
-                else
-                    #hosted repo, validate the url
-                    repo_url_3rd_party="${repo_url}/3rd_party/repodata/repomd.xml"
-                    repo_url_cortx_iso="${repo_url}/cortx_iso/repodata/repomd.xml"
-                    repo_url_python_deps="${repo_url}/python_deps"
-                    for url in "${repo_url_3rd_party}" "${repo_url_cortx_iso}" "${repo_url_python_deps}"; do
-                        connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$url")
-                        if [[ "$connect_status" == 404 ]]; then
-                            echo "ERROR: Failed to connect to $url" | tee -a "${LOG_FILE}"
-                            echo "ERROR: Target URL provided is either unreachable or it doesn't point to the valid Cortx build" | tee -a "${LOG_FILE}"
-                            exit 1
-                        else
-                            echo "DEBUG: Valid url: $url" >> "${LOG_FILE}"
-                        fi
-                    done
-                fi
                 ;;
             -h|--help)
                 usage; exit 0;;
-            *) echo "Invalid option $1"; usage; exit 1;;
         esac
     done
+}
+
+validate_url()
+{
+    echo "DEBUG: Validating the url: ${repo_url}" >> "${LOG_FILE}"
+    if echo "${repo_url}" | grep -q file; then
+        # local iso path
+        use_local_repo=true
+        iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
+        if [[ ! -d "${iso_mount_path}" ]]; then
+            echo "ERROR: Invalid Cortx ISO mount point: $repo_url" | tee -a "${LOG_FILE}"
+            echo -e "ERROR: Please ensure the Cortx ISO is mounted at $repo_url/components"\
+                "& the OS ISO is mounted at $repo_url/dependencies.\n"\
+                "\tOR provide the path of the mounted ISOs using -t option: \n"\
+                "\t$ ./install.sh -t file:///mnt/path/to/iso/mount_dir" | tee -a "${LOG_FILE}"
+            exit 1
+        fi
+        # Validate the directory structure of the mount path
+        # Validation for cortx iso
+        if [[ ! -f "${iso_mount_path}/components/3rd_party/repodata/repomd.xml" ]]; then
+            echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+            echo "ERROR: Could not find ${iso_mount_path}/components/3rd_party/repodata/repomd.xml" | tee -a "${LOG_FILE}"
+            echo -e "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components\n"\
+                "\tOR provide the path of the mounted ISOs using -t option:\n"\
+                "\t$ ./install.sh -t file:///mnt/path/to/iso" | tee -a "${LOG_FILE}"
+            exit 1
+        fi
+        if [[ ! -f "${iso_mount_path}/components/cortx_iso/repodata/repomd.xml" ]]; then
+            echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+            echo "ERROR: Could not find ${iso_mount_path}/components/cortx_iso/repodata/repomd.xml" | tee -a "${LOG_FILE}"
+            echo -e "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components\n"\
+                "\tOR provide the path of the mounted ISOs using -t option:\n"\
+                "\t$ ./install.sh -t file:///mnt/path/to/iso" | tee -a "${LOG_FILE}"
+            exit 1
+        fi
+        if [[ ! -f "${iso_mount_path}/components/python_deps/index.html" ]]; then
+            echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+            echo "ERROR: Could not find ${iso_mount_path}/components/python_deps/index.html" | tee -a "${LOG_FILE}"
+            echo -e "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components\n"\
+                "\tOR provide the path of the mounted ISOs using -t option:\n"\
+                "\t$ ./install.sh -t file:///mnt/path/to/iso" | tee -a "${LOG_FILE}"
+            exit 1
+        fi
+        # Validation for os iso
+        if [[ ! -f "${iso_mount_path}/dependencies/repodata/repomd.xml" ]]; then
+            echo "ERROR: Invalid Cortx-OS ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+            echo "ERROR: Could not find ${iso_mount_path}/dependencies/repodata/repomd.xml" | tee -a "${LOG_FILE}"
+            echo -e "ERROR: Please ensure the Cortx-OS ISO is mounted at /mnt/cortx/dependencies\n"\
+                "\tOR provide the path of the mounted ISOs using -t option:\n"\
+                "\t$ ./install.sh -t file:///mnt/path/to/iso" | tee -a "${LOG_FILE}"
+            exit 1
+        fi
+    elif echo "${repo_url}" | grep -q http; then
+        #hosted repo, validate the url
+        repo_url_3rd_party="${repo_url}/3rd_party/repodata/repomd.xml"
+        repo_url_cortx_iso="${repo_url}/cortx_iso/repodata/repomd.xml"
+        repo_url_python_deps="${repo_url}/python_deps"
+        for url in "${repo_url_3rd_party}" "${repo_url_cortx_iso}" "${repo_url_python_deps}"; do
+            connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$url")
+            if [[ "$connect_status" == 404 ]]; then
+                echo "ERROR: Failed to connect to $url" | tee -a "${LOG_FILE}"
+                echo -e "ERROR: Target URL provided is either unreachable or it doesn't point to the valid Cortx build" | tee -a "${LOG_FILE}"
+                exit 1
+            else
+                echo "DEBUG: Valid url: $url" >> "${LOG_FILE}"
+            fi
+        done
+    else
+        echo "ERROR: Invalid target build provided" | tee -a "${LOG_FILE}"
+        echo -e "ERROR: Please ensure the Cortx-OS ISO is mounted at /mnt/cortx/dependencies\n"\
+            "\tOR provide the path of the mounted ISOs using -t option as shown below.\n"\
+            "\tinstall.sh -t file:///mnt/path/to/iso\n"\
+            "\tOR provide url for remotely hosted build repo\n"\
+            "\t$ ./install.sh -t http://hosted_repo_server.com/target_build" | tee -a "${LOG_FILE}"
+        exit 1
+    fi
+    echo "DEBUG: Validating the url: Done" >> "${LOG_FILE}"
 }
 
 config_local_salt()
@@ -256,7 +279,9 @@ name=Repository Base
 enabled=1
 EOF
 
-    mv -f /etc/pip.conf /etc/pip.conf.bkp || true
+    if [[ -f /etc/pip.conf ]]; then
+        mv -f /etc/pip.conf /etc/pip.conf.bkp || true
+    fi
     touch /etc/pip.conf
 cat <<EOF >/etc/pip.conf
 [global]
@@ -293,24 +318,46 @@ install_dependency_pkgs()
     echo -e "\tInstalling nodejs" | tee -a "${LOG_FILE}"
     if [[ -d "/opt/nodejs/node-v12.13.0-linux-x64" ]]; then
         echo "nodejs already installed" | tee -a "${LOG_FILE}"
-        return
-    fi
-    mkdir /opt/nodejs
-    if [[ $use_local_repo == "true" ]]; then
-        #local iso
-        nodejs_tar="${repo_url}/components/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
-        echo -e "\tDEBUG: Extracting the tarball: ${nodejs_tar}" >> "${LOG_FILE}"
-        tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"q
-        echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs" >> "${LOG_FILE}"
     else
-        #hosted repo
-        nodejs_tar="${repo_url}/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
-        echo -e "\tDEBUG: Downloading nodejs tarball: ${nodejs_tar}" >> "${LOG_FILE}"
-        wget -P /opt/nodejs "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
-        echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
-        tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"
-        echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs, removing the tarball" >> "${LOG_FILE}"
-        rm -rf "${nodejs_tar}"
+        mkdir -p /opt/nodejs
+        if [[ $use_local_repo == "true" ]]; then
+            #local iso
+            iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
+            nodejs_tar="${iso_mount_path}/components/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
+            echo -e "\tDEBUG: Extracting the tarball: ${nodejs_tar}" >> "${LOG_FILE}"
+            tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"q
+            echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs" >> "${LOG_FILE}"
+        else
+            #hosted repo
+            nodejs_tar="${repo_url}/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
+            echo -e "\tDEBUG: Downloading nodejs tarball: ${nodejs_tar}" >> "${LOG_FILE}"
+            wget -P /opt/nodejs "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
+            echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
+            tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"
+            echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs, removing the tarball" >> "${LOG_FILE}"
+            rm -rf "${nodejs_tar}"
+        fi
+    fi
+    if hostnamectl status | grep Chassis | grep -q server; then
+        echo "DEBUG: This is Hardware" >> "${LOG_FILE}"
+        if ! systemctl list-units | grep -q scsi-network-relay; then
+            echo -e "\tInstalling scsi-network-relay" | tee -a "${LOG_FILE}"
+            yum install --nogpgcheck -y -q scsi-network-relay >> "${LOG_FILE}" 2>&1
+        fi
+        echo -e "\tStarting the scsi-network-relay service" | tee -a "${LOG_FILE}"
+        try=0
+        max_tries=30
+        until systemctl list-units | grep scsi-network-relay; >/dev/null 2>&1
+        do
+            if [[ "$try" -gt "$max_tries" ]]; then
+                echo "ERROR: scsi-network-relay is not available" | tee -a "${LOG_FILE}"
+                echo "ERROR: Please install the appropriate package and try again" | tee -a "${LOG_FILE}"
+                exit 1
+            fi
+            try=$(( try + 1 ))
+            sleep 1
+        done
+        systemctl restart scsi-network-relay
     fi
     echo -e "\tInstalled all dependency packages successfully" | tee -a "${LOG_FILE}"
 }
@@ -387,32 +434,12 @@ main()
     echo "*********************************************************" | tee -a "${LOG_FILE}"
     echo "      Setting up the factory environment for Cortx       " | tee -a "${LOG_FILE}"
     echo "*********************************************************" | tee -a "${LOG_FILE}"
-    if hostnamectl status | grep Chassis | grep -q server; then
-        echo "DEBUG: This is Hardware" >> "${LOG_FILE}"
-
-        echo "Starting the scsi-network-relay service" | tee -a "${LOG_FILE}"
-        try=0
-        max_tries=30
-        until systemctl list-units | grep scsi-network-relay; >/dev/null 2>&1
-        do
-            if [[ "$try" -gt "$max_tries" ]]; then
-                echo "ERROR: scsi-network-relay is not available" | tee -a "${LOG_FILE}"
-                echo "ERROR: Please install the appropriate package and try again" | tee -a "${LOG_FILE}"
-                exit 1
-            fi
-            try=$(( try + 1 ))
-            sleep 1
-        done
-        systemctl restart scsi-network-relay
-
-#            setup_repos "$repo_url"
-    fi
+    validate_url
     if [[ "${use_local_repo}" == true ]]; then
         setup_repos_iso "$repo_url"
     else
         setup_repos_hosted "$repo_url"
     fi
-
     install_dependency_pkgs
     install_cortx_pkgs
     config_local_salt
