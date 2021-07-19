@@ -15,10 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-# Cortx Setup API for LR-Node Stamping Signature operations
-
-
-from pathlib import Path
 from ..command import Command
 
 # CORTX package

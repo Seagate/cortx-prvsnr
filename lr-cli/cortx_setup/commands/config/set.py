@@ -15,21 +15,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com."
 #
 
-# Cortx Setup API for LR-Node Stamping Signature operations
-
-
-# import subprocess  # noqa
-# from pathlib import Path
-# from time import sleep
-#
-# from ..command import Command
-
 # CORTX package
 from cortx.utils.conf_store import Conf
 from ..command import Command
 from cortx_setup.config import CONFSTORE_CLUSTER_FILE
-from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id, function_run, StatesApplier
 
 
 class SetConfiguration(Command):
