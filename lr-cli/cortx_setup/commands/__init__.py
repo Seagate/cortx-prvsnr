@@ -33,7 +33,7 @@ from .cluster.prepare import ClusterPrepare
 from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
-from .resource.discover import ResourceDiscover
+#from .resource.discover import ResourceDiscover
 from .node.prepare.firewall import NodePrepareFirewall
 from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
@@ -48,6 +48,8 @@ from .storageset.add.node import AddServerNode
 from .storageset.add.enclosure import AddStorageEnclosure
 from .storageset.config.durability import DurabilityConfig
 from .enclosure.refresh import RefreshEnclosureId
+from .config.set import SetConfiguration
+from .config.get import GetConfiguration
 
 
 __all__ = [
@@ -76,12 +78,14 @@ __all__ = [
     'NodePrepareStorage',
     'RefreshEnclosureId',
     'ResourceShow',
-    'ResourceDiscover',
+   # 'ResourceDiscover',
     'SecurityConfig',
     'ServerConfig',
     'SetSignature',
     'StorageEnclosureConfig',
     'SaltCleanup',
     'PrepareConfstore',
-    'PillarSync'
+    'PillarSync',
+    'SetConfiguration',
+    'GetConfiguration'
  ]

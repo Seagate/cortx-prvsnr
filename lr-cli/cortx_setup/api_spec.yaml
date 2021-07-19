@@ -71,8 +71,8 @@ cluster:
       ClusterConfigComponent
 
 resource:
-  discover:
-    ResourceDiscover
+ # discover:
+ #   ResourceDiscover
   show:
     ResourceShow
 
@@ -108,3 +108,9 @@ enclosure:
 
 prepare_confstore:
   PrepareConfstore
+
+config:
+  set:
+    SetConfiguration
+  get:
+    GetConfiguration
