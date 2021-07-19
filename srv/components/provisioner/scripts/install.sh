@@ -68,23 +68,58 @@ parse_args()
                 set -u
                 repo_url="$2"
                 shift 2
-                use_local_repo=false
                 if echo "${repo_url}" | grep -q file; then
                     # local iso path
                     use_local_repo=true
-                    iso_mount_path=echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
+                    iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
                     if [[ ! -d "${iso_mount_path}" ]]; then
                         echo "ERROR: Invalid URL provided: $repo_url" | tee -a "${LOG_FILE}"
                         exit 1
                     fi
-                    #TODO: validate the directory structure of the mount path
-                else
-                    #hosted repo, validate the url
-                    connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$repo_url")
-                    if [[ "$connect_status" == 404 ]]; then
-                        echo "ERROR: Target URL provided is invalid or unreachable" | tee -a "${LOG_FILE}"
+                    # Validate the directory structure of the mount path
+                    # Validation for cortx iso
+                    if [[ ! -f "${iso_mount_path}/components/3rd_party/repodata/repomd.xml" ]]; then
+                        echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Could not find ${iso_mount_path}/components/3rd_party/repodata/repomd.xml" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components" | tee -a "${LOG_FILE}"
                         exit 1
                     fi
+                    if [[ ! -f "${iso_mount_path}/components/cortx_iso/repodata/repomd.xml" ]]; then
+                        echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Could not find ${iso_mount_path}/components/cortx_iso/repodata/repomd.xml" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components" | tee -a "${LOG_FILE}"
+                        exit 1
+                    fi
+                    if [[ ! -f "${iso_mount_path}/components/python_deps/index.html" ]]; then
+                        echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Could not find ${iso_mount_path}/components/python_deps/index.html" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Please ensure the Cortx ISO is mounted at /mnt/cortx/components" | tee -a "${LOG_FILE}"
+                        exit 1
+                    fi
+
+                    # Validation for os iso
+                    if [[ ! -f "${iso_mount_path}/dependencies/repodata/repomd.xml" ]]; then
+                        echo "ERROR: Invalid Cortx-OS ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Could not find ${iso_mount_path}/dependencies/repodata/repomd.xml" | tee -a "${LOG_FILE}"
+                        echo "ERROR: Please ensure the Cortx-OS ISO is mounted at /mnt/cortx/dependencies" | tee -a "${LOG_FILE}"
+                        exit 1
+                    fi
+
+                else
+                    #hosted repo, validate the url
+                    repo_url_3rd_party="${repo_url}/3rd_party/repodata/repomd.xml"
+                    repo_url_cortx_iso="${repo_url}/cortx_iso/repodata/repomd.xml"
+                    repo_url_python_deps="${repo_url}/python_deps"
+                    for url in "${repo_url_3rd_party}" "${repo_url_cortx_iso}" "${repo_url_python_deps}"; do
+                        connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$url")
+                        if [[ "$connect_status" == 404 ]]; then
+                            echo "ERROR: Failed to connect to $url" | tee -a "${LOG_FILE}"
+                            echo "ERROR: Target URL provided is either unreachable or it doesn't point to the valid Cortx build" | tee -a "${LOG_FILE}"
+                            exit 1
+                        else
+                            echo "DEBUG: Valid url: $url" >> "${LOG_FILE}"
+                        fi
+                    done
                 fi
                 ;;
             -h|--help)
@@ -163,13 +198,19 @@ config_local_salt()
 setup_repos_hosted()
 {
     repo=$1
-    echo "Cleaning yum cache" | tee -a "${LOG_FILE}"
-    yum clean all >> "${LOG_FILE}"
-    rm -rf /var/cache/yum/* || true
+    for file in `grep -lE "cortx-storage.colo.seagate.com|file://" /etc/yum.repos.d/*.repo`; do
+        echo "DEBUG: Removing old repo file: $file" >> "${LOG_FILE}"
+        rm -f "$file"
+    done
+
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
     echo "Configuring the repository: ${repo}/cortx_iso" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/cortx_iso/" >> "${LOG_FILE}"
+
+    echo "Cleaning yum cache" | tee -a "${LOG_FILE}"
+    yum clean all || true >> "${LOG_FILE}"
+    rm -rf /var/cache/yum/* || true
 
     echo "DEBUG: Preparing the pip.conf" >> "${LOG_FILE}"
     cat << EOL > /etc/pip.conf
@@ -186,16 +227,16 @@ EOL
 setup_repos_iso()
 {
     mntpt="$1"
-    cortx_iso_mntdir="${mntpt}/cortx"
-    cortx_os_iso_mntdir="${mntpt}/cortx-os"
+    cortx_iso_mntdir="${mntpt}/components"
+    cortx_os_iso_mntdir="${mntpt}/dependencies"
     echo "DEBUG: Backing up exisitng repositories" >> "${LOG_FILE}"
-    mv /etc/yum.repos.d /etc/yum.repos.d.bak || true
-
-    echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
-    mkdir -p /etc/yum.repos.d && touch /etc/yum.repos.d/bootstrap.repo
+    time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
+    mv /etc/yum.repos.d /etc/yum.repos.d.${time_stamp} || true
+    echo "INFO: Creating cortx_iso.repo" 2>&1 | tee -a ${LOG_FILE}
+    mkdir -p /etc/yum.repos.d
     for repo in 3rd_party cortx_iso
     do
-cat >> /etc/yum.repos.d/bootstrap.repo <<EOF
+cat >> /etc/yum.repos.d/cortx_iso.repo <<EOF
 [$repo]
 baseurl=${cortx_iso_mntdir}/${repo}
 gpgcheck=0
@@ -205,9 +246,9 @@ enabled=1
 EOF
     done
 
-    echo "INFO: Creating base.repo" 2>&1 | tee -a ${LOG_FILE}
-    touch /etc/yum.repos.d/base.repo
-cat >> /etc/yum.repos.d/base.repo <<EOF
+    echo "INFO: Creating cortx_os.repo" 2>&1 | tee -a ${LOG_FILE}
+    touch /etc/yum.repos.d/cortx_os.repo
+cat >> /etc/yum.repos.d/cortx_os.repo <<EOF
 [Base]
 baseurl=${cortx_os_iso_mntdir}
 gpgcheck=0
@@ -257,7 +298,7 @@ install_dependency_pkgs()
     mkdir /opt/nodejs
     if [[ $use_local_repo == "true" ]]; then
         #local iso
-        nodejs_tar="${repo_url}/cortx/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
+        nodejs_tar="${repo_url}/components/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
         echo -e "\tDEBUG: Extracting the tarball: ${nodejs_tar}" >> "${LOG_FILE}"
         tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"q
         echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs" >> "${LOG_FILE}"
@@ -319,22 +360,23 @@ install_cortx_pkgs()
 setup_bash_env()
 {
     if [[ "$use_local_repo" == false ]]; then 
-    if grep -wq CORTX_RELEASE_REPO /root/.bashrc; then
-        line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /root/.bashrc | tail -1 | cut -d: -f1)
-        echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
-        sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /root/.bashrc
-    else
-        echo "CORTX_RELEASE_REPO=$repo_url" >> /root/.bashrc
+        if grep -wq CORTX_RELEASE_REPO /root/.bashrc; then
+            line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /root/.bashrc | tail -1 | cut -d: -f1)
+            echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
+            sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /root/.bashrc
+        else
+            echo "CORTX_RELEASE_REPO=$repo_url" >> /root/.bashrc
+        fi
+        # Also update /etc/.bashrc so as to have the same environment variable set for new users created
+        if grep -wq CORTX_RELEASE_REPO /etc/.bashrc; then
+            line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/.bashrc | tail -1 | cut -d: -f1)
+            echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
+            sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /etc/.bashrc
+        else
+            echo "export CORTX_RELEASE_REPO=$repo_url" >> /etc/.bashrc
+        fi
+        export CORTX_RELEASE_REPO="$repo_url"
     fi
-    # Also update /etc/.bashrc so as to have the same environment variable set for new users created
-    if grep -wq CORTX_RELEASE_REPO /etc/.bashrc; then
-        line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/.bashrc | tail -1 | cut -d: -f1)
-        echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
-        sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /etc/.bashrc
-    else
-        echo "export CORTX_RELEASE_REPO=$repo_url" >> /etc/.bashrc
-    fi
-    export CORTX_RELEASE_REPO="$repo_url"
 }
 
 main()
@@ -345,8 +387,6 @@ main()
     echo "*********************************************************" | tee -a "${LOG_FILE}"
     echo "      Setting up the factory environment for Cortx       " | tee -a "${LOG_FILE}"
     echo "*********************************************************" | tee -a "${LOG_FILE}"
-    #TODO: uncomment once ready
-    #    create_factory_user $user_name $uid $group $gid
     if hostnamectl status | grep Chassis | grep -q server; then
         echo "DEBUG: This is Hardware" >> "${LOG_FILE}"
 
@@ -365,14 +405,12 @@ main()
         done
         systemctl restart scsi-network-relay
 
-            setup_repos "$repo_url"
+#            setup_repos "$repo_url"
     fi
-    if [[ ! -z "$repo_url" ]]; then
+    if [[ "${use_local_repo}" == true ]]; then
         setup_repos_iso "$repo_url"
     else
-        echo "ERROR: target-build not provided, it's mandetary option for VM"
-        echo "ERROR: Please provide the target-build " | tee -a "${LOG_FILE}"
-        exit 1
+        setup_repos_hosted "$repo_url"
     fi
 
     install_dependency_pkgs
