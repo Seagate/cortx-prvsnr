@@ -7,3 +7,11 @@ cortx>software>corosync>user={{ pillar['cortx']['software']['corosync-pacemaker'
 cortx>software>common>message_bus_type=kafka
 cortx>release>setup={{ pillar['cortx']['release']['setup'] }}
 cortx>release>product={{ pillar['cortx']['release']['product'] }}
+{% if 'physical' in grains['virtual'] %}
+cortx>software>s3>service>instances=11
+cortx>software>s3>io>max_units=32
+{% else %}
+cortx>software>s3>service>instances=1
+cortx>software>s3>io>max_units=8
+{% endif %}
+cortx>software>motr>service>client_instances=2
