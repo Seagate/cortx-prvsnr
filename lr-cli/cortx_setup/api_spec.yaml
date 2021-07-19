@@ -71,8 +71,8 @@ cluster:
       ClusterConfigComponent
 
 resource:
- # discover:
- #   ResourceDiscover
+  discover:
+    ResourceDiscover
   show:
     ResourceShow
 

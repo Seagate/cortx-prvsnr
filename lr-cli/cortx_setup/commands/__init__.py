@@ -33,7 +33,7 @@ from .cluster.prepare import ClusterPrepare
 from .cluster.config.component import ClusterConfigComponent
 from .security.config import SecurityConfig
 from .resource.show import ResourceShow
-#from .resource.discover import ResourceDiscover
+from .resource.discover import ResourceDiscover
 from .node.prepare.firewall import NodePrepareFirewall
 from .node.prepare.network import NodePrepareNetwork
 from .node.prepare.time import NodePrepareTime
@@ -78,7 +78,7 @@ __all__ = [
     'NodePrepareStorage',
     'RefreshEnclosureId',
     'ResourceShow',
-   # 'ResourceDiscover',
+    'ResourceDiscover',
     'SecurityConfig',
     'ServerConfig',
     'SetSignature',
