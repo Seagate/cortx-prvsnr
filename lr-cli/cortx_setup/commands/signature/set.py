@@ -59,6 +59,10 @@ class SetSignature(Command):
             lr_sign_file = Path("/etc/node-signature.yaml")
             index = "signature"
 
+            # Remove additional trailing spaces
+            if value:
+                value = value.strip()
+
             if not (key and value):
                 raise ValueError(
                    "A valid signature is mandatory to set for stamping. "
