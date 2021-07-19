@@ -49,7 +49,7 @@ cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
 cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
 cp -R srv_ext %{buildroot}/opt/seagate/cortx/provisioner/srv_ext/
-
+cp -R srv/components/system/firewall/files/firewall_config.yaml %{buildroot}/opt/seagate/cortx_configs/
 
 %post
 # Set Permissions
