@@ -13,7 +13,7 @@ BuildRequires: python36-devel
 Requires: python36
 Requires: python36-cortx-prvsnr
 Requires: cortx-prvsnr
-Requires: cortx_setup
+Requires: python36-cortx-setup
 
 
 %description
