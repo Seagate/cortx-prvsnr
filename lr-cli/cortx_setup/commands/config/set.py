@@ -30,7 +30,7 @@ class SetConfiguration(Command):
             'help': 'Configuration key to set'
         },
         'value': {
-            'type': int,
+            'type': str,
             'default': None,
             'optional': True,
             'help': 'Configuration value to set'
@@ -50,12 +50,17 @@ class SetConfiguration(Command):
             raise ValueError(
                 "Invalid input. Expected Config param format: --key 'key' --value 'value'"
             )
-
+        if value.strip():
+            raise ValueError(
+                "Invalid input. Value should not be en empty string"
+            )
         Conf.load(
             'node_info_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )
         self.logger.debug(f"Updating confstore key {key} with value {value}")
+
+        value = int(value) if value.isdigit() else value
         Conf.set(
             'node_info_index',
             key,
