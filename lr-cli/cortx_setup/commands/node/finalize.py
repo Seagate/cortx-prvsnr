@@ -128,7 +128,7 @@ class NodeFinalize(Command):
         with specific permissions each
 
         """
-        user_secret = "Seagate123!"
+        # More Field users can be added to this list in future
         for user in ['nodeadmin', 'support']:
             home_dir = SEAGATE_USER_HOME_DIR / user
             Path(home_dir).mkdir(parents=True, exist_ok=True)
@@ -161,7 +161,7 @@ class NodeFinalize(Command):
                 'user.present',
                 fun_kwargs=dict(
                     name=user,
-                    password=user_secret,
+                    password="Seagate123!",
                     hash_password=True,
                     home=str(home_dir),
                     groups=[ugroup],
