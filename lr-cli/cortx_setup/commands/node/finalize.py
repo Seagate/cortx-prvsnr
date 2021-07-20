@@ -218,3 +218,4 @@ class NodeFinalize(Command):
                   "Field users created. Check logs for more details on the validations error..")
             else:
                 raise
+
