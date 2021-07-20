@@ -124,7 +124,7 @@ class NodePrepareNetwork(Command):
 
         node_id = local_minion_id()
         machine_id = get_machine_id(node_id)
-        Conf.load(
+        self.load_conf_store(
             'node_prepare_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )

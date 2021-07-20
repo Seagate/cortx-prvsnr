@@ -17,6 +17,7 @@
 
 from .. import config
 from ..log import Log
+from cortx.utils.conf_store import Conf
 
 
 class Command(object):
@@ -34,3 +35,16 @@ class Command(object):
 
     def get_args(self):
         return self._args
+
+    def load_conf_store(self, index, path):
+        try:
+            self.logger.debug(f"loading confstore index {index}: {path}")
+            Conf.load(
+                index,
+                path
+            )
+        except Exception as exc:
+            if "already exists" in str(exc):
+                self.logger.debug(f"Confstore Already loaded")
+            else:
+                raise exc
