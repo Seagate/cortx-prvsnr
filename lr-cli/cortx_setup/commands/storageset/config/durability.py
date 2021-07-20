@@ -71,7 +71,7 @@ class DurabilityConfig(Command):
             durability_type = kwargs['durability_type']
             cluster_id = get_cluster_id()
 
-            Conf.load(
+            self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )

@@ -53,7 +53,7 @@ class AddServerNode(Command):
             cluster_id = get_cluster_id()
             machine_id = []
 
-            Conf.load(
+            self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )

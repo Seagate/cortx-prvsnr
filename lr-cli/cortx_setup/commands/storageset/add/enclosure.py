@@ -57,7 +57,7 @@ class AddStorageEnclosure(Command):
             # so input is node-name: srvnode-1, srvnode-2.
             # Will/Should it be enclosure-1, enclosure-2 ?
 
-            Conf.load(
+            self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
