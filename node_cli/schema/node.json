@@ -7,31 +7,188 @@
       "description": "Node preparation",
       "permissions_tag": "bypass",
       "sub_commands": [
-         {
-           "name": "network",
-           "description": "Node network configuration",
-           "permissions_tag": "bypass",
-           "args": [
-           {
-             "flag": "--hostname",
-             "type": "str",
-             "help": "Specify the hostname for system"
-           },
-           {
+        {
+          "name": "network",
+          "description": "Node network configuration",
+          "permissions_tag": "bypass",
+          "args": [
+            {
+              "flag": "--hostname",
+              "type": "str",
+              "help": "Specify the hostname for system"
+            },
+            {
+              "flag": "--dns_servers",
+              "type": "str",
+              "nargs": "+",
+              "help": "specify DNS server names for system"
+            },
+            {
+              "flag": "--search_domains",
+              "type": "str",
+              "nargs": "+",
+              "help": "specify search domains list for system"
+            },
+            {
+              "flag": "--type",
+              "type": "str",
+              "dest": "network_type",
+              "choices": [
+                "data",
+                "private",
+                "management"
+              ],
+              "help": "Type of interface from (data, private, management)"
+            },
+            {
+              "flag": "--ip_address",
+              "type": "str",
+              "default": "",
+              "help": "Ip Address"
+            },
+            {
+              "flag": "--gateway",
+              "type": "str",
+              "default": "",
+              "help": "Gateway IP"
+            },
+            {
+              "flag": "--netmask",
+              "type": "str",
+              "default": "",
+              "help": "Netmask"
+            },
+            {
               "flag": "args",
               "default": [],
               "suppress_help": true,
               "nargs": "?",
               "help": ""
-           }
-           ],
-           "comm": {
-              "type": "direct",
-              "target": "cortx_setup.commands",
-              "method": "run",
-              "class": "NodePrepareNetwork"
-           }
-
+            }
+          ],
+          "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "NodePrepareNetwork"
+          }
+        },
+        {
+          "name": "server",
+          "description": "Node Server configuration",
+          "permissions_tag": "bypass",
+          "args": [
+            {
+              "flag": "--site_id",
+              "type": "str",
+              "help": "Site ID"
+            },
+            {
+              "flag": "--rack_id",
+              "type": "str",
+              "help": "Rack ID"
+            },
+            {
+              "flag": "--node_id",
+              "type": "str",
+              "help": "Node ID"
+            },
+            {
+              "flag": "args",
+              "default": [],
+              "suppress_help": true,
+              "nargs": "?",
+              "help": ""
+            }
+          ],
+          "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "NodePrepareServer"
+          }
+        },
+        {
+          "name": "firewall",
+          "description": "Firewall configuration",
+          "permissions_tag": "bypass",
+          "args": [
+            {
+              "flag": "--config",
+              "type": "str",
+              "help": "Specify path of firewall config file"
+            },
+            {
+              "flag": "args",
+              "default": [],
+              "suppress_help": true,
+              "nargs": "?",
+              "help": ""
+            }
+          ],
+          "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "NodePrepareFirewall"
+          }
+        },
+        {
+          "name": "time",
+          "description": "NTP and Time configuration",
+          "permissions_tag": "bypass",
+          "args": [
+            {
+              "flag": "--server",
+              "type": "str",
+              "help": "server name"
+            },
+            {
+              "flag": "--timezone",
+              "type": "str",
+              "default": "UTC",
+              "help": "Timezone"
+            },
+            {
+              "flag": "args",
+              "default": [],
+              "suppress_help": true,
+              "nargs": "?",
+              "help": ""
+            }
+          ],
+          "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "NodePrepareTime"
+          }
+        },
+        {
+          "name": "finalize",
+          "description": "Node Finalization",
+          "permissions_tag": "bypass",
+          "args": [
+            {
+              "flag": "--force",
+              "type": "bool",
+              "default": "False",
+              "help": "Over-ride finalize validation checks"
+            },
+            {
+              "flag": "args",
+              "default": [],
+              "suppress_help": true,
+              "nargs": "?",
+              "help": ""
+            }
+          ],
+          "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "NodePrepareFinalize"
+          }
         }
       ]
     }
