@@ -1,4 +1,4 @@
-Name:       node_cli
+Name:       cortx-node-cli
 Version:    %{_cortx_prvsnr_version}
 Release:    %{_build_number}.%{_cortx_prvsnr_git_ver}.%{?dist:el7}
 Summary:    NodeCLI rpm.

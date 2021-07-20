@@ -68,7 +68,7 @@ pushd ~/rpmbuild/SOURCES/
     rm -rf cortx-prvsnr*
 
     # Setup the source tar for rpm build
-    DEST_DIR="node_cli-${CORTX_PRVSNR_VERSION}-git${GIT_VER}"
+    DEST_DIR="cortx-node-cli-${CORTX_PRVSNR_VERSION}-git${GIT_VER}"
     mkdir -p "${DEST_DIR}"/{node_cli}
     cp -R "${BASEDIR}/../../../node_cli" "${DEST_DIR}"
 

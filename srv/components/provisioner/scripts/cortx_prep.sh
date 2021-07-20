@@ -238,7 +238,7 @@ install_cortx_pkgs()
         "udx-discovery"
         "stats_utils"
         "python36-cortx-setup"
-        "node_cli"
+        "cortx-node-cli"
     )
 
     for pkg in ${cortx_pkgs[@]}; do
