@@ -134,7 +134,7 @@ class NodeFinalize(Command):
             Path(home_dir).mkdir(parents=True, exist_ok=True)
 
             if "nodeadmin" in user:
-                ugroup = user
+                ugroup = "prvsnrusers"
                 user_permissions = [
                     '/usr/bin/nodecli',
                     '/var/log'
@@ -142,7 +142,7 @@ class NodeFinalize(Command):
                 default_login = "/usr/bin/nodecli"
             else:
                 ugroup = "wheel"
-                user_permissions = 'ALL'
+                user_permissions = ['ALL']
                 default_login = "/bin/sh"
 
             self.logger.debug(
@@ -214,7 +214,7 @@ class NodeFinalize(Command):
                     "Forcibly creating users.."
                 )
                 self._create_field_users(node_id)
-                self.logger.debug(
+                self.logger.info(
                   "Field users created. Check logs for more details on the validations error..")
             else:
                 raise
