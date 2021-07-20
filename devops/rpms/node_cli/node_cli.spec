@@ -1,7 +1,7 @@
-Name:       cortx-prvsnr
+Name:       cortx-node-cli
 Version:    %{_cortx_prvsnr_version}
 Release:    %{_build_number}.%{_cortx_prvsnr_git_ver}.%{?dist:el7}
-Summary:    CORTX Provisioning.
+Summary:    NodeCLI rpm.
 
 Group:      Tools
 License:    Seagate
@@ -11,17 +11,13 @@ Source:     %{name}-%{version}-%{_cortx_prvsnr_git_ver}.tar.gz
 BuildRequires: python36-devel
 
 Requires: python36
-Requires: python36-PyYAML
-Requires: python36-pip
-Requires: rsync
-#Requires: salt-master = 3002.2
-#Requires: salt-minion = 3002.2
-#Requires: salt-ssh
-#Requires: salt-syndic
+Requires: python36-cortx-prvsnr
+Requires: cortx-prvsnr
+Requires: python36-cortx-setup
 
 
 %description
-CORTX Provisioning to deploy CORTX Object storage software.
+NodeCLI rpm to deploy CORTX at Feild.
 
 
 %prep
@@ -44,15 +40,11 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/seagate/cortx/provisioner/{files,conf}
 
 # Copy files
-cp -R cli %{buildroot}/opt/seagate/cortx/provisioner
-cp -R pillar %{buildroot}/opt/seagate/cortx/provisioner
-cp -R srv %{buildroot}/opt/seagate/cortx/provisioner
-cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx/provisioner/conf/
-cp -R srv_ext %{buildroot}/opt/seagate/cortx/provisioner/srv_ext/
+cp -R node_cli %{buildroot}/opt/seagate/cortx/provisioner/node_cli/
 
 %post
 # Set Permissions
-/bin/chmod -R 754 /opt/seagate/cortx/provisioner/cli
+ln -sf /opt/seagate/cortx/provisioner/node_cli/nodecli.py /usr/bin/node_cli
 
 %clean
 rm -rf %{buildroot}
@@ -60,9 +52,4 @@ rm -rf %{buildroot}
 
 %files
 # %config(noreplace) /opt/seagate/cortx/provisioner/%{name}.yaml
-/opt/seagate/cortx/provisioner/conf
-/opt/seagate/cortx/provisioner/cli
-/opt/seagate/cortx/provisioner/files
-/opt/seagate/cortx/provisioner/pillar
-/opt/seagate/cortx/provisioner/srv
-/opt/seagate/cortx/provisioner/srv_ext
+/opt/seagate/cortx/provisioner/node_cli
