@@ -70,15 +70,13 @@ class NodePrepareNetwork(Command):
             'type': str,
             'nargs': '+',
             'optional': True,
-            'default': "",
-            'help': 'DNS server'
+            'help': 'List of DNS servers for the provided network, given space-separated'
         },
         'search_domains': {
             'type': host,
             'nargs': '+',
             'optional': True,
-            'default': "",
-            'help': 'Search domain list'
+            'help': 'List of Search domains for the provided network, given space-separated'
         },
     }
 
@@ -126,7 +124,7 @@ class NodePrepareNetwork(Command):
 
         node_id = local_minion_id()
         machine_id = get_machine_id(node_id)
-        Conf.load(
+        self.load_conf_store(
             'node_prepare_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )

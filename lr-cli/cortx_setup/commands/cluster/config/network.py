@@ -52,7 +52,7 @@ class ClusterNetworkConfig(Command):
     def run(self, **kwargs):
         cluster_id = get_cluster_id()
         index = 'node_info_index'
-        Conf.load(
+        self.load_conf_store(
             index,
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )
