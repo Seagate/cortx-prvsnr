@@ -235,9 +235,10 @@ install_cortx_pkgs()
         "cortx-s3server"
         "cortx-sspl"
         "cortx-sspl-cli"
-        "python36-cortx-prvsnr"
         "udx-discovery"
         "stats_utils"
+        "python36-cortx-setup"
+        "cortx-node-cli"
     )
 
     for pkg in ${cortx_pkgs[@]}; do
