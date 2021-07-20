@@ -1,48 +1,190 @@
 {
-  "name": "cluster",
-  "description": "Cluster commands",
-  "sub_commands": [
+    "name": "cluster",
+    "description": "Cluster commands",
+    "sub_commands": [
     {
-      "name": "show",
-      "description": "Cluster show command",
-      "permissions_tag": "bypass",
-      "args": [
-           {
-              "flag": "args",
-              "default": [],
-              "suppress_help": true,
-              "nargs": "?",
-              "help": ""
-           },
-           {
-              "flag": "-f",
-              "dest": "format",
-              "help": "Format of Output",
-              "default": "table",
-              "type": "str",
-              "choices": [
-              "table",
-              "xml",
-              "json"
-              ]
-            }
-      ],
-      "comm": {
-              "type": "direct",
-              "target": "cortx_setup.commands",
-              "method": "run",
-              "class": "ClusterShow"
-           },
-      "output": {
-        "table": {
-          "headers": {
-            "cluster_nodes": "cluster nodes",
-            "non_cluster_nodes": "non cluster nodes"
-          }
+        "name": "prepare",
+        "description": "Cluster prepare command",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterPrepare"
         }
-      }
-
-
-   }
- ]
+    },
+    {
+        "name": "create",
+        "description": "Cluster create command",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "--name",
+            "type": "str"
+        },
+        {
+            "flag": "--site_count",
+            "type": "int"
+        },
+        {
+            "flag": "--storageset_count",
+            "type": "int"
+        },
+        {
+            "flag": "nodes",
+            "type": "str",
+            "nargs": "+",
+            "help": "Source of build to use for bootstrap. e.g: {local|rpm|iso}"
+        },
+        {
+            "flag": "--source",
+            "type": "str",
+            "default": "rpm",
+            "help": "List of FQDN of node(s) to be clustered and bootstrapped, primary node given first."
+        },
+        {
+            "flag": "--target_build",
+            "type": "str",
+            "help": "Distribution type of build"
+        },
+        {
+            "flag": "--dist_type",
+            "type": "str",
+            "default": "bundle",
+            "help": "Target build to bootstrap"
+        },
+        {
+            "flag": "--ha",
+            "type": "bool",
+            "default": "False",
+            "help": "Provide HA option for multi-node setup e.g: --ha"
+        },
+        {
+            "flag": "--iso_cortx",
+            "type": "str",
+            "help": "iso file path, for iso-source deployment"
+        },
+        {
+            "flag": "--iso_os",
+            "type": "str",
+            "help": "iso os path, for iso-source deployment. e.g: {/opt/isos/cortx-os-1.0.0-23.iso}"
+        },
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterCreate"
+        }
+    },
+    {
+        "name": "config",
+        "description": "Cluster config command",
+        "permissions_tag": "bypass",
+        "sub_commands": [
+        {
+            "name": "network",
+            "description": "cluster network config command",
+            "permissions_tag": "bypass",
+            "args": [
+            {
+                "flag": "--virtual_host",
+                "type": "str",
+                "help": "Cluster vip"
+            },
+            {
+                "flag": "args",
+                "default": [],
+                "suppress_help": true,
+                "nargs": "?",
+                "help": ""
+            }],
+            "comm": {
+                "type": "direct",
+                "target": "cortx_setup.commands",
+                "method": "run",
+                "class": "ClusterNetworkConfig"
+            }
+        },
+        {
+            "name": "component",
+            "description": "cluster component config command",
+            "permissions_tag": "bypass",
+            "args": [
+            {
+                "flag": "--type",
+                "type": "str",
+                "dest": "component_group",
+                "choices": ["foundation", "iopath", "controlpath", "ha"],
+                "help": "Component group to deploy"
+            },
+            {
+                "flag": "args",
+                "default": [],
+                "suppress_help": true,
+                "nargs": "?",
+                "help": ""
+            }],
+            "comm": {
+                "type": "direct",
+                "target": "cortx_setup.commands",
+                "method": "run",
+                "class": "ClusterConfigComponent"
+            }
+        }]
+    },
+    {
+        "name": "show",
+        "description": "Cluster show command",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        },
+        {
+            "flag": "-f",
+            "dest": "format",
+            "help": "Format of Output",
+            "default": "table",
+            "type": "str",
+            "choices": [
+            "table",
+            "xml",
+            "json"
+            ]
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterShow"
+        },
+        "output": {
+            "table": {
+                "headers": {
+                    "cluster_nodes": "cluster nodes",
+                    "non_cluster_nodes": "non cluster nodes"
+                }
+            }
+        }
+    }
+]    
 }
