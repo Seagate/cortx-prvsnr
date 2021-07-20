@@ -137,13 +137,20 @@ class NodeFinalize(Command):
                 ugroup = "prvsnrusers"
                 user_permissions = [
                     '/usr/bin/nodecli',
-                    '/var/log'
+                    '/var/log',
+                    '/usr/bin/provisioner',
+                    '/usr/bin/salt',
+                    '/usr/local/bin/salt',
+                    '/usr/bin/salt-call',
+                    '/bin/salt-call',
+                    '/usr/local/bin/salt-call',
+                    f'{SEAGATE_USER_HOME_DIR}'
                 ]
                 default_login = "/usr/bin/nodecli"
             else:
                 ugroup = "wheel"
                 user_permissions = ['ALL']
-                default_login = "/bin/sh"
+                default_login = "/bin/bash"
 
             self.logger.debug(
                f"Creating user group '{ugroup}', if not present"
@@ -182,8 +189,8 @@ class NodeFinalize(Command):
                               f'{", ".join(user_permissions)}'),
                     create=True,
                     replace=True,
-                    user=user,
-                    group=ugroup,
+                    user='root',
+                    group='root',
                     mode=440
                 ),
                 targets=node_id
