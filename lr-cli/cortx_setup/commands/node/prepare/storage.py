@@ -186,7 +186,7 @@ class NodePrepareStorage(Command):
             self.logger.debug(
                 f"Updating the enclosure id {_enc_id_on_enc} in confstore"
             )
-            Conf.load(
+            self.load_conf_store(
                 'node_info_index',
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
