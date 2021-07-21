@@ -18,7 +18,7 @@
 from pathlib import Path
 from ..command import Command
 from cortx_setup.commands.common_utils import get_pillar_data
-from cortx_setup.config import DEFAULT_PASSWD, CERT_PATH, HEALTH_PATH  # , MANIFEST_PATH
+from cortx_setup.config import CERT_PATH, HEALTH_PATH  # , MANIFEST_PATH
 from cortx_setup.validate import (
     CortxSetupError,
     interfaces,
@@ -161,7 +161,7 @@ class NodeFinalize(Command):
                 'user.present',
                 fun_kwargs=dict(
                     name=user,
-                    password=DEFAULT_PASSWD,
+                    password="Seagate123!"     # TODO: remove from cli, add this to vault in future
                     hash_password=True,
                     home=str(home_dir),
                     groups=[ugroup],
