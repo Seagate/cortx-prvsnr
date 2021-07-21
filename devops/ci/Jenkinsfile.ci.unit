@@ -111,26 +111,6 @@ Closure staticValidation = {
     return
 
 
-
-    /*
-    preparePythonEnv()
-
-    String testPythonReport = "flake8.out"  // TODO not configurable for now
-    stage('Check python') {
-        // TODO check other python sources (not only 'test')
-        try {
-            withEnv(['PATH+USER_LOCAL_BIN=~/.local/bin']) {
-                sh "pipenv run bash -x devops/ci/validate_python.sh"
-            }
-        } catch (_err) {
-            archiveArtifacts artifacts: testPythonReport, allowEmptyArchive: true
-            echo "Python static validation failed: $_err"
-            // TODO that should break the pipeline actually
-            // throw _err
-        }
-    }
-    */
-
     String testYamlReport = "yamllint.out"  // TODO not configurable for now
     stage('Check yaml') {
         try {
