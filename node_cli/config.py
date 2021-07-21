@@ -15,10 +15,19 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Start CSM agent:
-  service.running:
-    - name: csm_agent
+PROMPT_DESC = 'Node cli interface'
+TERMINAL = 'nodecli>> '
 
-Start CSM web:
-  service.running:
-    - name: csm_web
+# Log file configuration
+LOG_PATH = '/var/log/seagate/provisioner/'
+BACKUP_FILE_COUNT = 10
+FILE_SIZE = 10
+LOG_LEVEL = 'INFO'
+
+
+# permissions
+permissions = {
+                  'node': {'bypass': True},
+                  'cluster': {'bypass': True},
+                  'storageset': {'bypass': True}
+              }

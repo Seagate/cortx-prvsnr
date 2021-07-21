@@ -33,7 +33,7 @@ class ResourceShow(Command):
             temp = []
             for i, _ in enumerate(resource_map):
                 if "health" in resource_map[i].keys():
-                    if resource_state in resource_map[i]['health']['status']:
+                    if resource_state.lower() in resource_map[i]['health']['status'].lower():
                         temp.append(resource_map[i])
             return temp
         else:
@@ -75,7 +75,7 @@ class ResourceShow(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Resource type for which resource map is to be fetched e.g node>compute[0]>hw>disks or node>compute[0]'
+            'help': "Resource type for which resource map is to be fetched e.g 'node>compute[0]>hw>disks' or 'node>compute[0]' or 'node>storage[0]>hw>controllers'"
         },
         'resource_state': {
             'type': str,
@@ -96,8 +96,10 @@ class ResourceShow(Command):
             resource_map_path = get_pillar_data(
                 'provisioner/common_config/resource_map_path')
             resource_dict = self.parse_resource_file(resource_map_path)
-            resource_dict = self.filter_resource_type(
-                kwargs['resource_type'], resource_dict)
+
+            if kwargs['resource_type']:
+                resource_dict = self.filter_resource_type(
+                    kwargs['resource_type'], resource_dict)
 
             if kwargs['resource_state']:
                 resource_dict = self.resource_filter_status(

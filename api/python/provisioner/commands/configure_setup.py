@@ -223,9 +223,11 @@ class ConfigureSetup(CommandParserFillerMixin):
         ]
         for key in input_data.keys():
             if input_data.get(key) and "," in input_data.get(key):
-                input_data[key] = [
+                output = [
                     element.strip() for element in input_data.get(key).split(",")
                 ]
+                output = [element for element in output if element and len(element) > 1]
+                input_data[key] = output
 
             elif any(k in key for k in keys_of_type_list):
                 # special case single value as array
@@ -286,8 +288,11 @@ class ConfigureSetup(CommandParserFillerMixin):
             number_of_nodes, parsed
         )
 
+        # validate blank values
+        validate._validate_null_values(config)
 
-        #validate network interfaces and data-matadata devices from config.ini
+        # validate network interfaces and data-matadata devices from config.ini
+        validate._validate_config_interfaces(config)
         validate._validate_config_devices(config)
 
         # Process default sections

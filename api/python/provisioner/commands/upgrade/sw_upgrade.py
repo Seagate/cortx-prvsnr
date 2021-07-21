@@ -57,7 +57,6 @@ from provisioner.cortx_ha import (
     cluster_stop,
     cluster_standby,
     cluster_start,
-    cluster_unstandby,
     is_cluster_healthy
 )
 
@@ -271,7 +270,7 @@ class SWUpgrade(CommandParserFillerMixin):
         )
 
         logger.info("Starting the Cortx cluster")
-        cluster_unstandby()
+        cluster_start()
         # cluster_start(unstandby=False)
 
         # TODO make the folllowing a part of migration

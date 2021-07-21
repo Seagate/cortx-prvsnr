@@ -35,11 +35,16 @@ Private data network configuration:
     - nm_controlled: no
     - peerdns: no
     - userctl: no
-    - prefix: 24
 {% if pillar['cluster'][node]['network']['data']['private_ip'] %}
     - proto: none
     - ipaddr: {{ pillar['cluster'][node]['network']['data']['private_ip'] }}
     - mtu: {{ pillar['cluster'][node]['network']['data']['mtu'] }}
+{% if pillar['cluster'][node]['network']['data']['netmask'] %}
+    - netmask: {{ pillar['cluster'][node]['network']['data']['netmask'] }}
+{%- endif %}
+{% if pillar['cluster'][node]['network']['data']['gateway'] %}
+    - gateway: {{ pillar['cluster'][node]['network']['data']['gateway'] }}
+{% endif %}
 {%- else %}
     - proto: dhcp
 {%- endif %}

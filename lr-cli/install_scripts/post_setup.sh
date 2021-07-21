@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -15,10 +16,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Start CSM agent:
-  service.running:
-    - name: csm_agent
 
-Start CSM web:
-  service.running:
-    - name: csm_web
+set -eu
+
+verbosity="${1:-0}"
+
+if [[ "$verbosity" -ge 2 ]]; then
+    set -x
+fi
+
+## PLACEHOLDER

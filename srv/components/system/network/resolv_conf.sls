@@ -15,10 +15,22 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Start CSM agent:
-  service.running:
-    - name: csm_agent
+# Configuration
+{% if ((pillar['cluster']['search_domains']) and (pillar['cluster']['dns_servers'])) %}
+Update resolv.conf:
+  file.managed:
+    - name: /etc/resolv.conf
+    - source: salt://components/system/network/files/resolv.conf
+    - template: jinja
+    - user: root
+    - group: root
+    - mode: 644
+    - replace: True
+    - create: True
+    - allow_empty: True
+{% else %}
+No DNS config to apply:
+  test.show_notification:
+    - text: "dns_servers and search_domains are not specified in cluster.sls"
+{% endif %}
 
-Start CSM web:
-  service.running:
-    - name: csm_web

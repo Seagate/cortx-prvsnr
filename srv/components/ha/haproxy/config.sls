@@ -29,18 +29,6 @@ Setup HAProxy config:
     - keep_source: False
     - template: jinja
 
-Configure HAProxy service:
-  file.managed:
-    - name: /etc/systemd/system/haproxy.service.d/override.conf
-    - makedirs: True
-    - source: salt://components/ha/haproxy/files/haproxy_override.conf
-
-Reload service units:
-  cmd.run:
-    - name: systemctl daemon-reload
-    - onchanges:
-      - file: Configure HAProxy service
-
 Setup haproxy 503 error code to http file:
   file.managed:
     - name: /etc/haproxy/errors/503.http
