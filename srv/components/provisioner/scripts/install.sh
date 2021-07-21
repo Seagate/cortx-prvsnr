@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
@@ -23,7 +22,8 @@ mkdir -p $(dirname "${LOG_FILE}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 minion_id="srvnode-0"
 repo_url=
-nodejs_tar="http://cortx-storage.colo.seagate.com/releases/cortx/github/integration-custom-ci/centos-7.8.2003/custom-build-1969/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
+nodejs_tar=
+use_local_repo=false
 
 function trap_handler {
     exit_code=$?
@@ -56,7 +56,6 @@ Configure Cortx prerequisites locally.
 parse_args()
 {
     echo "DEBUG: parse_args(): parsing input arguments" >> "${LOG_FILE}"
-
     while [[ $# -gt 0 ]]; do
         case $1 in
             -t|--target-build)
@@ -67,15 +66,25 @@ parse_args()
                     exit 2
                 fi
                 set -u
-                repo_url=$2
+                repo_url="$2"
                 shift 2
-                export CORTX_RELEASE_REPO="$repo_url"
-                if grep -wq CORTX_RELEASE_REPO /etc/environment; then
-                    line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/environment | tail -1 | cut -d: -f1)
-                    echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
-                    sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /etc/environment
+                use_local_repo=false
+                if echo "${repo_url}" | grep -q file; then
+                    # local iso path
+                    use_local_repo=true
+                    iso_mount_path=echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
+                    if [[ ! -d "${iso_mount_path}" ]]; then
+                        echo "ERROR: Invalid URL provided: $repo_url" | tee -a "${LOG_FILE}"
+                        exit 1
+                    fi
+                    if ls -l
                 else
-                    echo "CORTX_RELEASE_REPO=$repo_url" >> /etc/environment
+                    #hosted repo, validate the url
+                    connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$repo_url")
+                    if [[ "$connect_status" == 404 ]]; then
+                        echo "ERROR: Target URL provided is invalid or unreachable" | tee -a "${LOG_FILE}"
+                        exit 1
+                    fi
                 fi
                 ;;
             -h|--help)
@@ -151,7 +160,7 @@ config_local_salt()
     echo "Done" | tee -a "${LOG_FILE}"
 }
 
-setup_repos()
+setup_repos_hosted()
 {
     repo=$1
     echo "Cleaning yum cache" | tee -a "${LOG_FILE}"
@@ -172,6 +181,50 @@ EOL
     echo "DEBUG: generated pip3 conf file" >> "${LOG_FILE}"
     cat /etc/pip.conf >> "${LOG_FILE}"
 
+}
+
+setup_repos_iso()
+{
+    mntpt="$1"
+    cortx_iso_mntdir="${mntpt}/cortx"
+    cortx_os_iso_mntdir="${mntpt}/cortx-os"
+    echo "DEBUG: Backing up exisitng repositories" >> "${LOG_FILE}"
+    mv /etc/yum.repos.d /etc/yum.repos.d.bak || true
+
+    echo "INFO: Creating bootstrap.repo" 2>&1 | tee -a ${LOG_FILE}
+    mkdir -p /etc/yum.repos.d && touch /etc/yum.repos.d/bootstrap.repo
+    for repo in 3rd_party cortx_iso
+    do
+cat >> /etc/yum.repos.d/bootstrap.repo <<EOF
+[$repo]
+baseurl=${cortx_iso_mntdir}/${repo}
+gpgcheck=0
+name=Repository ${repo}
+enabled=1
+
+EOF
+    done
+
+    echo "INFO: Creating base.repo" 2>&1 | tee -a ${LOG_FILE}
+    touch /etc/yum.repos.d/base.repo
+cat >> /etc/yum.repos.d/base.repo <<EOF
+[Base]
+baseurl=${cortx_os_iso_mntdir}
+gpgcheck=0
+name=Repository Base
+enabled=1
+EOF
+
+    mv -f /etc/pip.conf /etc/pip.conf.bkp || true
+    touch /etc/pip.conf
+cat <<EOF >/etc/pip.conf
+[global]
+timeout: 60
+index-url: ${cortx_iso_mntdir}/python_deps/
+EOF
+
+    echo "Done" 2>&1 | tee -a ${LOG_FILE}
+    yum clean all || true
 }
 
 install_dependency_pkgs()
@@ -196,19 +249,29 @@ install_dependency_pkgs()
         fi
     done
 
+    echo -e "\tInstalling nodejs" | tee -a "${LOG_FILE}"
     if [[ -d "/opt/nodejs/node-v12.13.0-linux-x64" ]]; then
         echo "nodejs already installed" | tee -a "${LOG_FILE}"
-    else
-        echo -e "\tInstalling nodejs" | tee -a "${LOG_FILE}"
-        echo -e "\tDEBUG: Downloading nodeja tarball" >> "${LOG_FILE}"
-        wget "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
-        mkdir /opt/nodejs
-        echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
-        tar -C /opt/nodejs/ -xf node-v12.13.0-linux-x64.tar.xz >> "${LOG_FILE}"
-        echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs, removing the tarball ${nodejs_tar}" >> "${LOG_FILE}"
-        rm -rf "${nodejs_tar}"
-        echo -e "\tInstalled all dependency packages successfully" | tee -a "${LOG_FILE}"
+        return
     fi
+    mkdir /opt/nodejs
+    if [[ $use_local_repo == "true" ]]; then
+        #local iso
+        nodejs_tar="${repo_url}/cortx/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
+        echo -e "\tDEBUG: Extracting the tarball: ${nodejs_tar}" >> "${LOG_FILE}"
+        tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"q
+        echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs" >> "${LOG_FILE}"
+    else
+        #hosted repo
+        nodejs_tar="${repo_url}/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
+        echo -e "\tDEBUG: Downloading nodejs tarball: ${nodejs_tar}" >> "${LOG_FILE}"
+        wget -P /opt/nodejs "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
+        echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
+        tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"
+        echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs, removing the tarball" >> "${LOG_FILE}"
+        rm -rf "${nodejs_tar}"
+    fi
+    echo -e "\tInstalled all dependency packages successfully" | tee -a "${LOG_FILE}"
 }
 
 install_cortx_pkgs()
@@ -250,42 +313,28 @@ install_cortx_pkgs()
         fi
     done
 
-    if ! command -v cortx_setup; then
-        ## WORKAROUND UNTIL EOS_21317 IS ADDRESSED.
-        echo -e "\tWARNING: python36-cortx-setup package is not installed" | tee -a "${LOG_FILE}"
-        echo -e "\tInstalling cortx_setup commands using pip" | tee -a "${LOG_FILE}"
-        pip3 install -U git+https://github.com/Seagate/cortx-prvsnr@pre-cortx-1.0#subdirectory=lr-cli/ >> "${LOG_FILE}" 2>&1
-        export PATH=${PATH}:/usr/local/bin
-        if ! command -v cortx_setup; then
-            echo "DEBUG: Updating the path variable" >> "${LOG_FILE}"
-            export PATH=${PATH}:/usr/local/bin
-            if ! command -v cortx_setup; then
-                echo "ERROR: cortx_setup command still not available " | tee -a "${LOG_FILE}"
-                echo "ERROR: Please check if cortx_setup commands"\
-                " are installed at correct location and environment variable PATH is updated." | tee -a "${LOG_FILE}"
-                exit 1
-            fi
-        fi
-    fi
-    if ! command -v provisioner; then
-        echo "ERROR: Could not find the provisioner command" | tee -a "${LOG_FILE}"
-        echo "ERROR: Ensure the appropriate package is installed and then try again" | tee -a "${LOG_FILE}"
-        exit 1
-    fi
     echo "Installed all Cortx packages successfully" | tee -a "${LOG_FILE}"
 }
 
-download_isos()
+setup_bash_env()
 {
-    #PLACEHOLDER
-    echo "THIS IS PLACEHOLDER FUNCTION"
-    # CORTX_RELEASE_REPO="$1"
-    # echo "Downloading the ISOs" | tee -a "${LOG_FILE}"
-    # mkdir /opt/isos
-    # cortx_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' ' | grep 'single.iso')
-    # curl -O ${CORTX_RELEASE_REPO}/iso/${cortx_iso}
-    # os_iso=$(curl -s ${CORTX_RELEASE_REPO}/iso/ | sed 's\/<\\/*[^>]*>\/\/g' | cut -f1 -d' '|grep  "cortx-os")
-    # curl -O ${CORTX_RELEASE_REPO}/iso/${os_iso}
+    if [[ "$use_local_repo" == false ]]; then 
+    if grep -wq CORTX_RELEASE_REPO /root/.bashrc; then
+        line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /root/.bashrc | tail -1 | cut -d: -f1)
+        echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
+        sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /root/.bashrc
+    else
+        echo "CORTX_RELEASE_REPO=$repo_url" >> /root/.bashrc
+    fi
+    # Also update /etc/.bashrc so as to have the same environment variable set for new users created
+    if grep -wq CORTX_RELEASE_REPO /etc/.bashrc; then
+        line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/.bashrc | tail -1 | cut -d: -f1)
+        echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
+        sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /etc/.bashrc
+    else
+        echo "export CORTX_RELEASE_REPO=$repo_url" >> /etc/.bashrc
+    fi
+    export CORTX_RELEASE_REPO="$repo_url"
 }
 
 main()
@@ -315,38 +364,15 @@ main()
             sleep 1
         done
         systemctl restart scsi-network-relay
-        if [[ ! -z $repo_url ]]; then
-            # User has provided target-build for HW
-            # Remove the ISOs set up by Kickstart
-            # download the iso from provided build url
-            # mount the iso
 
-            #echo "Removing the ISOs setup by Kickstart" | tee -a "${LOG_FILE}"
-            #TODO:
-                #remove_isos
-                #download_isos $repo_url
-                #mount_isos
-                #configure repos from iso files
-
-            #WORKAROUND: Use hosted repos until download_isos function is ready
             setup_repos "$repo_url"
-        else
-            echo "DEBUG: Using the ISO files set up by kickstart " >> "${LOG_FILE}"
-            #TODO: use the same isos downloaded by KS file to install the packages
-            # configure repos from iso files
-
-            echo "ERROR: Please provide the target-build unless kickstart file is in place" | tee -a "${LOG_FILE}"
-            exit 1
-        fi
+    fi
+    if [[ ! -z "$repo_url" ]]; then
+        setup_repos_iso "$repo_url"
     else
-        echo "This is VM" >> "${LOG_FILE}"
-        if [[ ! -z "$repo_url" ]]; then
-            setup_repos "$repo_url"
-        else
-            echo "ERROR: target-build not provided, it's mandetary option for VM"
-            echo "ERROR: Please provide the target-build " | tee -a "${LOG_FILE}"
-            exit 1
-        fi
+        echo "ERROR: target-build not provided, it's mandetary option for VM"
+        echo "ERROR: Please provide the target-build " | tee -a "${LOG_FILE}"
+        exit 1
     fi
 
     install_dependency_pkgs
@@ -357,9 +383,8 @@ main()
     echo "Done" | tee -a "${LOG_FILE}"
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
-    echo "PATH=${PATH}:/usr/local/bin" >> /root/.bashrc
-    export PATH="${PATH}:/usr/local/bin"
-    export CORTX_RELEASE_REPO="$repo_url"
+    echo "Setting up the shell environment" | tee -a "${LOG_FILE}"
+    setup_bash_env
     echo "Done" | tee -a "${LOG_FILE}"
 }
 
