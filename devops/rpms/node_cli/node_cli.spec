@@ -44,7 +44,7 @@ cp -R node_cli %{buildroot}/opt/seagate/cortx/provisioner/node_cli/
 
 %post
 # Set Permissions
-ln -sf /opt/seagate/cortx/provisioner/node_cli/nodecli.py /usr/bin/node_cli
+ln -sf /opt/seagate/cortx/provisioner/node_cli/nodecli.py /usr/bin/nodecli
 
 %clean
 rm -rf %{buildroot}

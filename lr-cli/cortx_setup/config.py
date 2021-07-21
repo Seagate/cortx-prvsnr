@@ -46,3 +46,6 @@ SOURCE_PATH = PRVSNR_PILLAR_DIR / 'components' / 'storage.sls'
 DEST_PATH = PRVSNR_PILLAR_DIR / 'samples' / 'storage.sls'
 
 BMC_COMPONENT = 'server_node'
+# Field users default passwd
+# TODO: add this to vault in future
+DEFAULT_PASSWD = "Seagate123!"

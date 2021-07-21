@@ -18,7 +18,7 @@
 from pathlib import Path
 from ..command import Command
 from cortx_setup.commands.common_utils import get_pillar_data
-from cortx_setup.config import CERT_PATH, HEALTH_PATH  # , MANIFEST_PATH
+from cortx_setup.config import DEFAULT_PASSWD, CERT_PATH, HEALTH_PATH  # , MANIFEST_PATH
 from cortx_setup.validate import (
     CortxSetupError,
     interfaces,
@@ -59,7 +59,7 @@ class NodeFinalize(Command):
         cert_file = Path(CERT_PATH / 'stx.pem')
         if not cert_file.is_file():
             raise CortxSetupError(
-                f"Validation failed: "
+                "Validation failed: "
                 f"Cert file not present {cert_file}"
             )
         self.logger.debug("Certificate installtion check: Success")
@@ -137,20 +137,13 @@ class NodeFinalize(Command):
                 ugroup = "prvsnrusers"
                 user_permissions = [
                     '/usr/bin/nodecli',
-                    '/var/log',
-                    '/usr/bin/provisioner',
-                    '/usr/bin/salt',
-                    '/usr/local/bin/salt',
-                    '/usr/bin/salt-call',
-                    '/bin/salt-call',
-                    '/usr/local/bin/salt-call',
-                    f'{SEAGATE_USER_HOME_DIR}'
+                    '/var/log'
                 ]
-                default_login = "/usr/bin/nodecli"
+                default_login = "/usr/bin/bash"
             else:
                 ugroup = "wheel"
                 user_permissions = ['ALL']
-                default_login = "/bin/bash"
+                default_login = "/usr/bin/bash"
 
             self.logger.debug(
                f"Creating user group '{ugroup}', if not present"
@@ -168,7 +161,7 @@ class NodeFinalize(Command):
                 'user.present',
                 fun_kwargs=dict(
                     name=user,
-                    password="Seagate123!",
+                    password=DEFAULT_PASSWD,
                     hash_password=True,
                     home=str(home_dir),
                     groups=[ugroup],
@@ -198,6 +191,30 @@ class NodeFinalize(Command):
 
             self.logger.debug(f"Success: User creation for '{user}'")
 
+            if "nodeadmin" in user:
+                self.logger.debug(
+                  f"Adding assistance to change default password on first login for '{user}' user"
+                )
+                StateFunExecuter.execute(
+                    'cmd.run',
+                    fun_kwargs=dict(
+                        name=f'passwd -e {user}'
+                    ),
+                    targets=node_id
+                )
+
+                self.logger.debug("Ensuring user permissions on system")
+
+                StateFunExecuter.execute(
+                    'file.append',
+                    fun_kwargs=dict(
+                        name=f'{home_dir}/.profile',
+                        text=('sudo /usr/bin/nodecli \n'
+                              'alias exit=exit;exit')
+                    ),
+                    targets=node_id
+                )
+
 
     def run(self, force=False):
         try:
@@ -225,4 +242,3 @@ class NodeFinalize(Command):
                   "Field users created. Check logs for more details on the validations error..")
             else:
                 raise
-
