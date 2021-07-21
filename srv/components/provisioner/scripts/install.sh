@@ -221,9 +221,9 @@ config_local_salt()
 setup_repos_hosted()
 {
     repo=$1
-    for file in `grep -lE "cortx-storage.colo.seagate.com|file://" /etc/yum.repos.d/*.repo`; do
-        echo "DEBUG: Removing old repo file: $file" >> "${LOG_FILE}"
-        rm -f "$file"
+    for repo_file in $(grep -lE "cortx-storage.colo.seagate.com|file://" /etc/yum.repos.d/*.repo); do
+        echo "DEBUG: Removing old repo file: $repo_file" >> "${LOG_FILE}"
+        rm -f "$repo_file"
     done
 
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
@@ -254,8 +254,8 @@ setup_repos_iso()
     cortx_os_iso_mntdir="${mntpt}/dependencies"
     echo "DEBUG: Backing up exisitng repositories" >> "${LOG_FILE}"
     time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
-    mv /etc/yum.repos.d /etc/yum.repos.d.${time_stamp} || true
-    echo "INFO: Creating cortx_iso.repo" 2>&1 | tee -a ${LOG_FILE}
+    mv /etc/yum.repos.d /etc/yum.repos.d."${time_stamp}" || true
+    echo "INFO: Creating cortx_iso.repo" 2>&1 | tee -a "${LOG_FILE}"
     mkdir -p /etc/yum.repos.d
     for repo in 3rd_party cortx_iso
     do
@@ -269,7 +269,7 @@ enabled=1
 EOF
     done
 
-    echo "INFO: Creating cortx_os.repo" 2>&1 | tee -a ${LOG_FILE}
+    echo "INFO: Creating cortx_os.repo" 2>&1 | tee -a "${LOG_FILE}"
     touch /etc/yum.repos.d/cortx_os.repo
 cat >> /etc/yum.repos.d/cortx_os.repo <<EOF
 [Base]
@@ -289,7 +289,7 @@ timeout: 60
 index-url: ${cortx_iso_mntdir}/python_deps/
 EOF
 
-    echo "Done" 2>&1 | tee -a ${LOG_FILE}
+    echo "Done" 2>&1 | tee -a "${LOG_FILE}"
     yum clean all || true
 }
 
