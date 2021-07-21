@@ -161,7 +161,7 @@ class NodeFinalize(Command):
                 'user.present',
                 fun_kwargs=dict(
                     name=user,
-                    password="Seagate123!"     # TODO: remove from cli, add this to vault in future
+                    password="Seagate123!",     # TODO: remove from cli, add this to vault in future
                     hash_password=True,
                     home=str(home_dir),
                     groups=[ugroup],
