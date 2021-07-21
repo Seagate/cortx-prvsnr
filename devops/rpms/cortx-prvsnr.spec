@@ -53,6 +53,7 @@ cp -R srv_ext %{buildroot}/opt/seagate/cortx/provisioner/srv_ext/
 %post
 # Set Permissions
 /bin/chmod -R 754 /opt/seagate/cortx/provisioner/cli
+/bin/chmod 754 /opt/seagate/cortx/provisioner/srv/components/provisioner/scripts/support
 
 %clean
 rm -rf %{buildroot}
