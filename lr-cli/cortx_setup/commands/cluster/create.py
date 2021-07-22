@@ -137,7 +137,7 @@ class ClusterCreate(Command):
 
         """
         try:
-            index = 'node_info_index'
+            index = 'cluster_info_index'
             local_minion = None
             local_fqdn = socket.gethostname()
             cluster_args = ['name', 'site_count', 'storageset_count']

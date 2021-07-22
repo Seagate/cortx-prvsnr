@@ -51,7 +51,7 @@ class ClusterNetworkConfig(Command):
 
     def run(self, **kwargs):
         cluster_id = get_cluster_id()
-        index = 'node_info_index'
+        index = 'cluster_info_index'
         self.load_conf_store(
             index,
             f'json://{CONFSTORE_CLUSTER_FILE}'
@@ -67,7 +67,7 @@ class ClusterNetworkConfig(Command):
                     local=True
                 )
                 Conf.set(
-                    'node_info_index',
+                    'cluster_info_index',
                     f'cluster>{cluster_id}>network>{key}',
                     value
                 )
@@ -81,7 +81,7 @@ class ClusterNetworkConfig(Command):
                     local=True
                 )
                 Conf.set(
-                    'node_info_index',
+                    'cluster_info_index',
                     f'cluster>{cluster_id}>network>management>{key}',
                     value
                 )

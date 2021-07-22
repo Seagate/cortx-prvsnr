@@ -45,7 +45,7 @@ class CreateStorageSet(Command):
     def run(self, name=None, count=None):
         try:
             node_id = local_minion_id()
-            index = 'storageset_index'
+            index = 'cluster_info_index'
 
             # TODO: Addnl validation needed. Support for updating
             # values for multiple storagesets in a cluster.

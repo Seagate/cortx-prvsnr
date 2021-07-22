@@ -49,7 +49,7 @@ class AddStorageEnclosure(Command):
 
     def run(self, storage_set_name=None, storage_enclosure=None):
         try:
-            index = 'storageset_index'
+            index = 'cluster_info_index'
             cluster_id = get_cluster_id()
             enclosure_id = []
 
