@@ -59,7 +59,7 @@ class NodeFinalize(Command):
         cert_file = Path(CERT_PATH / 'stx.pem')
         if not cert_file.is_file():
             raise CortxSetupError(
-                f"Validation failed: "
+                "Validation failed: "
                 f"Cert file not present {cert_file}"
             )
         self.logger.debug("Certificate installtion check: Success")
@@ -139,11 +139,11 @@ class NodeFinalize(Command):
                     '/usr/bin/nodecli',
                     '/var/log'
                 ]
-                default_login = "/usr/bin/nodecli"
+                default_login = "/usr/bin/bash"
             else:
                 ugroup = "wheel"
                 user_permissions = ['ALL']
-                default_login = "/bin/sh"
+                default_login = "/usr/bin/bash"
 
             self.logger.debug(
                f"Creating user group '{ugroup}', if not present"
@@ -161,7 +161,7 @@ class NodeFinalize(Command):
                 'user.present',
                 fun_kwargs=dict(
                     name=user,
-                    password="Seagate123!",
+                    password="Seagate123!",     # TODO: remove from cli, add this to vault in future
                     hash_password=True,
                     home=str(home_dir),
                     groups=[ugroup],
@@ -182,14 +182,38 @@ class NodeFinalize(Command):
                               f'{", ".join(user_permissions)}'),
                     create=True,
                     replace=True,
-                    user=user,
-                    group=ugroup,
+                    user='root',
+                    group='root',
                     mode=440
                 ),
                 targets=node_id
             )
 
             self.logger.debug(f"Success: User creation for '{user}'")
+
+            if "nodeadmin" in user:
+                self.logger.debug(
+                  f"Adding assistance to change default password on first login for '{user}' user"
+                )
+                StateFunExecuter.execute(
+                    'cmd.run',
+                    fun_kwargs=dict(
+                        name=f'passwd -e {user}'
+                    ),
+                    targets=node_id
+                )
+
+                self.logger.debug("Ensuring user permissions on system")
+
+                StateFunExecuter.execute(
+                    'file.append',
+                    fun_kwargs=dict(
+                        name=f'{home_dir}/.profile',
+                        text=('sudo /usr/bin/nodecli \n'
+                              'alias exit=exit;exit')
+                    ),
+                    targets=node_id
+                )
 
 
     def run(self, force=False):

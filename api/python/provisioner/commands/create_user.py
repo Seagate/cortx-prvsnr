@@ -326,7 +326,7 @@ class CreateUser(CommandParserFillerMixin):
             'file.managed',
             fun_kwargs=dict(
                 name=f"/etc/sudoers.d/{uname}",
-                contents=('## Restricted access for {uname} group users \n'
+                contents=(f'## Restricted access for {uname} group users \n'
                           f'%{uname}   ALL = NOPASSWD: '
                           f'{" ,".join(commands_list)}'),
                 create=True,
