@@ -176,8 +176,20 @@ class ClusterCreate(Command):
 
             # ISO files validation
             if kwargs['source'] == 'iso':
-                kwargs['iso_cortx'] = target_build + "/components"
-                kwargs['iso_os'] = target_build + "/dependencies"
+                iso_files = [fn for fn in os.listdir("/opt/isos/")
+                                if fn.endswith('.iso')]
+                for name in iso_files:
+                    for name in iso_files:
+                    if "single" in name:
+                        ISO_SINGLE_FILE = name
+                    elif "os" in name:
+                        ISO_OS_FILE = name
+                kwargs['iso_cortx'] = ISO_SINGLE_FILE
+                kwargs['iso_os'] = ISO_OS_FILE
+                if not (ISO_SINGLE_FILE.exists() or ISO_OS_FILE.exists()):
+                    raise ValueError(
+                        "No Cortx ISO found at: /opt/isos. Please"
+                        "download and keep them at /opt/isos and try again")
 
             cluster_dict = {key:kwargs[key]
                            for key in kwargs if key in cluster_args}

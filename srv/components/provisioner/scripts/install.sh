@@ -24,6 +24,7 @@ minion_id="srvnode-0"
 repo_url="file:///mnt/cortx"
 nodejs_tar=
 use_local_repo=false
+iso_downloaded_path="/opt/isos"
 
 function trap_handler {
     exit_code=$?
@@ -75,21 +76,50 @@ parse_args()
     done
 }
 
+validate_isos()
+{
+    # Check if isos are kept at /opt/isos
+    # Check if iso files are valid isos
+    if [[ $(ls "$iso_downloaded_path"/*.iso | wc -l) == 2 ]]; then
+        for i in $(ls "$iso_downloaded_path"/*.iso); do
+            if echo "$i" | grep single; then
+                cortx_iso="$i"
+            else
+                os_iso="$i"
+            fi
+        done
+    else
+        echo -e "ERROR: No ISOs found at: $iso_downloaded_path"\
+            "\t Please ensure the Cortx single ISO and Cortx-OS"\
+            " ISO are kept at $iso_downloaded_path" | tee -a "${LOG_FILE}"
+        exit 1
+    fi
+    for iso in $cortx_iso $os_iso; do
+        if ! file "$iso"; then
+            echo -e "ERROR: Invalid ISO: $iso \n\tPlease download"
+                " the correct ISO at $iso_downloaded_path & try again" | tee -a "${LOG_FILE}"
+            exit 1
+        else
+            echo "DEBUG: Valid ISO: $iso" >> "${LOG_FILE}"
+        fi
+    done
+    iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
+    if [[ ! -d "${iso_mount_path}" ]]; then
+        echo "ERROR: Invalid Cortx ISO mount point: $repo_url" | tee -a "${LOG_FILE}"
+        echo -e "ERROR: Please ensure the Cortx ISO is mounted at $repo_url/components"\
+            "& the OS ISO is mounted at $repo_url/dependencies.\n"\
+            "\tOR provide the path of the mounted ISOs using -t option: \n"\
+            "\t$ ./install.sh -t file:///mnt/path/to/iso/mount_dir" | tee -a "${LOG_FILE}"
+        exit 1
+    fi
+}
+
 validate_url()
 {
     echo "DEBUG: Validating the url: ${repo_url}" >> "${LOG_FILE}"
     if echo "${repo_url}" | grep -q file; then
         # local iso path
         use_local_repo=true
-        iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
-        if [[ ! -d "${iso_mount_path}" ]]; then
-            echo "ERROR: Invalid Cortx ISO mount point: $repo_url" | tee -a "${LOG_FILE}"
-            echo -e "ERROR: Please ensure the Cortx ISO is mounted at $repo_url/components"\
-                "& the OS ISO is mounted at $repo_url/dependencies.\n"\
-                "\tOR provide the path of the mounted ISOs using -t option: \n"\
-                "\t$ ./install.sh -t file:///mnt/path/to/iso/mount_dir" | tee -a "${LOG_FILE}"
-            exit 1
-        fi
         # Validate the directory structure of the mount path
         # Validation for cortx iso
         if [[ ! -f "${iso_mount_path}/components/3rd_party/repodata/repomd.xml" ]]; then
@@ -131,6 +161,7 @@ validate_url()
         repo_url_cortx_iso="${repo_url}/cortx_iso/repodata/repomd.xml"
         repo_url_python_deps="${repo_url}/python_deps"
         for url in "${repo_url_3rd_party}" "${repo_url_cortx_iso}" "${repo_url_python_deps}"; do
+            echo "DEBUG: Running curl on: $url" >> "${LOG_FILE}"
             connect_status=$(curl -o /dev/null --silent --head --write-out '%{http_code}' "$url")
             if [[ "$connect_status" == 404 ]]; then
                 echo "ERROR: Failed to connect to $url" | tee -a "${LOG_FILE}"
@@ -405,22 +436,9 @@ install_cortx_pkgs()
 
 setup_bash_env()
 {
-    if [[ "$use_local_repo" == false ]]; then 
-        if grep -wq CORTX_RELEASE_REPO /root/.bashrc; then
-            line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /root/.bashrc | tail -1 | cut -d: -f1)
-            echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
-            sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /root/.bashrc
-        else
-            echo "CORTX_RELEASE_REPO=$repo_url" >> /root/.bashrc
-        fi
-        # Also update /etc/.bashrc so as to have the same environment variable set for new users created
-        if grep -wq CORTX_RELEASE_REPO /etc/.bashrc; then
-            line_to_replace=$(grep -m1 -noP "CORTX_RELEASE_REPO" /etc/.bashrc | tail -1 | cut -d: -f1)
-            echo "DEBUG: line_to_replace: $line_to_replace" >> "${LOG_FILE}"
-            sed -i "${line_to_replace}s|CORTX_RELEASE_REPO.*|CORTX_RELEASE_REPO=$repo_url|" /etc/.bashrc
-        else
-            echo "export CORTX_RELEASE_REPO=$repo_url" >> /etc/.bashrc
-        fi
+    if [[ "$use_local_repo" == false ]]; then
+        echo export CORTX_RELEASE_REPO="$repo_url" > /etc/profile.d/targetbuildenv.sh
+        chmod 0755 /etc/profile.d/targetbuildenv.sh
         export CORTX_RELEASE_REPO="$repo_url"
     fi
 }
@@ -435,6 +453,7 @@ main()
     echo "*********************************************************" | tee -a "${LOG_FILE}"
     validate_url
     if [[ "${use_local_repo}" == true ]]; then
+        validate_isos
         setup_repos_iso "$repo_url"
     else
         setup_repos_hosted "$repo_url"
@@ -443,12 +462,21 @@ main()
     install_cortx_pkgs
     config_local_salt
     echo "Resetting the machine id" | tee -a "${LOG_FILE}"
-    salt-call state.apply components.provisioner.config.machine_id.reset --no-color --out-file="${LOG_FILE}" --out-file-append
+    salt-call state.apply components.provisioner.config.machine_id.reset\
+        --no-color --out-file="${LOG_FILE}" --out-file-append
     echo "Done" | tee -a "${LOG_FILE}"
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
     echo "Setting up the shell environment" | tee -a "${LOG_FILE}"
     setup_bash_env
+
+    if [[ "${use_local_repo}" == true ]]; then
+        #TODO: Test & enable this for remotely hosted repos as well
+        rm -rf /etc/yum.repos.d/*cortx_iso*.repo
+        yum clean all
+        rm -rf /var/cache/yum/
+        rm -f /etc/pip.conf
+    fi
     echo "Done" | tee -a "${LOG_FILE}"
 }
 
