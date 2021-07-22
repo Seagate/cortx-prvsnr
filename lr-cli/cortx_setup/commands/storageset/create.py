@@ -50,7 +50,7 @@ class CreateStorageSet(Command):
             # TODO: Addnl validation needed. Support for updating
             # values for multiple storagesets in a cluster.
 
-            Conf.load(
+            self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )

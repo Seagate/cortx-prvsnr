@@ -82,7 +82,7 @@ class NodePrepareServerConfig(Command):
         }
 
         # Load confstore
-        Conf.load(
+        self.load_conf_store(
             'node_info_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )

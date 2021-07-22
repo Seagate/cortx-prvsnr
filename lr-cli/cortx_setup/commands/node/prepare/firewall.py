@@ -45,7 +45,7 @@ class NodePrepareFirewall(Command):
         try:
             self.logger.debug(f"loading firewall configuration")
             firewall_config_arg = kwargs.get('config')
-            Conf.load('index1', firewall_config_arg)
+            self.load_conf_store('index1', firewall_config_arg)
             firewall_conf = {'firewall': Conf.get('index1','firewall') }
             dump_yaml(firewall_pillar_sls, dict(firewall_conf))
 
