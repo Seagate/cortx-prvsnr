@@ -81,8 +81,7 @@ class ResourceShow(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'choices': ['OK', 'FAULT', 'DEGRADED'],
-            'help': 'The current state of the resources'
+            'help': "The current state of the resources  like 'OK', 'FAULT', 'DEGRADED', 'NA', 'INACTIVE', 'UNKNOWN'"
         },
     }
 
