@@ -64,11 +64,11 @@ def main():
     cls_name = args.pop('command')
     cls = getattr(commands, cls_name)
     try:
-        res = cls().run(**args)
-        if res:
-            res = json.dumps(res)
-            Log.logger.debug(f"CLI out {res}")
-            print(res)
+        result = cls().run(**args)
+        if result:
+            result = json.dumps(result)
+            Log.logger.debug(f"CLI output: {result}")
+            print(result)
     except Exception as exc:
         Log.logger.error(f"cortx_setup command Failed: {str(exc)}")
         exit(1)
