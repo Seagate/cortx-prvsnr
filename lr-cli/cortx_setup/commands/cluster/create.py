@@ -169,13 +169,15 @@ class ClusterCreate(Command):
                 if not target_build:
                     raise ValueError("'target_build' is mandatory to bootstrap. "
                                      "Please provide valid build URL in command.")
+                if target_build.startswith('file'):
+                    #ISO based deployment
+                    kwargs['source'] = 'iso'
+                    kwargs['target_build'] = None
 
             # ISO files validation
             if kwargs['source'] == 'iso':
-                if not (kwargs['iso_cortx'] or kwargs['iso_os']):
-                    raise ValueError(
-                         "iso single file and iso os file paths are mandatory "
-                         "to bootstrap. Please provide valid paths in command.")
+                kwargs['iso_cortx'] = target_build + "/components"
+                kwargs['iso_os'] = target_build + "/dependencies"
 
             cluster_dict = {key:kwargs[key]
                            for key in kwargs if key in cluster_args}
