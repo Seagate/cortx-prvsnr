@@ -49,7 +49,7 @@ class AddServerNode(Command):
 
     def run(self, storage_set_name=None, server_node=None):
         try:
-            index = 'storageset_index'
+            index = 'cluster_info_index'
             cluster_id = get_cluster_id()
             machine_id = []
 
