@@ -45,6 +45,7 @@ from cortx_setup.commands.cluster.generate import (
 from cortx_setup.commands.node.prepare.time import (
     NodePrepareTime
 )
+from cortx_setup.validate import ipv4
 from cortx.utils.conf_store import Conf
 
 from provisioner.commands import (
@@ -122,6 +123,12 @@ class ClusterCreate(Command):
             'optional': True,
             'help': ('iso os path, for iso-source deployment. '
                      'e.g: {/opt/isos/cortx-os-1.0.0-23.iso}')
+        },
+        'virtual_host': {
+            'type': ipv4,
+            'default': None,
+            'optional': True,
+            'help': 'Management vip'
         }
     }
 
@@ -140,7 +147,7 @@ class ClusterCreate(Command):
             index = 'cluster_info_index'
             local_minion = None
             local_fqdn = socket.gethostname()
-            cluster_args = ['name', 'site_count', 'storageset_count']
+            cluster_args = ['name', 'site_count', 'storageset_count', 'virtual_host']
 
             # Ref: `nodes` will be removed from this args list.
             # Read more on https://github.com/Seagate/cortx-prvsnr/tree/pre-cortx-1.0/docs/design_updates.md#field-api-design-changes
@@ -245,8 +252,6 @@ class ClusterCreate(Command):
                     self.logger.debug(f"Setting time on enclosure with server & timezone")
                     NodePrepareTime().set_enclosure_time()
             StatesApplier.apply( ['components.system.config.sync_salt'] ,targets=ALL_MINIONS)
-            self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
 
             self.logger.info("Environment set up! Proceeding to create a cluster..")
 
@@ -255,15 +260,15 @@ class ClusterCreate(Command):
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
             clust_id = get_cluster_id()
+
             for key, value in cluster_dict.items():
-                if value:
+                if value and 'virtual_host' not in key:
                     self.logger.debug(
                         f"Updating {key} to {value} in confstore"
                     )
                     PillarSet().run(
                         f'cluster/{key}',
-                        value,
-                        local=True
+                        value
                     )
                     if 'storageset_count' in key:
                         conf_key = f'cluster>{clust_id}>site>storage_set_count'
@@ -274,7 +279,25 @@ class ClusterCreate(Command):
                         conf_key,
                         value
                     )
+                if value and 'virtual_host' in key:
+                    self.logger.debug(
+                        f"Updating virtual_host to {value} in confstore"
+                    )
+                    PillarSet().run(
+                        f'cluster/mgmt_vip',
+                        value
+                    )
+                    Conf.set(
+                        index,
+                        f'cluster>{clust_id}>network>management>virtual_host',
+                        value
+
+                    )
             Conf.save(index)
+
+            self.logger.debug("Exporting to Confstore")
+            confstore_export.ConfStoreExport().run()
+
             self.logger.debug("Success: Cluster created")
             return f"Cluster created with node(s): {nodes}"
 
