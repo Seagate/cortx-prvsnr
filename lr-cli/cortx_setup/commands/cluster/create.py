@@ -267,7 +267,7 @@ class ClusterCreate(Command):
                     )
                 if value and 'virtual_host' in key:
                     self.logger.debug(
-                        f"Updating virtual_host to {virtual_host} in confstore"
+                        f"Updating virtual_host to {value} in confstore"
                     )
                     PillarSet().run(
                         f'cluster/mgmt_vip',
@@ -277,7 +277,7 @@ class ClusterCreate(Command):
                         index,
                         f'cluster>{clust_id}>network>management>virtual_host',
                         value
-                        
+
                     )
             Conf.save(index)
 
