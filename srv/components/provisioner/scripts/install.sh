@@ -438,11 +438,10 @@ install_cortx_pkgs()
 
 setup_bash_env()
 {
-    if [[ "$use_local_repo" == false ]]; then
-        echo export CORTX_RELEASE_REPO="$repo_url" > /etc/profile.d/targetbuildenv.sh
-        chmod 0755 /etc/profile.d/targetbuildenv.sh
-        export CORTX_RELEASE_REPO="$repo_url"
-    fi
+    echo "DEBUG: Setting the environment variable for build: $repo_url" >> "${LOG_FILE}"
+    echo export CORTX_RELEASE_REPO="$repo_url" > /etc/profile.d/targetbuildenv.sh
+    chmod 0755 /etc/profile.d/targetbuildenv.sh
+    export CORTX_RELEASE_REPO="$repo_url"
 }
 
 main()

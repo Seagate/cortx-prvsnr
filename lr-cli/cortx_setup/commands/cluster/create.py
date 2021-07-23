@@ -180,15 +180,16 @@ class ClusterCreate(Command):
                                 if fn.endswith('.iso')]
                 for name in iso_files:
                     if "single" in name:
-                        ISO_SINGLE_FILE = name
+                        ISO_SINGLE_FILE = "/opt/isos/" + name
                     elif "os" in name:
-                        ISO_OS_FILE = name
+                        ISO_OS_FILE = "/opt/isos/" + name
                 kwargs['iso_cortx'] = ISO_SINGLE_FILE
                 kwargs['iso_os'] = ISO_OS_FILE
-                if not (ISO_SINGLE_FILE.exists() or ISO_OS_FILE.exists()):
+                if not (os.path.isfile(ISO_SINGLE_FILE)
+                        or os.path.isfile(ISO_OS_FILE)):
                     raise ValueError(
-                        "No Cortx ISO found at: /opt/isos. Please"
-                        "download and keep them at /opt/isos and try again")
+                        f"No Cortx ISO found:{ISO_SINGLE_FILE} & {ISO_OS_FILE}"
+                        "Please download and keep them at /opt/isos and try again")
 
             cluster_dict = {key:kwargs[key]
                            for key in kwargs if key in cluster_args}
