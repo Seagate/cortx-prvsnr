@@ -24,7 +24,10 @@ from cortx_setup.commands.common_utils import (
     get_cluster_id
 )
 
-from provisioner.commands import PillarSet
+from provisioner.commands import (
+    PillarSet,
+    confstore_export
+)
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
@@ -66,7 +69,7 @@ class DurabilityConfig(Command):
     def run(self, **kwargs):
         try:
             node_id = local_minion_id()
-            index = 'cluster_info_index'
+            index = 'storage_durability_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
             cluster_id = get_cluster_id()
@@ -96,8 +99,7 @@ class DurabilityConfig(Command):
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                durability_dict,
-                local=True
+                durability_dict
             )
             Conf.set(
                 index,
@@ -109,6 +111,8 @@ class DurabilityConfig(Command):
             self.logger.debug(
                 f"Durability configured for Storageset '{storage_set_name}'"
             )
+            self.logger.debug("Exporting to Confstore")
+            confstore_export.ConfStoreExport().run()
 
         except ValueError as exc:
             raise ValueError(

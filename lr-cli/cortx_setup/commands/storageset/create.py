@@ -23,7 +23,10 @@ from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import (
     get_cluster_id
 )
-from provisioner.commands import PillarSet
+from provisioner.commands import (
+    PillarSet,
+    confstore_export
+)
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
@@ -45,7 +48,7 @@ class CreateStorageSet(Command):
     def run(self, name=None, count=None):
         try:
             node_id = local_minion_id()
-            index = 'cluster_info_index'
+            index = 'storage_create_index'
 
             # TODO: Addnl validation needed. Support for updating
             # values for multiple storagesets in a cluster.
@@ -62,15 +65,13 @@ class CreateStorageSet(Command):
 
             PillarSet().run(
                 'cluster/storage_set/name',
-                name,
-                local=True
+                name
             )
 
             # Not updating node count to Confstore
             PillarSet().run(
                 'cluster/storage_set/count',
-                count,
-                local=True
+                count
             )
 
             Conf.set(
@@ -80,6 +81,9 @@ class CreateStorageSet(Command):
             )
 
             Conf.save(index)
+
+            self.logger.debug("Exporting to Confstore")
+            confstore_export.ConfStoreExport().run()
 
         except ValueError as exc:
             raise ValueError(

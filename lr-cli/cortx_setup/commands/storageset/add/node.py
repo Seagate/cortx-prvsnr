@@ -26,7 +26,10 @@ from cortx_setup.commands.common_utils import (
     get_pillar_data
 )
 
-from provisioner.commands import PillarSet
+from provisioner.commands import (
+    PillarSet,
+    confstore_export
+)
 from cortx.utils.conf_store import Conf
 
 
@@ -49,7 +52,7 @@ class AddServerNode(Command):
 
     def run(self, storage_set_name=None, server_node=None):
         try:
-            index = 'cluster_info_index'
+            index = 'storage_add_index'
             cluster_id = get_cluster_id()
             machine_id = []
 
@@ -90,8 +93,7 @@ class AddServerNode(Command):
 
             PillarSet().run(
                 'cluster/storage_set/server_nodes',
-                machine_id,
-                local=True
+                machine_id
             )
             Conf.set(
                 index,
@@ -102,6 +104,8 @@ class AddServerNode(Command):
             Conf.save(index)
             self.logger.debug(f"Server nodes {server_node} with correspoding "
                               f"machine_id {machine_id} added to Storageset")
+            self.logger.debug("Exporting to Confstore")
+            confstore_export.ConfStoreExport().run()
 
         except ValueError as exc:
             raise ValueError(
