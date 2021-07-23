@@ -179,6 +179,7 @@ class ClusterCreate(Command):
                 iso_files = [fn for fn in os.listdir("/opt/isos/")
                                 if fn.endswith('.iso')]
                 for name in iso_files:
+                    for name in iso_files:
                     if "single" in name:
                         ISO_SINGLE_FILE = name
                     elif "os" in name:

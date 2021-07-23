@@ -14,7 +14,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
-#!/bin/bash
 
 set -euE
 
@@ -123,7 +122,6 @@ validate_url()
         use_local_repo=true
         # Validate the directory structure of the mount path
         # Validation for cortx iso
-        iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
         if [[ ! -f "${iso_mount_path}/components/3rd_party/repodata/repomd.xml" ]]; then
             echo "ERROR: Invalid Cortx ISO provided" | tee -a "${LOG_FILE}" | tee -a "${LOG_FILE}"
             echo "ERROR: Could not find ${iso_mount_path}/components/3rd_party/repodata/repomd.xml" | tee -a "${LOG_FILE}"
