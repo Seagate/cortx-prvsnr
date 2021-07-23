@@ -111,8 +111,6 @@ class DurabilityConfig(Command):
             self.logger.debug(
                 f"Durability configured for Storageset '{storage_set_name}'"
             )
-            self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
 
         except ValueError as exc:
             raise ValueError(

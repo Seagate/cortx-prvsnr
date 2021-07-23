@@ -295,9 +295,6 @@ class ClusterCreate(Command):
                     )
             Conf.save(index)
 
-            self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
-
             self.logger.debug("Success: Cluster created")
             return f"Cluster created with node(s): {nodes}"
 
