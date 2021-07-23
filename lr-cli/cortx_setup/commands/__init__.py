@@ -56,7 +56,6 @@ __all__ = [
     'AddStorageEnclosure',
     'Commons',
     'ClusterCreate',
-    'ClusterNetworkConfig',
     'ClusterPrepare',
     'ClusterConfigComponent',
     'ClusterShow',
