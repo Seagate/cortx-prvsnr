@@ -47,6 +47,8 @@ from .storageset.add.node import AddServerNode
 from .storageset.add.enclosure import AddStorageEnclosure
 from .storageset.config.durability import DurabilityConfig
 from .enclosure.refresh import RefreshEnclosureId
+from .config.set import SetConfiguration
+from .config.get import GetConfiguration
 
 
 __all__ = [
@@ -81,5 +83,7 @@ __all__ = [
     'StorageEnclosureConfig',
     'SaltCleanup',
     'PrepareConfstore',
-    'PillarSync'
+    'PillarSync',
+    'SetConfiguration',
+    'GetConfiguration'
  ]

@@ -106,3 +106,9 @@ enclosure:
 
 prepare_confstore:
   PrepareConfstore
+
+config:
+  set:
+    SetConfiguration
+  get:
+    GetConfiguration
