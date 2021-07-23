@@ -78,6 +78,11 @@
             "help": "iso os path, for iso-source deployment. e.g: {/opt/isos/cortx-os-1.0.0-23.iso}"
         },
         {
+            "flag": "--virtual_host",
+            "type": "str",
+            "help": "Management vip"
+        },
+        {
             "flag": "args",
             "default": [],
             "suppress_help": true,
@@ -96,30 +101,6 @@
         "description": "Cluster config command",
         "permissions_tag": "bypass",
         "sub_commands": [
-        {
-            "name": "network",
-            "description": "cluster network config command",
-            "permissions_tag": "bypass",
-            "args": [
-            {
-                "flag": "--virtual_host",
-                "type": "str",
-                "help": "Cluster vip"
-            },
-            {
-                "flag": "args",
-                "default": [],
-                "suppress_help": true,
-                "nargs": "?",
-                "help": ""
-            }],
-            "comm": {
-                "type": "direct",
-                "target": "cortx_setup.commands",
-                "method": "run",
-                "class": "ClusterNetworkConfig"
-            }
-        },
         {
             "name": "component",
             "description": "cluster component config command",
