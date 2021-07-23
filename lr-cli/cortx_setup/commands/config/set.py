@@ -54,7 +54,7 @@ class SetConfiguration(Command):
             raise ValueError(
                 "Invalid input. Value should not be en empty string"
             )
-        Conf.load(
+        self.load_conf_store(
             'node_info_index',
             f'json://{CONFSTORE_CLUSTER_FILE}'
         )

@@ -46,7 +46,7 @@ class GetConfiguration(Command):
             )
 
         index = 'node_info_index'
-        Conf.load(index, f'json://{CONFSTORE_CLUSTER_FILE}')
+        self.load_conf_store(index, f'json://{CONFSTORE_CLUSTER_FILE}')
         try:
             val_fr_conf = Conf.get(index, key)
             self.logger.debug(f"Config value for '{key}' : {val_fr_conf}")
