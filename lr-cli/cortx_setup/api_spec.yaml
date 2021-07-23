@@ -65,8 +65,6 @@ cluster:
   prepare:
     ClusterPrepare
   config:
-    network:
-      ClusterNetworkConfig
     component:
       ClusterConfigComponent
 
