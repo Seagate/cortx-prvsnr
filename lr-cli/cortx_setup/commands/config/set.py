@@ -50,7 +50,7 @@ class SetConfiguration(Command):
             raise ValueError(
                 "Invalid input. Expected Config param format: --key 'key' --value 'value'"
             )
-        if value.strip():
+        if not value.strip():
             raise ValueError(
                 "Invalid input. Value should not be en empty string"
             )
