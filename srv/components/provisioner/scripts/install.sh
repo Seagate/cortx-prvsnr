@@ -358,7 +358,7 @@ install_dependency_pkgs()
             iso_mount_path=$(echo "${repo_url}" | cut -d: -f 2 | sed 's/^..//')
             nodejs_tar="${iso_mount_path}/components/3rd_party/commons/node/node-v12.13.0-linux-x64.tar.xz"
             echo -e "\tDEBUG: Extracting the tarball: ${nodejs_tar}" >> "${LOG_FILE}"
-            tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"q
+            tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"
             echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs" >> "${LOG_FILE}"
         else
             #hosted repo
@@ -366,7 +366,7 @@ install_dependency_pkgs()
             echo -e "\tDEBUG: Downloading nodejs tarball: ${nodejs_tar}" >> "${LOG_FILE}"
             wget -P /opt/nodejs "${nodejs_tar}" >> "${LOG_FILE}" 2>&1
             echo -e "\tDEBUG: Extracting the tarball" >> "${LOG_FILE}"
-            tar -C /opt/nodejs/ -xf "${nodejs_tar}" >> "${LOG_FILE}"
+            tar -C /opt/nodejs/ -xf /opt/nodejs/node-v12.13.0-linux-x64.tar.xz >> "${LOG_FILE}"
             echo -e "\tDEBUG: The extracted tarball is kept at /opt/nodejs, removing the tarball" >> "${LOG_FILE}"
             rm -rf "${nodejs_tar}"
         fi
