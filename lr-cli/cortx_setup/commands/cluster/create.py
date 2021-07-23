@@ -176,13 +176,27 @@ class ClusterCreate(Command):
                 if not target_build:
                     raise ValueError("'target_build' is mandatory to bootstrap. "
                                      "Please provide valid build URL in command.")
+                if target_build.startswith('file'):
+                    #ISO based deployment
+                    kwargs['source'] = 'iso'
+                    kwargs['target_build'] = None
 
             # ISO files validation
             if kwargs['source'] == 'iso':
-                if not (kwargs['iso_cortx'] or kwargs['iso_os']):
+                iso_files = [fn for fn in os.listdir("/opt/isos/")
+                                if fn.endswith('.iso')]
+                for name in iso_files:
+                    if "single" in name:
+                        ISO_SINGLE_FILE = "/opt/isos/" + name
+                    elif "os" in name:
+                        ISO_OS_FILE = "/opt/isos/" + name
+                kwargs['iso_cortx'] = ISO_SINGLE_FILE
+                kwargs['iso_os'] = ISO_OS_FILE
+                if not (os.path.isfile(ISO_SINGLE_FILE)
+                        or os.path.isfile(ISO_OS_FILE)):
                     raise ValueError(
-                         "iso single file and iso os file paths are mandatory "
-                         "to bootstrap. Please provide valid paths in command.")
+                        f"No Cortx ISO found:{ISO_SINGLE_FILE} & {ISO_OS_FILE}"
+                        "Please download and keep them at /opt/isos and try again")
 
             cluster_dict = {key:kwargs[key]
                            for key in kwargs if key in cluster_args}
