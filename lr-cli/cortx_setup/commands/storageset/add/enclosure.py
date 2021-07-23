@@ -110,8 +110,6 @@ class AddStorageEnclosure(Command):
                   f"Storage enclosure for nodes {storage_enclosure} with corresponding "
                   f"enclosure_id {enclosure_id} added to Storageset"
             )
-            self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
 
         except ValueError as exc:
             raise ValueError(

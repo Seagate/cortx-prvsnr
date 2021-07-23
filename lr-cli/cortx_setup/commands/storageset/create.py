@@ -82,9 +82,6 @@ class CreateStorageSet(Command):
 
             Conf.save(index)
 
-            self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
-
         except ValueError as exc:
             raise ValueError(
               f"Failed to create Storageset: {str(exc)}"

@@ -104,8 +104,6 @@ class AddServerNode(Command):
             Conf.save(index)
             self.logger.debug(f"Server nodes {server_node} with correspoding "
                               f"machine_id {machine_id} added to Storageset")
-            self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
 
         except ValueError as exc:
             raise ValueError(
