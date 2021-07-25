@@ -50,8 +50,8 @@ from cortx.utils.conf_store import Conf
 
 from provisioner.commands import (
     PillarSet,
-    confstore_export,
     bootstrap_provisioner,
+    confstore_export,
     create_service_user
 )
 from provisioner.salt import (
