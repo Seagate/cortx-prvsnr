@@ -23,10 +23,7 @@ from cortx_setup.config import CONFSTORE_CLUSTER_FILE
 from cortx_setup.commands.common_utils import (
     get_cluster_id
 )
-from provisioner.commands import (
-    PillarSet,
-    confstore_export
-)
+from provisioner.commands import PillarSet
 from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 

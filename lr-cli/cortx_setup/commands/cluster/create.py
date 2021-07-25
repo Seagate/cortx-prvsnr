@@ -52,7 +52,6 @@ from provisioner.commands import (
     PillarSet,
     bootstrap_provisioner,
     confstore_export,
-    cluster_id,
     create_service_user
 )
 from provisioner.salt import (
@@ -294,6 +293,9 @@ class ClusterCreate(Command):
 
                     )
             Conf.save(index)
+
+            self.logger.debug("Exporting to Confstore")
+            confstore_export.ConfStoreExport().run()
 
             self.logger.debug("Success: Cluster created")
             return f"Cluster created with node(s): {nodes}"
