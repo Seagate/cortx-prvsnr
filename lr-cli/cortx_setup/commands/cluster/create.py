@@ -51,8 +51,6 @@ from cortx.utils.conf_store import Conf
 from provisioner.commands import (
     PillarSet,
     bootstrap_provisioner,
-    confstore_export,
-    cluster_id,
     create_service_user
 )
 from provisioner.salt import (
