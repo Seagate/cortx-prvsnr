@@ -26,10 +26,7 @@ from cortx_setup.commands.common_utils import (
     get_pillar_data
 )
 
-from provisioner.commands import (
-    PillarSet,
-    confstore_export
-)
+from provisioner.commands import PillarSet
 from cortx.utils.conf_store import Conf
 
 
