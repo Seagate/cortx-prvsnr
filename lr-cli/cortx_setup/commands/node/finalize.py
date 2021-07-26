@@ -222,7 +222,7 @@ class NodeFinalize(Command):
                     'file.append',
                     fun_kwargs=dict(
                         name=f'{home_dir}/.bashrc',
-                        text='alias nodecli="sudo nodecli"'
+                        text='alias nodecli="sudo /usr/bin/nodecli"'
                     ),
                     targets=node_id
                 )
