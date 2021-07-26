@@ -221,11 +221,22 @@ class NodeFinalize(Command):
                 StateFunExecuter.execute(
                     'file.append',
                     fun_kwargs=dict(
-                        name=f'{home_dir}/.profile',
-                        text='sudo /usr/bin/nodecli'
+                        name=f'{home_dir}/.bashrc',
+                        text='alias nodecli="sudo nodecli"'
                     ),
                     targets=node_id
                 )
+
+                StateFunExecuter.execute(
+                    'file.append',
+                    fun_kwargs=dict(
+                        name=f'{home_dir}/.profile',
+                        text=('sudo /usr/bin/nodecli \n'
+                              f'source {home_dir}/.bashrc')
+                    ),
+                    targets=node_id
+                )
+
 
 
     def run(self, force=False):
