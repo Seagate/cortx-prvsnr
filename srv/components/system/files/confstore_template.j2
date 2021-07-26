@@ -10,6 +10,14 @@ cortx>software>openldap>sgiam>secret=>{{ pillar['cortx']['software']['openldap']
 cortx>software>corosync>user=>{{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
 cortx>software>corosync>secret=>{{ pillar['cortx']['software']['corosync-pacemaker']['secret'] }}
 cortx>software>common>message_bus_type=>kafka
+{% if 'physical' in grains['virtual'] %}
+cortx>software>s3>service>instances=>11
+cortx>software>s3>io>max_units=>32
+{% else %}
+cortx>software>s3>service>instances=>1
+cortx>software>s3>io>max_units=>8
+{% endif %}
+cortx>software>motr>service>client_instances=>2
 {%- for _,node in pillar['cluster']['server_nodes'].items() %}
 cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['network']['data']['private_fqdn'] }}:{{ pillar['cortx']['software']['kafka']['port'] }}
 {%- endfor %}
