@@ -64,7 +64,7 @@ class DurabilityConfig(Command):
 
     def run(self, **kwargs):
         try:
-            index = 'cluster_info_index'
+            index = 'storage_durability_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
             cluster_id = get_cluster_id()
@@ -75,8 +75,8 @@ class DurabilityConfig(Command):
             )
 
             ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
-
             d_data = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>durability')
+            durability_dict = {durability_type: {}}
 
             if ss_name != storage_set_name:
                 raise ValueError(
@@ -95,13 +95,12 @@ class DurabilityConfig(Command):
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                d_data,
-                local=True
+                d_data 
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>durability',
-                d_data
+                d_data 
             )
 
             Conf.save(index)
