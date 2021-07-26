@@ -203,7 +203,7 @@ class NodeFinalize(Command):
                     targets=node_id
                 )
 
-                self.logger.debug("Ensuring user permissions on system")
+                self.logger.debug(f"Ensuring {user} user permissions on system")
 
                 StateFunExecuter.execute(
                     'file.append',
@@ -211,6 +211,18 @@ class NodeFinalize(Command):
                         name=f'{home_dir}/.profile',
                         text=('sudo /usr/bin/nodecli \n'
                               'alias exit=exit;exit')
+                    ),
+                    targets=node_id
+                )
+
+            else:
+                self.logger.debug(f"Ensuring {user} user permissions on system")
+
+                StateFunExecuter.execute(
+                    'file.append',
+                    fun_kwargs=dict(
+                        name=f'{home_dir}/.profile',
+                        text='sudo /usr/bin/nodecli'
                     ),
                     targets=node_id
                 )
