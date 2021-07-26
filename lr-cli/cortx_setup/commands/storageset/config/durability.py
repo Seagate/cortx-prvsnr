@@ -95,7 +95,7 @@ class DurabilityConfig(Command):
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                d_data 
+                d_data
             )
             Conf.set(
                 index,
@@ -112,3 +112,4 @@ class DurabilityConfig(Command):
             raise ValueError(
               f"Failed to configure durability. Reason: {str(exc)}"
             )
+
