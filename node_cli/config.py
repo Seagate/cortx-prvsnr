@@ -16,7 +16,7 @@
 #
 
 PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli>> '
+TERMINAL = 'nodecli> '
 
 # Log file configuration
 LOG_PATH = '/var/log/seagate/provisioner/'
