@@ -25,7 +25,6 @@ from cortx_setup.commands.common_utils import (
 )
 
 from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
 
@@ -65,8 +64,7 @@ class DurabilityConfig(Command):
 
     def run(self, **kwargs):
         try:
-            node_id = local_minion_id()
-            index = 'storage_durability_index'
+            index = 'cluster_info_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
             cluster_id = get_cluster_id()
@@ -78,7 +76,7 @@ class DurabilityConfig(Command):
 
             ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
 
-            durability_dict = {durability_type: {}}
+            d_data = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>durability')
 
             if ss_name != storage_set_name:
                 raise ValueError(
@@ -86,22 +84,24 @@ class DurabilityConfig(Command):
                    f"'{storage_set_name}' not found in ConfStore data. "
                    "First, set with `cortx_setup storageset create` command."
                 )
-
+            if not d_data.get(durability_type, False):
+                d_data[durability_type] = {}
             for key, value in kwargs.items():
                 if key not in ['storage_set_name', 'durability_type']:
                     self.logger.debug(
                         f"Updating {key} as {value} in ConfStore"
                     )
-                    durability_dict[durability_type].update({key: value})
+                    d_data[durability_type].update({key: value})
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                durability_dict
+                d_data,
+                local=True
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>durability',
-                durability_dict
+                d_data
             )
 
             Conf.save(index)
