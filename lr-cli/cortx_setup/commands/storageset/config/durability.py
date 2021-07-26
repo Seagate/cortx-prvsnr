@@ -66,7 +66,7 @@ class DurabilityConfig(Command):
     def run(self, **kwargs):
         try:
             node_id = local_minion_id()
-            index = 'storageset_index'
+            index = 'storage_durability_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
             cluster_id = get_cluster_id()
@@ -96,8 +96,7 @@ class DurabilityConfig(Command):
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                durability_dict,
-                local=True
+                durability_dict
             )
             Conf.set(
                 index,

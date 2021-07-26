@@ -51,9 +51,12 @@ cp -R srv/components/provisioner/files/setup.yaml %{buildroot}/opt/seagate/cortx
 cp -R srv_ext %{buildroot}/opt/seagate/cortx/provisioner/srv_ext/
 
 %post
+/bin/mkdir -p /opt/seagate/cortx_configs
+/bin/cp /opt/seagate/cortx/provisioner/srv/components/system/firewall/files/firewall_config.yaml /opt/seagate/cortx_configs/
 # Set Permissions
 /bin/chmod -R 754 /opt/seagate/cortx/provisioner/cli
 /bin/chmod 754 /opt/seagate/cortx/provisioner/srv/components/provisioner/scripts/support
+
 
 %clean
 rm -rf %{buildroot}

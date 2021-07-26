@@ -1,0 +1,24 @@
+firewall:
+  data_public:
+    services:
+      - http
+      - https
+      - salt-master
+    ports:
+      haproxy:
+        - 443/tcp
+      s3:
+        - 9080/tcp
+        - 9443/tcp
+  mgmt_public:
+    services:
+      - http
+      - https
+      - ftp
+      - ntp
+      - salt-master
+      - ssh
+      - glusterfs
+    ports:
+      csm:
+        - 28100/tcp

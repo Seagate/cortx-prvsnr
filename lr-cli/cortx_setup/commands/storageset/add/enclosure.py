@@ -25,9 +25,8 @@ from cortx_setup.commands.common_utils import (
     get_enclosure_id,
     get_pillar_data
 )
-
-from provisioner.commands import PillarSet
 from cortx.utils.conf_store import Conf
+from provisioner.commands import PillarSet
 
 
 class AddStorageEnclosure(Command):
@@ -49,7 +48,7 @@ class AddStorageEnclosure(Command):
 
     def run(self, storage_set_name=None, storage_enclosure=None):
         try:
-            index = 'storageset_index'
+            index = 'storage_enclosure_index'
             cluster_id = get_cluster_id()
             enclosure_id = []
 
@@ -95,8 +94,7 @@ class AddStorageEnclosure(Command):
 
             PillarSet().run(
                 'cluster/storage_set/storage_enclosures',
-                enclosure_id,
-                local=True
+                enclosure_id
             )
             Conf.set(
                 index,

@@ -49,7 +49,7 @@ class AddServerNode(Command):
 
     def run(self, storage_set_name=None, server_node=None):
         try:
-            index = 'storageset_index'
+            index = 'storage_add_index'
             cluster_id = get_cluster_id()
             machine_id = []
 
@@ -90,8 +90,7 @@ class AddServerNode(Command):
 
             PillarSet().run(
                 'cluster/storage_set/server_nodes',
-                machine_id,
-                local=True
+                machine_id
             )
             Conf.set(
                 index,

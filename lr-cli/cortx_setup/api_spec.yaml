@@ -65,8 +65,6 @@ cluster:
   prepare:
     ClusterPrepare
   config:
-    network:
-      ClusterNetworkConfig
     component:
       ClusterConfigComponent
 
@@ -108,3 +106,9 @@ enclosure:
 
 prepare_confstore:
   PrepareConfstore
+
+config:
+  set:
+    SetConfiguration
+  get:
+    GetConfiguration
