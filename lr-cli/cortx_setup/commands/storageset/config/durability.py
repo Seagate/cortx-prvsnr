@@ -84,24 +84,24 @@ class DurabilityConfig(Command):
                    "First, set with `cortx_setup storageset create` command."
                 )
             durability_key = f'cluster>{cluster_id}>storage_set[0]>durability'
-            d_data = Conf.get(index, durability_key)
-            if not d_data.get(durability_type, False):
-                d_data[durability_type] = {}
+            durability_info = Conf.get(index, durability_key)
+            if not durability_info.get(durability_type, False):
+                durability_info[durability_type] = {}
             for key, value in kwargs.items():
                 if key not in ['storage_set_name', 'durability_type']:
                     self.logger.debug(
                         f"Updating {key} as {value} in ConfStore"
                     )
-                    d_data[durability_type].update({key: value})
+                    durability_info[durability_type].update({key: value})
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                d_data
+                durability_info
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>durability',
-                d_data
+                durability_info
             )
             Conf.save(index)
             self.logger.debug(
