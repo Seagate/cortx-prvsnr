@@ -286,3 +286,4 @@ in context of offline upgrade on the cluster level on the second node:
 provisioner mini_api hook pre-upgrade upgrade-offline cluster \
     --sw hare ha --ctx-vars MYENV=somevalue --targets srnode-2
 ```
+
