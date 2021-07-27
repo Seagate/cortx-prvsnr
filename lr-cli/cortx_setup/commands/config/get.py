@@ -50,6 +50,10 @@ class GetConfiguration(Command):
         try:
             val_fr_conf = Conf.get(index, key)
             self.logger.debug(f"Config value for '{key}' : {val_fr_conf}")
+            if not val_fr_conf:
+                self.logger.warning(
+                   f"Error: Invalid configuration key '{key}'"
+                )
             return val_fr_conf
         except ValueError as exc:
             raise ValueError(
