@@ -66,11 +66,15 @@ def __get_password(**kwargs):
         kwargs["timestamp"]).decode("utf-8")
     pass_key = ''
     # parse timestamp for characters
-    timestamp = re.sub('[^0-9]', '', kwargs["timestamp"])
+    timestamp = re.sub(':', '', kwargs["timestamp"])
+    special_characters = ['#', '$', '-', '+', '_', '&', '@']
+    timestamp = re.findall('..?', timestamp)
 
-    for el in re.findall('..?', timestamp):
+    for el in timestamp:
         pass_key += cipher_key[int(el) % len(cipher_key)]
-    return pass_key
+
+    return pass_key[:4] + special_characters[int(
+        timestamp[1]) % len(special_characters)] + pass_key[4:]
 
 
 def __change_passwd(**kwargs):
@@ -103,7 +107,7 @@ def set_passwd():
     kwargs = {
         "user": SUPPORT_USER_NAME,
         "identifier": Path('/etc/machine-id').read_text().rstrip(),
-        "timestamp": str(datetime.datetime.now())
+        "timestamp": datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S")
     }
     logging.debug(
         f"Updating password for {SUPPORT_USER_NAME} at {kwargs['timestamp']}")
