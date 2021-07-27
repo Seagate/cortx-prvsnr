@@ -15,10 +15,18 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import time
 from pathlib import Path
+from crontab import CronTab
 from ..command import Command
 from cortx_setup.commands.common_utils import get_pillar_data
-from cortx_setup.config import CERT_PATH, HEALTH_PATH  # , MANIFEST_PATH
+from cortx_setup.config import (
+    CERT_PATH,
+    SUPPORT_CRON_SCRIPT,
+    SUPPORT_CRON_TIME,
+    SUPPORT_USER_NAME,
+    HEALTH_PATH  # , MANIFEST_PATH
+)
 from cortx_setup.validate import (
     CortxSetupError,
     interfaces,
@@ -52,7 +60,6 @@ class NodeFinalize(Command):
                                       f"File not present {path}")
         self.logger.debug("Node health check: Success")
 
-
     def _validate_cert_installation(self):
         self.logger.debug("Validating certificate installtion check")
         cert_file = None
@@ -63,7 +70,6 @@ class NodeFinalize(Command):
                 f"Cert file not present {cert_file}"
             )
         self.logger.debug("Certificate installtion check: Success")
-
 
     def _validate_interfaces(self, node_id):
         self.logger.debug("Validating network interfaces check")
@@ -91,7 +97,6 @@ class NodeFinalize(Command):
         interfaces(mgmt + private_data + public_data)
         self.logger.debug("Network interfaces check: Success")
 
-
     def _validate_devices(self, node_id, s_type):
         self.logger.debug("Validating cvg devices check")
         cvgs = get_pillar_data(f'cluster/{node_id}/storage/cvg')
@@ -110,7 +115,6 @@ class NodeFinalize(Command):
             disk_devices(s_type, data + meta_data)
         self.logger.debug("Cvg devices check: Success")
 
-
     def _validate_server_type(self, node_id):
         self.logger.debug("Validating server type check")
         server_type = get_pillar_data(f'cluster/{node_id}/type')
@@ -119,7 +123,29 @@ class NodeFinalize(Command):
         self.logger.debug("Server type check: Success")
         return server_type
 
+    def create_cron_job(self, support_user, cron_time):
+        """
 
+        This function would create cron job which would
+        update support user password after every specified
+        cron_time
+
+        """
+        cron = CronTab(user=support_user)
+
+        # TODO check if a similar job exists
+        job = cron.new(
+            command=SUPPORT_CRON_SCRIPT,
+            comment='Update support user password'
+        )
+        job.hour.every(cron_time)
+        cron.write()
+        job.enable()
+
+        time.sleep(10)
+
+        if not job.is_enabled():
+            raise Exception('Unable to start cron job')
 
     def _create_field_users(self, node_id):
         """users creation.
@@ -146,7 +172,7 @@ class NodeFinalize(Command):
                 default_login = "/usr/bin/bash"
 
             self.logger.debug(
-               f"Creating user group '{ugroup}', if not present"
+                f"Creating user group '{ugroup}', if not present"
             )
             StateFunExecuter.execute(
                 'group.present',
@@ -171,7 +197,8 @@ class NodeFinalize(Command):
                 secure=True
             )
 
-            self.logger.debug(f"Creating sudoers file with permissions for user: '{user}'")
+            self.logger.debug(
+                f"Creating sudoers file with permissions for user: '{user}'")
 
             StateFunExecuter.execute(
                 'file.managed',
@@ -238,7 +265,6 @@ class NodeFinalize(Command):
                 )
 
 
-
     def run(self, force=False):
         try:
             node_id = local_minion_id()
@@ -253,6 +279,8 @@ class NodeFinalize(Command):
             )
             self._create_field_users(node_id)
             self.logger.debug("Field users created.")
+            self.logger.debug("Setting up Cron job")
+            self.create_cron_job(SUPPORT_USER_NAME, SUPPORT_CRON_TIME)
 
         except CortxSetupError as exc:
             if force:
@@ -262,7 +290,8 @@ class NodeFinalize(Command):
                 )
                 self._create_field_users(node_id)
                 self.logger.info(
-                  "Field users created. Check logs for more details on the validations error..")
+                    "Field users created. Check logs for more details on the validations error..")
+                self.logger.debug("Setting up Cron job")
+                self.create_cron_job(SUPPORT_USER_NAME, SUPPORT_CRON_TIME)
             else:
                 raise
-
