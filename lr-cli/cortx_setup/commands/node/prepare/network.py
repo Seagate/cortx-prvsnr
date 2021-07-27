@@ -196,6 +196,7 @@ class NodePrepareNetwork(Command):
             if val:
                 self.logger.debug(f"Setting up system {key} to {val}")
                 PillarSet().run(f'cluster/{key}', val, local=True)
+
         function_run('saltutil.refresh_pillar', targets=node_id)
         if dns_servers and search_domains:
             StatesApplier.apply(
@@ -204,6 +205,6 @@ class NodePrepareNetwork(Command):
             )
 
         Conf.save('node_prepare_index')
-        # call state applyer if dns n search doma:wq
+        # call state applyer if dns n search doma
 
         self.logger.debug("Done")
