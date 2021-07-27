@@ -28,8 +28,20 @@ cluster>{{ cluster_id }}>site_count=>1
 cluster>{{ cluster_id }}>site>storage_set_count=>{{ pillar['cluster']['storage_sets'].keys() | length }}
 {% set mgmt_vip = salt['mine.get']('srvnode-1', 'node_ip_addrs') | dictsort() %}
 cluster>{{ cluster_id }}>network>management>virtual_host=>{{ pillar['cluster']['mgmt_vip'] if pillar['cluster']['mgmt_vip'] else mgmt_vip[0][1][pillar['cluster']['srvnode-1']['network']['mgmt']['interfaces'][0]][0] }}
+{%- if pillar['cluster']['search_domains'] }}
+{%- for search_domain in pillar['cluster']['search_domains'] %}
+cluster>{{ cluster_id }}>network>search_domains[{{ loop.index - 1 }}]=>{{ search_domain }}
+{%- endfor %}
+{%- else %}
 cluster>{{ cluster_id }}>network>search_domains=>{{ pillar['cluster']['search_domains'] }}
+{%- endif %}
+{%- if pillar['cluster']['dns_servers'] }}
+{%- for dns in pillar['cluster']['dns_servers'] %}
+cluster>{{ cluster_id }}>network>dns_servers[{{ loop.index - 1 }}]=>{{ dns }}
+{%- endfor %}
+{%- else %}
 cluster>{{ cluster_id }}>network>dns_servers=>{{ pillar['cluster']['dns_servers'] }}
+{%- endif %}
 {%- for storage_set in pillar['cluster']['storage_sets'].keys() %}
 {%- set outer_loop = loop %}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name=>{{ storage_set }}
