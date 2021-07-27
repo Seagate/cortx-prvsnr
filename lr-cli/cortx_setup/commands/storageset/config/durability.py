@@ -74,9 +74,8 @@ class DurabilityConfig(Command):
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
 
-            ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
-            d_data = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>durability')
-            durability_dict = {durability_type: {}}
+            ss_name = Conf.get(index,
+                               f'cluster>{cluster_id}>storage_set[0]>name')
 
             if ss_name != storage_set_name:
                 raise ValueError(
@@ -84,6 +83,8 @@ class DurabilityConfig(Command):
                    f"'{storage_set_name}' not found in ConfStore data. "
                    "First, set with `cortx_setup storageset create` command."
                 )
+            durability_key = f'cluster>{cluster_id}>storage_set[0]>durability'
+            d_data = Conf.get(index, durability_key)
             if not d_data.get(durability_type, False):
                 d_data[durability_type] = {}
             for key, value in kwargs.items():
@@ -95,14 +96,13 @@ class DurabilityConfig(Command):
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                d_data 
+                d_data
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>durability',
-                d_data 
+                d_data
             )
-
             Conf.save(index)
             self.logger.debug(
                 f"Durability configured for Storageset '{storage_set_name}'"
@@ -112,3 +112,4 @@ class DurabilityConfig(Command):
             raise ValueError(
               f"Failed to configure durability. Reason: {str(exc)}"
             )
+
