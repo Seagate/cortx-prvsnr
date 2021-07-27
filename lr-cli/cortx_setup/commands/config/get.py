@@ -52,8 +52,7 @@ class GetConfiguration(Command):
             self.logger.debug(f"Config value for '{key}' : {val_fr_conf}")
             if not val_fr_conf:
                 self.logger.warning(
-                   f"Given key '{key}' is possibly not found "
-                   "in the Confstore data."
+                   f"Error: Invalid configuration key '{key}'"
                 )
             return val_fr_conf
         except ValueError as exc:
