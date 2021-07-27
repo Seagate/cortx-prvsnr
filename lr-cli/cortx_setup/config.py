@@ -46,3 +46,8 @@ SOURCE_PATH = PRVSNR_PILLAR_DIR / 'components' / 'storage.sls'
 DEST_PATH = PRVSNR_PILLAR_DIR / 'samples' / 'storage.sls'
 
 BMC_COMPONENT = 'server_node'
+
+# Support user
+SUPPORT_USER_NAME = 'support'
+SUPPORT_CRON_TIME = 24                       # time in hours
+SUPPORT_CRON_SCRIPT = 'sudo /opt/seagate/cortx/provisioner/srv/components/provisioner/scripts/support --set-credentials'
