@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+#
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# For any questions about this software or licensing,
+# please email opensource@seagate.com or cortx-questions@seagate.com.
+#
+
+
+import re
+import argparse
+import logging
+import os
+import sys
+import datetime
+import yaml
+import subprocess
+from pathlib import Path
+from cortx.utils.security import cipher
+from provisioner.utils import (
+    run_subprocess_cmd,
+    load_yaml
+)
+from provisioner.errors import SubprocessCmdError
+from cortx_setup.config import SUPPORT_USER_NAME
+
+SUPPORT_CONFIG = Path('/var/data/support.yaml')
+
+logging.basicConfig(
+    datefmt='%m/%d/%Y %I:%M:%S %p %z',
+    filename="/var/log/seagate/provisioner/support.log",
+    filemode='a',
+    format="[%(levelname)s - %(asctime)s]: %(message)s",
+    level=logging.ERROR
+)
+
+
+def __update_support_config(yaml_data):
+    os.makedirs(SUPPORT_CONFIG.parent, exist_ok=True)
+    logging.debug(f"Preparing support config file with {yaml_data}")
+    f = open(SUPPORT_CONFIG, "w")
+    yaml.dump(yaml_data, f)
+    f.close()
+    run_subprocess_cmd(
+        [f'setfacl -m u:{yaml_data["user"]}:rw {SUPPORT_CONFIG}'],
+        shell=True)
+
+
+def __get_password(**kwargs):
+    """
+    Get password by generating a cypher key using combination of support user
+    identifier and timestamp.
+    """
+    cipher_key = cipher.Cipher.generate_key(
+        f'{kwargs["user"]}@{kwargs["identifier"]}',
+        kwargs["timestamp"]).decode("utf-8")
+    pass_key = ''
+    # parse timestamp for characters
+    timestamp = re.sub(':', '', kwargs["timestamp"])
+    special_characters = ['#', '$', '-', '+', '_', '&', '@']
+    timestamp = re.findall('..?', timestamp)
+
+    for el in timestamp:
+        pass_key += cipher_key[int(el) % len(cipher_key)]
+
+    return pass_key[:4] + special_characters[int(
+        timestamp[1]) % len(special_characters)] + pass_key[4:]
+
+
+def __change_passwd(**kwargs):
+    """
+    Change password using passwd command
+    """
+    pass_key = __get_password(**kwargs)
+    command = f"echo -e '{pass_key}\n{pass_key}' | sudo passwd {kwargs['user']}"
+    run_subprocess_cmd([command], shell=True)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='''Support user credentials  ''')
+    parser.add_argument(
+        '--set-credentials',
+        action='store_true',
+        help='Update suport user credentials')
+    parser.add_argument(
+        '--get-credentials',
+        type=str,
+        default=None,
+        help='fetch Path for suport user config')
+
+    args = parser.parse_args()
+    return args
+
+
+def set_passwd():
+    kwargs = {
+        "user": SUPPORT_USER_NAME,
+        "identifier": Path('/etc/machine-id').read_text().rstrip(),
+        "timestamp": datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S")
+    }
+    logging.debug(
+        f"Updating password for {SUPPORT_USER_NAME} at {kwargs['timestamp']}")
+    __change_passwd(**kwargs)
+    __update_support_config(kwargs)
+    sys.exit(0)
+
+
+def get_passwd(file_path):
+    if os.path.isfile(file_path):
+        yaml_dict = load_yaml(file_path)
+        print(__get_password(**yaml_dict))
+    else:
+        print(
+            "Invalid filepath {filepath} specified."
+            "Please ensure the valid filepath and verify it is with yaml format")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    try:
+        args = parse_args()
+        if args.set_credentials:
+            set_passwd()
+        else:
+            if args.get_credentials:
+                get_passwd(args.get_credentials)
+    except KeyboardInterrupt as e:
+        print("\n\nWARNING: User aborted command. Partial data save/corruption might occur. It is advised to re-run the command.")
+        sys.exit(1)
