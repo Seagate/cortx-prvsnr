@@ -19,8 +19,8 @@
 set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/install.log}"
-target_build_loc="/opt/seagate/cortx_configs/provisioner_generated/target_build"
 mkdir -p $(dirname "${LOG_FILE}")
+target_build_loc="/opt/seagate/cortx_configs/provisioner_generated/target_build"
 mkdir -p $(dirname "${target_build_loc}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 minion_id="srvnode-0"

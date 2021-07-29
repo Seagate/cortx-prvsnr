@@ -17,7 +17,6 @@
 # Cortx Setup API to bootstrap and create a logical cluster
 
 
-from logging import raiseExceptions
 import os
 import socket
 
@@ -105,8 +104,8 @@ class ClusterCreate(Command):
         'target_build': {
             'type': str,
             'optional': True,
-            'help': ('Target build to bootstrap, '
-                    'required only for remotely hosted repos.')
+            'help': ('Target build URL '
+                    'Required only for remotely hosted Cortx repos.')
         },
         'ha': {
             'type': bool,
@@ -175,7 +174,7 @@ class ClusterCreate(Command):
                 if not target_build.startswith('http'):
                     raise ValueError(
                         f"Invalid target build provided: {target_build}"
-                        " Please provide http or https url"
+                        " Please provide the valid http or https URL."
                     )
                 # target_build and source type iso are mutually exclusive
                 if source_type == 'iso':
@@ -187,34 +186,36 @@ class ClusterCreate(Command):
             else:
                 # read target build from a file created during factory setup
                 tbuild_path = "/opt/seagate/cortx_configs/provisioner_generated/target_build"
-                self.logger.info("Getting the Cortx build version")
+                self.logger.info("Fetching the Cortx build source")
                 if not tbuild_path.exists():
                     raise ValueError(
-                        f"Could not read the Cortx build version."
-                        " The file doesn't exist: '{tbuild_path}'"
+                        f"The file with Cortx build source"
+                        " doesn't exist: '{tbuild_path}'"
                         " Please use the --target_build option to"
-                        " provide the build url"
+                        " provide the correct build URL."
                     )
                 with open(tbuild_path, "r") as fh:
                     target_build = fh.readline().strip()
 
                 if not target_build:
                     raise ValueError(
-                        f"Could not read the Cortx build version."
+                        f"Could not find the Cortx build source."
                         " Please use the --target_build option to"
                         " provide the build url"
                     )
-                # The target build can be a local path or http url
-                # if it's local path set source to iso, and set the
-                # the target_build to None.
+
+                # The target build could be a file uri or http url
+                # If it's file uri set the source to iso and target_build
+                # to None.
                 if target_build.startswith('file'):
                     #ISO based deployment
                     kwargs['source'] = 'iso'
                     kwargs['target_build'] = None
                 elif not target_build.startswith('http'):
                     raise ValueError(
-                        f"Invalid Cortx build version provided: {target_build}"
-                        " Please provide http or https url"
+                        f"Invalid build source found: {target_build}"
+                        " Please use --target_build or iso options to"
+                        " to provide the correct build source."
                     )
 
             # ISO files validation
@@ -240,7 +241,7 @@ class ClusterCreate(Command):
                     raise ValueError(
                         f"No Cortx ISOs found: "
                         f"{ISO_SINGLE_FILE} & {ISO_OS_FILE}, please"
-                        " keep the ISOs at /opt/isos and try again"
+                        " keep the ISOs at /opt/isos and try again."
                     )
 
             cluster_dict = {key:kwargs[key]
