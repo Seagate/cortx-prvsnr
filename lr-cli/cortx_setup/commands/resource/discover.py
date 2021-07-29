@@ -19,7 +19,13 @@ import time
 from ..command import Command
 from provisioner.commands import PillarSet
 from cortx.utils.discovery import Discovery
-from cortx_setup.config import RETRIES, WAIT
+from cortx_setup.config import (
+    WAIT,
+    RETRIES,
+    HEALTH_PATH,
+    MANIFEST_PATH
+)
+from cortx_setup.validate import CortxSetupError
 
 
 class ResourceDiscover(Command):
@@ -28,9 +34,8 @@ class ResourceDiscover(Command):
 
         retries = RETRIES
         status = ""
-        self.logger.debug("Running resource discover command")
-        # Currently since this is a bug once fixed (EOS-20937)
-        # we wont be needing to provide any parameter
+        self.logger.debug("Running resource health command")
+
         request_id = Discovery.generate_node_health(rpath=resource_type)
         self.logger.debug(f"Requestid for resource map - {request_id}")
 
@@ -39,16 +44,41 @@ class ResourceDiscover(Command):
             if "Success" in status:
                 break
             elif "Failed" in status:
-                raise Exception(status)
+                raise CortxSetupError(status)
             retries -= 1
             time.sleep(WAIT)
         else:
             if retries == 0 and "Success" not in status:
-                raise Exception(
+                raise CortxSetupError(
                     "Timed out error."
                     "Generation of resource map is taking longer than expected.")
 
         return Discovery.get_node_health(request_id)
+
+    def get_node_manifest(self, resource_type=None):
+
+        retries = RETRIES
+        status = ""
+        self.logger.debug("Running resource manifest command")
+
+        request_id = Discovery.generate_node_manifest(rpath=resource_type)
+        self.logger.debug(f"Requestid for manifest - {request_id}")
+
+        while retries > 0:
+            status = Discovery.get_gen_node_manifest_status(request_id)
+            if "Success" in status:
+                break
+            elif "Failed" in status:
+                raise CortxSetupError(status)
+            retries -= 1
+            time.sleep(WAIT)
+        else:
+            if retries == 0 and "Success" not in status:
+                raise CortxSetupError(
+                    "Timed out error."
+                    "Generation of node manifest is taking longer than expected.")
+
+        return Discovery.get_node_manifest(request_id)
 
     _args = {}
 
@@ -56,9 +86,17 @@ class ResourceDiscover(Command):
 
         resource_path = self.get_resource_map()
         PillarSet().run(
-            'provisioner/common_config/resource_map_path',
+            HEALTH_PATH,
             resource_path,
             local=True
         )
         self.logger.debug(f"Resource map present at - {resource_path}")
+
+        manifest_path = self.get_node_manifest()
+        PillarSet().run(
+            MANIFEST_PATH,
+            manifest_path,
+            local=True
+        )
+        self.logger.debug(f"Node manifest present at - {manifest_path}")
         self.logger.debug(f"Done")
