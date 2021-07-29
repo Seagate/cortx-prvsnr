@@ -16,7 +16,7 @@
 #
 
 from .command import Command
-from provisioner.salt import cmd_run, StatesApplier
+from provisioner.salt import cmd_run, StatesApplier, local_minion_id
 from cortx_setup import config
 from provisioner.commands import PillarSet
 from provisioner.config import (
@@ -51,8 +51,11 @@ class PillarSync(Command):
         conf_path = str(PRVSNR_FACTORY_PROFILE_DIR / 'confstore')
         # backup local consftore data
         self.logger.debug(f"Copy local confstore file to {conf_path}")
-        state = 'components.provisioner.confstore'
-        StatesApplier.apply([state])
+        state_create = 'components.provisioner.confstore_dir_create'
+        StatesApplier.apply([state_create], targets=local_minion_id())
+        
+        state_copy = 'components.provisioner.confstore_copy'
+        StatesApplier.apply([state_copy]))
         # backup local pillar data
         cmd_run(f"rm -rf {PRVSNR_DATA_ROOT_DIR}/.backup ")
         cmd_run(f"mkdir -p {PRVSNR_DATA_ROOT_DIR}/.backup")

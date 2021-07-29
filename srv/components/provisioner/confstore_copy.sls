@@ -17,14 +17,6 @@
 
 {% set profile_confstore = "/var/lib/seagate/cortx/provisioner/shared/factory_profile/confstore" %}
 
-Create confstore dir in profile path:
-  file.directory:
-    - name: {{ profile_confstore }}
-    - user: root
-    - group: root
-    - dir_mode: 640
-    - makedirs: True
-
 
 Copy confstore file:
   file.managed:
