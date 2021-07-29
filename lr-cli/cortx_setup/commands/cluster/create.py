@@ -17,6 +17,7 @@
 # Cortx Setup API to bootstrap and create a logical cluster
 
 
+from logging import raiseExceptions
 import os
 import socket
 
@@ -93,7 +94,7 @@ class ClusterCreate(Command):
             'optional': True,
             'default': 'rpm',
             'help': ('Source of build to use for bootstrap. '
-                     'e.g: {local|rpm|iso}')
+                     'e.g: {rpm|iso}')
         },
         'dist_type': {
             'type': str,
@@ -104,7 +105,8 @@ class ClusterCreate(Command):
         'target_build': {
             'type': str,
             'optional': True,
-            'help': 'Target build to bootstrap'
+            'help': ('Target build to bootstrap, '
+                    'required only for remotely hosted repos.')
         },
         'ha': {
             'type': bool,
@@ -152,6 +154,7 @@ class ClusterCreate(Command):
             # Read more on https://github.com/Seagate/cortx-prvsnr/tree/pre-cortx-1.0/docs/design_updates.md#field-api-design-changes
             nodes = kwargs['nodes']
             target_build = kwargs['target_build']
+            source_type = kwargs['source']
 
             self.logger.debug(
               "Checking for basic details in place."
@@ -168,34 +171,77 @@ class ClusterCreate(Command):
             if len(nodes) > 1:
                 kwargs['ha'] = True
 
-            # Build validation
-            if not target_build:
-                target_build = os.environ.get('CORTX_RELEASE_REPO')
-                kwargs['target_build'] = target_build
+            if target_build:
+                if not target_build.startswith('http'):
+                    raise ValueError(
+                        f"Invalid target build provided: {target_build}"
+                        " Please provide http or https url"
+                    )
+                # target_build and source type iso are mutually exclusive
+                if source_type == 'iso':
+                    raise TypeError(
+                        "The target_build option and the 'source' type "
+                        "'iso' are not supported together."
+                        " Please run the command with correct options."
+                        )
+            else:
+                # read target build from a file created during factory setup
+                tbuild_path = "/opt/seagate/cortx_configs/provisioner_generated/target_build"
+                self.logger.info("Getting the Cortx build version")
+                if not tbuild_path.exists():
+                    raise ValueError(
+                        f"Could not read the Cortx build version."
+                        " The file doesn't exist: '{tbuild_path}'"
+                        " Please use the --target_build option to"
+                        " provide the build url"
+                    )
+                with open(tbuild_path, "r") as fh:
+                    target_build = fh.readline().strip()
+
                 if not target_build:
-                    raise ValueError("'target_build' is mandatory to bootstrap. "
-                                     "Please provide valid build URL in command.")
+                    raise ValueError(
+                        f"Could not read the Cortx build version."
+                        " Please use the --target_build option to"
+                        " provide the build url"
+                    )
+                # The target build can be a local path or http url
+                # if it's local path set source to iso, and set the
+                # the target_build to None.
                 if target_build.startswith('file'):
                     #ISO based deployment
                     kwargs['source'] = 'iso'
                     kwargs['target_build'] = None
+                elif not target_build.startswith('http'):
+                    raise ValueError(
+                        f"Invalid Cortx build version provided: {target_build}"
+                        " Please provide http or https url"
+                    )
 
             # ISO files validation
             if kwargs['source'] == 'iso':
-                iso_files = [fn for fn in os.listdir("/opt/isos/")
-                                if fn.endswith('.iso')]
-                for name in iso_files:
-                    if "single" in name:
-                        ISO_SINGLE_FILE = "/opt/isos/" + name
-                    elif "os" in name:
-                        ISO_OS_FILE = "/opt/isos/" + name
-                kwargs['iso_cortx'] = ISO_SINGLE_FILE
-                kwargs['iso_os'] = ISO_OS_FILE
+                if kwargs['iso_cortx'] and kwargs['iso_os']:
+                    ISO_SINGLE_FILE = kwargs['iso_cortx']
+                    ISO_OS_FILE = kwargs['iso_os']
+                else:
+                    self.logger.info("Checking the Cortx ISO files")
+                    iso_files = [fn for fn in os.listdir("/opt/isos/")
+                                    if fn.endswith('.iso')]
+                    for name in iso_files:
+                        if "single" in name:
+                            ISO_SINGLE_FILE = "/opt/isos/" + name
+                        elif "os" in name:
+                            ISO_OS_FILE = "/opt/isos/" + name
+                    kwargs['iso_cortx'] = ISO_SINGLE_FILE
+                    kwargs['iso_os'] = ISO_OS_FILE
+
+                self.logger.info("Validating the Cortx ISO files")
                 if not (os.path.isfile(ISO_SINGLE_FILE)
                         or os.path.isfile(ISO_OS_FILE)):
                     raise ValueError(
-                        f"No Cortx ISO found:{ISO_SINGLE_FILE} & {ISO_OS_FILE}"
-                        "Please download and keep them at /opt/isos and try again")
+                        f"No Cortx ISOs found: "
+                        f"{ISO_SINGLE_FILE} & {ISO_OS_FILE}, please"
+                        " keep the ISOs at /opt/isos and try again"
+                    )
 
             cluster_dict = {key:kwargs[key]
                            for key in kwargs if key in cluster_args}

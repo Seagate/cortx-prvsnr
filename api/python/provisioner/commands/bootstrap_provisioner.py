@@ -634,16 +634,16 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             paths['setup_key_file'],
             paths['salt_roster_file']
         )
-        if run_args.bootstrap_key:
-            self._prepare_roster(
-                run_args.nodes,
-                run_args.bootstrap_key,
-                paths['salt_bootstrap_roster_file']
-            )
+        # if run_args.bootstrap_key:
+        #     self._prepare_roster(
+        #         run_args.nodes,
+        #         run_args.bootstrap_key,
+        #         paths['salt_bootstrap_roster_file']
+        #     )
 
-        if not run_args.field_setup:
-            logger.info("Copying config.ini to file root")
-            self._copy_config_ini(run_args, paths)
+        # if not run_args.field_setup:
+        #     logger.info("Copying config.ini to file root")
+        #     self._copy_config_ini(run_args, paths)
 
         # TODO IMPROVE EOS-9581 not all masters support
         master_targets = (
