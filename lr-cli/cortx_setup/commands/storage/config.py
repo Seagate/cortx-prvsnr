@@ -138,7 +138,6 @@ class StorageEnclosureConfig(Command):
         self.machine_id = None
         self.enclosure_id = None
         self.mode = None
-        self.cvg_count = -1
 
         # assign value to enclosure-id from /etc/enclosure-id if it exists
         if enc_file_path.exists():
@@ -192,8 +191,8 @@ class StorageEnclosureConfig(Command):
         if(key=='password'):
             value = encrypt_secret(value, "storage_enclosure", self.enclosure_id)
 
-        if key == "cvg":
-            value = str(value)
+        # if key == "cvg":
+        #     value = str(value)
 
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
@@ -218,11 +217,11 @@ class StorageEnclosureConfig(Command):
         # 3.  --mode primary --ip <> --port <>
         # 4.  --user <> --password
         # 5.  --controller galium
-        # 6.  --cvg 0 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
+        # 6.  --cvg dg01 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
         # VM
         # 1.  --controller virtual --mode primary --ip <> --port <> --user <> --password <>
         # 2.  --name virtual_rack1 --type virtual
-        # 3.  --cvg 0 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
+        # 3.  --cvg dg02 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
 
         user = kwargs.get('user')
         password = kwargs.get('password')
@@ -234,7 +233,7 @@ class StorageEnclosureConfig(Command):
         controller_type = kwargs.get('controller')
         self.mode = kwargs.get('mode')
         cred_validation = False
-        self.cvg_count = int(kwargs.get('cvg'))
+        cvg_name = kwargs.get('cvg')
         data_devices = []
         input_data_devices = kwargs.get('data-devices')
         if input_data_devices:
@@ -243,6 +242,12 @@ class StorageEnclosureConfig(Command):
         input_metadata_devices = kwargs.get('metadata-devices')
         if input_metadata_devices:
             metadata_devices = [device for device in input_metadata_devices.split(",") if device and len(device) > 1]
+
+        if (data_devices or metadata_devices) and not cvg_name:
+            self.logger.exception(
+                f"argument cvg is must to set data and metadata devices"
+            )
+            raise RuntimeError('Please provide cvg using --cvg option')
 
         self.machine_id = get_machine_id(node_id)
         self.refresh_key_map()
@@ -485,7 +490,7 @@ class StorageEnclosureConfig(Command):
                 storage_type
             )
 
-        if self.cvg_count != -1:
+        if cvg_name:
             if not data_devices or not metadata_devices:
                 self.logger.error(
                     "The parameters data-devices and metadata-devices"
@@ -523,11 +528,10 @@ class StorageEnclosureConfig(Command):
                         raise ValueError(
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
-            cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
-            self.cvg_count = self.cvg_count + 1
-            self.update_pillar_and_conf('cvg', self.cvg_count)
+            cvg_list.insert(current_cvg_count, {'cvg_name': cvg_name, 'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            cvg_count = current_cvg_count + 1
+            self.update_pillar_and_conf('cvg', cvg_count)
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
-
