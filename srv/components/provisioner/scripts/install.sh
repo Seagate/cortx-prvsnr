@@ -438,13 +438,13 @@ install_cortx_pkgs()
     echo "Installed all Cortx packages successfully" | tee -a "${LOG_FILE}"
 }
 
-# setup_bash_env()
-# {
-#     echo "DEBUG: Setting the environment variable for build: $repo_url" >> "${LOG_FILE}"
-#     echo export CORTX_RELEASE_REPO="$repo_url" > /etc/profile.d/targetbuildenv.sh
-#     chmod 0755 /etc/profile.d/targetbuildenv.sh
-#     export CORTX_RELEASE_REPO="$repo_url"
-# }
+setup_bash_env()
+{
+    echo "DEBUG: Setting the environment variable for build: $repo_url" >> "${LOG_FILE}"
+    echo export CORTX_RELEASE_REPO="$repo_url" > /etc/profile.d/targetbuildenv.sh
+    chmod 0755 /etc/profile.d/targetbuildenv.sh
+    export CORTX_RELEASE_REPO="$repo_url"
+}
 
 save_target_build()
 {

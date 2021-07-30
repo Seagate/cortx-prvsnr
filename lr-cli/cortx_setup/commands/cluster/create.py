@@ -61,10 +61,10 @@ from provisioner.salt import (
 from provisioner import salt
 from provisioner.api import grains_get
 from cortx_setup.config import (
-    ALL_MINIONS
+    ALL_MINIONS,
+    CORTX_ISO_PATH
 )
 from provisioner.salt import StatesApplier
-
 
 class ClusterCreate(Command):
 
@@ -187,7 +187,7 @@ class ClusterCreate(Command):
                 # read target build from a file created during factory setup
                 tbuild_path = "/opt/seagate/cortx_configs/provisioner_generated/target_build"
                 self.logger.info("Fetching the Cortx build source")
-                if not tbuild_path.exists():
+                if not os.path.isfile(tbuild_path):
                     raise ValueError(
                         f"The file with Cortx build source"
                         " doesn't exist: '{tbuild_path}'"
@@ -225,13 +225,13 @@ class ClusterCreate(Command):
                     ISO_OS_FILE = kwargs['iso_os']
                 else:
                     self.logger.info("Checking the Cortx ISO files")
-                    iso_files = [fn for fn in os.listdir("/opt/isos/")
+                    iso_files = [fn for fn in os.listdir(CORTX_ISO_PATH)
                                     if fn.endswith('.iso')]
                     for name in iso_files:
                         if "single" in name:
-                            ISO_SINGLE_FILE = "/opt/isos/" + name
+                            ISO_SINGLE_FILE = str(CORTX_ISO_PATH) + "/" + name
                         elif "os" in name:
-                            ISO_OS_FILE = "/opt/isos/" + name
+                            ISO_OS_FILE = str(CORTX_ISO_PATH) + "/" + name
                     kwargs['iso_cortx'] = ISO_SINGLE_FILE
                     kwargs['iso_os'] = ISO_OS_FILE
 
