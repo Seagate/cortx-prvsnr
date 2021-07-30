@@ -51,3 +51,5 @@ BMC_COMPONENT = 'server_node'
 SUPPORT_USER_NAME = 'support'
 SUPPORT_CRON_TIME = 24                       # time in hours
 SUPPORT_CRON_SCRIPT = 'sudo /opt/seagate/cortx/provisioner/srv/components/provisioner/scripts/support --set-credentials'
+
+CORTX_ISO_PATH = Path('/opt/isos')
