@@ -190,16 +190,16 @@ class ClusterCreate(Command):
                 if not os.path.isfile(tbuild_path):
                     raise ValueError(
                         f"The file with Cortx build source"
-                        " doesn't exist: '{tbuild_path}'"
-                        " Please use the --target_build option to"
-                        " provide the correct build URL."
+                        f" doesn't exist: '{tbuild_path}'"
+                        f" Please use the --target_build option to"
+                        f" provide the correct build URL."
                     )
                 with open(tbuild_path, "r") as fh:
                     target_build = fh.readline().strip()
 
                 if not target_build:
                     raise ValueError(
-                        f"Could not find the Cortx build source."
+                        "Could not find the Cortx build source."
                         " Please use the --target_build option to"
                         " provide the build url"
                     )
