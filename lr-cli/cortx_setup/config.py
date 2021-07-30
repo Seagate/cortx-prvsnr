@@ -25,6 +25,9 @@ CONFSTORE_CLUSTER_FILE = Path(
 PRVSNR_PILLAR_DIR = Path(
     '/opt/seagate/cortx/provisioner/pillar'
 )
+PRVSNR_LOG_DIR= Path(
+    '/var/log/seagate/provisioner'
+)
 
 local_pillars = ['cluster', 'storage', 'system', 'firewall']
 
