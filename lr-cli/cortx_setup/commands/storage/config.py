@@ -57,7 +57,7 @@ class StorageEnclosureConfig(Command):
     '''
     $ cortx_setup storage config --name <enclosure-name> --type {RBOD|JBOD|EBOD|virtual}
     $ cortx_setup storage config --controller {gallium|indium|virtual} --mode {primary|secondary}
-    $ cortx_setup storage config --cvg {0|1} --metadata_devices <device list> --data_devices <data_devices>
+    $ cortx_setup storage config --cvg dg_name --metadata-devices <device list> --data-devices <device list>
     e.g.
     $ cortx_setup storage config --controller gallium --mode primary --ip <ip-address> --port <port-number> --user <user> --password <paasword>
     $ cortx_setup storage config --controller gallium --mode secondary --ip <ip-address> --port <port-number> --user <user> --password <paasword>
@@ -116,17 +116,17 @@ class StorageEnclosureConfig(Command):
             'help': 'Port of the controller to connect to'
         },
         'cvg': {
-            'type': int,
-            'default': -1,
+            'type': str,
+            'default': None,
             'optional': True,
-            'help': 'Cylinder Volume Group number.'
+            'help': 'Disk group name'
         },
-        'data_devices': {
+        'data-devices': {
             'type': str,
              'optional': True,
             'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
-        'metadata_devices': {
+        'metadata-devices': {
             'type': str,
             'optional': True,
             'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
@@ -218,11 +218,11 @@ class StorageEnclosureConfig(Command):
         # 3.  --mode primary --ip <> --port <>
         # 4.  --user <> --password
         # 5.  --controller galium
-        # 6.  --cvg 0 --data_devices /dev/sdb,/dev/sdc --metadata_devices /dev/sdd
+        # 6.  --cvg 0 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
         # VM
         # 1.  --controller virtual --mode primary --ip <> --port <> --user <> --password <>
         # 2.  --name virtual_rack1 --type virtual
-        # 3.  --cvg 0 --data_devices /dev/sdb,/dev/sdc --metadata_devices /dev/sdd
+        # 3.  --cvg 0 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
 
         user = kwargs.get('user')
         password = kwargs.get('password')
@@ -236,11 +236,11 @@ class StorageEnclosureConfig(Command):
         cred_validation = False
         self.cvg_count = int(kwargs.get('cvg'))
         data_devices = []
-        input_data_devices = kwargs.get('data_devices')
+        input_data_devices = kwargs.get('data-devices')
         if input_data_devices:
             data_devices = [device for device in input_data_devices.split(",") if device and len(device) > 1]
         metadata_devices = []
-        input_metadata_devices = kwargs.get('metadata_devices')
+        input_metadata_devices = kwargs.get('metadata-devices')
         if input_metadata_devices:
             metadata_devices = [device for device in input_metadata_devices.split(",") if device and len(device) > 1]
 
@@ -488,7 +488,7 @@ class StorageEnclosureConfig(Command):
         if self.cvg_count != -1:
             if not data_devices or not metadata_devices:
                 self.logger.error(
-                    "The parameters data_devices and metadata_devices"
+                    "The parameters data-devices and metadata-devices"
                     " are missing")
                 raise RuntimeError("Incomplete arguments provided")
 
