@@ -49,10 +49,10 @@ cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name=>{{ storag
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['machine_id'] }}
 cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]=>{{ pillar['storage'][pillar['cluster'][node]['storage']['enclosure']]['enclosure_id'] }}
 {%- endfor %}
-{%- for durability_type in pillar['cluster']['srvnode-1']['storage']['durability'] %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>data=>{{ pillar['cluster']['srvnode-1']['storage']['durability'][durability_type]['data'] }}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>parity=>{{ pillar['cluster']['srvnode-1']['storage']['durability'][durability_type]['parity'] }}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>spare=>{{ pillar['cluster']['srvnode-1']['storage']['durability'][durability_type]['spare'] }}
+{%- for durability_type in pillar['cluster']['durability'][storage_set].keys() %}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>data=>{{ pillar['cluster']['durability'][storage_set][durability_type]['data'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>parity=>{{ pillar['cluster']['durability'][storage_set][durability_type]['parity'] }}
+cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>spare=>{{ pillar['cluster']['durability'][storage_set][durability_type]['spare'] }}
 {%- endfor %}
 {%- endfor %}
 {%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}

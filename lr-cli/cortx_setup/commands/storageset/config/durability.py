@@ -25,6 +25,14 @@ from cortx_setup.commands.common_utils import (
 )
 
 from provisioner.commands import PillarSet
+from provisioner.config import (
+    CONFSTORE_ROOT_FILE,
+    ALL_MINIONS
+)
+from provisioner.salt import (
+    StateFunExecuter,
+    copy_to_file_roots
+)
 from cortx.utils.conf_store import Conf
 
 
@@ -40,6 +48,7 @@ class DurabilityConfig(Command):
             'default': 'sns',
             'optional': True,
             'dest': 'durability_type',
+            'choices': ['sns', 'dix'],
             'help': 'Storageset durability type. e.g: {sns|dix}'
         },
         'data': {
@@ -64,52 +73,71 @@ class DurabilityConfig(Command):
 
     def run(self, **kwargs):
         try:
-            index = 'storage_durability_index'
+            confstore_file_index = 'storage_durability_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
             cluster_id = get_cluster_id()
+            durability_dict = {
+                'data': str(
+                    kwargs['data']), 'parity': str(
+                    kwargs['parity']), 'spare': str(
+                    kwargs['spare'])}
 
             self.load_conf_store(
-                index,
+                confstore_file_index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
 
-            ss_name = Conf.get(index,
-                               f'cluster>{cluster_id}>storage_set[0]>name')
+            current_storage_set_data = Conf.get(
+                confstore_file_index, f'cluster>{cluster_id}>storage_set')
+            storage_index = -1
 
-            if ss_name != storage_set_name:
+            for idx, _ in enumerate(current_storage_set_data):
+                if current_storage_set_data[idx]['name'] == storage_set_name:
+                    storage_index = idx
+                    break
+
+            if storage_index == -1:
                 raise ValueError(
-                   "Invalid Storageset name provided: "
-                   f"'{storage_set_name}' not found in ConfStore data. "
-                   "First, set with `cortx_setup storageset create` command."
+                    "Invalid Storageset name provided: "
+                    f"'{storage_set_name}' not found in ConfStore data. "
+                    "First, set with `cortx_setup storageset create` command."
                 )
-            durability_key = f'cluster>{cluster_id}>storage_set[0]>durability'
-            durability_info = Conf.get(index, durability_key)
-            if not durability_info.get(durability_type, False):
-                durability_info[durability_type] = {}
-            for key, value in kwargs.items():
-                if key not in ['storage_set_name', 'durability_type']:
-                    self.logger.debug(
-                        f"Updating {key} as {value} in ConfStore"
-                    )
-                    durability_info[durability_type].update({key: value})
+
+            confstore_durability_key = f'cluster>{cluster_id}>storage_set[{storage_index}]>durability'
+            pillar_durability_key = f'cluster/durability/{storage_set_name}'
 
             PillarSet().run(
-                'cluster/storage_set/durability',
-                durability_info
+                f'{pillar_durability_key}/{durability_type}',
+                durability_dict
             )
             Conf.set(
-                index,
-                f'cluster>{cluster_id}>storage_set[0]>durability',
-                durability_info
+                confstore_file_index,
+                f'{confstore_durability_key}>{durability_type}',
+                durability_dict
             )
-            Conf.save(index)
+            Conf.save(confstore_file_index)
             self.logger.debug(
                 f"Durability configured for Storageset '{storage_set_name}'"
             )
 
+            # Copy the current confstore across all nodes
+            dest = copy_to_file_roots(
+                CONFSTORE_CLUSTER_FILE, CONFSTORE_ROOT_FILE)
+            self.logger.debug("Confstore file provisioner root directory")
+
+            StateFunExecuter.execute(
+                'file.managed',
+                fun_kwargs=dict(
+                    name=str(CONFSTORE_CLUSTER_FILE),
+                    source=str(dest),
+                    makedirs=True
+                ),
+                targets=ALL_MINIONS
+            )
+            self.logger.info("Confstore copied across all nodes of cluster")
+
         except ValueError as exc:
             raise ValueError(
-              f"Failed to configure durability. Reason: {str(exc)}"
+                f"Failed to configure durability. Reason: {str(exc)}"
             )
-
