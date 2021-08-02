@@ -16,6 +16,10 @@
 #
 
 import json
+from cortx_setup.config import (
+    HEALTH_PATH,
+    MANIFEST_PATH
+)
 from cortx_setup.commands.common_utils import get_pillar_data
 
 from ..command import Command
@@ -39,8 +43,9 @@ class ResourceShow(Command):
         else:
             return resource_map
 
-    def parse_resource_file(self, resource_map_path: str):
-        file_type, file_path = resource_map_path.split("://")
+    @staticmethod
+    def parse_resource_file(file_map_path: str):
+        file_type, file_path = file_map_path.split("://")
         if "json" in file_type:
             with open(file_path, "r") as f:
                 return json.loads(f.read())
@@ -92,9 +97,8 @@ class ResourceShow(Command):
             # resource_map_path =
             # ResourceDiscover.get_resource_map(resource_type =
             # kwargs['resource_type'])
-            resource_map_path = get_pillar_data(
-                'provisioner/common_config/resource_map_path')
-            resource_dict = self.parse_resource_file(resource_map_path)
+            resource_path = get_pillar_data(HEALTH_PATH)
+            resource_dict = ResourceShow.parse_resource_file(resource_path)
 
             if kwargs['resource_type']:
                 resource_dict = self.filter_resource_type(
@@ -107,6 +111,16 @@ class ResourceShow(Command):
             self.logger.info(json.dumps(resource_dict, indent=4))
             # return json.dumps(resource_dict, indent=4)
 
-        else:
+        elif kwargs["manifest"]:
+            manifest_path = get_pillar_data(MANIFEST_PATH)
+            manifest_dict = ResourceShow.parse_resource_file(manifest_path)
+
+            if kwargs['resource_type']:
+                manifest_dict = self.filter_resource_type(
+                    kwargs['resource_type'], manifest_dict)
+
+            self.logger.info(json.dumps(manifest_dict, indent=4))
+            # return json.dumps(manifest_dict, indent=4)
+
             self.logger.debug("discover HW/SW Manifest for all resources")
         self.logger.debug("Done")
