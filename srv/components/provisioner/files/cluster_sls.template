@@ -35,7 +35,7 @@ cluster:
       sns:
         data: {{ 4 if num_of_nodes > 1 else 1 }}
         parity: {{ 2 if num_of_nodes > 1 else 0 }}
-        spare: {{ 2 if num_of_nodes > 1 else 0 }}    
+        spare: 0    # earlier it was 3 incase for multinode cluster {{ 3 if num_of_nodes > 1 else 0 }} now for VM as well as for HW its 0
   server_nodes:
     {%- for node_num in range(num_of_nodes) %}
     {%- set node = "srvnode-" + ((node_num + 1) | string) %}
