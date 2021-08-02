@@ -25,7 +25,6 @@ from cortx_setup.commands.common_utils import (
 )
 
 from provisioner.commands import PillarSet
-from provisioner.salt import local_minion_id
 from cortx.utils.conf_store import Conf
 
 
@@ -65,7 +64,6 @@ class DurabilityConfig(Command):
 
     def run(self, **kwargs):
         try:
-            node_id = local_minion_id()
             index = 'storage_durability_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
@@ -76,9 +74,8 @@ class DurabilityConfig(Command):
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
 
-            ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
-
-            durability_dict = {durability_type: {}}
+            ss_name = Conf.get(index,
+                               f'cluster>{cluster_id}>storage_set[0]>name')
 
             if ss_name != storage_set_name:
                 raise ValueError(
@@ -86,24 +83,26 @@ class DurabilityConfig(Command):
                    f"'{storage_set_name}' not found in ConfStore data. "
                    "First, set with `cortx_setup storageset create` command."
                 )
-
+            durability_key = f'cluster>{cluster_id}>storage_set[0]>durability'
+            durability_info = Conf.get(index, durability_key)
+            if not durability_info.get(durability_type, False):
+                durability_info[durability_type] = {}
             for key, value in kwargs.items():
                 if key not in ['storage_set_name', 'durability_type']:
                     self.logger.debug(
                         f"Updating {key} as {value} in ConfStore"
                     )
-                    durability_dict[durability_type].update({key: value})
+                    durability_info[durability_type].update({key: value})
 
             PillarSet().run(
                 'cluster/storage_set/durability',
-                durability_dict
+                durability_info
             )
             Conf.set(
                 index,
                 f'cluster>{cluster_id}>storage_set[0]>durability',
-                durability_dict
+                durability_info
             )
-
             Conf.save(index)
             self.logger.debug(
                 f"Durability configured for Storageset '{storage_set_name}'"
@@ -113,3 +112,4 @@ class DurabilityConfig(Command):
             raise ValueError(
               f"Failed to configure durability. Reason: {str(exc)}"
             )
+

@@ -25,7 +25,8 @@ from cortx_setup.config import (
     SUPPORT_CRON_SCRIPT,
     SUPPORT_CRON_TIME,
     SUPPORT_USER_NAME,
-    HEALTH_PATH  # , MANIFEST_PATH
+    HEALTH_PATH,
+    MANIFEST_PATH
 )
 from cortx_setup.validate import (
     CortxSetupError,
@@ -49,7 +50,7 @@ class NodeFinalize(Command):
 
     def _validate_health_map(self):
         self.logger.debug("Validating node health check")
-        resource_paths = [HEALTH_PATH]    # [HEALTH_PATH, MANIFEST_PATH]
+        resource_paths = [HEALTH_PATH, MANIFEST_PATH]
         for resource in resource_paths:
             path = get_pillar_data(resource)
             if not path or path is MISSED:
@@ -220,7 +221,7 @@ class NodeFinalize(Command):
 
             if "nodeadmin" in user:
                 self.logger.debug(
-                  f"Adding assistance to change default password on first login for '{user}' user"
+                    f"Adding assistance to change default password on first login for '{user}' user"
                 )
                 StateFunExecuter.execute(
                     'cmd.run',
@@ -230,7 +231,8 @@ class NodeFinalize(Command):
                     targets=node_id
                 )
 
-                self.logger.debug(f"Ensuring {user} user permissions on system")
+                self.logger.debug(
+                    f"Ensuring {user} user permissions on system")
 
                 StateFunExecuter.execute(
                     'file.append',
@@ -243,7 +245,8 @@ class NodeFinalize(Command):
                 )
 
             else:
-                self.logger.debug(f"Ensuring {user} user permissions on system")
+                self.logger.debug(
+                    f"Ensuring {user} user permissions on system")
 
                 StateFunExecuter.execute(
                     'file.append',
@@ -263,7 +266,6 @@ class NodeFinalize(Command):
                     ),
                     targets=node_id
                 )
-
 
     def run(self, force=False):
         try:

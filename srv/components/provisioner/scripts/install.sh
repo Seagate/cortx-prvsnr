@@ -20,6 +20,8 @@ set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/install.log}"
 mkdir -p $(dirname "${LOG_FILE}")
+target_build_loc="/opt/seagate/cortx_configs/provisioner_generated/target_build"
+mkdir -p $(dirname "${target_build_loc}")
 PRVSNR_ROOT="/opt/seagate/cortx/provisioner"
 minion_id="srvnode-0"
 repo_url="file:///mnt/cortx"
@@ -444,6 +446,12 @@ setup_bash_env()
     export CORTX_RELEASE_REPO="$repo_url"
 }
 
+save_target_build()
+{
+    echo "DEBUG: Storing the target build $repo_url at: $target_build_loc" >> "${LOG_FILE}"
+    echo "$repo_url" > "${target_build_loc}"
+}
+
 main()
 {
     time_stamp=$(date)
@@ -469,7 +477,7 @@ main()
     echo "Preparing the Cortx ConfStore with default values" | tee -a "${LOG_FILE}"
     cortx_setup prepare_confstore
     echo "Setting up the shell environment" | tee -a "${LOG_FILE}"
-    setup_bash_env
+    save_target_build
 
     if [[ "${use_local_repo}" == true ]]; then
         #TODO: Test & enable this for remotely hosted repos as well

@@ -15,17 +15,13 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-cleanup:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - sspl
-      - uds
-      - csm
-    iopath:
-      - motr
-      - s3server
-      - hare
-    foundation:
-      - cortx_utils
+{% set profile_confstore = "/var/lib/seagate/cortx/provisioner/shared/factory_profile/confstore" %}
+
+
+Copy confstore file:
+  file.managed:
+    - name: {{ profile_confstore }}/provisioner_cluster.json.{{ grains['id'] }}
+    - source: /opt/seagate/cortx_configs/provisioner_cluster.json
+    - user: root
+    - group: root
+    - replace: True
