@@ -77,8 +77,7 @@ class DurabilityConfig(Command):
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
 
-            if not (
-                    durability_type and kwargs['data'] and kwargs['parity'] and kwargs['spare']):
+            if None in [durability_type, kwargs['data'], kwargs['parity'], kwargs['spare']]:
                 raise Exception(
                     "ERROR: Insufficient command parameters type specified")
 
@@ -106,11 +105,11 @@ class DurabilityConfig(Command):
             if storage_set_index == -1:
                 raise ValueError(
                     f"Error: Storage-set '{storage_set_name}' not found."
-                    "Action: Configure with cortx_setup storageset create command"
+                    "Action: Configure with 'cortx_setup storageset create' command"
                 )
 
             confstore_durability_key = f'cluster>{cluster_id}>storage_set[{storage_set_index}]>durability'
-            pillar_durability_key = f'cluster/durability/{storage_set_name}'
+            pillar_durability_key = 'cluster/srvnode-1/storage/durability'
 
             PillarSet().run(
                 f'{pillar_durability_key}/{durability_type}',

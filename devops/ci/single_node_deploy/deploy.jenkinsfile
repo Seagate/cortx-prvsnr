@@ -90,9 +90,6 @@ node ('provisioning'){
                     echo \"\"\"
                     [cluster]
                     mgmt_vip=None
-                    durability.storage-set-1.sns.data=4
-                    durability.storage-set-1.sns.parity=2
-                    durability.storage-set-1.sns.spare=0
                     [srvnode_default]
                     network.data.private_interfaces=eth3,eth4
                     network.data.public_interfaces=eth1,eth2
@@ -102,6 +99,9 @@ node ('provisioning'){
                     storage.cvg.0.data_devices=\${device_list#*,}
                     storage.cvg.0.metadata_devices=\${device_list%%,*}
                     network.data.private_ip=None
+                    storage.durability.sns.data=1
+                    storage.durability.sns.parity=0
+                    storage.durability.sns.spare=0
 
                     [enclosure_default]
                     type=virtual
