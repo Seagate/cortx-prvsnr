@@ -106,7 +106,7 @@ cluster:
         sns:
           data: {{ 4 if num_of_nodes > 1 else 1 }}
           parity: {{ 2 if num_of_nodes > 1 else 0 }}
-          spare: {{ 2 if num_of_nodes > 1 else 0 }}
+          spare: 0 
     {%- if "physical" in grains["virtual"] %}
     s3_instances: 11
     {%- else %}
