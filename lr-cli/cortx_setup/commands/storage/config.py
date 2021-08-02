@@ -232,11 +232,11 @@ class StorageEnclosureConfig(Command):
         cred_validation = False
         cvg_name = kwargs.get('cvg')
         data_devices = []
-        input_data_devices = kwargs.get('data-devices')
+        input_data_devices = kwargs.get('data_devices')
         if input_data_devices:
             data_devices = [device for device in input_data_devices.split(",") if device and len(device) > 1]
         metadata_devices = []
-        input_metadata_devices = kwargs.get('metadata-devices')
+        input_metadata_devices = kwargs.get('metadata_devices')
         if input_metadata_devices:
             metadata_devices = [device for device in input_metadata_devices.split(",") if device and len(device) > 1]
 
@@ -488,11 +488,12 @@ class StorageEnclosureConfig(Command):
             )
 
         if cvg_name:
+            self.logger.debug(f"cvg_name:{cvg_name}, data_devices:{data_devices}, metadata_devices:{metadata_devices}")
             if not data_devices or not metadata_devices:
                 self.logger.error(
-                    "The parameters data-devices and metadata-devices"
+                    "ERROR: The parameters data-devices and metadata-devices"
                     " are missing")
-                raise RuntimeError("Incomplete arguments provided")
+                raise RuntimeError("ERROR: Incomplete arguments provided")
 
             current_cvg_count = Conf.get (
                 'node_info_index',
@@ -500,6 +501,8 @@ class StorageEnclosureConfig(Command):
             )
             if not current_cvg_count:
                 current_cvg_count = 0
+            else:
+                current_cvg_count = int(current_cvg_count)
 
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
             if not cvg_list or cvg_list is MISSED:
@@ -527,7 +530,7 @@ class StorageEnclosureConfig(Command):
                                 "Please provide the correct device")
             cvg_list.insert(current_cvg_count, {'cvg_name': cvg_name, 'data_devices': data_devices, 'metadata_devices': metadata_devices})
             cvg_count = current_cvg_count + 1
-            self.update_pillar_and_conf('cvg', cvg_count)
+            self.update_pillar_and_conf('cvg', str(cvg_count))
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
