@@ -26,7 +26,8 @@ from provisioner.salt import (
 from cortx_setup.commands.command import Command
 from cortx_setup.commands.common_utils import (
     get_provisioner_states,
-    get_cortx_states
+    get_cortx_states,
+    get_pillar_data
 )
 
 from provisioner.commands import deploy
@@ -79,6 +80,7 @@ class ClusterConfigComponent(Command):
             primary = local_minion_id()
             secondaries = f"not {primary}"
 
+            node_count = get_pillar_data("cluster/storage_set/count")
             if component_group is None:
                 # self.logger.debug(f"Deploying prerequisites components on nodes")
                 # self._configure(
@@ -98,15 +100,15 @@ class ClusterConfigComponent(Command):
                         'config.config', 'config.init_mod'],
                     targets=primary
                 )
-                self.logger.debug(f"Deploying cortx ha components on {secondaries}")
-                self._configure(
-                    ['ha.cortx-ha'],
-                    stages=[
-                        'config.post_install', 'config.prepare',
-                        'config.config', 'config.init_mod'],
-                    targets=secondaries
-                )
-
+                if node_count > 1:
+                    self.logger.debug(f"Deploying cortx ha components on {secondaries}")
+                    self._configure(
+                        ['ha.cortx-ha'],
+                        stages=[
+                            'config.post_install', 'config.prepare',
+                            'config.config', 'config.init_mod'],
+                        targets=secondaries
+                    )
             # elif component_group in noncortx_components:
             #     self.logger.debug(f"Deploying prerequisites components on nodes")
             #     self._configure(
@@ -127,14 +129,15 @@ class ClusterConfigComponent(Command):
                         'config.config', 'config.init_mod'],
                     targets=primary
                 )
-                self.logger.debug(f"Deploying cortx ha components on {secondaries}")
-                self._configure(
-                    ['ha.cortx-ha'],
-                    stages=[
-                        'config.post_install', 'config.prepare',
-                        'config.config', 'config.init_mod'],
-                    targets=secondaries
-                )
+                if node_count > 1:
+                    self.logger.debug(f"Deploying cortx ha components on {secondaries}")
+                    self._configure(
+                        ['ha.cortx-ha'],
+                        stages=[
+                            'config.post_install', 'config.prepare',
+                            'config.config', 'config.init_mod'],
+                        targets=secondaries
+                    )
             self.logger.debug(f"Deployment done")
         except ValueError as exc:
             raise ValueError(
