@@ -121,7 +121,7 @@ node ('provisioning'){
                     network.data.private_ip=None
                     storage.durability.sns.data=4
                     storage.durability.sns.parity=2
-                    storage.durability.sns.spare=2
+                    storage.durability.sns.spare=0
                     [enclosure_default]
                     type=virtual
                     controller.type=virtual
