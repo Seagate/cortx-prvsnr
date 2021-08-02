@@ -57,7 +57,7 @@ class StorageEnclosureConfig(Command):
     '''
     $ cortx_setup storage config --name <enclosure-name> --type {RBOD|JBOD|EBOD|virtual}
     $ cortx_setup storage config --controller {gallium|indium|virtual} --mode {primary|secondary}
-    $ cortx_setup storage config --cvg dg_name --metadata-devices <device list> --data-devices <device list>
+    $ cortx_setup storage config --cvg <disk-group name> --metadata-devices <device list> --data-devices <device list>
     e.g.
     $ cortx_setup storage config --controller gallium --mode primary --ip <ip-address> --port <port-number> --user <user> --password <paasword>
     $ cortx_setup storage config --controller gallium --mode secondary --ip <ip-address> --port <port-number> --user <user> --password <paasword>
@@ -119,17 +119,17 @@ class StorageEnclosureConfig(Command):
             'type': str,
             'default': None,
             'optional': True,
-            'help': 'Disk group name'
+            'help': 'Cylinder Volume Group Name (Disk-Group) E.g. dgA01'
         },
         'data-devices': {
             'type': str,
              'optional': True,
-            'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
+            'help': 'List of data devices mapped to CVG disk-group E.g. /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
         'metadata-devices': {
             'type': str,
             'optional': True,
-            'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
+            'help': 'List of metadata devices mapped to CVG disk-group E.g. /dev/mapper/mpathx,/dev/mapper/mpathy'
         }
     }
 
@@ -191,9 +191,6 @@ class StorageEnclosureConfig(Command):
         if(key=='password'):
             value = encrypt_secret(value, "storage_enclosure", self.enclosure_id)
 
-        # if key == "cvg":
-        #     value = str(value)
-
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -245,7 +242,7 @@ class StorageEnclosureConfig(Command):
 
         if (data_devices or metadata_devices) and not cvg_name:
             self.logger.exception(
-                f"argument cvg is must to set data and metadata devices"
+                "argument cvg is must to set data and metadata devices"
             )
             raise RuntimeError('Please provide cvg using --cvg option')
 
