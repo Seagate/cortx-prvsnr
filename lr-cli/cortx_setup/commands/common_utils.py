@@ -109,6 +109,12 @@ def get_cortx_states():
     """
     return get_pillar_data('execution/cortx_components')
 
+def get_reset_states():
+    """
+    Get cortx states iopath controlpath and system states
+
+    """
+    return get_pillar_data('reset/cortx_components')
 
 def encrypt_secret(secret, component, key):
     key_cipher = Cipher.generate_key(key, component)
