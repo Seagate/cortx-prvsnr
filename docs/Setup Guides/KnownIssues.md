@@ -930,7 +930,7 @@ Please follow the following steps until the way to fix this in Provisioner is id
     ```
     [root@smc50-m08 ~]# shutdown -r now
     ```
-**Note:** If this method fails, you could try [an alternative approach](https://github.com/Seagate/cortx-prvsnr/wiki/Alternative-method-for-removing-LVM-metadata-information-from-enclosure-volumes)
+**Note:** If this method fails, you could try [an alternative approach](AlternativeMethod.md)
   
   </p>
 </details>
@@ -990,7 +990,7 @@ Storage component fails during auto-deploy command with following error:
 The failure is due to the reason that the system was previously used for deployment and the metadata device being used still has the old metadata.
 **Solution:**
  
-Follow the steps mentioned [here](https://github.com/Seagate/cortx-prvsnr/wiki/Alternative-method-for-removing-LVM-metadata-information-from-enclosure-volumes)
+Follow the steps mentioned [here](AlternativeMethod.md)
 
   </p>
   </details>
