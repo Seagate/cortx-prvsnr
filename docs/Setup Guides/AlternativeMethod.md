@@ -1,6 +1,6 @@
 # Alternative method for removing LVM metadata information from enclosure volumes
 
-As outlined in [Known Issue #19](https://github.com/Saumya-Sunder/cortx-prvsnr-1/blob/patch-1/docs/Setup%20Guides/KnownIssues.md#manual-fix-in-case-the-node-has-been-reimaged), you may run into a problem during the reinstall with LVM metadata present on the enclosure volumes.
+As outlined in [Known Issue #18](https://github.com/Saumya-Sunder/cortx-prvsnr-1/blob/patch-1/docs/Setup%20Guides/KnownIssues.md#manual-fix-in-case-the-node-has-been-reimaged), you may run into a problem during the reinstall with LVM metadata present on the enclosure volumes.
 
 If the original method of removing the LVM metadata fails, you could try an alternative approach:
 
