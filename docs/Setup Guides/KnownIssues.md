@@ -621,6 +621,7 @@ eosnode-1:
 eosnode-2:
     eb21357f-41eb-4a7b-b94e-0c48e51cbfd5
 ```  
+
 **Solution:**  
 ```
 # Fix
