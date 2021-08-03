@@ -129,6 +129,44 @@
         }]
     },
     {
+        "name": "start",
+        "description": "Cluster start command",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterStart"
+        }
+    },
+    {
+        "name": "status",
+        "description": "Cluster status command",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterStatus"
+        }
+    },
+    {
         "name": "show",
         "description": "Cluster show command",
         "permissions_tag": "bypass",

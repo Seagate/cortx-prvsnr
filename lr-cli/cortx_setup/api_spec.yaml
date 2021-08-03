@@ -67,7 +67,10 @@ cluster:
   config:
     component:
       ClusterConfigComponent
-
+  start:
+    ClusterStart
+  status:
+    ClusterStatus
 resource:
   discover:
     ResourceDiscover

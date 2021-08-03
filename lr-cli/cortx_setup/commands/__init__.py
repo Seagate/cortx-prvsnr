@@ -49,7 +49,8 @@ from .storageset.config.durability import DurabilityConfig
 from .enclosure.refresh import RefreshEnclosureId
 from .config.set import SetConfiguration
 from .config.get import GetConfiguration
-
+from .cluster.start import ClusterStart
+from .cluster.status import ClusterStatus
 
 __all__ = [
     'AddServerNode',
@@ -85,5 +86,7 @@ __all__ = [
     'PrepareConfstore',
     'PillarSync',
     'SetConfiguration',
-    'GetConfiguration'
+    'GetConfiguration',
+    'ClusterStart',
+    'ClusterStatus'
  ]
