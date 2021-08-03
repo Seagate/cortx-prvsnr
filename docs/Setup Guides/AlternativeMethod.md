@@ -98,7 +98,7 @@ Proceed with the re-install.
 Note: It's ok to perform steps 7-8 even if you performed steps 4-6.
 
 
-**IF you really want to confirm that partitions are gone**
+**If you really want to confirm that partitions are gone**
 
 10. Edit the following files:
 
