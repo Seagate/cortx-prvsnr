@@ -1,8 +1,7 @@
 # Known deployment issues
 
-
 <details>
-  <summary>1. AWS S3 ls fails as openldap database does not sync across the nodes</summary>
+  <summary>AWS S3 ls fails as openldap database does not sync across the nodes</summary>
   <p>
 
 **Problem:**  
@@ -961,7 +960,9 @@ This will add the patch to update the references to ci-storage and continue the 
   <summary>20. Storage component fails with error "Device /dev/disk/by-id/dm-name-mpathX2 excluded by a filter."</summary>
   <p>
 
-**Problem:** 
+
+##### Problem:
+    
 Storage component fails during auto-deploy command with following error:
 ```
 ----------
