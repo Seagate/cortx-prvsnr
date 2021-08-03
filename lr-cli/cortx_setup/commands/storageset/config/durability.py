@@ -73,7 +73,7 @@ class DurabilityConfig(Command):
 
     def run(self, **kwargs):
         try:
-            confstore_file_index = 'storage_durability_index'
+            confstore_config = 'storage_durability_index'
             storage_set_name = kwargs['storage_set_name']
             durability_type = kwargs['durability_type']
 
@@ -83,45 +83,44 @@ class DurabilityConfig(Command):
 
             cluster_id = get_cluster_id()
             durability_dict = {
-                'data': str(
-                    kwargs['data']), 'parity': str(
-                    kwargs['parity']), 'spare': str(
-                    kwargs['spare'])}
+                'data': str(kwargs['data']),
+                'parity': str(kwargs['parity']),
+                'spare': str(kwargs['spare'])
+            }
 
             self.load_conf_store(
-                confstore_file_index,
+                confstore_config,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
 
-            current_storage_set_data = Conf.get(
-                confstore_file_index, f'cluster>{cluster_id}>storage_set')
-            storage_index = -1
+            storage_set_info = Conf.get(
+                confstore_config, f'cluster>{cluster_id}>storage_set')
+            storage_set_index = -1
 
-            for idx, _ in enumerate(current_storage_set_data):
-                if current_storage_set_data[idx]['name'] == storage_set_name:
-                    storage_index = idx
+            for index, _ in enumerate(storage_set_info):
+                if storage_set_info[index]['name'] == storage_set_name:
+                    storage_set_index = index
                     break
 
-            if storage_index == -1:
+            if storage_set_index == -1:
                 raise ValueError(
-                    "Invalid Storageset name provided: "
-                    f"'{storage_set_name}' not found in ConfStore data. "
-                    "First, set with `cortx_setup storageset create` command."
+                    f"Error: Storage-set '{storage_set_name}' not found."
+                    "Action: Configure with 'cortx_setup storageset create' command"
                 )
 
-            confstore_durability_key = f'cluster>{cluster_id}>storage_set[{storage_index}]>durability'
-            pillar_durability_key = f'cluster/durability/{storage_set_name}'
+            confstore_durability_key = f'cluster>{cluster_id}>storage_set[{storage_set_index}]>durability'
+            pillar_durability_key = 'cluster/srvnode-1/storage/durability'
 
             PillarSet().run(
                 f'{pillar_durability_key}/{durability_type}',
                 durability_dict
             )
             Conf.set(
-                confstore_file_index,
+                confstore_config,
                 f'{confstore_durability_key}>{durability_type}',
                 durability_dict
             )
-            Conf.save(confstore_file_index)
+            Conf.save(confstore_config)
             self.logger.debug(
                 f"Durability configured for Storageset '{storage_set_name}'"
             )
@@ -140,7 +139,7 @@ class DurabilityConfig(Command):
                 ),
                 targets=ALL_MINIONS
             )
-            self.logger.info("Confstore copied across all nodes of cluster")
+            self.logger.debug("Confstore copied across all nodes of cluster")
 
         except ValueError as exc:
             raise ValueError(
