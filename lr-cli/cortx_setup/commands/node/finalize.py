@@ -16,6 +16,7 @@
 #
 
 import time
+import shutil
 from pathlib import Path
 from crontab import CronTab
 from ..command import Command
@@ -26,7 +27,9 @@ from cortx_setup.config import (
     SUPPORT_CRON_TIME,
     SUPPORT_USER_NAME,
     HEALTH_PATH,
-    MANIFEST_PATH
+    MANIFEST_PATH,
+    BACKUP_FACTORY_FOLDER,
+    BACKUP_FILE_DICT
 )
 from cortx_setup.validate import (
     CortxSetupError,
@@ -266,6 +269,18 @@ class NodeFinalize(Command):
                     ),
                     targets=node_id
                 )
+
+    def _factory_backup(self):
+        """
+        This function would create backup for files and folders
+        that would be affected in feild deployment.
+        """
+        BACKUP_FACTORY_FOLDER.mkdir(parents=True, exist_ok=True)
+
+        self.logger.debug("Backup factory data")
+        for source_path, dest_path in BACKUP_FILE_DICT:
+            shutil.copy(source_path, str(dest_path))
+
 
     def run(self, force=False):
         try:

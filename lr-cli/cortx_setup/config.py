@@ -53,3 +53,28 @@ SUPPORT_CRON_TIME = 24                       # time in hours
 SUPPORT_CRON_SCRIPT = 'sudo /opt/seagate/cortx/provisioner/srv/components/provisioner/scripts/support --set-credentials'
 
 CORTX_ISO_PATH = Path('/opt/isos')
+
+# Backup
+BACKUP_FACTORY_FOLDER = Path('/opt/seagate/cortx/provisioner/backup_factory')
+BACKUP_FILE_DICT = {
+    '/etc/hosts' : BACKUP_FACTORY_FOLDER / 'hosts',
+    '/etc/salt/grains' : BACKUP_FACTORY_FOLDER / 'grains',
+    '/etc/salt/master' : BACKUP_FACTORY_FOLDER / 'master',
+    '/etc/salt/minion' : BACKUP_FACTORY_FOLDER / 'minion',
+    '/etc/salt/minion_id' : BACKUP_FACTORY_FOLDER / 'minion_id',
+    CONFSTORE_CLUSTER_FILE : BACKUP_FACTORY_FOLDER / 'confstore',
+    '/var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all' : BACKUP_FACTORY_FOLDER / 'local_pillar'
+}
+
+CLEANUP_FILE_LIST = [
+    CONFSTORE_CLUSTER_FILE,
+    '/etc/yum.repos.d/3rd_party*.repo',
+    '/etc/yum.repos.d/lustre.repo',
+    '/var/cache/salt',
+    '/etc/cluster-id',
+    '/etc/salt/pki',
+    '/etc/yum.repos.d/RELEASE_FACTORY.INFO'
+    '/opt/seagate/cortx_configs/provisioner_generated',
+    '/opt/seagate/cortx/provisioner/pillar/groups/all',
+    '/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all/uu_*'
+]

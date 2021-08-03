@@ -20,12 +20,12 @@ reset:
     ha:
       - ha.cortx-ha
     controlpath:
-      - sspl
       - uds
       - csm
+      - sspl
     iopath:
-      - motr
-      - s3server
       - hare
+      - s3server
+      - motr
     foundation:
       - cortx_utils
