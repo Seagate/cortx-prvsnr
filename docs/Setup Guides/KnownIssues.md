@@ -1,7 +1,9 @@
 # Known deployment issues
 
 
-## Known Issue 1: aws s3 ls fails as openldap database does not sync across the nodes
+<details>
+  <summary>1. AWS S3 ls fails as openldap database does not sync across the nodes</summary>
+  <p>
 
 **Problem:**  
   [EOS-6598](https://jts.seagate.com/browse/EOS-6598) aws s3 ls fails as openldap database does not sync across the nodes  
@@ -29,8 +31,12 @@
   # salt ‘*’ test.ping
   # salt ‘*’ service.restart slapd 
   ```
+  </p>
+  </details>
 
-## Known Issue 2: At the end of setup-provisioner, the command appears hung while updating the salt mines
+<details>
+  <summary>2. At the end of setup-provisioner, the command appears hung while updating the salt mines</summary>
+  <p>
 
 **Problem:**  
    At the end of setup-provisioner, the command appears hung while updating the salt mines.  
@@ -54,18 +60,24 @@
    ```
    Should return True for both the nodes
 
-**Issue status:** PRESUMABLY RESOLVED. Upd. from 2020-04-21  
+**Issue status:** PRESUMED RESOLVED. Upd. from 2020-04-21  
+    
+ </p>
+  </details>
 
-## Known Issue 3: s3 endpoints points to wrong ip in */etc/hosts*
+<details>
+  <summary>3. S3 endpoints points to wrong ip in /etc/hosts</summary>
+  <p>
+    
 **Problem:**  
-  s3 endpoints points to wrong ip in */etc/hosts*
+  S3 endpoints points to wrong ip in */etc/hosts*
 
 **Description:**
   After cluster ip feature is added, the s3 endpoints (*s3.seagate sts.seagate.com iam.seagate.com 
   sts.cloud.seagate.com*) need to point to cluster ip on both the nodes but they point to data interface ip.  
 
 **Solution:**  
- **Update */etc/hosts* file on both nodes** so that all s3 endpoints point to the cluster ip.  
+ **Update `/etc/hosts` file on both nodes** so that all s3 endpoints point to the cluster ip.  
  Run following command **on primary node** to get the cluster ip:  
  ```
  $ salt 'eosnode-1' pillar.item cluster:cluster_ip | tail -1
@@ -76,9 +88,15 @@
  $ cat /etc/hosts | grep s3
  172.19.222.27  s3.seagate.com sts.seagate.com iam.seagate.com   sts.cloud.seagate.com
  ``` 
-**NOTE:** The above line will already be there in */etc/hosts* just update it with cluster ip.
+**Note:** The above line will already be there in */etc/hosts* just update it with cluster ip.
 
-## Known Issue 4: `pcs status` shows some services under *Failed Resource Action*
+  </p>
+  </details>
+
+<details>
+  <summary>4. pcs status shows some services under Failed Resource Action</summary>
+  <p>
+    
 **Problem:**  
   `pcs status` shows some services under *Failed Resource Action*
 
@@ -89,8 +107,14 @@
   They are harmless for now and they will get removed as part of HA milestone 3 (M3).
 
 **Issue status:** RESOLVED. Upd. from 2020-04-21  
+    
+</p>
+</details>
 
-## Known Issue 5: deploy-eos fails during provisioning of HA component.
+<details>
+  <summary>5. deploy-eos fails during provisioning of HA component</summary>
+  <p>
+    
 **Problem:**  
  deploy-eos fails during provisioning of HA component.
 
@@ -152,8 +176,7 @@
   ```
 
 **Issue status:** RESOLVED. Upd. from 2020-04-21  
-
-## Known Issue 6: deploy-eos fails during provisioning of HA component.
+    
 **Problem:**  
  [EOS-6325](https://jts.seagate.com/browse/EOS-6325)  
  deploy-eos fails during provisioning of HA component.   
@@ -220,8 +243,14 @@
   $ `sh /opt/seagate/eos-prvsnr/cli/deploy-eos -v`  
 
 **Issue status:** ACTIVE. Reproduced during partial re-provisioning. Upd. from 2020-04-29  
+    
+</p>
+</details>
 
-## Known Issue 7: after deploy-eos is run successfuly service haproxy remains in failed state.
+<details>
+  <summary>6. haproxy service fails after running deploy-eos</summary>
+  <p>
+    
 **Problem:**  
  after deploy-eos is run successfuly service haproxy remains in failed state.   
 
@@ -232,17 +261,29 @@
 **Solution:** 
   restart the haproxy service on both nodes using following command, run this on primary node:  
   $`salt '*' service.start haproxy`  
+    
+ </p>
+</details>
 
-## Known Issue 8: issue is a blocker for LCO lab nodes. `cluster_ip` parameter can't be set in cluster.sls
+<details>
+  <summary>7. cluster_ip parameter can't be set in cluster.sls</summary>
+  <p>
+    
+**Problem:**
 [EOS-5922](https://jts.seagate.com/browse/EOS-5922) issue is a blocker for LCO lab nodes. `cluster_ip` parameter can't be set in cluster.sls.  
 Please check status this issue before doing provisioning.
 
 **Issue status:** RESOLVED. Upd. from 2020-04-20
+    
+</p>
+</details>
 
-
-## Known Issue 9: RPM or RPM dependencies fail to install.  
-[Puppet periodically cleans up the repos under `/etc/yum.repo.d` directory]  
-**Problem:**  Puppet periodically cleans up the repos under `/etc/yum.repo.d` directory
+<details>
+  <summary>8. RPM or RPM dependencies fail to install</summary>
+  <p>
+    
+**Problem:**  Puppet periodically cleans up the repos under `/etc/yum.repo.d` directory. 
+    
 **Description:**  
 RPM or RPM dependencies fail to install.  
 E.g.
@@ -266,9 +307,16 @@ If the repos are deleted, run following command to restore the repos:
 $ `curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uploads/eos-install-prereqs.sh | bash -s`   
 
 **Issue status:** ACTIVE. Upd. from 2020-04-21  
+    
+ </p>
+</details>
 
-## Known Issue 10: deploy-eos fails during nodejs components  
+<details>
+  <summary>9. deploy-eos fails during nodejs components</summary>
+  <p>
+    
 **Problem:** deploy-eos fails during nodejs components  
+    
 **Description:**  
   The deploye-eos script fails with following error while provisioning the nodejs component:  
 
@@ -300,11 +348,17 @@ $ `curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uplo
   $ `salt '*' state.apply components.misc_pkgs.nodejs.teardown && salt '*' state.apply components.misc_pkgs.nodejs`  
   Run deploy-eos again by skipping the components provisioned so far.  
 
-**Issue status:** PRESUMABLY RESOLVED. Upd. from 2020-04-21  
+**Issue status:** PRESUMED RESOLVED. Upd. from 2020-04-21  
 
+ </p>
+</details>
   
-## Known Issue 11: deploy-eos fails to install eoscore component  
-**Problem:** deploy-eos fails to install eoscore component  
+<details>
+<summary>10. deploy-eos fails to install eoscore component</summary>
+  <p>
+  
+  **Problem:** deploy-eos fails to install eoscore component.
+  
 **Description:**  
   deploy-eos fails to provision eoscore with cpio error:  
 
@@ -360,10 +414,15 @@ $ `curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uplo
   Delete the following file and retry again, following command does the same:  
   $ `salt '*' cmd.run "rm -rf /usr/libexec/mero*" && ./deploy-eos --iopath-states --ha-states --ctrlpath-states` 
 
-**Issue status:** PRESUMABLY RESOLVED. Upd. from 2020-04-21  
+**Issue status:** PRESUMED RESOLVED. Upd. from 2020-04-21  
+  
+  </p>
+</details>
 
+<details>
+  <summary>11. deploy-eos fails to provision iostack-ha component</summary>
+  <p>
 
-## Known Issue 12: deploy-eos fails to provision iostack-ha component  
 **Problem:** deploy-eos fails to provision iostack-ha component    
 **Description:**  
   deploy-eos fails to provision iostack-ha component and errors out with following error  
@@ -392,12 +451,18 @@ $ `curl http://ci-storage.mero.colo.seagate.com/releases/eos/uploads/prvsnr_uplo
   $ `salt '*' cmd.run "partprobe /dev/disk/by-id/dm-name-mpath*"`  
   $ `salt '*' state.apply components.ha.iostack-ha.teardown && salt '*' state.apply components.ha.iostack-ha`  
   To continue with sspl and csm components run deploy-eos again:  
-  $ `deploy-eos --ctrlpath-states`  
+  $ `deploy-eos --ctrlpath-states` 
+    
+  </p>
+  </details>
 
-## Known Issue 13: deploy-eos fails to provision post_setup component with build#1507  
+<details>
+  <summary>12. deploy-eos fails to provision post_setup component with build#1507</summary>
+  <p>
+    
 **Problem:** deploy-eos fails to provision post_setup component with build#1507     
-**Description:**  
-  post_setup component fails during deploy-eos with following error:  
+**Description:** post_setup component fails during deploy-eos with following error:  
+    
   ```
   INFO: Applying 'components.post_setup' for both nodes
 eosnode-2:
@@ -443,13 +508,19 @@ Failed:    2
 ------------
   ```  
 **Solution:**  
-  It is safe to ignore it.  
-  Just ensure that the `pcs status` is showing all services as started.  
+  It is safe to ignore the issue. Just ensure that the `pcs status` is showing all services as started. 
+    
+ </p>
+  </details>
 
-## Known Issue 14: deploy-eos fails to provision iostack-ha  
-**Problem:** deploy-eos fails to provision iostack-ha.     
-**Description:**  
-This is not a bug, but cleanup issue. iostack-ha don't clean up hare-consul-agent during teardown  
+<details>
+  <summary>13. deploy-eos fails to provision iostack-ha</summary>
+    <p>
+    
+**Problem:** deploy-eos fails to provision iostack-ha. 
+      
+**Description:** This is not a bug, but cleanup issue. iostack-ha don't clean up hare-consul-agent during teardown.
+      
   ```
          ID: start IOStack HA cluster
     Function: cmd.run
@@ -484,8 +555,14 @@ This is not a bug, but cleanup issue. iostack-ha don't clean up hare-consul-agen
    $ `salt '*' service.stop hare-consul-agent`  
    $ `salt '*' state.apply components.ha.iostack-ha.teardown`  
    $ `salt '*' state.apply components.ha.iostack-ha`  
+      
+</p>
+</details>
 
-## Known Issue 15: deploy-eos fails to provision openldap on eosnode-2
+<details>
+  <summary>14. deploy-eos fails to provision openldap on eosnode-2</summary>
+  <p>
+    
 **Problem:** deploy-eos fails to provision openldap on eosnode-2  
 **Description:**  
 Root cause of below issue is cluster_id miss-match across nodes:  
@@ -566,9 +643,14 @@ $ salt "*" state.apply components.misc_pkgs.openldap.teardown
 
 # Resume Provisioner
 $ sh /opt/seagate/eos-prvsnr/cli/deploy-eos
-```
+``` 
+</p>
+</details>
 
-## Known Issue 16: auto-deploy-eos remains hung while updating salt metadata   
+<details>
+  <summary>15. auto-deploy-eos remains hung while updating salt metadata</summary>
+  </p>
+  
 **Problem:** auto-deploy-eos remains hung while updating salt data  
 
 **Description:**  
@@ -583,7 +665,13 @@ The root cause is unknown.
 This hang situation is at the start of the deploy-eos command.  
 Solution is to run the deploy-eos command manually.  
 
-## Known Issue 17: deploy-eos fails during storage component while make/enable swap partition  
+</p>
+</details>
+
+<details>
+  <summary>16. deploy-eos fails during storage component while make/enable swap partition</summary>
+  <p>
+    
 **Problem:** deploy-eos fails during storage component while make/enable swap partition    
 **Description:**  
 Open the deploy log and check if there are any error related to swap:  
@@ -644,7 +732,13 @@ Check if SWAP is mounted on these devices
 So, if swap is mounted on the metadata device partition, you can safely ignore this error and run:  
 $ `deploy-eos`  
 
-## Known Issue 18: deploy-eos fails for openldap deployment for ldap_add     
+</p>
+</details>
+
+<details>
+  <summary>17. deploy-eos fails for openldap deployment for ldap_add</summary>
+  <p>
+    
 **Problem:** auto-deploy-eos/deploy-eos command fails during openldap    
 ```
 ldap_add: Other (e.g., implementation specific) error (80)
@@ -686,18 +780,21 @@ $ `salt '*' state.apply components.misc_pkgs.openldap.teardown`
 $ `sh /opt/seagate/eos-prvnsr/cli/deploy-eos`  
 
 
-**If OpenLDAP hangs**  
-**Solution:**
+**If OpenLDAP hangs, run**  
 ```
 Kill the process and follow the below steps:  
      salt "*" saltutil.kill_all_jobs
      salt "*" state.apply components.misc_pkgs.openldap.teardown
      /opt/seagate/cortx/provisioner/cli/deploy
 ```
+    
+</p>
+</details>
 
-## Known Issue 19: LVM issue - auto-deploy fails during provisioning of storage component ([EOS-12289](https://jts.seagate.com/browse/EOS-12289)).     
+<details>
+  <summary>18. LVM issue - auto-deploy fails during provisioning of storage component</summary>
 
-**Problem:** auto-deploy/deploy command fails during provisioning of components.system.storage    
+**Problem:** auto-deploy/deploy command fails during provisioning of components.system.storage [EOS-12289](https://jts.seagate.com/browse/EOS-12289).
 
 **Description:**  
 Even after fresh OS install (re-image) the `lsblk` lists volumes with LVM configuration from previous deploy as shown below:
@@ -722,7 +819,7 @@ Please follow the following steps until the way to fix this in Provisioner is id
 3. Re-image the node(s)
 4. Reconfigure the volumes (Optional) and map them to all the initiators
 5. Before starting the autodeploy check 'lsblk -S | grep sas' and ensure that it matches with the volumes.
-6. run `lsblk` to check if previous LVM partitions are seen (If yes, don't proceed and contact Provisioning team else proceed to the next step, )
+6. run `lsblk` to check if previous LVM partitions are seen (If yes, don't proceed and contact Provisioning team else proceed to the next step)
 7. Run auto-deploy
 
 ### Manual Fix in case the node has been reimaged
@@ -797,7 +894,7 @@ Please follow the following steps until the way to fix this in Provisioner is id
     done
     partprobe
     ```  
-    **NOTE**: The above is automation for the following 4 steps:  
+    **Note**: The above is automation for the following 4 steps:  
     1.  Use command to identify the partitioned volumes (in absense of mpath configuration):
         ```  
         [root@smc50-m08 ~]# ls -1 /dev/disk/by-id/scsi-*  
@@ -834,10 +931,15 @@ Please follow the following steps until the way to fix this in Provisioner is id
     ```
     [root@smc50-m08 ~]# shutdown -r now
     ```
-**NOTE:** If this method fails, you could try [an alternative approach](https://github.com/Seagate/cortx-prvsnr/wiki/Alternative-method-for-removing-LVM-metadata-information-from-enclosure-volumes)
+**Note:** If this method fails, you could try [an alternative approach](https://github.com/Seagate/cortx-prvsnr/wiki/Alternative-method-for-removing-LVM-metadata-information-from-enclosure-volumes)
+  
+  </p>
+</details>
 
 
-## Known Issue 20: Beta RC10 deployment fails while provisioning nodejs component.     
+<details>
+  <summary>19. Beta RC10 deployment fails while provisioning nodejs component</summary>
+  <p>
 
 **Problem:** auto-deploy/deploy command fails during provisioning of components.misc_pkgs.nodejs component    
 
@@ -850,9 +952,14 @@ Run following command after nodejs provisioning fails from the primary node:
 `curl "http://<cortx_release_repo>/releases/cortx/uploads/rhel/rhel-7.7.1908/prvsnr_uploads/rc-10-fix.sh" | bash -s `
  
 This will add the patch to update the references to ci-storage and continue the deployment.
+    
+</p>
+</details>
 
 
-## Known Issue 21: Storage component fails with error "Device /dev/disk/by-id/dm-name-mpathX2 excluded by a filter."     
+<details>
+  <summary>20. Storage component fails with error "Device /dev/disk/by-id/dm-name-mpathX2 excluded by a filter."</summary>
+  <p>
 
 **Problem:** 
 Storage component fails during auto-deploy command with following error:
@@ -883,3 +990,6 @@ The failure is due to the reason that the system was previously used for deploym
 **Solution:**
  
 Follow the steps mentioned [here](https://github.com/Seagate/cortx-prvsnr/wiki/Alternative-method-for-removing-LVM-metadata-information-from-enclosure-volumes)
+
+  </p>
+  </details>
