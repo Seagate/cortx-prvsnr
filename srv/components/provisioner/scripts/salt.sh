@@ -86,5 +86,10 @@ do
     try=$(( try + 1 ))
 done
 echo "DEBUG: Salt configuration done successfully" >> "${LOG_FILE}"
-echo "Cortx provisioner environment configured successfully" >> "${LOG_FILE}"
+
+yes | cp -rf /opt/seagate/cortx/provisioner/backup_factory/hosts /etc/hosts
+rm -rf /root/.ssh
+systemctl restart salt-master
+systemctl restart salt-minion
+echo "Post-factory salt environment configured successfully" >> "${LOG_FILE}"
 echo "Done" >> "${LOG_FILE}"

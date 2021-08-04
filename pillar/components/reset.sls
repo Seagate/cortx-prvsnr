@@ -29,3 +29,23 @@ reset:
       - motr
     foundation:
       - cortx_utils
+  non_cortx_components:
+    3rd party:
+      - ha.corosync-pacemaker
+      - misc_pkgs.kafka
+      - misc_pkgs.lustre
+      - misc_pkgs.statsd
+      - misc_pkgs.kibana
+      - misc_pkgs.elasticsearch
+      - misc_pkgs.nodejs
+      - misc_pkgs.consul
+      - misc_pkgs.openldap
+      - ha.haproxy
+    platform:
+      - system.chrony
+      - system.logrotate
+      - system.firewall
+      - misc_pkgs.rsyslog
+      - system.storage
+      - system.storage.multipath
+      - system

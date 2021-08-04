@@ -16,7 +16,6 @@
 #
 
 import time
-import shutil
 from pathlib import Path
 from crontab import CronTab
 from ..command import Command
@@ -38,6 +37,7 @@ from cortx_setup.validate import (
 )
 from provisioner.config import SEAGATE_USER_HOME_DIR
 from provisioner.salt import local_minion_id, StateFunExecuter
+from provisioner.utils import run_subprocess_cmd
 from provisioner.values import MISSED
 
 
@@ -285,8 +285,8 @@ class NodeFinalize(Command):
         BACKUP_FACTORY_FOLDER.mkdir(parents=True, exist_ok=True)
 
         self.logger.debug("Backup factory data")
-        for source_path, dest_path in BACKUP_FILE_DICT:
-            shutil.copy(source_path, str(dest_path))
+        for source_path, dest_path in BACKUP_FILE_DICT.items():
+            run_subprocess_cmd(f"cp -rf {source_path} {str(dest_path)} ")
 
 
     def run(self, force=False):
@@ -305,6 +305,7 @@ class NodeFinalize(Command):
             self.logger.debug("Field users created.")
             self.logger.debug("Setting up Cron job")
             self.create_cron_job(SUPPORT_USER_NAME, SUPPORT_CRON_TIME)
+            self._factory_backup()
 
         except CortxSetupError as exc:
             if force:
@@ -317,5 +318,6 @@ class NodeFinalize(Command):
                     "Field users created. Check logs for more details on the validations error..")
                 self.logger.debug("Setting up Cron job")
                 self.create_cron_job(SUPPORT_USER_NAME, SUPPORT_CRON_TIME)
+                self._factory_backup()
             else:
                 raise
