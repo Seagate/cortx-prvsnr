@@ -105,7 +105,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 'host': node.host,
                 'user': node.user,
                 'port': node.port,
-                'priv': str(priv_key)
+                'priv': str(priv_key),
+                'sudo': True
             }
             if thin_dir:
                 roster[node.minion_id]['thin_dir'] = str(thin_dir)
@@ -342,7 +343,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.rediscover or not specs_pillar_path.exists():
             specs = {
                 node.minion_id: {
-                    'user': 'root',
+                    'user': node.user,
                     'host': node.ping_addrs[0],
                     'port': node.port
                 }
@@ -839,7 +840,6 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if not run_args.pypi_repo:
             logger.info("Setting up custom python repository")
             ssh_client.state_apply('repos.pip_config')
-
         try:
             logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
@@ -985,7 +985,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
-                    f' release/type \'"{run_args.dist_type.value}"\''
+                    ' release/type '
+                    f"\"{run_args.dist_type.value}\""
                 ), targets=run_args.primary.minion_id
             )
 
@@ -995,7 +996,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     (
                         'provisioner pillar_set --fpath release.sls'
                         ' release/deps_bundle_url '
-                        f'\'"{run_args.url_cortx_deps}"\''
+                        f"\"{run_args.url_cortx_deps}\""
                     ), targets=run_args.primary.minion_id
                 )
 
@@ -1004,7 +1005,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.cmd_run(
                     (
                         'provisioner pillar_set --fpath release.sls'
-                        f' release/target_build \'"{run_args.target_build}"\''
+                        ' release/target_build '
+                        f"\"{run_args.target_build}\""
                     ), targets=run_args.primary.minion_id
                 )
 

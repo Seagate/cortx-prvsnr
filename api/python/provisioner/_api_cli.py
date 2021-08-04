@@ -167,6 +167,7 @@ def auth_init(username, password, eauth='pam'):
 mod = sys.modules[__name__]
 for fun in [
     'get_result',
+    'grains_get',
     'pillar_get',
     'pillar_set',
     'get_params',
@@ -187,6 +188,10 @@ for fun in [
     'shutdown_controller',
     'configure_cortx',
     'create_user',
+    'cluster_id',
+    'confstore_export',
+    'create_service_user',
+    'bootstrap_provisioner',
     'replace_node',
     'get_release_version',
     'get_factory_version',

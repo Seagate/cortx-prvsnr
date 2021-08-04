@@ -16,13 +16,13 @@
 
 Remove Provisioner logs:
   cmd.run:
-    - name: "truncate -s /var/log/seagate/provisioner/*"
+    - name: "truncate -s 0 /var/log/seagate/provisioner/*.log"
 
 Remove glusterfs logs:
   cmd.run:
-    - name: "truncate -s /var/log/glusterfs/*"
+    - name: "truncate -s 0 /var/log/glusterfs/*.log"
 
 Restart rsyslog:
   module.run:
     - service.restart:
-      - ryslog
+      - rsyslog

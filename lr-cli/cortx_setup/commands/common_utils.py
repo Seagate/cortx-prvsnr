@@ -111,8 +111,7 @@ def get_cortx_states():
 
 def get_reset_states():
     """
-    Get cortx states iopath controlpath and system states
-
+    Get reset states system controlpath and iopath states
     """
     return get_pillar_data('reset/cortx_components')
 

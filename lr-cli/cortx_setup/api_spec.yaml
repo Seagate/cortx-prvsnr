@@ -68,7 +68,7 @@ cluster:
     component:
       ClusterConfigComponent
   reset:
-    NodeResetCluster
+    ClusterResetNode
 
 resource:
   discover:

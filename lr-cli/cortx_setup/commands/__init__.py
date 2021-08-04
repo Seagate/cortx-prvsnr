@@ -49,7 +49,7 @@ from .storageset.config.durability import DurabilityConfig
 from .enclosure.refresh import RefreshEnclosureId
 from .config.set import SetConfiguration
 from .config.get import GetConfiguration
-from .cluster.reset import NodeResetCluster
+from .cluster.reset import ClusterResetNode
 
 __all__ = [
     'AddServerNode',
@@ -86,5 +86,5 @@ __all__ = [
     'PillarSync',
     'SetConfiguration',
     'GetConfiguration',
-    'NodeResetCluster'
+    'ClusterResetNode'
  ]

@@ -17,47 +17,91 @@
 
 # TODO TEST OES-8473
 
-ssh_dir_created:
-  file.directory:
-    - name: /root/.ssh
-    - mode: 700
+{% set users = ['root'] %}
+{% if pillar['node_specs'][grains['id']]['user'] != 'root' %}
+  {% do users.append(pillar['node_specs'][grains['id']]['user']) %}
+{% endif %}
 
-ssh_priv_key_deployed:
+{% for user in users %}
+
+{% if user == 'root' %}
+{%- set user_home = '/root' -%}
+{% else %}
+{%- set user_home = '/opt/seagate/users/' + user -%}
+{% endif %}
+
+{{ user }}_ssh_dir_created:
+  file.directory:
+    - name: {{user_home}}/.ssh
+    - mode: 700
+    - user: {{ user }}
+    - group: {{ user }}
+
+{{ user }}_ssh_priv_key_deployed:
   file.managed:
     - show_changes: False
     - keep_source: True
     - mode: 600
     - names:
-      - /root/.ssh/id_rsa_prvsnr:
+      - {{user_home}}/.ssh/id_rsa_prvsnr:
         - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
-      - /root/.ssh/id_rsa:
+      - {{user_home}}/.ssh/id_rsa:
         - source: salt://provisioner/files/minions/all/id_rsa_prvsnr
+    - user: {{ user }}
+    - group: {{ user }}
     - requires:
       - ssh_dir_created
 
-ssh_pub_key_deployed:
+{{ user }}_ssh_pub_key_deployed:
   file.managed:
     - keep_source: True
     - mode: 600
     - names:
-      - /root/.ssh/id_rsa_prvsnr.pub:
+      - {{user_home}}/.ssh/id_rsa_prvsnr.pub:
         - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
-      - /root/.ssh/id_rsa.pub:
+      - {{user_home}}/.ssh/id_rsa.pub:
         - source: salt://provisioner/files/minions/all/id_rsa_prvsnr.pub
+    - user: {{ user }}
+    - group: {{ user }}
     - requires:
       - ssh_dir_created
 
-ssh_key_authorized:
+{{ user }}_ssh_key_authorized:
   ssh_auth.present:
-    - source: /root/.ssh/id_rsa_prvsnr.pub
-    - user: root
+    - source: {{user_home}}/.ssh/id_rsa_prvsnr.pub
+    - user: {{ user }}
+    - group: {{ user }}
     - requires:
       - ssh_pub_key_deployed
 
-ssh_config_updated:
+{{ user }}_ssh_config_updated:
   file.managed:
-    - name: /root/.ssh/config
-    - source: salt://ssh/files/config
-    - keep_source: True
+    - name: {{user_home}}/.ssh/config
+    - contents: |
+        {% for node_id, node in pillar['node_specs'].items() %}
+        Host {{ node['host'] }}
+            HostName {{ node['host'] }}
+            Port {{ node['port'] }}
+            User {{ user }}
+            UserKnownHostsFile /dev/null
+            StrictHostKeyChecking no
+            IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
+            IdentitiesOnly yes
+            LogLevel ERROR
+            BatchMode yes
+        Host {{ node_id }} {{ node_id }}.data.private
+            HostName {{ node_id }}.data.private
+            Port {{ node['port'] }}
+            User {{ user }}
+            UserKnownHostsFile /dev/null
+            StrictHostKeyChecking no
+            IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
+            IdentitiesOnly yes
+            LogLevel ERROR
+            BatchMode yes
+        {% endfor %}
     - mode: 600
-    - template: jinja
+    - user: {{ user }}
+    - group: {{ user }}
+
+{% endfor %}

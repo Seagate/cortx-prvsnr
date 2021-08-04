@@ -19,6 +19,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Union
+from getpass import getpass
 
 from .utils import run_subprocess_cmd
 
@@ -48,6 +49,7 @@ def copy_id(
     priv_key_path: Union[Path, str] = None,
     force=False,
     ssh_options=None,
+    target=None
 ):
     cmd = ['ssh-copy-id']
 
@@ -66,7 +68,11 @@ def copy_id(
 
     cmd.append(f"{user}@{host}" if user else f"{host}")
 
-    cmd = (['sshpass', '-e'] + cmd) if os.getenv("SSHPASS") else cmd
+    if os.getenv("SSHPASS"):
+        cmd = (['sshpass', '-e'] + cmd)
+    else:
+        password = getpass(prompt=f"Enter {user} user passowrd for {target}:")
+        cmd = (['sshpass', '-p', password] + cmd)
 
     logger.info("Copying keys for ssh password-less connectivity.")
     logger.debug(f"Command: {cmd}")
