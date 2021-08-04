@@ -91,6 +91,8 @@ server_node>{{ machine_id }}>network>data>transport_type=>{{ pillar['cluster'][n
 server_node>{{ machine_id }}>storage>cvg_count=>{{ pillar['cluster'][node]['storage']['cvg'] | length }}
 {%- for i in range(pillar['cluster'][node]['storage']['cvg'] | length) %}
 {%- set outer_loop = loop %}
+{%- set cvg_name = pillar['cluster'][node]['storage']['cvg'][i]['name'] %}
+server_node>{{ machine_id }}>storage>cvg[{{ outer_loop.index - 1 }}]>name=>{{ cvg_name }}
 {%- set metadata_devices = pillar['cluster'][node]['storage']['cvg'][outer_loop.index - 1]['metadata_devices'] %}
 {%- for device in metadata_devices %}
 server_node>{{ machine_id }}>storage>cvg[{{ outer_loop.index - 1 }}]>metadata_devices[{{ loop.index - 1 }}]=>{{ device }}

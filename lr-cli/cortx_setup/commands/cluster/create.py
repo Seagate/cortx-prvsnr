@@ -204,6 +204,7 @@ class ClusterCreate(Command):
                         " provide the build url"
                     )
 
+                kwargs['target_build'] = target_build
                 # The target build could be a file uri or http url
                 # If it's file uri set the source to iso and target_build
                 # to None.
