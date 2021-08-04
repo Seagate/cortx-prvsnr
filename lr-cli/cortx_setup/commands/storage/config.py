@@ -528,7 +528,7 @@ class StorageEnclosureConfig(Command):
                         raise ValueError(
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
-            cvg_list.insert(current_cvg_count, {'cvg_name': cvg_name, 'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            cvg_list.insert(current_cvg_count, {'name': cvg_name, 'data_devices': data_devices, 'metadata_devices': metadata_devices})
             cvg_count = current_cvg_count + 1
             self.update_pillar_and_conf('cvg', str(cvg_count))
             self.update_pillar_and_conf('cvg_devices', cvg_list)

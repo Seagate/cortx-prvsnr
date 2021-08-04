@@ -94,7 +94,7 @@ cluster:
     storage:
       enclosure: enclosure-{{ (node_num + 1) }}
       cvg:
-        - cvg_name:
+        - name:
           data_devices:
             - /dev/sdc
           metadata_devices:
