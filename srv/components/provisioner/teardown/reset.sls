@@ -13,18 +13,16 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
-#
 
-include:
-  - components.misc_pkgs.rsyslog.stop
-  - components.misc_pkgs.rsyslog.start
+Remove Provisioner logs:
+  cmd.run:
+    - name: "truncate -s 0 /var/log/seagate/provisioner/*.log"
 
-Restart slapd:
-  service.running:
-    - name: slapd
+Remove glusterfs logs:
+  cmd.run:
+    - name: "truncate -s 0 /var/log/glusterfs/*.log"
 
-Start s3authserver:
-  service.running:
-    - name: s3authserver
-    - require:
-      - Restart slapd
+Restart rsyslog:
+  module.run:
+    - service.restart:
+      - rsyslog

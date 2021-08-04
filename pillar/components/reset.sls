@@ -15,16 +15,17 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.misc_pkgs.rsyslog.stop
-  - components.misc_pkgs.rsyslog.start
-
-Restart slapd:
-  service.running:
-    - name: slapd
-
-Start s3authserver:
-  service.running:
-    - name: s3authserver
-    - require:
-      - Restart slapd
+reset:
+  cortx_components:
+    ha:
+      - ha.cortx-ha
+    controlpath:
+      - uds
+      - csm
+      - sspl
+    iopath:
+      - hare
+      - s3server
+      - motr
+    foundation:
+      - cortx_utils
