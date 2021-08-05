@@ -144,7 +144,7 @@ class ClusterCreate(Command):
             self.provisioner = provisioner
             username = 'nodeadmin'
             auth_args = {'username': username, 'password': kwargs['password']}
-            self.provisioner.auth_init(auth_args)
+            self.provisioner.auth_init(username, kwargs['password'])
 
             index = 'cluster_info_index'
             local_minion = None
@@ -304,7 +304,7 @@ class ClusterCreate(Command):
                 targets= ALL_MINIONS,
                 **auth_args
             )
-    
+
             machine_id = self.provisioner.grains_get("machine_id")[node_id]["machine_id"]
             enclosure_id = self.provisioner.grains_get("enclosure_id")[node_id]["enclosure_id"]
             if enclosure_id:
@@ -352,7 +352,7 @@ class ClusterCreate(Command):
                     self.logger.debug(
                         f"Updating virtual_host to {value} in confstore"
                     )
-                    self.provisioner.pillar_set(f'cluster/mgmt_vip',value)
+                    self.provisioner.pillar_set('cluster/mgmt_vip',value)
                     Conf.set(
                         index,
                         f'cluster>{clust_id}>network>management>virtual_host',

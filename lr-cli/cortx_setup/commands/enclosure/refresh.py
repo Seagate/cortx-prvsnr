@@ -30,7 +30,7 @@ class RefreshEnclosureId(Command):
     """
 
     _args = {}
-    def run(self, targets=ALL_MINIONS):
+    def run(self, targets=ALL_MINIONS, **kwargs):
         try:
             self.logger.debug("Refresh enclosure ID")
 
@@ -38,7 +38,7 @@ class RefreshEnclosureId(Command):
                 'components.system.storage.enclosure_id',
                 'components.system.config.sync_salt'
             ]:
-                StatesApplier.apply([state], targets)
+                StatesApplier.apply([state], targets, **kwargs)
 
         except Exception as exc:
             self.logger.error(
