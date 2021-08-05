@@ -1126,8 +1126,8 @@ def pillar_get(targets=ALL_MINIONS, **kwargs):
     return function_run('pillar.items', targets=targets, **kwargs)
 
 
-def pillar_refresh(targets=ALL_MINIONS):
-    return function_run('saltutil.refresh_pillar', targets=targets)
+def pillar_refresh(targets=ALL_MINIONS, **kwargs):
+    return function_run('saltutil.refresh_pillar', targets=targets, **kwargs)
 
 
 # TODO test

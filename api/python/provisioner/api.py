@@ -780,3 +780,34 @@ def set_private_data_network(local=False, **kwargs):
     :return:
     """
     return _api_call('set_private_data_network', local=local, **kwargs)
+
+def bootstrap_provisioner(nodes, **kwargs):
+    """
+    Bootstrap provisioner
+    """
+    return _api_call('bootstrap_provisioner', *nodes, **kwargs)
+
+def create_service_user(user):
+    """
+    Create service user
+
+    :param user: service user username 
+
+    :return:
+    """
+    return _api_call('create_service_user', user=user)
+
+def cluster_id(targets=ALL_MINIONS):
+    """
+    Create cluster_id
+
+    :param targets: (optional) targets for cluster_id
+    """
+    return _api_call('cluster_id', targets=targets)
+
+def confstore_export():
+    """
+    Confstore export
+    """
+    return _api_call('confstore_export')
+

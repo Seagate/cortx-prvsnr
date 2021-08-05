@@ -21,6 +21,7 @@ from ..command import Command
 from cortx_setup.config import (
     ALL_MINIONS
 )
+import provisioner
 from provisioner.salt import StatesApplier
 
 
@@ -30,7 +31,11 @@ class EncryptSecrets(Command):
     """
 
     _args = {}
-    def run(self, targets=ALL_MINIONS):
+    def run(self, targets=ALL_MINIONS, **kwargs):
+
+        self.provisioner = provisioner
+        self.provisioner.auth_init(kwargs['username'], kwargs['passowrd'])
+
         try:
             self.logger.debug("Encrypting config data")
 
@@ -38,7 +43,7 @@ class EncryptSecrets(Command):
                 'components.system.config.pillar_encrypt',
                 'components.system.config.sync_salt'
             ]:
-                StatesApplier.apply([state], targets)
+                StatesApplier.apply([state], targets, **kwargs)
 
         except Exception as exc:
             self.logger.error(

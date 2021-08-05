@@ -21,6 +21,6 @@
 
 check_{{ node_id }}_reachable:
   cmd.run:
-    - name: ssh -q -o "ConnectTimeout=5" {{ node_id }} exit
+    - name: ssh -q -o "ConnectTimeout=5" {{ node['user'] }}@{{ node_id }} exit
 
 {% endfor %}

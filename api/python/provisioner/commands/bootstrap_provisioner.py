@@ -105,7 +105,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 'host': node.host,
                 'user': node.user,
                 'port': node.port,
-                'priv': str(priv_key)
+                'priv': str(priv_key),
+                'sudo': True
             }
             if thin_dir:
                 roster[node.minion_id]['thin_dir'] = str(thin_dir)
@@ -342,7 +343,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if run_args.rediscover or not specs_pillar_path.exists():
             specs = {
                 node.minion_id: {
-                    'user': 'root',
+                    'user': node.user,
                     'host': node.ping_addrs[0],
                     'port': node.port
                 }
