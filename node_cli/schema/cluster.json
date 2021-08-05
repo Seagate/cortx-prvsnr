@@ -109,6 +109,11 @@
             "help": "Management vip"
         },
         {
+            "flag": "--password",
+            "type": "str",
+            "help": "Nodeadmin user password"
+        },
+        {
             "flag": "args",
             "default": [],
             "suppress_help": true,

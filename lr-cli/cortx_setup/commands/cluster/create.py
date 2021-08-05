@@ -120,7 +120,7 @@ class ClusterCreate(Command):
             'default': None,
             'optional': True,
             'help': 'Management vip'
-        }
+        },
         'password': {
             'type': str,
             'default': None,

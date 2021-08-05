@@ -21,6 +21,7 @@ from ..command import Command
 from cortx_setup.config import (
     ALL_MINIONS
 )
+import provisioner
 from provisioner.salt import (
     pillar_refresh,
     StatesApplier

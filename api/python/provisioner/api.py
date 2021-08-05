@@ -791,7 +791,7 @@ def create_service_user(user):
     """
     Create service user
 
-    :param user: service user username 
+    :param user: service user username
 
     :return:
     """

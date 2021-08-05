@@ -25,6 +25,7 @@ from provisioner.config import (
     PRVSNR_FACTORY_PROFILE_DIR
 )
 import json
+import provisioner
 
 
 class PillarSync(Command):
