@@ -279,7 +279,7 @@ class ClusterCreate(Command):
             GenerateCluster().run(**auth_args)
 
             self.logger.debug("Creating service user")
-            self.create_service_user(user="cortxub")
+            self.provisioner.create_service_user(user="cortxub")
 
             node_id = 'srvnode-1'
             self.logger.debug("Setting up Cluster ID on the system")

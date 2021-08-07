@@ -33,14 +33,14 @@ class PillarSync(Command):
     def run(self, **kwargs):
 
         self.provisioner = provisioner
-        self.provisioner.auth_init(kwargs['username'], kwargs['passowrd'])
+        self.provisioner.auth_init(kwargs['username'], kwargs['password'])
 
         self.logger.debug("Updating pillar data")
         for pillar in config.local_pillars:
             res_pillar = {}
             res = cmd_run(
                 f"salt-call --local pillar.get {pillar} --out=json",
-                *kwargs
+                **kwargs
             )
             for key, value in res.items():
                 value = json.loads(value)
@@ -54,8 +54,7 @@ class PillarSync(Command):
             self.logger.info(f"Updating {pillar} pillar data")
             self.provisioner.pillar_set(
                 f'{pillar}',
-                res_pillar,
-                *kwargs
+                res_pillar
             )
         conf_path = str(PRVSNR_FACTORY_PROFILE_DIR / 'confstore')
         # backup local consftore data

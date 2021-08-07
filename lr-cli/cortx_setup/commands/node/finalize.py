@@ -196,6 +196,7 @@ class NodeFinalize(Command):
             StateFunExecuter.execute(
                 'file.directory',
                 fun_kwargs=dict(
+                    name=str(home_dir),
                     user=user,
                     group=user,
                     recurse=['user', 'group']
