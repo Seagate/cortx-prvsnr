@@ -785,7 +785,7 @@ def bootstrap_provisioner(nodes, **kwargs):
     """
     Bootstrap provisioner
     """
-    return _api_call('bootstrap_provisioner', *nodes, **kwargs)
+    return _api_call('bootstrap_provisioner', nodes, **kwargs)
 
 def create_service_user(user):
     """

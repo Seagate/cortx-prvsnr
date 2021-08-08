@@ -16,22 +16,28 @@
 #
 
 # TODO TEST OES-8473
-{% set user = pillar['node_specs'][grains['id']]['user'] %}
-{% if user == 'root' %}
-{% set user_home = '/root' %}
-{% else %}
-{% set user_home = '/opt/seagate/users/' + user %}
+
+{% set users = ['root'] %}
+{% if pillar['node_specs'][grains['id']]['user'] != 'root' %}
+  {% do users.append(pillar['node_specs'][grains['id']]['user']) %}
 {% endif %}
 
+{% for user in users %}
 
-ssh_dir_created:
+{% if user == 'root' %}
+{%- set user_home = '/opt/test/root' -%}
+{% else %}
+{%- set user_home = '/opt/test/' + user -%}
+{% endif %}
+
+{{ user }}_ssh_dir_created:
   file.directory:
     - name: {{user_home}}/.ssh
     - mode: 700
     - user: {{ user }}
     - group: {{ user }}
 
-ssh_priv_key_deployed:
+{{ user }}_ssh_priv_key_deployed:
   file.managed:
     - show_changes: False
     - keep_source: True
@@ -46,7 +52,7 @@ ssh_priv_key_deployed:
     - requires:
       - ssh_dir_created
 
-ssh_pub_key_deployed:
+{{ user }}_ssh_pub_key_deployed:
   file.managed:
     - keep_source: True
     - mode: 600
@@ -60,7 +66,7 @@ ssh_pub_key_deployed:
     - requires:
       - ssh_dir_created
 
-ssh_key_authorized:
+{{ user }}_ssh_key_authorized:
   ssh_auth.present:
     - source: {{user_home}}/.ssh/id_rsa_prvsnr.pub
     - user: {{ user }}
@@ -68,12 +74,34 @@ ssh_key_authorized:
     - requires:
       - ssh_pub_key_deployed
 
-ssh_config_updated:
+{{ user }}_ssh_config_updated:
   file.managed:
     - name: {{user_home}}/.ssh/config
-    - source: salt://ssh/files/config
-    - keep_source: True
+    - contents: |
+        {% for node_id, node in pillar['node_specs'].items() %}
+        Host {{ node['host'] }}
+            HostName {{ node['host'] }}
+            Port {{ node['port'] }}
+            User {{ node['user'] }}
+            UserKnownHostsFile /dev/null
+            StrictHostKeyChecking no
+            IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
+            IdentitiesOnly yes
+            LogLevel ERROR
+            BatchMode yes
+        Host {{ node_id }} {{ node['host'] }}
+            HostName {{ node['host'] }}
+            Port {{ node['port'] }}
+            User {{ node['user'] }}
+            UserKnownHostsFile /dev/null
+            StrictHostKeyChecking no
+            IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
+            IdentitiesOnly yes
+            LogLevel ERROR
+            BatchMode yes
+        {% endfor %}
     - mode: 600
     - user: {{ user }}
     - group: {{ user }}
-    - template: jinja
+
+{% endfor %}

@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+import sys
 from typing import List, Dict, Type
 # import socket
 import logging
@@ -840,7 +841,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if not run_args.pypi_repo:
             logger.info("Setting up custom python repository")
             ssh_client.state_apply('repos.pip_config')
-
+        sys.exit()
         try:
             logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
@@ -986,7 +987,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
-                    f' release/type \'"{run_args.dist_type.value}"\''
+                    ' release/type '
+                    f"\"{run_args.dist_type.value}\""
                 ), targets=run_args.primary.minion_id
             )
 
@@ -996,7 +998,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     (
                         'provisioner pillar_set --fpath release.sls'
                         ' release/deps_bundle_url '
-                        f'\'"{run_args.url_cortx_deps}"\''
+                        f"\"{run_args.url_cortx_deps}\""
                     ), targets=run_args.primary.minion_id
                 )
 
@@ -1005,7 +1007,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.cmd_run(
                     (
                         'provisioner pillar_set --fpath release.sls'
-                        f' release/target_build \'"{run_args.target_build}"\''
+                        ' release/target_build '
+                        f"\"{run_args.target_build}\""
                     ), targets=run_args.primary.minion_id
                 )
 

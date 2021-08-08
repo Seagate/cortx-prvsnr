@@ -124,6 +124,7 @@ class ClusterCreate(Command):
         'password': {
             'type': str,
             'default': None,
+            'optional': True,
             'help': 'Nodeadmin user password'
         }
     }
@@ -140,11 +141,14 @@ class ClusterCreate(Command):
 
         """
         try:
-
             self.provisioner = provisioner
+
+            if kwargs['password'] is None:
+                raise ValueError('Password for nodeadmin user not provided')
             username = 'nodeadmin'
             auth_args = {'username': username, 'password': kwargs['password']}
             self.provisioner.auth_init(username, kwargs['password'])
+            kwargs.pop('password')
 
             index = 'cluster_info_index'
             local_minion = None
@@ -310,7 +314,6 @@ class ClusterCreate(Command):
             if enclosure_id:
                 if not machine_id in enclosure_id:   # check if the system is VM or HW
                     self.logger.debug(f"Setting time on enclosure with server & timezone")
-                    #NodePrepareTime().set_enclosure_time()
                     StatesApplier.apply(
                         [ "components.controller.ntp" ],
                         targets= ALL_MINIONS,
