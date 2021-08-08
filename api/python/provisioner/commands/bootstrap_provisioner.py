@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import sys
 from typing import List, Dict, Type
 # import socket
 import logging
@@ -841,7 +840,6 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if not run_args.pypi_repo:
             logger.info("Setting up custom python repository")
             ssh_client.state_apply('repos.pip_config')
-        sys.exit()
         try:
             logger.info("Checking passwordless ssh")
             ssh_client.state_apply('ssh.check')
