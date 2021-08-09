@@ -19,6 +19,7 @@
 
 import os
 import socket
+from getpass import getpass
 
 from cortx_setup.config import (
     CONFSTORE_CLUSTER_FILE,
@@ -120,12 +121,6 @@ class ClusterCreate(Command):
             'default': None,
             'optional': True,
             'help': 'Management vip'
-        },
-        'password': {
-            'type': str,
-            'default': None,
-            'optional': True,
-            'help': 'Nodeadmin user password'
         }
     }
 
@@ -143,12 +138,10 @@ class ClusterCreate(Command):
         try:
             self.provisioner = provisioner
 
-            if kwargs['password'] is None:
-                raise ValueError('Password for nodeadmin user not provided')
             username = 'nodeadmin'
-            auth_args = {'username': username, 'password': kwargs['password']}
-            self.provisioner.auth_init(username, kwargs['password'])
-            kwargs.pop('password')
+            password = getpass(prompt=f"Enter {user} user passowrd for srvnode-1:")
+            auth_args = {'username': username, 'password': password}
+            self.provisioner.auth_init(username, password)
 
             index = 'cluster_info_index'
             local_minion = None

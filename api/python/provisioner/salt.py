@@ -752,7 +752,8 @@ class SaltSSHClient(SaltClientBase):
                             ssh_options=exc.cmd_args.get('kw').get(
                                 'ssh_options'
                             ),
-                            force=True
+                            force=True,
+                            target=target
                         )
                 else:
                     raise
