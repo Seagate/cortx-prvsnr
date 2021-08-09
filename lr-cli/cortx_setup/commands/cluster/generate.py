@@ -21,6 +21,7 @@ from ..command import Command
 from cortx_setup.config import (
     ALL_MINIONS
 )
+import provisioner
 from provisioner.salt import (
     pillar_refresh,
     StatesApplier
@@ -31,7 +32,11 @@ class GenerateCluster(Command):
     Generate Cluster with sync'ed data
     """
 
-    def run(self, targets=ALL_MINIONS):
+    def run(self, **kwargs):
+
+        self.provisioner = provisioner
+        self.provisioner.auth_init(kwargs['username'], kwargs['password'])
+
         try:
             self.logger.debug("Generating cluster pillar")
 
@@ -39,11 +44,12 @@ class GenerateCluster(Command):
                        ['components.provisioner.config.generate_cluster_pillar',
                         'components.system.config.sync_salt'
                        ],
-                       targets=ALL_MINIONS
+                       targets=ALL_MINIONS,
+                       **kwargs
             )
 
             self.logger.debug("Refreshing config")
-            pillar_refresh(targets=ALL_MINIONS)
+            pillar_refresh(targets=ALL_MINIONS, **kwargs)
 
         except Exception as exc:
             self.logger.error(

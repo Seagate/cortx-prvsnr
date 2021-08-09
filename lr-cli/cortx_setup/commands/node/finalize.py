@@ -162,15 +162,11 @@ class NodeFinalize(Command):
 
             if "nodeadmin" in user:
                 ugroup = "prvsnrusers"
-                user_permissions = [
-                    '/usr/bin/nodecli',
-                    '/var/log'
-                ]
-                default_login = "/usr/bin/bash"
             else:
                 ugroup = "wheel"
-                user_permissions = ['ALL']
-                default_login = "/usr/bin/bash"
+
+            user_permissions = ['ALL']
+            default_login = "/usr/bin/bash"
 
             self.logger.debug(
                 f"Creating user group '{ugroup}', if not present"
@@ -193,6 +189,17 @@ class NodeFinalize(Command):
                     home=str(home_dir),
                     groups=[ugroup],
                     shell=default_login        # nosec
+                ),
+                targets=node_id,
+                secure=True
+            )
+            StateFunExecuter.execute(
+                'file.directory',
+                fun_kwargs=dict(
+                    name=str(home_dir),
+                    user=user,
+                    group=user,
+                    recurse=['user', 'group']
                 ),
                 targets=node_id,
                 secure=True
