@@ -71,7 +71,7 @@ def copy_id(
     if os.getenv("SSHPASS"):
         cmd = (['sshpass', '-e'] + cmd)
     else:
-        password = getpass(prompt=f"Enter {user} user passowrd for {target}:")
+        password = getpass(prompt=f"Enter {user} user password for {target}:")
         cmd = (['sshpass', '-p', password] + cmd)
 
     logger.info("Copying keys for ssh password-less connectivity.")
