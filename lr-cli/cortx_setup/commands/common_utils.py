@@ -15,7 +15,12 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-from provisioner.salt import local_minion_id, function_run
+import json
+from provisioner.salt import (
+    cmd_run,
+    local_minion_id,
+    function_run
+)
 from provisioner.commands import reset_machine_id
 from cortx.utils.security.cipher import Cipher
 from provisioner.pillar import (
@@ -119,3 +124,10 @@ def encrypt_secret(secret, component, key):
     key_cipher = Cipher.generate_key(key, component)
     return Cipher.encrypt(key_cipher, secret.encode("utf-8")).decode("utf-8")
 
+def get_cluster_nodes():
+    """
+    Get current nodes in cluster
+    """
+    res = cmd_run('salt-key -L --out=json')
+    res = json.loads(res[local_minion_id()])
+    return res.get('minions')
