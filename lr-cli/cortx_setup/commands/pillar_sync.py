@@ -60,7 +60,7 @@ class PillarSync(Command):
         # backup local consftore data
         self.logger.debug(f"Copy local confstore file to {conf_path}")
         conf_create = 'components.provisioner.confstore_create'
-        StatesApplier.apply([conf_create], targets=local_minion_id())
+        StatesApplier.apply([conf_create], targets=local_minion_id(), **kwargs)
 
         conf_copy = 'components.provisioner.confstore_copy'
         StatesApplier.apply([conf_copy])

@@ -25,9 +25,9 @@
 {% for user in users %}
 
 {% if user == 'root' %}
-{%- set user_home = '/opt/test/root' -%}
+{%- set user_home = '/root' -%}
 {% else %}
-{%- set user_home = '/opt/test/' + user -%}
+{%- set user_home = '/opt/seagate/users/' + user -%}
 {% endif %}
 
 {{ user }}_ssh_dir_created:
@@ -82,17 +82,17 @@
         Host {{ node['host'] }}
             HostName {{ node['host'] }}
             Port {{ node['port'] }}
-            User {{ node['user'] }}
+            User {{ user }}
             UserKnownHostsFile /dev/null
             StrictHostKeyChecking no
             IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
             IdentitiesOnly yes
             LogLevel ERROR
             BatchMode yes
-        Host {{ node_id }} {{ node['host'] }}
-            HostName {{ node['host'] }}
+        Host {{ node_id }} {{ node_id }}.data.private
+            HostName {{ node_id }}.data.private
             Port {{ node['port'] }}
-            User {{ node['user'] }}
+            User {{ user }}
             UserKnownHostsFile /dev/null
             StrictHostKeyChecking no
             IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
