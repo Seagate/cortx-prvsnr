@@ -23,7 +23,6 @@ from cortx_setup.commands.common_utils import (
 )
 from cortx_setup.config import (
     BACKUP_FACTORY_FOLDER,
-    BACKUP_FILE_DICT,
     RESTORE_FILE_DICT,
     CLEANUP_FILE_LIST
 )
