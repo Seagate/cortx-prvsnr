@@ -141,6 +141,7 @@ class ClusterResetNode(Command):
 
         self._create_saltssh_client()
 
+        if reset_type == 'data':
             self.logger.info("Calling reset for cortx components")
             cortx_components = get_reset_states()
             self._destroy(cortx_components, stage=["teardown.reset"])
