@@ -139,7 +139,7 @@ class ClusterCreate(Command):
             self.provisioner = provisioner
 
             username = 'nodeadmin'
-            password = getpass(prompt=f"Enter {user} user passowrd for srvnode-1:")
+            password = getpass(prompt=f"Enter {username} user passowrd for srvnode-1:")
             auth_args = {'username': username, 'password': password}
             self.provisioner.auth_init(username, password)
 
