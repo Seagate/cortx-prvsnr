@@ -40,7 +40,6 @@ from provisioner.salt import local_minion_id, StateFunExecuter
 from provisioner.utils import run_subprocess_cmd
 from provisioner.values import MISSED
 
-
 class NodeFinalize(Command):
     _args = {
         'force': {
@@ -293,7 +292,9 @@ class NodeFinalize(Command):
         try:
             node_id = local_minion_id()
             self._validate_cert_installation()
-            self._validate_health_map()
+            server_type = get_pillar_data(f'cluster/{node_id}/type')
+            if server_type == 'HW':
+                    self._validate_health_map()
             self._validate_interfaces(node_id)
             server_type = self._validate_server_type(node_id)
             self._validate_devices(node_id, server_type)
