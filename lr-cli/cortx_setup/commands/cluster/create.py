@@ -50,9 +50,11 @@ from cortx_setup.validate import ipv4
 from cortx.utils.conf_store import Conf
 
 import provisioner
+from provisioner import salt
 from provisioner.salt import (
     local_minion_id, cmd_run, StatesApplier
 )
+
 from cortx_setup.config import (
     ALL_MINIONS,
     CORTX_ISO_PATH
@@ -139,7 +141,7 @@ class ClusterCreate(Command):
             self.provisioner = provisioner
 
             username = 'nodeadmin'
-            password = getpass(prompt=f"Enter {username} user passowrd for srvnode-1:")
+            password = getpass(prompt=f"Enter {username} user password for srvnode-1:")
             auth_args = {'username': username, 'password': password}
             self.provisioner.auth_init(username, password)
 
@@ -256,6 +258,7 @@ class ClusterCreate(Command):
               f"Starting bootstrap process now with args: {kwargs}"
             )
             self.provisioner.bootstrap_provisioner(**kwargs)
+            salt._local_minion_id = local_minion
             if SOURCE_PATH.exists():
                 self.logger.debug("Cleanup existing storage config on all nodes")
                 cmd_run(
