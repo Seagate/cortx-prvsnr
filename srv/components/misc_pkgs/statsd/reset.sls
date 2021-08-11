@@ -20,7 +20,7 @@ include:
 
 Remove statsd package:
   cmd.run:
-    - name: "rpm -e --nodeps statsd stats_utils"
+    - name: "rpm -e --nodeps statsd"
 
 Remove statsd configuration:
   file.absent:
