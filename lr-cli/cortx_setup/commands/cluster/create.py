@@ -19,6 +19,7 @@
 
 import os
 import socket
+from getpass import getpass
 
 from cortx_setup.config import (
     CONFSTORE_CLUSTER_FILE,
@@ -48,23 +49,16 @@ from cortx_setup.commands.node.prepare.time import (
 from cortx_setup.validate import ipv4
 from cortx.utils.conf_store import Conf
 
-from provisioner.commands import (
-    PillarSet,
-    bootstrap_provisioner,
-    confstore_export,
-    create_service_user
-)
-from provisioner.salt import (
-    local_minion_id,
-    cmd_run
-)
+import provisioner
 from provisioner import salt
-from provisioner.api import grains_get
+from provisioner.salt import (
+    local_minion_id, cmd_run, StatesApplier
+)
+
 from cortx_setup.config import (
     ALL_MINIONS,
     CORTX_ISO_PATH
 )
-from provisioner.salt import StatesApplier
 
 class ClusterCreate(Command):
 
@@ -144,6 +138,13 @@ class ClusterCreate(Command):
 
         """
         try:
+            self.provisioner = provisioner
+
+            username = 'nodeadmin'
+            password = getpass(prompt=f"Enter {username} user password for srvnode-1:")
+            auth_args = {'username': username, 'password': password}
+            self.provisioner.auth_init(username, password)
+
             index = 'cluster_info_index'
             local_minion = None
             local_fqdn = socket.gethostname()
@@ -161,10 +162,10 @@ class ClusterCreate(Command):
             # Parsing nodes
             for idx, node in enumerate(nodes):
                 if node == local_fqdn:
-                    nodes[idx] = f"srvnode-1:{node}"
+                    nodes[idx] = f"srvnode-1:{username}@{node}"
                     local_minion = 'srvnode-1'
                 else:
-                    nodes[idx] = f"srvnode-{idx+1}:{node}"
+                    nodes[idx] = f"srvnode-{idx+1}:{username}@{node}"
 
             # HA validation
             if len(nodes) > 1:
@@ -204,6 +205,7 @@ class ClusterCreate(Command):
                         " provide the build url"
                     )
 
+                kwargs['target_build'] = target_build
                 # The target build could be a file uri or http url
                 # If it's file uri set the source to iso and target_build
                 # to None.
@@ -255,67 +257,87 @@ class ClusterCreate(Command):
               "This step will take several minutes.. Follow logs for progress.\n"
               f"Starting bootstrap process now with args: {kwargs}"
             )
-            bootstrap_provisioner.BootstrapProvisioner()._run(**kwargs)
+            self.provisioner.bootstrap_provisioner(**kwargs)
             salt._local_minion_id = local_minion
             if SOURCE_PATH.exists():
                 self.logger.debug("Cleanup existing storage config on all nodes")
-                cmd_run(f"mv {SOURCE_PATH} {DEST_PATH}")
+                cmd_run(
+                    f"mv {SOURCE_PATH} {DEST_PATH}", **auth_args
+                )
                 self.logger.debug("Refreshing config")
-                cmd_run("salt-call saltutil.refresh_pillar")
+                cmd_run(
+                    "salt-call saltutil.refresh_pillar", **auth_args
+                )
 
             self.logger.info(
               "Bootstrap Done. Starting with preparing environment. "
               "Syncing config data now.."
             )
-            PillarSync().run()
+            PillarSync().run(**auth_args)
 
             self.logger.debug("Generating cluster")
-            GenerateCluster().run()
+            GenerateCluster().run(**auth_args)
 
             self.logger.debug("Creating service user")
-            create_service_user.CreateServiceUser.run(user="cortxub")
+            self.provisioner.create_service_user(user="cortxub")
 
             node_id = 'srvnode-1'
             self.logger.debug("Setting up Cluster ID on the system")
-            cmd_run('provisioner cluster_id', targets=node_id)
+            self.provisioner.cluster_id(targets=node_id)
 
             self.logger.debug("Encrypting config data")
-            EncryptSecrets().run()
+            EncryptSecrets().run(**auth_args)
 
             self.logger.debug("Refreshing enclosure id on the system")
-            RefreshEnclosureId().run()
+            RefreshEnclosureId().run(**auth_args)
 
             # NTP workaround.
             # TODO: move this to time.py after encryption issue
             self.logger.debug("Setting time on node with server & timezone")
 
-            # node_id = local_minion_id()
-            NodePrepareTime().set_server_time()
-            machine_id = get_machine_id(node_id)
-            enclosure_id = grains_get("enclosure_id")[node_id]["enclosure_id"]
+            StatesApplier.apply(
+                [
+                    "components.system.chrony.config",
+                    "components.system.chrony.stop",
+                    "components.system.chrony.start"
+                ],
+                targets= ALL_MINIONS,
+                **auth_args
+            )
+
+            machine_id = self.provisioner.grains_get("machine_id")[node_id]["machine_id"]
+            enclosure_id = self.provisioner.grains_get("enclosure_id")[node_id]["enclosure_id"]
             if enclosure_id:
                 if not machine_id in enclosure_id:   # check if the system is VM or HW
                     self.logger.debug(f"Setting time on enclosure with server & timezone")
-                    NodePrepareTime().set_enclosure_time()
-            StatesApplier.apply( ['components.system.config.sync_salt'] ,targets=ALL_MINIONS)
+                    StatesApplier.apply(
+                        [ "components.controller.ntp" ],
+                        targets= ALL_MINIONS,
+                        **auth_args
+                    )
+            StatesApplier.apply(
+                ['components.system.config.sync_salt'],
+                targets=ALL_MINIONS, **auth_args
+            )
 
             self.logger.info("Environment set up! Proceeding to create a cluster..")
 
+            cmd_run(
+                f"chown -R {auth_args['username']}:{auth_args['username']} {CONFSTORE_CLUSTER_FILE}",
+                **auth_args
+            )
             self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
-            clust_id = get_cluster_id()
+            clust_id = self.provisioner.grains_get("cluster_id")[node_id]["cluster_id"]
 
             for key, value in cluster_dict.items():
                 if value and 'virtual_host' not in key:
                     self.logger.debug(
                         f"Updating {key} to {value} in confstore"
                     )
-                    PillarSet().run(
-                        f'cluster/{key}',
-                        value
-                    )
+                    self.provisioner.pillar_set(f'cluster/{key}',value)
                     if 'storageset_count' in key:
                         conf_key = f'cluster>{clust_id}>site>storage_set_count'
                     else:
@@ -329,10 +351,7 @@ class ClusterCreate(Command):
                     self.logger.debug(
                         f"Updating virtual_host to {value} in confstore"
                     )
-                    PillarSet().run(
-                        f'cluster/mgmt_vip',
-                        value
-                    )
+                    self.provisioner.pillar_set('cluster/mgmt_vip',value)
                     Conf.set(
                         index,
                         f'cluster>{clust_id}>network>management>virtual_host',
@@ -342,7 +361,7 @@ class ClusterCreate(Command):
             Conf.save(index)
 
             self.logger.debug("Exporting to Confstore")
-            confstore_export.ConfStoreExport().run()
+            self.provisioner.confstore_export()
 
             self.logger.debug("Success: Cluster created")
             return f"Cluster created with node(s): {nodes}"

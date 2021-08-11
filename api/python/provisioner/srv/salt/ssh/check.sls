@@ -19,8 +19,14 @@
 
 {% for node_id, node in pillar['node_specs'].items() %}
 
+{%- if node['user'] == 'root' -%}
+  {%- set user_home = '/root' -%}
+{%- else -%}
+  {%- set user_home= '/opt/seagate/users/' + node['user'] -%}
+{% endif %}
+
 check_{{ node_id }}_reachable:
   cmd.run:
-    - name: ssh -q -o "ConnectTimeout=5" {{ node_id }} exit
+    - name: ssh -q -o "ConnectTimeout=5" {{ node['user'] }}@{{ node['host'] }} exit
 
 {% endfor %}

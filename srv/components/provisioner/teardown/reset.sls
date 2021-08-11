@@ -13,34 +13,16 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
-#
-# Cortx Setup API to refresh enclosure_id
 
+Remove Provisioner logs:
+  cmd.run:
+    - name: "truncate -s 0 /var/log/seagate/provisioner/*.log"
 
-from ..command import Command
-from cortx_setup.config import (
-    ALL_MINIONS
-)
-from provisioner.salt import StatesApplier
+Remove glusterfs logs:
+  cmd.run:
+    - name: "truncate -s 0 /var/log/glusterfs/*.log"
 
-
-class RefreshEnclosureId(Command):
-    """
-    Refresh EnclosureId
-    """
-
-    _args = {}
-    def run(self, targets=ALL_MINIONS, **kwargs):
-        try:
-            self.logger.debug("Refresh enclosure ID")
-
-            for state in [
-                'components.system.storage.enclosure_id',
-                'components.system.config.sync_salt'
-            ]:
-                StatesApplier.apply([state], targets, **kwargs)
-
-        except Exception as exc:
-            self.logger.error(
-               f"Error in refreshing enclosure ID. Reason: '{str(exc)}'"
-            )
+Restart rsyslog:
+  module.run:
+    - service.restart:
+      - rsyslog

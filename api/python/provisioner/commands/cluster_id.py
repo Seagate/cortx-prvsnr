@@ -213,7 +213,7 @@ class ClusterId(CommandParserFillerMixin):
                 PillarSet().run(
                     'cluster/cluster_id',
                     f'{cluster_id_from_setup}',
-                    targets=targets
+                    targets=ALL_MINIONS
                 )
 
                 # Ensure cluster-id file is created in all nodes

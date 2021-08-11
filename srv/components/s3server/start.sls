@@ -26,6 +26,5 @@ Restart slapd:
 Start s3authserver:
   service.running:
     - name: s3authserver
-    - enable: True
     - require:
       - Restart slapd

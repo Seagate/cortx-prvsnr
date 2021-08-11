@@ -71,6 +71,9 @@ cluster:
     ClusterStart
   status:
     ClusterStatus
+  reset:
+    ClusterResetNode
+
 resource:
   discover:
     ResourceDiscover

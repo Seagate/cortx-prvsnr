@@ -49,8 +49,12 @@ from .storageset.config.durability import DurabilityConfig
 from .enclosure.refresh import RefreshEnclosureId
 from .config.set import SetConfiguration
 from .config.get import GetConfiguration
+<<<<<<< HEAD
 from .cluster.start import ClusterStart
 from .cluster.status import ClusterStatus
+=======
+from .cluster.reset import ClusterResetNode
+>>>>>>> pre-cortx-1.0
 
 __all__ = [
     'AddServerNode',
@@ -88,5 +92,6 @@ __all__ = [
     'SetConfiguration',
     'GetConfiguration',
     'ClusterStart',
-    'ClusterStatus'
+    'ClusterStatus',
+    'ClusterResetNode'
  ]

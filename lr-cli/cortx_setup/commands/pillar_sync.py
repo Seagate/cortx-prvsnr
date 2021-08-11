@@ -25,15 +25,23 @@ from provisioner.config import (
     PRVSNR_FACTORY_PROFILE_DIR
 )
 import json
+import provisioner
 
 
 class PillarSync(Command):
 
     def run(self, **kwargs):
+
+        self.provisioner = provisioner
+        self.provisioner.auth_init(kwargs['username'], kwargs['password'])
+
         self.logger.debug("Updating pillar data")
         for pillar in config.local_pillars:
             res_pillar = {}
-            res = cmd_run(f"salt-call --local pillar.get {pillar} --out=json")
+            res = cmd_run(
+                f"salt-call --local pillar.get {pillar} --out=json",
+                **kwargs
+            )
             for key, value in res.items():
                 value = json.loads(value)
                 value = value['local']
@@ -44,7 +52,7 @@ class PillarSync(Command):
                     value[f'enclosure-{enc_num[1]}'] = value.pop('enclosure-0')
                 res_pillar.update(value)
             self.logger.info(f"Updating {pillar} pillar data")
-            PillarSet().run(
+            self.provisioner.pillar_set(
                 f'{pillar}',
                 res_pillar
             )
@@ -52,12 +60,12 @@ class PillarSync(Command):
         # backup local consftore data
         self.logger.debug(f"Copy local confstore file to {conf_path}")
         conf_create = 'components.provisioner.confstore_create'
-        StatesApplier.apply([conf_create], targets=local_minion_id())
+        StatesApplier.apply([conf_create], targets=local_minion_id(), **kwargs)
 
         conf_copy = 'components.provisioner.confstore_copy'
         StatesApplier.apply([conf_copy])
         # backup local pillar data
-        cmd_run(f"rm -rf {PRVSNR_DATA_ROOT_DIR}/.backup ")
-        cmd_run(f"mkdir -p {PRVSNR_DATA_ROOT_DIR}/.backup")
+        cmd_run(f"rm -rf {PRVSNR_DATA_ROOT_DIR}/.backup ",  **kwargs)
+        cmd_run(f"mkdir -p {PRVSNR_DATA_ROOT_DIR}/.backup",  **kwargs)
         cmd_run(f"mv {PRVSNR_USER_LOCAL_PILLAR_DIR}/* "
-                f"{PRVSNR_DATA_ROOT_DIR}/.backup/")
+                f"{PRVSNR_DATA_ROOT_DIR}/.backup/",  **kwargs)

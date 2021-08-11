@@ -22,6 +22,32 @@
         }
     },
     {
+        "name": "reset",
+        "description": "Cluster reset command",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            
+            "flag": "--type",
+            "type": "str",
+            "help": "reset all/data"
+            
+        },
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterResetNode"
+        }
+    },
+    {
         "name": "create",
         "description": "Cluster create command",
         "permissions_tag": "bypass",

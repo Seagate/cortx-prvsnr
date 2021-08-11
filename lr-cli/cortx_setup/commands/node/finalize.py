@@ -26,7 +26,9 @@ from cortx_setup.config import (
     SUPPORT_CRON_TIME,
     SUPPORT_USER_NAME,
     HEALTH_PATH,
-    MANIFEST_PATH
+    MANIFEST_PATH,
+    BACKUP_FACTORY_FOLDER,
+    BACKUP_FILE_DICT
 )
 from cortx_setup.validate import (
     CortxSetupError,
@@ -35,8 +37,8 @@ from cortx_setup.validate import (
 )
 from provisioner.config import SEAGATE_USER_HOME_DIR
 from provisioner.salt import local_minion_id, StateFunExecuter
+from provisioner.utils import run_subprocess_cmd
 from provisioner.values import MISSED
-
 
 class NodeFinalize(Command):
     _args = {
@@ -162,15 +164,11 @@ class NodeFinalize(Command):
 
             if "nodeadmin" in user:
                 ugroup = "prvsnrusers"
-                user_permissions = [
-                    '/usr/bin/nodecli',
-                    '/var/log'
-                ]
-                default_login = "/usr/bin/bash"
             else:
                 ugroup = "wheel"
-                user_permissions = ['ALL']
-                default_login = "/usr/bin/bash"
+
+            user_permissions = ['ALL']
+            default_login = "/usr/bin/bash"
 
             self.logger.debug(
                 f"Creating user group '{ugroup}', if not present"
@@ -193,6 +191,17 @@ class NodeFinalize(Command):
                     home=str(home_dir),
                     groups=[ugroup],
                     shell=default_login        # nosec
+                ),
+                targets=node_id,
+                secure=True
+            )
+            StateFunExecuter.execute(
+                'file.directory',
+                fun_kwargs=dict(
+                    name=str(home_dir),
+                    user=user,
+                    group=user,
+                    recurse=['user', 'group']
                 ),
                 targets=node_id,
                 secure=True
@@ -267,11 +276,25 @@ class NodeFinalize(Command):
                     targets=node_id
                 )
 
+    def _factory_backup(self):
+        """
+        This function would create backup for files and folders
+        that would be affected in feild deployment.
+        """
+        BACKUP_FACTORY_FOLDER.mkdir(parents=True, exist_ok=True)
+
+        self.logger.debug("Backup factory data")
+        for source_path, dest_path in BACKUP_FILE_DICT.items():
+            run_subprocess_cmd(f"cp -rf {source_path} {str(dest_path)} ")
+
+
     def run(self, force=False):
         try:
             node_id = local_minion_id()
             self._validate_cert_installation()
-            self._validate_health_map()
+            server_type = get_pillar_data(f'cluster/{node_id}/type')
+            if server_type == 'HW':
+                    self._validate_health_map()
             self._validate_interfaces(node_id)
             server_type = self._validate_server_type(node_id)
             self._validate_devices(node_id, server_type)
@@ -283,6 +306,7 @@ class NodeFinalize(Command):
             self.logger.debug("Field users created.")
             self.logger.debug("Setting up Cron job")
             self.create_cron_job(SUPPORT_USER_NAME, SUPPORT_CRON_TIME)
+            self._factory_backup()
 
         except CortxSetupError as exc:
             if force:
@@ -295,5 +319,6 @@ class NodeFinalize(Command):
                     "Field users created. Check logs for more details on the validations error..")
                 self.logger.debug("Setting up Cron job")
                 self.create_cron_job(SUPPORT_USER_NAME, SUPPORT_CRON_TIME)
+                self._factory_backup()
             else:
                 raise

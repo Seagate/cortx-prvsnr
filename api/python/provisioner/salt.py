@@ -752,7 +752,8 @@ class SaltSSHClient(SaltClientBase):
                             ssh_options=exc.cmd_args.get('kw').get(
                                 'ssh_options'
                             ),
-                            force=True
+                            force=True,
+                            target=target
                         )
                 else:
                     raise
@@ -1126,8 +1127,8 @@ def pillar_get(targets=ALL_MINIONS, **kwargs):
     return function_run('pillar.items', targets=targets, **kwargs)
 
 
-def pillar_refresh(targets=ALL_MINIONS):
-    return function_run('saltutil.refresh_pillar', targets=targets)
+def pillar_refresh(targets=ALL_MINIONS, **kwargs):
+    return function_run('saltutil.refresh_pillar', targets=targets, **kwargs)
 
 
 # TODO test

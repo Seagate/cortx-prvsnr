@@ -1,4 +1,10 @@
-{% for node_id, node in pillar['node_specs'].items() %}
+{%- for node_id, node in pillar['node_specs'].items() -%}
+
+{%- if node['user'] == 'root' -%}
+  {%- set user_home = '/root' -%}
+{%- else -%}
+  {%- set user_home= '/opt/seagate/users/' + node['user'] -%}
+{% endif %}
 
 Host {{ node_id }} {{ node['host'] }}
     HostName {{ node['host'] }}
@@ -6,9 +12,9 @@ Host {{ node_id }} {{ node['host'] }}
     User {{ node['user'] }}
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
-    IdentityFile /root/.ssh/id_rsa_prvsnr
+    IdentityFile {{user_home}}/.ssh/id_rsa_prvsnr
     IdentitiesOnly yes
     LogLevel ERROR
     BatchMode yes
 
-{% endfor %}
+{%- endfor -%}

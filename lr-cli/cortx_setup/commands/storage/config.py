@@ -57,7 +57,7 @@ class StorageEnclosureConfig(Command):
     '''
     $ cortx_setup storage config --name <enclosure-name> --type {RBOD|JBOD|EBOD|virtual}
     $ cortx_setup storage config --controller {gallium|indium|virtual} --mode {primary|secondary}
-    $ cortx_setup storage config --cvg {0|1} --metadata_devices <device list> --data_devices <data_devices>
+    $ cortx_setup storage config --cvg <disk-group name> --metadata-devices <device list> --data-devices <device list>
     e.g.
     $ cortx_setup storage config --controller gallium --mode primary --ip <ip-address> --port <port-number> --user <user> --password <paasword>
     $ cortx_setup storage config --controller gallium --mode secondary --ip <ip-address> --port <port-number> --user <user> --password <paasword>
@@ -116,20 +116,20 @@ class StorageEnclosureConfig(Command):
             'help': 'Port of the controller to connect to'
         },
         'cvg': {
-            'type': int,
-            'default': -1,
+            'type': str,
+            'default': None,
             'optional': True,
-            'help': 'Cylinder Volume Group number.'
+            'help': 'Cylinder Volume Group Name (Disk-Group) E.g. dgA01'
         },
-        'data_devices': {
+        'data-devices': {
             'type': str,
              'optional': True,
-            'help': 'List of data devices (Comma separated) e.g /dev/mapper/mpatha,/dev/mapper/mpathb'
+            'help': 'List of data devices mapped to CVG disk-group E.g. /dev/mapper/mpatha,/dev/mapper/mpathb'
         },
-        'metadata_devices': {
+        'metadata-devices': {
             'type': str,
             'optional': True,
-            'help': 'List of metadata devices (Comma separated) e.g /dev/mapper/mpathf,/dev/mapper/mpathg'
+            'help': 'List of metadata devices mapped to CVG disk-group E.g. /dev/mapper/mpathx,/dev/mapper/mpathy'
         }
     }
 
@@ -138,7 +138,6 @@ class StorageEnclosureConfig(Command):
         self.machine_id = None
         self.enclosure_id = None
         self.mode = None
-        self.cvg_count = -1
 
         # assign value to enclosure-id from /etc/enclosure-id if it exists
         if enc_file_path.exists():
@@ -192,9 +191,6 @@ class StorageEnclosureConfig(Command):
         if(key=='password'):
             value = encrypt_secret(value, "storage_enclosure", self.enclosure_id)
 
-        if key == "cvg":
-            value = str(value)
-
         self.logger.debug(f"Updating Cortx Confstore with key:{conf_key_map[key]} and value:{value}")
         Conf.set(
             'node_info_index',
@@ -218,11 +214,11 @@ class StorageEnclosureConfig(Command):
         # 3.  --mode primary --ip <> --port <>
         # 4.  --user <> --password
         # 5.  --controller galium
-        # 6.  --cvg 0 --data_devices /dev/sdb,/dev/sdc --metadata_devices /dev/sdd
+        # 6.  --cvg dg01 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
         # VM
         # 1.  --controller virtual --mode primary --ip <> --port <> --user <> --password <>
         # 2.  --name virtual_rack1 --type virtual
-        # 3.  --cvg 0 --data_devices /dev/sdb,/dev/sdc --metadata_devices /dev/sdd
+        # 3.  --cvg dg02 --data-devices /dev/sdb,/dev/sdc --metadata-devices /dev/sdd
 
         user = kwargs.get('user')
         password = kwargs.get('password')
@@ -234,7 +230,7 @@ class StorageEnclosureConfig(Command):
         controller_type = kwargs.get('controller')
         self.mode = kwargs.get('mode')
         cred_validation = False
-        self.cvg_count = int(kwargs.get('cvg'))
+        cvg_name = kwargs.get('cvg')
         data_devices = []
         input_data_devices = kwargs.get('data_devices')
         if input_data_devices:
@@ -243,6 +239,12 @@ class StorageEnclosureConfig(Command):
         input_metadata_devices = kwargs.get('metadata_devices')
         if input_metadata_devices:
             metadata_devices = [device for device in input_metadata_devices.split(",") if device and len(device) > 1]
+
+        if (data_devices or metadata_devices) and not cvg_name:
+            self.logger.exception(
+                "argument cvg is must to set data and metadata devices"
+            )
+            raise RuntimeError('Please provide cvg using --cvg option')
 
         self.machine_id = get_machine_id(node_id)
         self.refresh_key_map()
@@ -485,12 +487,13 @@ class StorageEnclosureConfig(Command):
                 storage_type
             )
 
-        if self.cvg_count != -1:
+        if cvg_name:
+            self.logger.debug(f"cvg_name:{cvg_name}, data_devices:{data_devices}, metadata_devices:{metadata_devices}")
             if not data_devices or not metadata_devices:
                 self.logger.error(
-                    "The parameters data_devices and metadata_devices"
+                    "ERROR: The parameters data-devices and metadata-devices"
                     " are missing")
-                raise RuntimeError("Incomplete arguments provided")
+                raise RuntimeError("ERROR: Incomplete arguments provided")
 
             current_cvg_count = Conf.get (
                 'node_info_index',
@@ -498,6 +501,8 @@ class StorageEnclosureConfig(Command):
             )
             if not current_cvg_count:
                 current_cvg_count = 0
+            else:
+                current_cvg_count = int(current_cvg_count)
 
             cvg_list = get_pillar_data('cluster/srvnode-0/storage/cvg')
             if not cvg_list or cvg_list is MISSED:
@@ -523,11 +528,10 @@ class StorageEnclosureConfig(Command):
                         raise ValueError(
                                 f"Validation for data device {device} failed\n"
                                 "Please provide the correct device")
-            cvg_list.insert(self.cvg_count, {'data_devices': data_devices, 'metadata_devices': metadata_devices})
-            self.cvg_count = self.cvg_count + 1
-            self.update_pillar_and_conf('cvg', self.cvg_count)
+            cvg_list.insert(current_cvg_count, {'name': cvg_name, 'data_devices': data_devices, 'metadata_devices': metadata_devices})
+            cvg_count = current_cvg_count + 1
+            self.update_pillar_and_conf('cvg', str(cvg_count))
             self.update_pillar_and_conf('cvg_devices', cvg_list)
 
         Conf.save('node_info_index')
         self.logger.debug("Done")
-

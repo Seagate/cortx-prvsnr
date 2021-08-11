@@ -15,41 +15,37 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-execution:
-  noncortx_components:
-    platform:
-      - system
-      - system.config.hosts
-      - system.config.ssh_check
-      - system.storage
-      - misc_pkgs.rsyslog
-      - system.logrotate
-    prerequisites:
-      - misc_pkgs.sos
-      {% if "physical" in grains['virtual'] %}
-      - misc_pkgs.ipmi.bmc_watchdog
-      {% endif %}
-      - misc_pkgs.ssl_certs
-      - ha.haproxy
-      - misc_pkgs.openldap
-      - misc_pkgs.nodejs
-      - misc_pkgs.kafka
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.kibana
-      - misc_pkgs.statsd
-      - misc_pkgs.consul.install
-      - misc_pkgs.lustre
-      - misc_pkgs.consul.install
-      - ha.corosync-pacemaker.install
-      - ha.corosync-pacemaker.config.base
+reset:
   cortx_components:
-    foundation:
-      - cortx_utils
-    iopath:
-      - motr
-      - s3server
-      - hare
+    ha:
+      - ha.cortx-ha
     controlpath:
-      - sspl
       - uds
       - csm
+      - sspl
+    iopath:
+      - hare
+      - s3server
+      - motr
+    foundation:
+      - cortx_utils
+  non_cortx_components:
+    3rd party:
+      - ha.corosync-pacemaker
+      - misc_pkgs.kafka
+      - misc_pkgs.lustre
+      - misc_pkgs.statsd
+      - misc_pkgs.kibana
+      - misc_pkgs.elasticsearch
+      - misc_pkgs.nodejs
+      - misc_pkgs.consul
+      - misc_pkgs.openldap
+      - ha.haproxy
+    platform:
+      - system.chrony
+      - system.logrotate
+      - system.firewall
+      - misc_pkgs.rsyslog
+      - system.storage
+      - system.storage.multipath
+      - system
