@@ -158,6 +158,18 @@
             "suppress_help": true,
             "nargs": "?",
             "help": ""
+        },
+        {
+            "flag": "-f",
+            "dest": "format",
+            "help": "Format of Output",
+            "default": "json",
+            "type": "str",
+            "choices": [
+            "table",
+            "xml",
+            "json"
+            ]
         }],
         "comm": {
             "type": "direct",

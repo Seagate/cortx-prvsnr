@@ -24,7 +24,5 @@ class ClusterStart(Command):
 
     def run(self):
         res = cmd_run('cortx cluster start', targets=local_minion_id())
-        res= json.dumps(res)
-        result = json.loads(res)
-        print(result)
+        result = {key.replace("\"", ""): item.replace("\"","") for key, item in res.items()}
         return result
