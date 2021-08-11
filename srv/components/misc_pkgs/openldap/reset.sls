@@ -28,24 +28,31 @@ disable slapd:
   service.disabled:
     - name: slapd
 
+Remove pkgs:
+  pkg.purged:
+    - pkgs:
+      - symas-openldap
+      - symas-openldap-servers
+      - symas-openldap-clients
+    - require:
+      - Stop slapd
+
 Remove pcs package:
   cmd.run:
     - name: "rpm -e --nodeps symas-openldap symas-openldap-servers symas-openldap-clients"
+    - require:
+      - Stop slapd
 
 # File cleanup operation
-{% for filename in [
-   '/etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif',
-   '/var/lib/ldap',
-   '/etc/sysconfig/slapd',
-   '/etc/sysconfig/slapd.bak',
-   '/etc/openldap/slapd.d',
-   '/opt/seagate/cortx_configs/provisioner_generated/ldap'
- ] %}
-{{ filename }}:
+Remove openldap data:
   file.absent:
-    - require:
-      - pkg: Remove pkgs
-{% endfor %}
+    - names:
+      - /etc/openldap/slapd.d/cn\=config/cn\=schema/cn\=\{1\}s3user.ldif
+      - /var/lib/ldap
+      - /etc/sysconfig/slapd
+      - /etc/sysconfig/slapd.bak
+      - /etc/openldap/slapd.d
+      - /opt/seagate/cortx_configs/provisioner_generated/ldap
 
 Remove user ldap:
   user.absent:

@@ -42,10 +42,11 @@ reset:
       - misc_pkgs.openldap
       - ha.haproxy
   system_components:
-    - system.chrony
-    - system.logrotate
-    - system.firewall
-    - misc_pkgs.rsyslog
-    - system.storage
-    - system.storage.multipath
-    - system
+    system:
+      - system.chrony
+      - system.logrotate
+      - system.firewall
+      - misc_pkgs.rsyslog
+      - system.storage
+      - system.storage.multipath
+      - system
