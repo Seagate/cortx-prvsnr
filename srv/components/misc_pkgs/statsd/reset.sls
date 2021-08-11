@@ -15,37 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-reset:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - uds
-      - csm
-      - sspl
-    iopath:
-      - hare
-      - s3server
-      - motr
-    foundation:
-      - cortx_utils
-  non_cortx_components:
-    3rd party:
-      - ha.corosync-pacemaker
-      - misc_pkgs.kafka
-      - misc_pkgs.lustre
-      - misc_pkgs.statsd
-      - misc_pkgs.kibana
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.nodejs
-      - misc_pkgs.consul
-      - misc_pkgs.openldap
-      - ha.haproxy
-  system_components:
-    - system.chrony
-    - system.logrotate
-    - system.firewall
-    - misc_pkgs.rsyslog
-    - system.storage
-    - system.storage.multipath
-    - system
+include:
+  - components.misc_pkgs.statsd.stop
+
+Remove statsd package:
+  cmd.run:
+    - name: "rpm -e --nodeps statsd stats_utils"
+
+Remove statsd configuration:
+  file.absent:
+    - name: /etc/statsd
+
+Remove /opt/statsd-utils:
+  file.absent:
+    - name: /opt/statsd-utils
+
+Delete statsd checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.statsd

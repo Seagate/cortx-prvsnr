@@ -131,6 +131,7 @@ class ClusterResetNode(Command):
         reset_type = kwargs.get('type')
         cortx_components = get_reset_states()
         non_cortx_components = get_pillar_data('reset/non_cortx_components')
+        system_components= get_pillar_data('reset/system_components')
         self.node_list = get_cluster_nodes()
 
         self.logger.debug(f"Reset to be done for type is {reset_type}")
@@ -169,6 +170,14 @@ class ClusterResetNode(Command):
             self._destroy(
                 non_cortx_components,
                 stage=[
+                    "reset"
+                ]
+            )
+            self.logger.debug("Preparing Reset for system components")
+
+            self._destroy(
+                system_components,
+                stage=[
                     "teardown"
                 ]
             )
@@ -187,9 +196,8 @@ class ClusterResetNode(Command):
             self.logger.debug("Removing cluster id file")
             self._run_cmd(['chattr -i /etc/cluster-id',
                            'rm -rf /etc/cluster-id'], self.node_list)
-            self._run_cmd(['mkdir -p /var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all'],
-                            self.node_list)
-
+            self._run_cmd(['mkdir -p /var/lib/seagate/cortx/provisioner/local/srv/pillar/groups/all',
+                            'mkdir -p /var/lib/seagate/cortx/provisioner/shared/locks'],self.node_list)
 
             self.logger.debug("Performing provisioner cleanup")
             self._run_cmd(list(map(lambda el: 'rm -rf ' + str(el),

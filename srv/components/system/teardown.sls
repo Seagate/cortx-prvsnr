@@ -20,10 +20,6 @@ Remove cortx-py-utils dependencies:
     - requirements: salt://components/system/files/cortx_py_utils_requirements.txt
     - bin_env: /usr/bin/pip3
 
-Remove cortx-py-utils pip package:
-  pkg.purged:
-    - name: cortx-py-utils
-
 Remove_base_packages:
   pkg.purged:
     - pkgs:

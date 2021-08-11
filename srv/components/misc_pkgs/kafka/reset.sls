@@ -15,37 +15,30 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-reset:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - uds
-      - csm
-      - sspl
-    iopath:
-      - hare
-      - s3server
-      - motr
-    foundation:
-      - cortx_utils
-  non_cortx_components:
-    3rd party:
-      - ha.corosync-pacemaker
-      - misc_pkgs.kafka
-      - misc_pkgs.lustre
-      - misc_pkgs.statsd
-      - misc_pkgs.kibana
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.nodejs
-      - misc_pkgs.consul
-      - misc_pkgs.openldap
-      - ha.haproxy
-  system_components:
-    - system.chrony
-    - system.logrotate
-    - system.firewall
-    - misc_pkgs.rsyslog
-    - system.storage
-    - system.storage.multipath
-    - system
+
+include:
+  - .stop
+
+Remove kafka package:
+  cmd.run:
+    - name: "rpm -e --nodeps kafka"
+
+Remove kafka directory:
+  file.absent:
+    - name: /opt/kafka
+
+Remove zookeeper data directory:
+  file.absent:
+    - name: /var/lib/zookeeper
+
+Remove zookeeper log directory:
+  file.absent:
+    - name: /var/log/zookeeper
+
+Remove kafka log directory:
+  file.absent:
+    - name: /var/log/kafka
+
+Remove kafka flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kafka
