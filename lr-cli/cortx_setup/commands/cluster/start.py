@@ -15,7 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-import json
 from ..command import Command
 from provisioner.salt import local_minion_id, cmd_run
 
