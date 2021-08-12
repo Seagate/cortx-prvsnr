@@ -15,37 +15,39 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-reset:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - uds
-      - csm
-      - sspl
-    iopath:
-      - hare
-      - s3server
-      - motr
-    foundation:
-      - cortx_utils
-  non_cortx_components:
-    3rd party:
-      - ha.corosync-pacemaker
-      - misc_pkgs.kafka
-      - misc_pkgs.lustre
-      - misc_pkgs.statsd
-      - misc_pkgs.kibana
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.nodejs
-      - misc_pkgs.consul
-      - misc_pkgs.openldap
-      - ha.haproxy
-  system_components:
-    system:
-      - system.chrony
-      - system.logrotate
-      - system.firewall
-      - misc_pkgs.rsyslog
-      - system.storage
-      - system.storage.multipath
+Remove user and group:
+  user.absent:
+    - name: hacluster
+    - purge: True
+    - force: True
+
+{% for serv in ["corosync", "pacemaker", "pcsd"] %}
+Stop service {{ serv }}:
+  service.dead:
+    - name: {{ serv }}
+    - enable: False
+{% endfor %}
+
+Remove pcs package:
+  cmd.run:
+    - name: "rpm -e --nodeps pcs pacemaker corosync fence-agents-ipmilan"
+
+# Remove configuration directory:
+#   file.absent:
+#     - names:
+#       - /etc/corosync
+#       - /etc/pacemaker
+
+Remove corosync-pacemaker data:
+  file.absent:
+    - names:
+      - /var/lib/corosync
+      - /var/lib/pacemaker
+      - /var/lib/pcsd
+      - /var/log/pcsd
+
+# Enable and Start Firewall:
+#   cmd.run:
+#     - names:
+#       - systemctl enable firewalld
+#       - systemctl start firewalld

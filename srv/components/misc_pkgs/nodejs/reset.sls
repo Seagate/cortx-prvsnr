@@ -15,37 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-reset:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - uds
-      - csm
-      - sspl
-    iopath:
-      - hare
-      - s3server
-      - motr
-    foundation:
-      - cortx_utils
-  non_cortx_components:
-    3rd party:
-      - ha.corosync-pacemaker
-      - misc_pkgs.kafka
-      - misc_pkgs.lustre
-      - misc_pkgs.statsd
-      - misc_pkgs.kibana
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.nodejs
-      - misc_pkgs.consul
-      - misc_pkgs.openldap
-      - ha.haproxy
-  system_components:
-    system:
-      - system.chrony
-      - system.logrotate
-      - system.firewall
-      - misc_pkgs.rsyslog
-      - system.storage
-      - system.storage.multipath
+Remove nodejs:
+  file.absent:
+    - name: /opt/nodejs
+
+Delete nodejs checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.nodejs
+
+#
+#Remove nodejs from bash_profile:
+#  file.replace:
+#    - name: ~/.bashrc
+#    - pattern: "# DO NOT EDIT: Nodejs binaries.*?# DO NOT EDIT: End"
+#    - flags: ['MULTILINE', 'DOTALL']
+#    - repl: ''
+#    - ignore_if_missing: True
+#
+#Source bash_profile for nodejs cleanup:
+#  cmd.run:
+#    - name: source ~/.bashrc

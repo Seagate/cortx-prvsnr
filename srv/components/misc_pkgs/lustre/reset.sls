@@ -15,37 +15,22 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-reset:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - uds
-      - csm
-      - sspl
-    iopath:
-      - hare
-      - s3server
-      - motr
-    foundation:
-      - cortx_utils
-  non_cortx_components:
-    3rd party:
-      - ha.corosync-pacemaker
-      - misc_pkgs.kafka
-      - misc_pkgs.lustre
-      - misc_pkgs.statsd
-      - misc_pkgs.kibana
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.nodejs
-      - misc_pkgs.consul
-      - misc_pkgs.openldap
-      - ha.haproxy
-  system_components:
-    system:
-      - system.chrony
-      - system.logrotate
-      - system.firewall
-      - misc_pkgs.rsyslog
-      - system.storage
-      - system.storage.multipath
+{% import_yaml 'components/defaults.yaml' as defaults %}
+include:
+  - components.misc_pkgs.lustre.stop
+
+Remove lusture package:
+  cmd.run:
+    - name: "rpm -e --nodeps kmod-lustre-client lustre-client"
+
+Delete Lnet config file:
+  file.absent:
+    - name: /etc/modprobe.d/lnet.conf
+
+Delete Lustre yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.lustre.repo.id }}
+
+Remove lustre checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.lustre

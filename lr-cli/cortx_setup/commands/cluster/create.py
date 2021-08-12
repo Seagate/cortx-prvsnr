@@ -302,6 +302,7 @@ class ClusterCreate(Command):
 
             StatesApplier.apply(
                 [
+                    "components.system.chrony.install",
                     "components.system.chrony.config",
                     "components.system.chrony.stop",
                     "components.system.chrony.start"
