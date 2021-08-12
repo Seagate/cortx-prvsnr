@@ -985,8 +985,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
             ssh_client.cmd_run(
                 (
                     'provisioner pillar_set --fpath release.sls'
-                    ' release/type '
-                    f"\"{run_args.dist_type.value}\""
+                    f' release/type \'"{run_args.dist_type.value}"\''
                 ), targets=run_args.primary.minion_id
             )
 
@@ -996,7 +995,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     (
                         'provisioner pillar_set --fpath release.sls'
                         ' release/deps_bundle_url '
-                        f"\"{run_args.url_cortx_deps}\""
+                        f'\'"{run_args.url_cortx_deps}"\''
                     ), targets=run_args.primary.minion_id
                 )
 
@@ -1005,8 +1004,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                 ssh_client.cmd_run(
                     (
                         'provisioner pillar_set --fpath release.sls'
-                        ' release/target_build '
-                        f"\"{run_args.target_build}\""
+                        f' release/target_build \'"{run_args.target_build}"\''
                     ), targets=run_args.primary.minion_id
                 )
 
