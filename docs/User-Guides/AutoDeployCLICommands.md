@@ -20,7 +20,7 @@ Checklist:
   - [ ]  Have you checked if the controllers are accessible with the data that you have collected?  
   - [ ]  Did you check connectivity to Controller-A? `ssh <controller_username>@<controller_a_ip>` (use controller password)  
   - [ ]  Did you check connectivity to Controller-B? `ssh <controller_username>@<controller_b_ip>` (use controller password)   
-  - [ ]  Have you disabled cross-connect using `lsiutil` (refer to [this document](https://seagatetechnology.sharepoint.com/:w:/r/sites/eos.devops/_layouts/15/Doc.aspx?sourcedoc=%7B0043C622-C96A-41B7-B636-AA0539FEDA2C%7D&file=Deployment%20Within%20Seagate%20Labs.docx&action=default&mobileredirect=true) for the usage instructions)?
+  - [ ]  Have you disabled cross-connect using `lsiutil` (refer to [this document](../DeployWithinSeagateLabs.md) for the usage instructions)?
   - [ ]  Are you reinstalling the existing setup? If so, have you applied a workaround to clean up the existing LVM metadata on the enclosure volumes ([method 1](https://github.com/Seagate/cortx-prvsnr/wiki/Deploy-Stack#manual-fix-in-case-the-node-has-been-reimaged), [method 2](https://github.com/Seagate/cortx-prvsnr/wiki/Alternative-method-for-removing-LVM-metadata-information-from-enclosure-volumes))?
   - [ ]  Do both HW nodes have Mellanox drivers installed? (If having Mellanox cards for high-speed data network)?
     ```
