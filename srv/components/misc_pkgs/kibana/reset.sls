@@ -15,37 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-reset:
-  cortx_components:
-    ha:
-      - ha.cortx-ha
-    controlpath:
-      - uds
-      - csm
-      - sspl
-    iopath:
-      - hare
-      - s3server
-      - motr
-    foundation:
-      - cortx_utils
-  non_cortx_components:
-    3rd party:
-      - ha.corosync-pacemaker
-      - misc_pkgs.kafka
-      - misc_pkgs.lustre
-      - misc_pkgs.statsd
-      - misc_pkgs.kibana
-      - misc_pkgs.elasticsearch
-      - misc_pkgs.nodejs
-      - misc_pkgs.consul
-      - misc_pkgs.openldap
-      - ha.haproxy
-  system_components:
-    system:
-      - system.chrony
-      - system.logrotate
-      - system.firewall
-      - misc_pkgs.rsyslog
-      - system.storage
-      - system.storage.multipath
+include:
+  - components.misc_pkgs.kibana.stop
+
+Remove kibana package:
+  cmd.run:
+    - name: "rpm -e --nodeps opendistroforelasticsearch-kibana"
+
+Remove kibana config:
+  file.absent:
+    - names:
+      - /etc/kibana
+      - /var/lib/kibana
+
+# Failsafe
+Delete kibana service file:
+  file.absent:
+    - name: /etc/systemd/system/kibana.service
+
+Delete kibana checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kibana

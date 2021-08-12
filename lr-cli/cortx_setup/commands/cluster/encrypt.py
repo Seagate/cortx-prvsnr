@@ -34,7 +34,8 @@ class EncryptSecrets(Command):
     def run(self, targets=ALL_MINIONS, **kwargs):
 
         self.provisioner = provisioner
-        self.provisioner.auth_init(kwargs['username'], kwargs['password'])
+        if 'username' in kwargs:
+            self.provisioner.auth_init(kwargs['username'], kwargs['password'])
 
         try:
             self.logger.debug("Encrypting config data")

@@ -35,7 +35,8 @@ class GenerateCluster(Command):
     def run(self, **kwargs):
 
         self.provisioner = provisioner
-        self.provisioner.auth_init(kwargs['username'], kwargs['password'])
+        if 'username' in kwargs:
+            self.provisioner.auth_init(kwargs['username'], kwargs['password'])
 
         try:
             self.logger.debug("Generating cluster pillar")
