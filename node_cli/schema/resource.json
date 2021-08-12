@@ -1,31 +1,31 @@
 {
     "name": "resource",
-    "description": "health and manifest commands",
+    "description": "Discover health and manifest for resources in the system",
     "sub_commands": [
         {
             "name": "show",
-            "description": "reshource show health and manifest command",
+            "description": "Show resource health and manifest",
             "permissions_tag": "bypass",
             "args": [
             {
                 "flag": "--health",
                 "action": "store_true",
-                "help": "Health check for all the resources in the system"
+                "help": "Show resource health"
             },
             {
                 "flag": "--manifest",
                 "action": "store_true",
-                "help": "discover HW/SW Manifest for all resources"
+                "help": "Show resource manifest"
             },
             {
                 "flag": "--resource_type",
                 "type": "str",
-                "help": "Resource type for which resource map is to be fetched e.g 'node>compute[0]>hw>disks' or 'node>compute[0]' or 'node>storage[0]>hw>controllers'"
+                "help": "Filter resources based on type E.g. 'node>compute[0]>hw>disks' or 'node>compute[0]' or 'node>storage[0]>hw>controllers'"
             },
             {
                 "flag": "--resource_state",
                 "type": "str",
-                "help": "The current state of the resources  like 'OK', 'FAULT', 'DEGRADED', 'NA', 'INACTIVE', 'UNKNOWN'"
+                "help": "Filter resources based on state E.g. 'OK', 'FAULT', 'DEGRADED', 'NA', 'INACTIVE', 'UNKNOWN'"
             },
             {
                 "flag": "args",
