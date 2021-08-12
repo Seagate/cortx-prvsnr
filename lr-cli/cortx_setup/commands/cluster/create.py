@@ -139,11 +139,16 @@ class ClusterCreate(Command):
         """
         try:
             self.provisioner = provisioner
-
-            username = 'nodeadmin'
-            password = getpass(prompt=f"Enter {username} user password for srvnode-1:")
-            auth_args = {'username': username, 'password': password}
-            self.provisioner.auth_init(username, password)
+            try:
+                username = os.getenv('SUDO_USER') if os.getenv('SUDO_USER') else os.getenv('USER')
+            except Exception as ex:
+                raise ex
+            if username != 'root':
+                password = getpass(prompt=f"Enter {username} user password for current node:")
+                auth_args = {'username': username, 'password': password}
+                self.provisioner.auth_init(username, password)
+            else:
+                auth_args = {}
 
             index = 'cluster_info_index'
             local_minion = None
@@ -322,10 +327,11 @@ class ClusterCreate(Command):
 
             self.logger.info("Environment set up! Proceeding to create a cluster..")
 
-            cmd_run(
-                f"chown -R {auth_args['username']}:{auth_args['username']} {CONFSTORE_CLUSTER_FILE}",
-                **auth_args
-            )
+            if 'username' in auth_args:
+                cmd_run(
+                    f"chown -R {auth_args['username']}:{auth_args['username']} {CONFSTORE_CLUSTER_FILE}",
+                    **auth_args
+                )
             self.load_conf_store(
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
