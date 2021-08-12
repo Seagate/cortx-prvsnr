@@ -9,12 +9,12 @@
             "args": [
             {
                 "flag": "--health",
-                "type": "str",
+                "action": "store_true",
                 "help": "Health check for all the resources in the system"
             },
             {
                 "flag": "--manifest",
-                "type": "str",
+                "action": "store_true",
                 "help": "discover HW/SW Manifest for all resources"
             },
             {
