@@ -1,0 +1,57 @@
+{
+    "name": "resource",
+    "description": "Discover health and manifest for resources in the system",
+    "sub_commands": [
+        {
+            "name": "show",
+            "description": "Show resource health and manifest",
+            "permissions_tag": "bypass",
+            "args": [
+            {
+                "flag": "--health",
+                "action": "store_true",
+                "help": "Show resource health"
+            },
+            {
+                "flag": "--manifest",
+                "action": "store_true",
+                "help": "Show resource manifest"
+            },
+            {
+                "flag": "--resource_type",
+                "type": "str",
+                "help": "Filter resources based on type E.g. 'node>compute[0]>hw>disks' or 'node>compute[0]' or 'node>storage[0]>hw>controllers'"
+            },
+            {
+                "flag": "--resource_state",
+                "type": "str",
+                "help": "Filter resources based on state E.g. 'OK', 'FAULT', 'DEGRADED', 'NA', 'INACTIVE', 'UNKNOWN'"
+            },
+            {
+                "flag": "args",
+                "default": [],
+                "suppress_help": true,
+                "nargs": "?",
+                "help": ""
+            },
+            {
+                "flag": "-f",
+                "dest": "format",
+                "help": "Format of Output",
+                "default": "json",
+                "type": "str",
+                "choices": [
+                "table",
+                "xml",
+                "json"
+                ]
+            }],
+            "comm": {
+                "type": "direct",
+                "target": "cortx_setup.commands",
+                "method": "run",
+                "class": "ResourceShow"
+            }
+        }
+    ]
+}

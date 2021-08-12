@@ -29,5 +29,6 @@ LOG_LEVEL = 'INFO'
 permissions = {
                   'node': {'bypass': True},
                   'cluster': {'bypass': True},
-                  'storageset': {'bypass': True}
+                  'storageset': {'bypass': True},
+                  'resource': {'bypass': True}
               }
