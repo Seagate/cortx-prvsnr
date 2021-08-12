@@ -67,6 +67,10 @@ include:
 #   user.absent:
 #     - name: consul
 
+Remove Consul package:
+  cmd.run:
+    - name: "rpm -e --nodeps consul"
+
 Delete consul checkpoint flag:
   file.absent:
     - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.consul
