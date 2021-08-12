@@ -33,7 +33,8 @@ class PillarSync(Command):
     def run(self, **kwargs):
 
         self.provisioner = provisioner
-        self.provisioner.auth_init(kwargs['username'], kwargs['password'])
+        if 'username' in kwargs:
+            self.provisioner.auth_init(kwargs['username'], kwargs['password'])
 
         self.logger.debug("Updating pillar data")
         for pillar in config.local_pillars:
