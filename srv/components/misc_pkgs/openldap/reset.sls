@@ -28,15 +28,6 @@ disable slapd:
   service.disabled:
     - name: slapd
 
-Remove pkgs:
-  pkg.purged:
-    - pkgs:
-      - symas-openldap
-      - symas-openldap-servers
-      - symas-openldap-clients
-    - require:
-      - Stop slapd
-
 Remove pcs package:
   cmd.run:
     - name: "rpm -e --nodeps symas-openldap symas-openldap-servers symas-openldap-clients"

@@ -49,4 +49,3 @@ reset:
       - misc_pkgs.rsyslog
       - system.storage
       - system.storage.multipath
-      - system

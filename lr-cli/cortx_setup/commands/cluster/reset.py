@@ -184,6 +184,7 @@ class ClusterResetNode(Command):
             self.logger.debug("Preparing Reset for Provisioner commands")
 
             provisioner_components = [
+                "system.reset",
                 "provisioner.salt.stop",
                 "system.storage.glusterfs.teardown.volume_remove",
                 "system.storage.glusterfs.teardown.stop",
