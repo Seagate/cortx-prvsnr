@@ -17,7 +17,6 @@
 
 import logging
 import uuid
-
 from typing import Dict, Optional
 from provisioner import (
     inputs,
