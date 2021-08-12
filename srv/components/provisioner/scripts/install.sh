@@ -209,7 +209,11 @@ config_local_salt()
 
     echo "Restarting the required services" | tee -a "${LOG_FILE}"
     systemctl start salt-master
+    systemctl enable salt-master
+
     systemctl restart salt-minion
+    systemctl enable salt-minion
+
     sleep 10
     status=$(systemctl status salt-minion | grep Active | awk '{ print $2 }')
     if [[ "$status" != "active" ]]; then

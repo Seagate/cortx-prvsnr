@@ -435,7 +435,10 @@ class PillarInputBase(PillarItemsAPI):
     value: Any = attr.ib(
         metadata={
             METADATA_ARGPARSER: {
-                'help': 'pillar value'
+                'help': 'pillar value',
+                'type': functools.partial(
+                    AttrParserArgs.value_from_str, v_type='json'
+                )
             }
         }
     )
