@@ -1,7 +1,7 @@
 # Before proceeding with Server setup refer to:
 
-* [Vagrant Setup](VagrantSetup.md)
-* [SaltStack Setup](SaltStackSetup.md)
+* [Vagrant Setup](../VagrantSetup.md)
+* [SaltStack Setup](../SaltStackSetup.md)
 
 # Preparing Config Files
 
