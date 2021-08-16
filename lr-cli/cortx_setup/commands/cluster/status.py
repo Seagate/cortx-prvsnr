@@ -22,7 +22,8 @@ from provisioner.salt import local_minion_id, cmd_run
 
 class ClusterStatus(Command):
 
-    def run(self):
+    @staticmethod
+    def run():
         cmd_out = cmd_run('hctl status --json', targets=local_minion_id())
         cmd_out = json.loads(cmd_out[local_minion_id()])
         result = {}

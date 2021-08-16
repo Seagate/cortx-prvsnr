@@ -21,7 +21,8 @@ from provisioner.salt import local_minion_id, cmd_run
 
 class ClusterStart(Command):
 
-    def run(self):
+    @staticmethod
+    def run():
         cmd_out = cmd_run('cortx cluster start', targets=local_minion_id())
         result = {key.replace("\"", ""): item.replace("\"","") for key, item in cmd_out.items()}
         return result
