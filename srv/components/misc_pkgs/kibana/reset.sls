@@ -15,20 +15,24 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli> '
+include:
+  - components.misc_pkgs.kibana.stop
 
-# Log file configuration
-LOG_PATH = '/var/log/seagate/provisioner/'
-BACKUP_FILE_COUNT = 10
-FILE_SIZE = 10
-LOG_LEVEL = 'INFO'
+Remove kibana package:
+  cmd.run:
+    - name: "rpm -e --nodeps opendistroforelasticsearch-kibana"
 
+Remove kibana config:
+  file.absent:
+    - names:
+      - /etc/kibana
+      - /var/lib/kibana
 
-# permissions
-permissions = {
-                  'node': {'bypass': True},
-                  'cluster': {'bypass': True},
-                  'storageset': {'bypass': True},
-                  'resource': {'bypass': True}
-              }
+# Failsafe
+Delete kibana service file:
+  file.absent:
+    - name: /etc/systemd/system/kibana.service
+
+Delete kibana checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kibana

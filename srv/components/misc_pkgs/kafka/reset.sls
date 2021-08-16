@@ -15,20 +15,30 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli> '
 
-# Log file configuration
-LOG_PATH = '/var/log/seagate/provisioner/'
-BACKUP_FILE_COUNT = 10
-FILE_SIZE = 10
-LOG_LEVEL = 'INFO'
+include:
+  - .stop
 
+Remove kafka package:
+  cmd.run:
+    - name: "rpm -e --nodeps kafka"
 
-# permissions
-permissions = {
-                  'node': {'bypass': True},
-                  'cluster': {'bypass': True},
-                  'storageset': {'bypass': True},
-                  'resource': {'bypass': True}
-              }
+Remove kafka directory:
+  file.absent:
+    - name: /opt/kafka
+
+Remove zookeeper data directory:
+  file.absent:
+    - name: /var/lib/zookeeper
+
+Remove zookeeper log directory:
+  file.absent:
+    - name: /var/log/zookeeper
+
+Remove kafka log directory:
+  file.absent:
+    - name: /var/log/kafka
+
+Remove kafka flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.kafka

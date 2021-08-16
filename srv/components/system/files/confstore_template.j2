@@ -23,7 +23,11 @@ cortx>software>kafka>servers[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['
 {%- endfor %}
 cortx>release>setup=>{{ pillar['cortx']['release']['setup'] }}
 cortx>release>product=>{{ pillar['cortx']['release']['product'] }}
+{% if pillar['cluster']['name'] is defined %}
+cluster>{{ cluster_id }}>name=>{{ pillar['cluster']['name'] }}
+{% else %}
 cluster>{{ cluster_id }}>name=>{{ pillar['corosync-pacemaker']['cluster_name'] }}
+{% endif %}
 cluster>{{ cluster_id }}>site_count=>1
 cluster>{{ cluster_id }}>site>storage_set_count=>{{ pillar['cluster']['storage_sets'].keys() | length }}
 {% set mgmt_vip = salt['mine.get']('srvnode-1', 'node_ip_addrs') | dictsort() %}

@@ -15,20 +15,21 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli> '
+include:
+  - components.misc_pkgs.statsd.stop
 
-# Log file configuration
-LOG_PATH = '/var/log/seagate/provisioner/'
-BACKUP_FILE_COUNT = 10
-FILE_SIZE = 10
-LOG_LEVEL = 'INFO'
+Remove statsd package:
+  cmd.run:
+    - name: "rpm -e --nodeps statsd"
 
+Remove statsd configuration:
+  file.absent:
+    - name: /etc/statsd
 
-# permissions
-permissions = {
-                  'node': {'bypass': True},
-                  'cluster': {'bypass': True},
-                  'storageset': {'bypass': True},
-                  'resource': {'bypass': True}
-              }
+Remove /opt/statsd-utils:
+  file.absent:
+    - name: /opt/statsd-utils
+
+Delete statsd checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.statsd

@@ -15,20 +15,23 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli> '
+Remove nodejs:
+  file.absent:
+    - name: /opt/nodejs
 
-# Log file configuration
-LOG_PATH = '/var/log/seagate/provisioner/'
-BACKUP_FILE_COUNT = 10
-FILE_SIZE = 10
-LOG_LEVEL = 'INFO'
+Delete nodejs checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.nodejs
 
-
-# permissions
-permissions = {
-                  'node': {'bypass': True},
-                  'cluster': {'bypass': True},
-                  'storageset': {'bypass': True},
-                  'resource': {'bypass': True}
-              }
+#
+#Remove nodejs from bash_profile:
+#  file.replace:
+#    - name: ~/.bashrc
+#    - pattern: "# DO NOT EDIT: Nodejs binaries.*?# DO NOT EDIT: End"
+#    - flags: ['MULTILINE', 'DOTALL']
+#    - repl: ''
+#    - ignore_if_missing: True
+#
+#Source bash_profile for nodejs cleanup:
+#  cmd.run:
+#    - name: source ~/.bashrc

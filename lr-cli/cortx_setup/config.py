@@ -76,5 +76,6 @@ CLEANUP_FILE_LIST = [
     '/etc/yum.repos.d/RELEASE_FACTORY.INFO'
     '/opt/seagate/cortx_configs/provisioner_generated',
     '/opt/seagate/cortx/provisioner/pillar/groups/all',
-    '/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all'
+    '/var/lib/seagate/cortx/provisioner/shared/srv/pillar/groups/all',
+    '/opt/seagate/cortx_configs/provisioner_generated/srvnode-0.firewall'
 ]

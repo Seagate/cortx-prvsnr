@@ -15,20 +15,22 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli> '
+{% import_yaml 'components/defaults.yaml' as defaults %}
+include:
+  - components.misc_pkgs.lustre.stop
 
-# Log file configuration
-LOG_PATH = '/var/log/seagate/provisioner/'
-BACKUP_FILE_COUNT = 10
-FILE_SIZE = 10
-LOG_LEVEL = 'INFO'
+Remove lusture package:
+  cmd.run:
+    - name: "rpm -e --nodeps kmod-lustre-client lustre-client"
 
+Delete Lnet config file:
+  file.absent:
+    - name: /etc/modprobe.d/lnet.conf
 
-# permissions
-permissions = {
-                  'node': {'bypass': True},
-                  'cluster': {'bypass': True},
-                  'storageset': {'bypass': True},
-                  'resource': {'bypass': True}
-              }
+Delete Lustre yum repo:
+  pkgrepo.absent:
+    - name: {{ defaults.lustre.repo.id }}
+
+Remove lustre checkpoint flag:
+  file.absent:
+    - name: /opt/seagate/cortx_configs/provisioner_generated/{{ grains['id'] }}.lustre

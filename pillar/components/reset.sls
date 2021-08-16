@@ -41,11 +41,11 @@ reset:
       - misc_pkgs.consul
       - misc_pkgs.openldap
       - ha.haproxy
-    platform:
+  system_components:
+    system:
       - system.chrony
       - system.logrotate
       - system.firewall
       - misc_pkgs.rsyslog
       - system.storage
       - system.storage.multipath
-      - system

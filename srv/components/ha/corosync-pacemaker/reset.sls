@@ -15,20 +15,39 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-PROMPT_DESC = 'Node cli interface'
-TERMINAL = 'nodecli> '
+Remove user and group:
+  user.absent:
+    - name: hacluster
+    - purge: True
+    - force: True
 
-# Log file configuration
-LOG_PATH = '/var/log/seagate/provisioner/'
-BACKUP_FILE_COUNT = 10
-FILE_SIZE = 10
-LOG_LEVEL = 'INFO'
+{% for serv in ["corosync", "pacemaker", "pcsd"] %}
+Stop service {{ serv }}:
+  service.dead:
+    - name: {{ serv }}
+    - enable: False
+{% endfor %}
 
+Remove pcs package:
+  cmd.run:
+    - name: "rpm -e --nodeps pcs pacemaker corosync fence-agents-ipmilan"
 
-# permissions
-permissions = {
-                  'node': {'bypass': True},
-                  'cluster': {'bypass': True},
-                  'storageset': {'bypass': True},
-                  'resource': {'bypass': True}
-              }
+# Remove configuration directory:
+#   file.absent:
+#     - names:
+#       - /etc/corosync
+#       - /etc/pacemaker
+
+Remove corosync-pacemaker data:
+  file.absent:
+    - names:
+      - /var/lib/corosync
+      - /var/lib/pacemaker
+      - /var/lib/pcsd
+      - /var/log/pcsd
+
+# Enable and Start Firewall:
+#   cmd.run:
+#     - names:
+#       - systemctl enable firewalld
+#       - systemctl start firewalld
