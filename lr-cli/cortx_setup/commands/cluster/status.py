@@ -28,7 +28,7 @@ class ClusterStatus(Command):
         cmd_out = json.loads(cmd_out[local_minion_id()])
         result = {}
         result['pools'] = cmd_out.get('pools')
-        result['profiles']= cmd_out.get('profiles')
-        result['filesystem']=cmd_out.get('filesystem')
-        result['nodes']= cmd_out.get('nodes')
+        result['profiles'] = cmd_out.get('profiles')
+        result['filesystem'] = cmd_out.get('filesystem')
+        result['nodes'] = cmd_out.get('nodes')
         return result
