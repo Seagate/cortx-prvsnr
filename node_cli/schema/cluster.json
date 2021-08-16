@@ -156,7 +156,7 @@
     },
     {
         "name": "start",
-        "description": "Cluster start command",
+        "description": "Start Cluster",
         "permissions_tag": "bypass",
         "args": [
         {
@@ -175,7 +175,7 @@
     },
     {
         "name": "status",
-        "description": "Cluster status command",
+        "description": "Check cluster status",
         "permissions_tag": "bypass",
         "args": [
         {
@@ -206,7 +206,7 @@
     },
     {
         "name": "show",
-        "description": "Cluster show command",
+        "description": "Show cluster details",
         "permissions_tag": "bypass",
         "args": [
         {

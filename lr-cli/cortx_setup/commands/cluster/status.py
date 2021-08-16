@@ -23,11 +23,11 @@ from provisioner.salt import local_minion_id, cmd_run
 class ClusterStatus(Command):
 
     def run(self):
-        res = cmd_run('hctl status --json', targets=local_minion_id())
-        res = json.loads(res[local_minion_id()])
+        cmd_out = cmd_run('hctl status --json', targets=local_minion_id())
+        cmd_out = json.loads(cmd_out[local_minion_id()])
         result = {}
-        result['pools'] = res.get('pools')
-        result['profiles']= res.get('profiles')
-        result['filesystem']=res.get('filesystem')
-        result['nodes']= res.get('nodes')
-        return res
+        result['pools'] = cmd_out.get('pools')
+        result['profiles']= cmd_out.get('profiles')
+        result['filesystem']=cmd_out.get('filesystem')
+        result['nodes']= cmd_out.get('nodes')
+        return result
