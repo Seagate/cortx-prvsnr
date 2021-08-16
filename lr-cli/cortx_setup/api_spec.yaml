@@ -67,6 +67,10 @@ cluster:
   config:
     component:
       ClusterConfigComponent
+  start:
+    ClusterStart
+  status:
+    ClusterStatus
   reset:
     ClusterResetNode
 

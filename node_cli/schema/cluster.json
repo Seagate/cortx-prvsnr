@@ -155,8 +155,58 @@
         }]
     },
     {
+        "name": "start",
+        "description": "Start Cluster",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterStart"
+        }
+    },
+    {
+        "name": "status",
+        "description": "Check cluster status",
+        "permissions_tag": "bypass",
+        "args": [
+        {
+            "flag": "args",
+            "default": [],
+            "suppress_help": true,
+            "nargs": "?",
+            "help": ""
+        },
+        {
+            "flag": "-f",
+            "dest": "format",
+            "help": "Format of Output",
+            "default": "json",
+            "type": "str",
+            "choices": [
+            "table",
+            "xml",
+            "json"
+            ]
+        }],
+        "comm": {
+            "type": "direct",
+            "target": "cortx_setup.commands",
+            "method": "run",
+            "class": "ClusterStatus"
+        }
+    },
+    {
         "name": "show",
-        "description": "Cluster show command",
+        "description": "Show cluster details",
         "permissions_tag": "bypass",
         "args": [
         {
