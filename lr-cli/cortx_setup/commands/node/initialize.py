@@ -37,7 +37,6 @@ class NodeInitialize(Command):
     }
 
     """Initialize cortx components by calling post_install command"""
-
     def run(self, components=None):
         node_id = local_minion_id()
         cmd_run(f"salt {node_id} saltutil.sync_all")
@@ -57,7 +56,6 @@ class NodeInitialize(Command):
                             f"Executing post_install command for {state} "
                             f"component"
                         )
-                        print(state)
                         deploy.Deploy()._apply_state(
                             f"components.{state}",
                             targets=node_id,
