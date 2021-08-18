@@ -54,10 +54,13 @@ class SetConfiguration(Command):
             raise ValueError(
                 "Invalid input. Value should not be en empty string"
             )
-        self.load_conf_store(
-            'node_info_index',
-            f'json://{CONFSTORE_CLUSTER_FILE}'
-        )
+        try:
+            self.load_conf_store(
+                'node_info_index',
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
+        except Exception:
+            self.logger.debug("index already present, using the same")
         self.logger.debug(f"Updating confstore key {key} with value {value}")
 
         value = int(value) if value.isdigit() else value

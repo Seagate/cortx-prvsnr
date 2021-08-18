@@ -45,7 +45,10 @@ class NodePrepareFirewall(Command):
         try:
             self.logger.debug(f"loading firewall configuration")
             firewall_config_arg = kwargs.get('config')
-            self.load_conf_store('index1', firewall_config_arg)
+            try:
+                self.load_conf_store('index1', firewall_config_arg)
+            except Exception:
+                self.logger.debug("index already present, using the same")
             firewall_conf = {'firewall': Conf.get('index1','firewall') }
             dump_yaml(firewall_pillar_sls, dict(firewall_conf))
 

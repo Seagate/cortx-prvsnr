@@ -25,7 +25,12 @@ CONFSTORE_CLUSTER_FILE = Path(
 PRVSNR_PILLAR_DIR = Path(
     '/opt/seagate/cortx/provisioner/pillar'
 )
-
+Stx_Cert_Path= Path(
+    '/opt/seagate/cortx/provisioner/srv/components/misc_pkgs/ssl_certs/files/stx.pem'
+)
+FIREWALL_CONFIG_PATH= Path(
+    'yaml:///opt/seagate/cortx_configs/firewall_config.yaml'
+)
 local_pillars = ['cluster', 'storage', 'system', 'firewall']
 
 # Will be changed to confstore yaml path

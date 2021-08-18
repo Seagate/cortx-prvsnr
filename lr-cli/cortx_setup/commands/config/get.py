@@ -46,7 +46,10 @@ class GetConfiguration(Command):
             )
 
         index = 'node_info_index'
-        self.load_conf_store(index, f'json://{CONFSTORE_CLUSTER_FILE}')
+        try:
+            self.load_conf_store(index, f'json://{CONFSTORE_CLUSTER_FILE}')
+        except Exception:
+            self.logger.debug("index already present, using the same")
         try:
             val_fr_conf = Conf.get(index, key)
             self.logger.debug(f"Config value for '{key}' : {val_fr_conf}")

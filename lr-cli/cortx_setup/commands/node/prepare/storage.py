@@ -186,10 +186,13 @@ class NodePrepareStorage(Command):
             self.logger.debug(
                 f"Updating the enclosure id {_enc_id_on_enc} in confstore"
             )
-            self.load_conf_store(
-                'node_info_index',
-                f'json://{CONFSTORE_CLUSTER_FILE}'
-            )
+            try:
+                self.load_conf_store(
+                    'node_info_index',
+                    f'json://{CONFSTORE_CLUSTER_FILE}'
+                )
+            except Exception:
+                self.logger.debug("index already present, using the same")
             Conf.set(
                 'node_info_index',
                 f'storage_enclosure>enclosure_id',

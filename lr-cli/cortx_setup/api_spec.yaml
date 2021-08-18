@@ -114,3 +114,5 @@ config:
     SetConfiguration
   get:
     GetConfiguration
+  apply:
+    CortxConfigApply

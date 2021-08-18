@@ -233,13 +233,16 @@ class StorageEnclosureConfig(Command):
         cvg_name = kwargs.get('cvg')
         data_devices = []
         input_data_devices = kwargs.get('data_devices')
-        if input_data_devices:
+        if isinstance(input_data_devices,str):
             data_devices = [device for device in input_data_devices.split(",") if device and len(device) > 1]
+        else:
+            data_devices= input_data_devices
         metadata_devices = []
         input_metadata_devices = kwargs.get('metadata_devices')
-        if input_metadata_devices:
+        if isinstance(input_metadata_devices,str):
             metadata_devices = [device for device in input_metadata_devices.split(",") if device and len(device) > 1]
-
+        else:
+            metadata_devices= input_metadata_devices
         if (data_devices or metadata_devices) and not cvg_name:
             self.logger.exception(
                 "argument cvg is must to set data and metadata devices"
@@ -249,10 +252,13 @@ class StorageEnclosureConfig(Command):
         self.machine_id = get_machine_id(node_id)
         self.refresh_key_map()
 
-        Conf.load(
-            'node_info_index',
-            f'json://{prvsnr_cluster_path}'
-        )
+        try:
+            Conf.load(
+                'node_info_index',
+                f'json://{prvsnr_cluster_path}'
+            )
+        except Exception:
+            self.logger.debug("index already present, using the same")
 
         setup_type = Conf.get (
             'node_info_index',

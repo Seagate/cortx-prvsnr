@@ -81,11 +81,14 @@ class NodePrepareServerConfig(Command):
                 f'cluster/{node}/node_id')
         }
 
-        # Load confstore
-        self.load_conf_store(
-            'node_info_index',
-            f'json://{CONFSTORE_CLUSTER_FILE}'
-        )
+        try:
+            # Load confstore
+            self.load_conf_store(
+                'node_info_index',
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
+        except Exception:
+            self.logger.debug("index already present, using the same")
 
         for key, value in kwargs.items():
             if value:

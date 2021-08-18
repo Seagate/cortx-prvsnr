@@ -92,10 +92,13 @@ class NetworkConfig(Command):
 
         node_id = local_minion_id()
         machine_id = get_machine_id(node_id)
-        Conf.load(
-            'node_config_index',
-            f'json://{CONFSTORE_CLUSTER_FILE}'
-        )
+        try:
+            Conf.load(
+                'node_config_index',
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
+        except Exception:
+            self.logger.debug("index already present, using the same")
 
         if bmc is not None:
             self.logger.debug(

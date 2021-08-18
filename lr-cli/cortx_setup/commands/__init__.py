@@ -49,6 +49,7 @@ from .storageset.config.durability import DurabilityConfig
 from .enclosure.refresh import RefreshEnclosureId
 from .config.set import SetConfiguration
 from .config.get import GetConfiguration
+from .config.apply import CortxConfigApply
 from .cluster.reset import ClusterResetNode
 
 __all__ = [
@@ -86,5 +87,6 @@ __all__ = [
     'PillarSync',
     'SetConfiguration',
     'GetConfiguration',
+    'CortxConfigApply',
     'ClusterResetNode'
  ]

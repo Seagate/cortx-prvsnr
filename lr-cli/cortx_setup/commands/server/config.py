@@ -63,10 +63,13 @@ class ServerConfig(Command):
             'type': f'server_node>{machine_id}>type',
         }
 
-        Conf.load(
-            'node_info_index',
-            f'json://{CONFSTORE_CLUSTER_FILE}'
-        )
+        try:
+            Conf.load(
+                'node_info_index',
+                f'json://{CONFSTORE_CLUSTER_FILE}'
+            )
+        except Exception:
+            self.logger.debug("index already present, using the same")
 
         for key, value in kwargs.items():
             if value:
