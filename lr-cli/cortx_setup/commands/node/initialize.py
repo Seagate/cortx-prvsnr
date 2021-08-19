@@ -35,7 +35,7 @@ class NodeInitialize(Command):
             'help': 'Components to be initialize (comma separated)'
         }
     }
-    
+
     """ Initialize cortx components by calling post_install command """
     
     def run(self, components=None):
