@@ -37,7 +37,7 @@ class NodeInitialize(Command):
     }
 
     """ Initialize cortx components by calling post_install command """
-    
+
     def run(self, components=None):
         comp_maping = {'utils': 'cortx_utils', 's3': 's3server'}  # mapping between solution.yaml and pillar
         node_id = local_minion_id()
