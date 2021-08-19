@@ -36,8 +36,14 @@ class NodeInitialize(Command):
         }
     }
 
-    """Initialize cortx components by calling post_install command"""
     def run(self, components=None):
+        """
+            Initialize cortx components by calling post_install command
+
+        :param components: (optional) - provide component list (comma separated)
+               which you want to initialize.
+               by default it will initialize all components.
+        """
         node_id = local_minion_id()
         cmd_run(f"salt {node_id} saltutil.sync_all")
         cortx_components = get_cortx_states()
@@ -47,8 +53,9 @@ class NodeInitialize(Command):
         if components:
             self.logger.debug(f"Executing Node initialize for given "
                               f"components {components}")
-            components = [component for component in components.split(",")
-                          if component and len(component) > 1]
+            if type(components) is str:
+                components = [component for component in components.split(",")
+                              if component and len(component) > 1]
             for state in components:
                 if state in defined_comp_list:
                     try:
