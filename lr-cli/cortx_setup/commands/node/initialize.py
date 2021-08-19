@@ -41,9 +41,9 @@ class NodeInitialize(Command):
 
         :param components: (optional) - provide component list (comma separated)
                which you want to initialize.
-               by default it will initialize all components.
-        """
-        comp_maping = {'utils': 'cortx_utils', 's3': 's3server'}  # mapping between solution.yaml and pillar  
+               by default it will initialize all components."""
+        
+        comp_maping = {'utils': 'cortx_utils', 's3': 's3server'}  # mapping between solution.yaml and pillar
         node_id = local_minion_id()
         cmd_run(f"salt {node_id} saltutil.sync_all")
         cortx_components = get_cortx_states()
