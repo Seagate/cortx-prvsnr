@@ -37,13 +37,13 @@ class NodeInitialize(Command):
     }
 
     def run(self, components=None):
-        """
-            Initialize cortx components by calling post_install command
+        """ Initialize cortx components by calling post_install command
 
         :param components: (optional) - provide component list (comma separated)
                which you want to initialize.
                by default it will initialize all components.
         """
+        comp_maping = {'utils': 'cortx_utils', 's3': 's3server'}  # mapping between solution.yaml and pillar  
         node_id = local_minion_id()
         cmd_run(f"salt {node_id} saltutil.sync_all")
         cortx_components = get_cortx_states()
@@ -53,10 +53,11 @@ class NodeInitialize(Command):
         if components:
             self.logger.debug(f"Executing Node initialize for given "
                               f"components {components}")
-            if type(components) is str:
-                components = [component for component in components.split(",")
+            if isinstance(components, str):
+                components = [component.strip() for component in components.split(",")
                               if component and len(component) > 1]
             for state in components:
+                state = comp_maping.get(state) if comp_maping.get(state, None) else state
                 if state in defined_comp_list:
                     try:
                         self.logger.debug(
