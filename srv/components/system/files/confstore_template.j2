@@ -29,7 +29,6 @@ cluster>{{ cluster_id }}>name=>{{ pillar['cluster']['name'] }}
 cluster>{{ cluster_id }}>name=>{{ pillar['corosync-pacemaker']['cluster_name'] }}
 {% endif %}
 cluster>{{ cluster_id }}>site_count=>1
-cluster>{{ cluster_id }}>site>storage_set_count=>{{ pillar['cluster']['storage_sets'].keys() | length }}
 {% set mgmt_vip = salt['mine.get']('srvnode-1', 'node_ip_addrs') | dictsort() %}
 cluster>{{ cluster_id }}>network>management>virtual_host=>{{ pillar['cluster']['mgmt_vip'] if pillar['cluster']['mgmt_vip'] else mgmt_vip[0][1][pillar['cluster']['srvnode-1']['network']['mgmt']['interfaces'][0]][0] }}
 {%- if pillar['cluster']['search_domains'] %}
@@ -46,19 +45,6 @@ cluster>{{ cluster_id }}>network>dns_servers[{{ loop.index - 1 }}]=>{{ dns }}
 {%- else %}
 cluster>{{ cluster_id }}>network>dns_servers=>{{ pillar['cluster']['dns_servers'] }}
 {%- endif %}
-{%- for storage_set in pillar['cluster']['storage_sets'].keys() %}
-{%- set outer_loop = loop %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>name=>{{ storage_set }}
-{%- for node in pillar['cluster']['storage_sets'][storage_set] %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>server_nodes[{{ loop.index - 1 }}]=>{{ pillar['cluster'][node]['machine_id'] }}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>storage_enclosures[{{ loop.index - 1 }}]=>{{ pillar['storage'][pillar['cluster'][node]['storage']['enclosure']]['enclosure_id'] }}
-{%- endfor %}
-{%- for durability_type in pillar['cluster']['srvnode-1']['storage']['durability'] %}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>data=>{{ pillar['cluster']['srvnode-1']['storage']['durability'][durability_type]['data'] }}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>parity=>{{ pillar['cluster']['srvnode-1']['storage']['durability'][durability_type]['parity'] }}
-cluster>{{ cluster_id }}>storage_set[{{ outer_loop.index - 1 }}]>durability>{{ durability_type }}>spare=>{{ pillar['cluster']['srvnode-1']['storage']['durability'][durability_type]['spare'] }}
-{%- endfor %}
-{%- endfor %}
 {%- for machine_id, node in pillar['cluster']['server_nodes'].items() %}
 server_node>{{ machine_id }}>name=>{{ node }}
 server_node>{{ machine_id }}>hostname=>{{ pillar['cluster'][node]['hostname'] }}
