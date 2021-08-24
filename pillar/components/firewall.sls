@@ -18,59 +18,61 @@
 # Check for default services under:
 # /usr/lib/firewalld/services/
 firewall:
-  # data_private:
+  data_private:
   # # Configuration for Data Public network
-  #   services:
+    services:
   #   # Specify standard firewalld supported services
   #   # to be allowed through firewall on management network
   #     # elasticsearch: 9200, 9300
-  #     - elasticsearch
+      - elasticsearch
   #     # high-availability: 2224, 3121, 5403, 5404/udp, 5405-5412/udp, 9929, 9929/udp, 21064
-  #     - high-availability
+      - high-availability
   #     # ldap: 389
-  #     - ldap
+      - ldap
   #     # ldaps: 636
-  #     - ldaps
-  #     - ssh
-  #   ports:
+      - ldaps
+      - ssh
+     ports:
   #   # Specify ports to be allowed through firewall
   #   # on management network
-  #     consul:
-  #      - 8300/tcp
-  #       - 8301/tcp
-  #       - 8301/udp
-  #       - 8302/tcp
-  #       - 8302/udp
-  #       - 8500/tcp
-  #     csm_agent:
-  #       - 28101/tcp
-  #     haproxy_dummy:
-  #       - 28001/tcp
-  #       - 28002/tcp
-  #     hax:
-  #       - 8008/tcp
-  #     kafka:
-  #       - 9092/tcp
-  #     lnet:
-  #       - 988/tcp
-  #     s3server:
-  #       {%- for port in range(28071,28093) %}
-  #       - {{ port }}/tcp
-  #       {% endfor -%}
-  #       - 28049/tcp
-  #     s3authserver:
-  #       - 28050/tcp
-  #     statsd:
-  #       - 5601/tcp
-  #       - 8125/tcp
-  #     rest_server:
-  #       - 28300/tcp
-  #     rsyslog:
-  #       - 514/tcp
-  #     zookeeper:
-  #       - 2181/tcp
-  #       - 2888/tcp
-  #       - 3888/tcp
+      consul:
+       - 8300/tcp
+       - 8301/tcp
+       - 8301/udp
+       - 8302/tcp
+       - 8302/udp
+       - 8500/tcp
+      csm_agent:
+       - 28101/tcp
+      haproxy_dummy:
+       - 28001/tcp
+       - 28002/tcp
+      hax:
+       - 8008/tcp
+      kafka:
+       - 9092/tcp
+      lnet:
+       - 988/tcp
+      s3server:
+       {%- for port in range(28071,28093) %}
+       - {{ port }}/tcp
+       {% endfor -%}
+       - 28049/tcp
+      s3authserver:
+       - 28050/tcp
+      statsd:
+       - 5601/tcp
+       - 8125/tcp
+      rest_server:
+       - 28300/tcp
+      rsyslog:
+       - 514/tcp
+      zookeeper:
+       - 2181/tcp
+       - 2888/tcp
+       - 3888/tcp
+      dhclient:
+        - 68/udp
   data_public:
   # Configuration for Data Public network
     services:
@@ -127,5 +129,5 @@ firewall:
       # smtp:
       #   - 25/tcp
       # saltmaster:
-      #   - 4505/tcp
-      #   - 4506/tcp
+      # - 4505/tcp
+      #- 4506/tcp
