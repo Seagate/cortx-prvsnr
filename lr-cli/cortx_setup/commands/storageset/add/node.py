@@ -57,15 +57,42 @@ class AddServerNode(Command):
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
-            ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
-            node_count = get_pillar_data("cluster/storage_set/count")
 
-            if ss_name != storage_set_name:
+            try:
+                storageset = Conf.get (
+                    'storage_create_index',
+                    f'cluster>{cluster_id}>storage_set'
+                )
+                storage_set_len = len(storageset)
+            except:
+                self.logger.debug(
+                    "No storage_set in confstore, setting storage_set_ind to 0"
+                    )
+                storage_set_len = 0
+
+            if storage_set_len == 0:
                 raise Exception(
                    "Invalid Storageset name provided: "
                    f"'{storage_set_name}' not found in ConfStore data. "
                    "First, set with `cortx_setup storageset create` command."
                 )
+
+            ss_found = False
+            for ind in range(0, storage_set_len):
+                ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[{ind}]>name')
+                if ss_name == storage_set_name:
+                    ss_found = True
+                else:
+                    continue
+
+            if ss_found == False:
+                raise Exception(
+                   "Invalid Storageset name provided: "
+                   f"'{storage_set_name}' not found in ConfStore data. "
+                   "First, set with `cortx_setup storageset create` command."
+                )
+
+            node_count = get_pillar_data("cluster/storage_set/count")
 
             # TODO: Addnl validation needed. Change server_node from list
             # to string and allow only one node to be updated at a time?
@@ -94,9 +121,21 @@ class AddServerNode(Command):
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[0]>server_nodes',
+                f'cluster>{cluster_id}>storage_set[{storage_set_len}]>server_nodes',
                 machine_id
             )
+
+            for node in server_node:
+                machine_id = get_machine_id(node)
+                self.logger.debug(
+                    f"Adding storage set ID:{storage_set_name} to "
+                    f"server {node} with machone id: {machine_id}"
+                )
+                Conf.set(
+                    index,
+                    f'server_node>{{ machine_id }}>storage_set_id',
+                    storage_set_name
+                )
 
             Conf.save(index)
             self.logger.debug(f"Server nodes {server_node} with correspoding "

@@ -98,7 +98,6 @@ server_node>{{ machine_id }}>storage>enclosure_id=>{{ pillar['storage'][pillar['
 server_node>{{ machine_id }}>site_id=>{{ pillar['cluster'][node]['site_id'] }}
 server_node>{{ machine_id }}>rack_id=>{{ pillar['cluster'][node]['rack_id'] }}
 server_node>{{ machine_id }}>node_id=>{{ pillar['cluster'][node]['node_id'] }}
-server_node>{{ machine_id }}>storage_set_id=>{{ pillar['cluster'][node]['storage_set_id'] }}
 server_node>{{ machine_id }}>cluster_id=>{{ cluster_id }}
 server_node>{{ machine_id }}>s3_instances=>{{ pillar['cluster'][node]['s3_instances'] }}
 {%- endfor %}
@@ -109,7 +108,6 @@ storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>cluster_id=
 {%- for _,node in pillar['cluster']['server_nodes'].items() %}
 {%- if pillar['cluster'][node]['storage']['enclosure'] == enclosure %}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>site_id=>{{ pillar['cluster'][node]['site_id'] }}
-storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>storage_set_id=>{{ pillar['cluster'][node]['storage_set_id'] }}
 {%- endif %}
 {%- endfor %}
 storage_enclosure>{{ pillar['storage'][enclosure]['enclosure_id'] }}>controller>type=>{{ pillar['storage'][enclosure]['controller']['type'] }}

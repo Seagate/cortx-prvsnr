@@ -65,15 +65,28 @@ class CreateStorageSet(Command):
                 name
             )
 
-            # Not updating node count to Confstore
+            #Not updating node count to Confstore
+            #TODO: Handle scenario for multiple storagesets
             PillarSet().run(
                 'cluster/storage_set/count',
                 count
             )
 
+            try:
+                tot_storageset = Conf.get (
+                    'storage_create_index',
+                    f'cluster>{cluster_id}>storage_set'
+                )
+                storage_set_ind = len(tot_storageset)
+            except:
+                self.logger.debug(
+                    "No storage_set in confstore, setting storage_set_ind to 0"
+                    )
+                storage_set_ind = 0
+
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[0]>name',
+                f'cluster>{cluster_id}>storage_set[{storage_set_ind}]>name',
                 name
             )
 
