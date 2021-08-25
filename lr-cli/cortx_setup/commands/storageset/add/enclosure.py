@@ -84,8 +84,8 @@ class AddStorageEnclosure(Command):
                 )
 
             ss_found = False
-            for ind in range(0, storage_set_len):
-                ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[{ind}]>name')
+            for ss_ind in range(0, storage_set_len):
+                ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[{ss_ind}]>name')
                 if ss_name == storage_set_name:
                     ss_found = True
                 else:
@@ -131,7 +131,7 @@ class AddStorageEnclosure(Command):
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[{storage_set_len}]>storage_enclosures',
+                f'cluster>{cluster_id}>storage_set[{ss_ind}]>storage_enclosures',
                 enclosure_id
             )
 

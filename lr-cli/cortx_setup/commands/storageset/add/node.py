@@ -81,9 +81,9 @@ class AddServerNode(Command):
                 )
 
             ss_found = False
-            for ind in range(0, storage_set_len):
+            for ss_ind in range(0, storage_set_len):
                 ss_name = Conf.get(
-                    index, f'cluster>{cluster_id}>storage_set[{ind}]>name'
+                    index, f'cluster>{cluster_id}>storage_set[{ss_ind}]>name'
                 )
                 if ss_name == storage_set_name:
                     ss_found = True
@@ -130,7 +130,7 @@ class AddServerNode(Command):
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[{storage_set_len}]>server_nodes',
+                f'cluster>{cluster_id}>storage_set[{ss_ind}]>server_nodes',
                 machine_id
             )
 
