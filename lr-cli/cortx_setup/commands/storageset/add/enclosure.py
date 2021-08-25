@@ -74,6 +74,9 @@ class AddStorageEnclosure(Command):
                 storage_set_len = 0
 
             if storage_set_len == 0:
+                self.logger.debug(
+                    f"storage_set object in ConfStore is empty"
+                )
                 raise Exception(
                    "Invalid Storageset name provided: "
                    f"'{storage_set_name}' not found in ConfStore data. "
@@ -89,6 +92,10 @@ class AddStorageEnclosure(Command):
                     continue
 
             if ss_found == False:
+                self.logger.debug(
+                    f"storage_set name {storage_set_name} is "
+                    " not present in ConfStore"
+                )
                 raise Exception(
                    "Invalid Storageset name provided: "
                    f"'{storage_set_name}' not found in ConfStore data. "
@@ -136,7 +143,7 @@ class AddStorageEnclosure(Command):
                 )
                 Conf.set(
                     index,
-                    f'storage_enclosure>{{ enclosure_id }}>storage_set_id',
+                    f'storage_enclosure>{enclosure_id}>storage_set_id',
                     storage_set_name
                 )
 

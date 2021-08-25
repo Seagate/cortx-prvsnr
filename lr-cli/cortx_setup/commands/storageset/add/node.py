@@ -60,7 +60,7 @@ class AddServerNode(Command):
 
             try:
                 storageset = Conf.get (
-                    'storage_create_index',
+                    index,
                     f'cluster>{cluster_id}>storage_set'
                 )
                 storage_set_len = len(storageset)
@@ -71,6 +71,9 @@ class AddServerNode(Command):
                 storage_set_len = 0
 
             if storage_set_len == 0:
+                self.logger.debug(
+                    f"storage_set object in ConfStore is empty"
+                )
                 raise Exception(
                    "Invalid Storageset name provided: "
                    f"'{storage_set_name}' not found in ConfStore data. "
@@ -79,13 +82,19 @@ class AddServerNode(Command):
 
             ss_found = False
             for ind in range(0, storage_set_len):
-                ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[{ind}]>name')
+                ss_name = Conf.get(
+                    index, f'cluster>{cluster_id}>storage_set[{ind}]>name'
+                )
                 if ss_name == storage_set_name:
                     ss_found = True
                 else:
                     continue
 
             if ss_found == False:
+                self.logger.debug(
+                    f"storage_set name {storage_set_name} is "
+                    " not present in ConfStore"
+                )
                 raise Exception(
                    "Invalid Storageset name provided: "
                    f"'{storage_set_name}' not found in ConfStore data. "
@@ -111,7 +120,7 @@ class AddServerNode(Command):
                 machine_id.append(get_machine_id(node))
 
             self.logger.debug(
-                "Adding machine_id '{machine_id}' to storageset "
+                f"Adding machine_id '{machine_id}' to storageset "
                 f"'{storage_set_name}' in ConfStore."
             )
 
@@ -133,13 +142,13 @@ class AddServerNode(Command):
                 )
                 Conf.set(
                     index,
-                    f'server_node>{{ machine_id }}>storage_set_id',
+                    f'server_node>{machine_id}>storage_set_id',
                     storage_set_name
                 )
 
             Conf.save(index)
             self.logger.debug(f"Server nodes {server_node} with correspoding "
-                              f"machine_id {machine_id} added to Storageset")
+                              f"machine_ids added to Storageset")
 
         except ValueError as exc:
             raise ValueError(
