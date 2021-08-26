@@ -78,7 +78,7 @@ class CreateStorageSet(Command):
                     f'cluster>{cluster_id}>storage_set'
                 )
                 storage_set_ind = len(tot_storageset)
-            except KeyError:
+            except Exception:
                 self.logger.debug(
                     "No storage_set in confstore, setting storage_set_ind to 0"
                     )

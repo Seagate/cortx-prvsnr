@@ -64,7 +64,7 @@ class AddServerNode(Command):
                     f'cluster>{cluster_id}>storage_set'
                 )
                 storage_set_len = len(storageset)
-            except KeyError:
+            except Exception:
                 self.logger.debug(
                     "No storage_set in confstore, setting storage_set_len to 0"
                 )
