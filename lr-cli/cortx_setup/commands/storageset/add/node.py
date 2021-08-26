@@ -66,8 +66,8 @@ class AddServerNode(Command):
                 storage_set_len = len(storageset)
             except KeyError:
                 self.logger.debug(
-                    "No storage_set in confstore, setting storage_set_ind to 0"
-                    )
+                    "No storage_set in confstore, setting storage_set_len to 0"
+                )
                 storage_set_len = 0
 
             if storage_set_len == 0:
@@ -75,15 +75,14 @@ class AddServerNode(Command):
                     "storage_set object in ConfStore is empty"
                 )
                 raise Exception(
-                   "Invalid Storageset name provided: "
-                   f"'{storage_set_name}' not found in ConfStore data. "
-                   "First, set with `cortx_setup storageset create` command."
+                   f"Error: Storage-set {storage_set_name} does not exist."
+                   " Use command - cortx_setup storageset create"
                 )
 
             ss_found = False
-            for ss_ind in range(0, storage_set_len):
+            for ss_index in range(0, storage_set_len):
                 ss_name = Conf.get(
-                    index, f'cluster>{cluster_id}>storage_set[{ss_ind}]>name'
+                    index, f'cluster>{cluster_id}>storage_set[{ss_index}]>name'
                 )
                 if ss_name == storage_set_name:
                     ss_found = True
@@ -92,13 +91,11 @@ class AddServerNode(Command):
 
             if ss_found == False:
                 self.logger.debug(
-                    f"storage_set name {storage_set_name} is "
-                    " not present in ConfStore"
+                    f"Can not find storage-set: {storage_set_name}"
                 )
                 raise Exception(
-                   "Invalid Storageset name provided: "
-                   f"'{storage_set_name}' not found in ConfStore data. "
-                   "First, set with `cortx_setup storageset create` command."
+                   f"Error: Storage-set {storage_set_name} does not exist."
+                   " Use command - cortx_setup storageset create"
                 )
 
             node_count = get_pillar_data("cluster/storage_set/count")
@@ -130,7 +127,7 @@ class AddServerNode(Command):
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[{ss_ind}]>server_nodes',
+                f'cluster>{cluster_id}>storage_set[{ss_index}]>server_nodes',
                 machine_id
             )
 
@@ -138,7 +135,7 @@ class AddServerNode(Command):
                 machine_id = get_machine_id(node)
                 self.logger.debug(
                     f"Adding storage set ID:{storage_set_name} to "
-                    f"server {node} with machone id: {machine_id}"
+                    f"server {node} with machine id: {machine_id}"
                 )
                 Conf.set(
                     index,
