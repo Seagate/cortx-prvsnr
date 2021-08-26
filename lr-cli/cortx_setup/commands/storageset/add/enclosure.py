@@ -67,15 +67,15 @@ class AddStorageEnclosure(Command):
                     f'cluster>{cluster_id}>storage_set'
                 )
                 storage_set_len = len(storageset)
-            except:
+            except KeyError:
                 self.logger.debug(
-                    "No storage_set in confstore, setting storage_set_ind to 0"
-                    )
+                    "No storage_set in confstore, setting storage_set_len to 0"
+                )
                 storage_set_len = 0
 
             if storage_set_len == 0:
                 self.logger.debug(
-                    f"storage_set object in ConfStore is empty"
+                    "storage_set object in ConfStore is empty"
                 )
                 raise Exception(
                    "Invalid Storageset name provided: "
@@ -85,7 +85,9 @@ class AddStorageEnclosure(Command):
 
             ss_found = False
             for ss_ind in range(0, storage_set_len):
-                ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[{ss_ind}]>name')
+                ss_name = Conf.get(index,
+                    f'cluster>{cluster_id}>storage_set[{ss_ind}]>name'
+                )
                 if ss_name == storage_set_name:
                     ss_found = True
                 else:

@@ -64,7 +64,7 @@ class AddServerNode(Command):
                     f'cluster>{cluster_id}>storage_set'
                 )
                 storage_set_len = len(storageset)
-            except:
+            except KeyError:
                 self.logger.debug(
                     "No storage_set in confstore, setting storage_set_ind to 0"
                     )
@@ -72,7 +72,7 @@ class AddServerNode(Command):
 
             if storage_set_len == 0:
                 self.logger.debug(
-                    f"storage_set object in ConfStore is empty"
+                    "storage_set object in ConfStore is empty"
                 )
                 raise Exception(
                    "Invalid Storageset name provided: "
