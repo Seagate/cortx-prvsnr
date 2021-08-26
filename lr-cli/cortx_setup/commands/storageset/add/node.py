@@ -66,13 +66,13 @@ class AddServerNode(Command):
                 storage_set_len = len(storageset)
             except Exception:
                 self.logger.debug(
-                    "No storage_set in confstore, setting storage_set_len to 0"
+                    "No storage-set found, setting storage_set_len to 0"
                 )
                 storage_set_len = 0
 
             if storage_set_len == 0:
                 self.logger.debug(
-                    "storage_set object in ConfStore is empty"
+                    "storage-set object is empty"
                 )
                 raise Exception(
                    f"Error: Storage-set {storage_set_name} does not exist."
@@ -91,7 +91,7 @@ class AddServerNode(Command):
 
             if ss_found == False:
                 self.logger.debug(
-                    f"Can not find storage-set: {storage_set_name}"
+                    f"Cannot find storage-set: {storage_set_name}"
                 )
                 raise Exception(
                    f"Error: Storage-set {storage_set_name} does not exist."
@@ -117,7 +117,7 @@ class AddServerNode(Command):
                 machine_id.append(get_machine_id(node))
 
             self.logger.debug(
-                f"Adding machine_id '{machine_id}' to storageset "
+                f"Adding machine_id '{machine_id}' to storage-set "
                 f"'{storage_set_name}' in ConfStore."
             )
 

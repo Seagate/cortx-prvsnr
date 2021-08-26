@@ -62,20 +62,20 @@ class AddStorageEnclosure(Command):
             )
 
             try:
-                storageset = Conf.get (
+                storage_set = Conf.get (
                     index,
                     f'cluster>{cluster_id}>storage_set'
                 )
-                storage_set_len = len(storageset)
+                storage_set_len = len(storage_set)
             except Exception:
                 self.logger.debug(
-                    "No storage-set in confstore, setting storage_set_len to 0"
+                    "No storage-set, setting storage_set_len to 0"
                 )
                 storage_set_len = 0
 
             if storage_set_len == 0:
                 self.logger.debug(
-                    "storage_set object in ConfStore is empty"
+                    "storage_set object is empty"
                 )
                 raise Exception(
                     f"Error: Storage-set {storage_set_name} does not exist."

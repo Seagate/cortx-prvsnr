@@ -77,16 +77,16 @@ class CreateStorageSet(Command):
                     'storage_create_index',
                     f'cluster>{cluster_id}>storage_set'
                 )
-                storage_set_ind = len(tot_storageset)
+                storage_set_index = len(tot_storageset)
             except Exception:
                 self.logger.debug(
-                    "No storage_set in confstore, setting storage_set_ind to 0"
+                    "No storage_set in confstore, setting storage_set_index to 0"
                     )
-                storage_set_ind = 0
+                storage_set_index = 0
 
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[{storage_set_ind}]>name',
+                f'cluster>{cluster_id}>storage_set[{storage_set_index}]>name',
                 name
             )
 
