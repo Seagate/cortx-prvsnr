@@ -36,16 +36,14 @@ cluster:
     hostname: {{ srvnode }}
     node_type: {{ "HW" if "physical" in grains["virtual"] else "VM" }}
     roles:
+      - openldap_server
       {% if 0 == node_num %}
       - primary
       {% else %}
       - secondary
       {% endif %}
       {%- if 0 == (node_num // 3) %}
-      - openldap_server
       - kafka_server
-      {%- else %}
-      - openldap_client
       {%- endif %}
     {%- if 0 == node_num %}
     is_primary: True
