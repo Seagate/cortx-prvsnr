@@ -28,28 +28,9 @@ firewall:
       s3authserver:
         - 28050/tcp
       s3server:
-        - 28071/tcp
-        - 28072/tcp
-        - 28073/tcp
-        - 28074/tcp
-        - 28075/tcp
-        - 28076/tcp
-        - 28077/tcp
-        - 28078/tcp
-        - 28079/tcp
-        - 28080/tcp
-        - 28081/tcp
-        - 28082/tcp
-        - 28083/tcp
-        - 28084/tcp
-        - 28085/tcp
-        - 28086/tcp
-        - 28087/tcp
-        - 28088/tcp
-        - 28089/tcp
-        - 28090/tcp
-        - 28091/tcp
-        - 29092/tcp
+        {%- for port in range(28071,28093) %}
+        - {{ port }}/tcp
+        {% endfor -%}
         - 28049/tcp
       statsd:
         - 5601/tcp
