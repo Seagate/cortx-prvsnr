@@ -109,8 +109,6 @@ class DurabilityConfig(Command):
                 )
 
             confstore_durability_key = f'cluster>{cluster_id}>storage_set[{storage_set_index}]>durability'
-            #TODO: Get node list for storage_set_name provided and update
-            # durability dict to only those nodes.
             pillar_durability_key = 'cluster/srvnode-1/storage/durability'
 
             PillarSet().run(
