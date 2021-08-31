@@ -61,15 +61,47 @@ class AddStorageEnclosure(Command):
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
 
-            ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
-            node_count = get_pillar_data("cluster/storage_set/count")
-
-            if ss_name != storage_set_name:
-                raise Exception(
-                   "Invalid Storageset name provided: "
-                   f"'{storage_set_name}' not found in ConfStore data. "
-                   "First, set with `cortx_setup storageset create` command."
+            try:
+                storage_set = Conf.get (
+                    index,
+                    f'cluster>{cluster_id}>storage_set'
                 )
+                storage_set_len = len(storage_set)
+            except Exception:
+                self.logger.debug(
+                    "No storage-set, setting storage_set_len to 0"
+                )
+                storage_set_len = 0
+
+            if storage_set_len == 0:
+                self.logger.debug(
+                    "storage_set object is empty"
+                )
+                raise Exception(
+                    f"Error: Storage-set {storage_set_name} does not exist."
+                    " Use command - cortx_setup storageset create"
+                )
+
+            ss_found = False
+            for ss_index in range(0, storage_set_len):
+                ss_name = Conf.get(index,
+                    f'cluster>{cluster_id}>storage_set[{ss_index}]>name'
+                )
+                if ss_name == storage_set_name:
+                    ss_found = True
+                else:
+                    continue
+
+            if ss_found == False:
+                self.logger.debug(
+                    f"Can not find storage-set: {storage_set_name}"
+                )
+                raise Exception(
+                   f"Error: Storage-set {storage_set_name} does not exist."
+                    " Use command - cortx_setup storageset create"
+                )
+
+            node_count = get_pillar_data("cluster/storage_set/count")
 
             # TODO: This is Placeholder. Exact API not provided yet.
             # Addnl validation needed. Change `storage_enclosure` from list
@@ -98,9 +130,21 @@ class AddStorageEnclosure(Command):
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[0]>storage_enclosures',
+                f'cluster>{cluster_id}>storage_set[{ss_index}]>storage_enclosures',
                 enclosure_id
             )
+
+            for node in storage_enclosure:
+                enclosure_id = get_enclosure_id(node)
+                self.logger.debug(
+                    f"Adding storage set ID:{storage_set_name} to "
+                    f"enclosure {node} with enclosure id: {enclosure_id}"
+                )
+                Conf.set(
+                    index,
+                    f'storage_enclosure>{enclosure_id}>storage_set_id',
+                    storage_set_name
+                )
 
             Conf.save(index)
             self.logger.debug(
