@@ -57,15 +57,48 @@ class AddServerNode(Command):
                 index,
                 f'json://{CONFSTORE_CLUSTER_FILE}'
             )
-            ss_name = Conf.get(index, f'cluster>{cluster_id}>storage_set[0]>name')
-            node_count = get_pillar_data("cluster/storage_set/count")
 
-            if ss_name != storage_set_name:
-                raise Exception(
-                   "Invalid Storageset name provided: "
-                   f"'{storage_set_name}' not found in ConfStore data. "
-                   "First, set with `cortx_setup storageset create` command."
+            try:
+                storageset = Conf.get (
+                    index,
+                    f'cluster>{cluster_id}>storage_set'
                 )
+                storage_set_len = len(storageset)
+            except Exception:
+                self.logger.debug(
+                    "No storage-set found, setting storage_set_len to 0"
+                )
+                storage_set_len = 0
+
+            if storage_set_len == 0:
+                self.logger.debug(
+                    "storage-set object is empty"
+                )
+                raise Exception(
+                   f"Error: Storage-set {storage_set_name} does not exist."
+                   " Use command - cortx_setup storageset create"
+                )
+
+            ss_found = False
+            for ss_index in range(0, storage_set_len):
+                ss_name = Conf.get(
+                    index, f'cluster>{cluster_id}>storage_set[{ss_index}]>name'
+                )
+                if ss_name == storage_set_name:
+                    ss_found = True
+                else:
+                    continue
+
+            if ss_found == False:
+                self.logger.debug(
+                    f"Cannot find storage-set: {storage_set_name}"
+                )
+                raise Exception(
+                   f"Error: Storage-set {storage_set_name} does not exist."
+                   " Use command - cortx_setup storageset create"
+                )
+
+            node_count = get_pillar_data("cluster/storage_set/count")
 
             # TODO: Addnl validation needed. Change server_node from list
             # to string and allow only one node to be updated at a time?
@@ -84,7 +117,7 @@ class AddServerNode(Command):
                 machine_id.append(get_machine_id(node))
 
             self.logger.debug(
-                "Adding machine_id '{machine_id}' to storageset "
+                f"Adding machine_id '{machine_id}' to storage-set "
                 f"'{storage_set_name}' in ConfStore."
             )
 
@@ -94,13 +127,25 @@ class AddServerNode(Command):
             )
             Conf.set(
                 index,
-                f'cluster>{cluster_id}>storage_set[0]>server_nodes',
+                f'cluster>{cluster_id}>storage_set[{ss_index}]>server_nodes',
                 machine_id
             )
 
+            for node in server_node:
+                machine_id = get_machine_id(node)
+                self.logger.debug(
+                    f"Adding storage set ID:{storage_set_name} to "
+                    f"server {node} with machine id: {machine_id}"
+                )
+                Conf.set(
+                    index,
+                    f'server_node>{machine_id}>storage_set_id',
+                    storage_set_name
+                )
+
             Conf.save(index)
             self.logger.debug(f"Server nodes {server_node} with correspoding "
-                              f"machine_id {machine_id} added to Storageset")
+                              f"machine_ids added to Storageset")
 
         except ValueError as exc:
             raise ValueError(
