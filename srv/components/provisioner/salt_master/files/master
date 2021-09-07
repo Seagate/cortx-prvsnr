@@ -12,11 +12,10 @@
 #default_include: master.d/*.conf
 
 # The address of the interface to bind to:
-{% if salt['pillar.get']('cluster') %}
-{%- set mgmt_ip = pillar['cluster'][grains['id']]['network']['mgmt']['public_ip'][0] -%}
-interface: {{ mgmt_ip }}
+{% if salt['cmd.shell']("nslookup $(hostname) | awk 'FNR==6 {print $2}'") %}
+interface: {{ salt['cmd.shell']("nslookup $(hostname) | awk 'FNR==6 {print $2}'") }}
 {% else %}
-interface : 0.0.0.0
+interface: 0.0.0.0
 {% endif %}
 
 # Whether the master should listen for IPv6 connections. If this is set to True,
@@ -577,36 +576,6 @@ ssh_update_roster: True
 
 # The renderer to use on the minions to render the state data
 #renderer: yaml_jinja
-
-# Default Jinja environment options for all templates except sls templates
-#jinja_env:
-#  block_start_string: '{%'
-#  block_end_string: '%}'
-#  variable_start_string: '{{'
-#  variable_end_string: '}}'
-#  comment_start_string: '{#'
-#  comment_end_string: '#}'
-#  line_statement_prefix:
-#  line_comment_prefix:
-#  trim_blocks: False
-#  lstrip_blocks: False
-#  newline_sequence: '\n'
-#  keep_trailing_newline: False
-
-# Jinja environment options for sls templates
-#jinja_sls_env:
-#  block_start_string: '{%'
-#  block_end_string: '%}'
-#  variable_start_string: '{{'
-#  variable_end_string: '}}'
-#  comment_start_string: '{#'
-#  comment_end_string: '#}'
-#  line_statement_prefix:
-#  line_comment_prefix:
-#  trim_blocks: False
-#  lstrip_blocks: False
-#  newline_sequence: '\n'
-#  keep_trailing_newline: False
 
 # The failhard option tells the minions to stop immediately after the first
 # failure detected in the state execution, defaults to False
