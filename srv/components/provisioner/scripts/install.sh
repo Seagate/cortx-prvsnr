@@ -200,7 +200,7 @@ config_local_salt()
     fi
 
     minion_file="${PRVSNR_ROOT}/srv/components/provisioner/salt_minion/files/minion_factory"
-    master_file="${PRVSNR_ROOT}/srv/components/provisioner/salt_master/files/master"
+    master_file="${PRVSNR_ROOT}/srv/components/provisioner/salt_master/files/master_factory"
 
     yes | cp -f "${master_file}" /etc/salt/master
     yes | cp -f "${minion_file}" /etc/salt/minion
