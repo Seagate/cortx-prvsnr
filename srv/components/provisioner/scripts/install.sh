@@ -28,6 +28,7 @@ repo_url="file:///mnt/cortx"
 nodejs_tar=
 use_local_repo=false
 iso_downloaded_path="/opt/isos"
+SKIP_OS_ISO=false
 
 function trap_handler {
     exit_code=$?
@@ -45,6 +46,7 @@ _usage()
     echo "
 Options:
   -t|--target-build BUILD_URL        Target Cortx build to deploy
+  -o|--opensource                          Skip looking for OS ISO image in opensource environment
 "
 }
 
@@ -72,6 +74,13 @@ parse_args()
                 set -u
                 repo_url="$2"
                 shift 2
+                ;;
+            -o|--opensource)
+			echo "DEBUG: Since the skip argument is provided, script will skip looking for OS ISO image" >> "${LOG_FILE}"
+			# In docker container cortex-os-*.iso would not be present. 
+			# Adding the parameter as part of EOS-24392
+                SKIP_OS_ISO=true
+                shift
                 ;;
             -h|--help)
                 usage; exit 0;;
@@ -200,7 +209,7 @@ config_local_salt()
     fi
 
     minion_file="${PRVSNR_ROOT}/srv/components/provisioner/salt_minion/files/minion_factory"
-    master_file="${PRVSNR_ROOT}/srv/components/provisioner/salt_master/files/master_factory"
+    master_file="${PRVSNR_ROOT}/srv/components/provisioner/salt_master/files/master"
 
     yes | cp -f "${master_file}" /etc/salt/master
     yes | cp -f "${minion_file}" /etc/salt/minion
@@ -290,12 +299,14 @@ setup_repos_iso()
 {
     mntpt="$1"
     cortx_iso_mntdir="${mntpt}/components"
-    cortx_os_iso_mntdir="${mntpt}/dependencies"
-    echo "DEBUG: Backing up exisitng repositories" >> "${LOG_FILE}"
-    time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
-    mv /etc/yum.repos.d /etc/yum.repos.d."${time_stamp}" || true
+    if [[ "${SKIP_OS_ISO}" == false ]]; then
+	    cortx_os_iso_mntdir="${mntpt}/dependencies"
+         echo "DEBUG: Backing up exisitng repositories" >> "${LOG_FILE}"
+         time_stamp=$(date "+%Y.%m.%d-%H.%M.%S")
+         mv /etc/yum.repos.d /etc/yum.repos.d."${time_stamp}" || true
+         mkdir -p /etc/yum.repos.d
+	fi
     echo "INFO: Creating cortx_iso.repo" 2>&1 | tee -a "${LOG_FILE}"
-    mkdir -p /etc/yum.repos.d
     for repo in 3rd_party cortx_iso
     do
 cat >> /etc/yum.repos.d/cortx_iso.repo <<EOF
@@ -308,6 +319,7 @@ enabled=1
 EOF
     done
 
+if  [[  "${SKIP_OS_ISO}" == false ]];  then
     echo "INFO: Creating cortx_os.repo" 2>&1 | tee -a "${LOG_FILE}"
     touch /etc/yum.repos.d/cortx_os.repo
 cat >> /etc/yum.repos.d/cortx_os.repo <<EOF
@@ -317,6 +329,7 @@ gpgcheck=0
 name=Repository Base
 enabled=1
 EOF
+fi
 
     if [[ -f /etc/pip.conf ]]; then
         mv -f /etc/pip.conf /etc/pip.conf.bkp || true
@@ -465,9 +478,11 @@ main()
     echo "      Setting up the factory environment for Cortx       " | tee -a "${LOG_FILE}"
     echo "*********************************************************" | tee -a "${LOG_FILE}"
     validate_url
-    if [[ "${use_local_repo}" == true ]]; then
+    if [[ "${use_local_repo}" == true && "${SKIP_OS_ISO}" == false ]]; then
         validate_isos
         setup_repos_iso "$repo_url"
+    elif [[ "${SKIP_OS_ISO}" == true ]]; then
+	   setup_repos_iso "$repo_url"
     else
         setup_repos_hosted "$repo_url"
     fi
