@@ -202,8 +202,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE EOS-8473 hardcoded
         if len(run_args.nodes) == 1:
             res[run_args.nodes[0].minion_id] = [
-                run_args.salt_master if run_args.salt_master
-                else config.LOCALHOST_IP
+                run_args.salt_master
             ]
             return res
 
@@ -221,8 +220,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     # note: any node may be a salt-master
                     if _node.minion_id in salt_masters:
                         res[node.minion_id].append(
-                            config.LOCALHOST_IP if _node is node
-                            else salt_masters[_node.minion_id]
+                            salt_masters[_node.minion_id]
                         )
         else:
             res = {

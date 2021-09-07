@@ -25,6 +25,7 @@ salt_master_configured:
     - source: {{ install_dir }}/srv/components/provisioner/salt_master/files/master
     - keep_source: True
     - backup: minion
+    - template: jinja
 
 {% for id in salt['pillar.get']('updated_keys', []) %}
 salt_minion_{{ id }}_key_deleted:
