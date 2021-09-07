@@ -148,14 +148,25 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         for node in nodes:
             pings = set()
+            targets = set()
             candidates = set(addrs[node.minion_id])
             for _node in nodes:
                 if _node is not node:
                     candidates -= addrs[_node.minion_id]
 
-            targets = '|'.join(
-                [_node.minion_id for _node in nodes if _node is not node]
-            )
+            _server_numbers = set()
+            for _node in nodes:
+                if _node is not node:
+                    _minion_id = _node.minion_id
+                    _server_number = _minion_id.split('-')[1]
+                    _server_numbers.add(_server_number)
+
+            # Convert server_numbers list to comma separated string
+            # e.g. Convert {'1', '2', '3', .., 'n'} to "1,2,3,..,n"
+            _target_server_numbers = ",".join(_num for _num in _server_numbers)
+
+            # Create targets glob as: "srvnode-[1,2,3,4,5,6,...,n]"
+            targets = "srvnode-[" + _target_server_numbers + "]"
 
             for addr in candidates:
                 try:
