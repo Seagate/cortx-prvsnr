@@ -12,6 +12,7 @@ firewall:
         - 28101/tcp
       dhclient:
         - 68/udp
+        - 68/tcp
       haproxy_dummy:
         - 28001/tcp
         - 28002/tcp

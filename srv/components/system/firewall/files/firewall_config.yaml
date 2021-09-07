@@ -64,6 +64,7 @@ firewall:
         - 3888/tcp
       dhclient:
         - 68/udp
+        - 68/tcp
 
   data_public:
     services:
