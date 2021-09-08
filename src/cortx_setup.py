@@ -22,7 +22,7 @@ import errno
 import argparse
 import inspect
 
-from cortx_provisioner import CortxProvisioner
+from provisioner import CortxProvisioner
 from cortx.utils.cmd_framework import Cmd
 
 class CortxSetupError(Exception):
@@ -53,8 +53,9 @@ class ConfigCmd(Cmd):
   def add_args(parser: str):
     """ Add Command args for parsing """
 
-    parser.add_argument('action', help='config action e.g. apply')
-    parser.add_argument('args', nargs='+', help='config parameters')
+    parser.add_argument('action', help='apply')
+    parser.add_argument('args', nargs='+', \
+        help='IN:<solution URL> IN:<config URL> OUT:<cortx URL>')
 
   def process(self):
     """ Apply Config """
@@ -81,8 +82,9 @@ class ClusterCmd(Cmd):
   def add_args(parser: str):
     """ Add Command args for parsing """
 
-    parser.add_argument('action', help='cluster bootstrap')
-    parser.add_argument('args', nargs='*', default=[], help='args')
+    parser.add_argument('action', help='bootstrap')
+    parser.add_argument('args', nargs='*', default=[], \
+        help='cortx config URL')
 
   def process(self, *args, **kwargs):
     """ Bootsrap Cluster """
@@ -92,7 +94,7 @@ class ClusterCmd(Cmd):
       CortxProvisioner.cluster_bootstrap(cortx_conf_url)
 
 
-if __name__ == "__main__":
+def main():
   try:
     # Parse and Process Arguments
     command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', sys.argv[1:])
@@ -108,4 +110,8 @@ if __name__ == "__main__":
     sys.stderr.write("%s\n" % traceback.format_exc())
     rc = errno.EINVAL
 
-  sys.exit(rc)
+  return rc
+
+
+if __name__ == "__main__":
+  sys.exit(main())

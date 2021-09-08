@@ -101,7 +101,7 @@ class CortxCluster:
 class CortxProvisioner:
   """ CORTX Provosioner """
 
-  _cortx_conf_url = "yaml:/etc/cortx/cortx.conf"
+  _cortx_conf_url = "yaml:/etc/cortx/cluster.conf"
 
   @staticmethod
   def init():

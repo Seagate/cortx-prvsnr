@@ -2,20 +2,17 @@ FROM centos:7.9.2009
 
 ARG BUILD_URL
 
-#RUN yum-config-manager --disable base,extras,updates
-#RUN yum localinstall --nogpgcheck -y ./cortx-py-utils-1.0.0-1_34a1a52.noarch.rpm
-
 # CORTX Provisioner 
 RUN mkdir -p /opt/seagate/cortx/provisioner/bin
-COPY src/cortx_setup.py /opt/seagate/cortx/provisioner/cortx_setup.py
-RUN ln -s /opt/seagate/cortx/provisioner/cortx_setup.py /opt/seagate/cortx/provisioner/bin/cortx_setup
-COPY src/cortx_provisioner.py /opt/seagate/cortx/provisioner/cortx_provisioner.py
+COPY ./tmp/cortx_setup.py /opt/seagate/cortx/provisioner/cortx_setup.py
+RUN ln -s /opt/seagate/cortx/provisioner/cortx_setup.py \
+    /opt/seagate/cortx/provisioner/bin/cortx_setup
+COPY ./tmp/provisioner.py /opt/seagate/cortx/provisioner/provisioner.py
 RUN chmod +x /opt/seagate/cortx/provisioner/bin/cortx_setup
-#ADD provisioner.tar.gz /
-
 
 # CORTX Utils
-RUN yum-config-manager --add-repo ${BUILD_URL}/cortx_iso && curl ${BUILD_URL}/RELEASE.INFO -o RELEASE.INFO
+RUN yum-config-manager --add-repo ${BUILD_URL}/cortx_iso && \
+    curl ${BUILD_URL}/RELEASE.INFO -o RELEASE.INFO
 COPY ./python_requirements.txt /tmp/python_requirements.txt
 COPY ./python_requirements.ext.txt /tmp/python_requirements.ext.txt
 RUN yum install --nogpgcheck -y python3
