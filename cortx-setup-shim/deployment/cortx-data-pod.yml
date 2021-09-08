@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cortx-data
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: config-volume
+    hostPath:
+      path: /data/config
+  - name: cortx-config
+    configMap:
+      name: cortx-config
+  containers:
+  - name: cortx-provisioner
+    image: cortx-provisioner:1.0
+    imagePullPolicy: IfNotPresent
+    args:
+    - /bin/sh
+    - -c
+    - export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
+      cortx_setup config apply yaml:/etc/cortx/solution/config.yaml;
+      cortx_setup config apply yaml:/etc/cortx/solution/cluster.yaml;
+      cortx_setup cluster bootstrap;
+      while true; do sleep 30; echo "Hello Kubernetes"; done;
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/cortx
+    volumeMounts:
+    - name: cortx-config
+      mountPath: /etc/cortx/solution

@@ -1,0 +1,146 @@
+#!/bin/env python3 
+
+import sys
+import traceback
+import errno
+import argparse
+import inspect
+
+from cortx.utils.process import SimpleProcess
+from cortx.utils.conf_store import Conf
+
+
+class CortxSetupError(Exception):
+    """ Generic Exception with error code and output """
+
+    def __init__(self, rc, message, *args):
+        self._rc = rc
+        self._desc = message % (args)
+
+    def __str__(self):
+        if self._rc == 0: return self._desc
+        return "error(%d): %s" %(self._rc, self._desc)
+
+
+class CortxNodeClass:
+  pass
+    
+
+class CortxCluster:
+  pass
+
+
+class CortxConfig:
+  pass
+
+
+class CortxProvisioner:
+  """ CORTX Provosioner """
+
+  _mp_config = "yaml:/tmp/mp.conf"
+
+  @staticmethod
+  def config_apply(conf_url):
+    Conf.load("solution_config", conf_url)
+    Conf.load("mp_config", CortxProvisioner._mp_config)
+    Conf.copy("solution_config", "mp_config")
+
+  @staticmethod
+  def cluster_bootstrap():
+    Conf.load("mp_config", CortxProvisioner._mp_config)
+    node_class_list = Conf.get("mp_config", "cluster>logical_node_class")
+    num_node_class = len(node_class_list)
+    for i in range(0, num_node_class):
+      components = Conf.get("mp_config", f"cluster>logical_node_class[{i}]>components")
+      num_components = len(components)
+      for j in range(0, num_components):
+        services = Conf.get("mp_config", f"cluster>logical_node_class[{i}]>components[{j}]>services")
+        service = 'all' if services is None else ','.join(services)
+        print(f"{components[j]['name']}_setup --config {CortxProvisioner._mp_config} --services %s" %service)
+        #rc, output = SimpleProcess(f"{components[i]}_setup --config {CortxProvisioner._mp_config} --services %s" %services.join(","))
+
+  @staticmethod
+  def process(argv):
+    return 0
+
+
+class Cmd:
+  """ Command """
+
+  def __init__(self, args: dict):
+    self._args = args
+
+  @staticmethod
+  def get_command(desc: str, argv: dict):
+    """ Return the Command after parsing the command line. """
+
+    parser = argparse.ArgumentParser(desc)
+    subparsers = parser.add_subparsers()
+
+    cmds = inspect.getmembers(sys.modules[__name__])
+    cmds = [(x, y) for x, y in cmds if x.endswith("Cmd") and x != "Cmd"]
+    for _, cmd in cmds:
+      parser1 = subparsers.add_parser(cmd.name, help='%s %s' % (desc, cmd.name))
+      parser1.set_defaults(command=cmd)
+      cmd.add_args(parser1)
+
+    args = parser.parse_args(argv)
+    return args.command(args)
+
+
+class ConfigCmd(Cmd):
+  """ PostInstall Setup Cmd """  
+
+  name = "config"
+
+  def __init__(self, args: dict):
+    super().__init__(args)
+
+  @staticmethod
+  def add_args(parser: str):
+    """ Add Command args for parsing """
+
+    parser.add_argument('action', help='apply config')
+    parser.add_argument('args', nargs='*', default=[], help='args')
+
+  def process(self):
+    """ Apply Config """
+    if self._args.action == "apply":
+      if len(self._args.args) == 0:
+        raise CortxSetupError(errno.EINVAL, "Insufficient parameters for apply")
+      CortxProvisioner.config_apply(self._args.args[0])
+
+
+class ClusterCmd(Cmd):
+  """ PostInstall Setup Cmd """
+
+  name = "cluster"
+
+  def __init__(self, args: dict):
+    super().__init__(args)
+     
+  @staticmethod
+  def add_args(parser: str):
+    """ Add Command args for parsing """
+
+    parser.add_argument('action', help='cluster bootstrap')
+    parser.add_argument('args', nargs='*', default=[], help='args')
+
+  def process(self, *args, **kwargs):
+    """ Bootsrap Cluster """
+    if self._args.action == "bootstrap":
+      CortxProvisioner.cluster_bootstrap()
+
+
+if __name__ == "__main__":
+  try:
+    # Parse and Process Arguments
+    command = Cmd.get_command('cortx_setup', sys.argv[1:])
+    rc = command.process() 
+
+  except Exception as e:
+    sys.stderr.write("%s\n\n" % str(e))
+    sys.stderr.write("%s\n" % traceback.format_exc())
+    rc = errno.EINVAL
+
+  sys.exit(rc)
