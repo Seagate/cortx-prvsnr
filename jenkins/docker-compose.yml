@@ -1,0 +1,12 @@
+
+version: "3"
+
+services:
+  cortx-provisioner:
+    image: cortx-provisioner:1.0
+    build:
+      context: ..
+      dockerfile: build/dockerfile
+      args:
+        BUILD_URL:
+        SRC: src

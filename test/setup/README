@@ -1,0 +1,26 @@
+README
+~~~~~~
+
+Testing the Source 
+
+1. Prepare input for cortx_setup. There are two files in this folder. 
+   a. cluster.conf 
+   b. config.conf
+
+2. Make sure PYTHON_PATH includes src folder, if you are not using rpm.
+
+3. Run apply command 
+   $ cortx_setup.py config apply yaml://`pwd`/config.yaml yaml://`pwd`/cluster.yaml yaml:///tmp/mp.conf
+
+4. Run bootstrap command
+   $ cortx_setup.py cluster bootstrap yaml:///tmp/mp.conf
+
+   output will look something like this...
+    motr_setup --config yaml:/etc/cortx/cortx.conf --services io
+    hare_setup --config yaml:/etc/cortx/cortx.conf --services all
+    s3_setup --config yaml:/etc/cortx/cortx.conf --services io,auth,bg_consumer
+    utils_setup --config yaml:/etc/cortx/cortx.conf --services message_bus
+    csm_setup --config yaml:/etc/cortx/cortx.conf --services agent
+    motr_setup --config yaml:/etc/cortx/cortx.conf --services fsm
+    s3_setup --config yaml:/etc/cortx/cortx.conf --services bg_producer
+
