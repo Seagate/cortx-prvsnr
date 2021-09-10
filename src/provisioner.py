@@ -38,6 +38,11 @@ class ConfigStore:
     Conf.save(self._conf_idx)
 
   @staticmethod
+  def set(key: str, val: str):
+    Conf.set(self._conf_idx, key, val)
+    Conf.save(self._conf_idx)
+
+  @staticmethod
   def get(key) -> str:
     """ Returns value for the given key """
     return Conf.get(self._conf_idx, key)
@@ -108,19 +113,16 @@ class CortxProvisioner:
     pass
 
   @staticmethod
-  def config_apply(solution_conf_url: str, cluster_conf_url: str,
-    cortx_conf_url: str = None):
+  def config_apply(solution_conf_url: str, cortx_conf_url: str = None):
     """
     Description:
     Parses input config and store in CORTX config location
 
     Parameters:
     [IN]  Solution Config URL
-    [IN]  Cluster Definition Config URL
     [OUT] CORTX Config URL
     """
 
-    Conf.load("cluster_conf", cluster_conf_url)
     Conf.load("solution_conf", solution_conf_url)
 
     if cortx_conf_url is not None:
@@ -128,8 +130,7 @@ class CortxProvisioner:
     Conf.load("cortx_conf", CortxProvisioner._cortx_conf_url)
 
     # TODO: Read Cluster Conf and Construct Cluster to dump to Conf Store
-    Conf.copy("cluster_conf", "cortx_conf")
-    Conf.copy("cortx_conf", "cortx_conf")
+    Conf.copy("solution_conf", "cortx_conf")
 
   @staticmethod
   def cluster_bootstrap(cortx_conf_url: str = None):
@@ -145,21 +146,20 @@ class CortxProvisioner:
 
     if cortx_conf_url is None:
       cortx_conf_url = CortxProvisioner._cortx_conf_url
-    print(cortx_conf_url)
     Conf.load("cortx_config", cortx_conf_url)
 
     # TODO: Revert to the actual Conf Store format
     # Current this is readind using solution conf format
-    node_class_list = Conf.get("cortx_config", "cluster>logical_node_class")
-    num_node_class = len(node_class_list)
+    node_types = Conf.get("cortx_config", "cluster>node_types")
+    num_node_types = len(node_types)
 
-    for i in range(0, num_node_class):
-      components = Conf.get("cortx_config", f"cluster>logical_node_class[{i}]>components")
+    for i in range(0, num_node_types):
+      components = Conf.get("cortx_config", f"cluster>node_types[{i}]>components")
       num_components = len(components)
 
       for j in range(0, num_components):
         services = Conf.get("cortx_config",
-          f"cluster>logical_node_class[{i}]>components[{j}]>services")
+          f"cluster>node_types[{i}]>components[{j}]>services")
         service = 'all' if services is None else ','.join(services)
         print(f"{components[j]['name']}_setup --config {CortxProvisioner._cortx_conf_url} --services %s" %service)
         # TODO: Enable this code

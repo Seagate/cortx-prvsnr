@@ -54,20 +54,13 @@ class ConfigCmd(Cmd):
     """ Add Command args for parsing """
 
     parser.add_argument('action', help='apply')
-    parser.add_argument('args', nargs='+', \
-        help='IN:<solution URL> IN:<config URL> OUT:<cortx URL>')
+    parser.add_argument('solution_conf', help='Solution Config URL')
+    parser.add_argument('cortx_conf', nargs='?', help='CORTX Config URL')
 
   def process(self):
     """ Apply Config """
     if self._args.action == 'apply':
-      num_args = len(self._args.args)
-      if num_args < 0:
-        raise CortxSetupError(errno.EINVAL, "Insufficient parameters for apply")
-      solution_conf_url = self._args.args[0]
-      cluster_conf_url = self._args.args[1]
-      cortx_conf_url = self._args.args[2] if num_args > 2 else None
-      CortxProvisioner.config_apply(solution_conf_url, cluster_conf_url,
-        cortx_conf_url)
+      CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
 
 
 class ClusterCmd(Cmd):
@@ -83,15 +76,12 @@ class ClusterCmd(Cmd):
     """ Add Command args for parsing """
 
     parser.add_argument('action', help='bootstrap')
-    parser.add_argument('args', nargs='*', default=[], \
-        help='cortx config URL')
+    parser.add_argument('cortx_conf', nargs='?', help='CORTX Config URL')
 
   def process(self, *args, **kwargs):
     """ Bootsrap Cluster """
     if self._args.action == "bootstrap":
-      num_args = len(self._args.args)
-      cortx_conf_url = self._args.args[0] if num_args > 0 else None
-      CortxProvisioner.cluster_bootstrap(cortx_conf_url)
+      CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
 
 
 def main():
