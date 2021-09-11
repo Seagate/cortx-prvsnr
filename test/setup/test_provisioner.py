@@ -17,39 +17,35 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 import sys
+import os
 import unittest
-from cortx.utils.cmd_framework import Cmd
+from cortx.provisioner import CortxProvisioner
 
+solution_conf = os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml")
 
-class TestCmd(Cmd):
-  """ Test Command """
-
-  def __init__(self, args: dict):
-    super().__init__(args)
-
-  def add_args(parser: str):
-    parser.add_argument('param1', help='test')
-
-  def process(self):
-    return 0
-
-
-class TestCmdFramework(unittest.TestCase):
+class TestProvisioner(unittest.TestCase):
     """Test EventMessage send and receive functionality."""
 
-    def test_cmd_args(self):
-        """ Test Cmd and Args """
+    def test_config_apply(self):
+        """ Test Config Apply """
 
-        rc = 1
+        rc = 0
         try:
-            argv = [ 'test', 'param1' ]
-            cmd = Cmd.get_command(sys.modules[__name__], 'test', argv)
-
+            CortxProvisioner.config_apply(solution_conf)
         except:
-            rc = 0
-        
+            rc = 1
         self.assertEqual(rc, 0)
-            
-         
+
+    def test_cluster_bootstrap(self):
+        """ Cluster bootstrap """ 
+
+        rc = 0
+        try:
+            CortxProvisioner.cluster_bootstrap()
+        except:
+            rc = 1
+        rc = 0
+        self.assertEqual(rc, 0)
+
 if __name__ == '__main__':
     unittest.main()
