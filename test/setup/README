@@ -13,10 +13,10 @@ Preparation
 Testing Manually
 
 1. Run apply command 
-   $ cortx_setup.py config apply yaml://`pwd`/config.yaml yaml://`pwd`/cluster.yaml yaml:///tmp/mp.conf
+   $ cortx_setup.py config apply yaml://`pwd`/config.yaml yaml:///tmp/mp.conf
 
 2. Run bootstrap command
-   $ cortx_setup.py cluster bootstrap yaml:///tmp/mp.conf
+   $ cortx_setup.py cluster bootstrap '1' yaml:///tmp/mp.conf
 
    output will look something like this...
     motr_setup --config yaml:/etc/cortx/cortx.conf --services io
