@@ -1,18 +1,21 @@
 README
 ~~~~~~
 
-Testing the Source 
+Preparation 
 
 1. Prepare input for cortx_setup. There are two files in this folder. 
    a. cluster.conf 
    b. config.conf
 
-2. Make sure PYTHON_PATH includes src folder, if you are not using rpm.
+2. Install cortx-utils and cortx-provisioner rpms. 
+   Make sure PYTHON_PATH includes src folder, if you are not using rpm.
 
-3. Run apply command 
+Testing Manually
+
+1. Run apply command 
    $ cortx_setup.py config apply yaml://`pwd`/config.yaml yaml://`pwd`/cluster.yaml yaml:///tmp/mp.conf
 
-4. Run bootstrap command
+2. Run bootstrap command
    $ cortx_setup.py cluster bootstrap yaml:///tmp/mp.conf
 
    output will look something like this...
@@ -24,3 +27,7 @@ Testing the Source
     motr_setup --config yaml:/etc/cortx/cortx.conf --services fsm
     s3_setup --config yaml:/etc/cortx/cortx.conf --services bg_producer
 
+Running the Tests
+
+Run the following command
+    $ ./test_provisioner.py 
