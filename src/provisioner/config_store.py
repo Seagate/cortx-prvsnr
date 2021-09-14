@@ -1,5 +1,3 @@
-#!/bin/python3
-
 # CORTX Python common library.
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 # This program is free software: you can redistribute it and/or modify
@@ -15,5 +13,34 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from cortx.provisioner.provisioner import CortxProvisioner
+from cortx.utils.conf_store import Conf
 from cortx.provisioner.error import CortxProvisionerError
+
+
+class ConfigStore:
+    """ CORTX Config Store """
+
+    _conf_idx = "cortx_conf"
+
+    def __init__(self, conf_url):
+        self._conf_url = conf_url
+        Conf.load(self._conf_idx, self._conf_url, skip_reload=True)
+
+    def set_kvs(self, kvs: list):
+        """ 
+        Parameters:
+        kvs - List of KV tuple, e.g. [('k1','v1'),('k2','v2')]
+        """
+        
+        for key, val in kvs:
+            Conf.set(self._conf_idx, key, val)
+        Conf.save(self._conf_idx)
+
+    def set(self, key: str, val: str):
+        Conf.set(self._conf_idx, key, val)
+        Conf.save(self._conf_idx)
+
+    def get(self, key: str) -> str:
+        """ Returns value for the given key """
+        return Conf.get(self._conf_idx, key)
+

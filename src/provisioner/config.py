@@ -1,5 +1,3 @@
-#!/bin/python3
-
 # CORTX Python common library.
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 # This program is free software: you can redistribute it and/or modify
@@ -15,5 +13,15 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from cortx.provisioner.provisioner import CortxProvisioner
+from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.error import CortxProvisionerError
+
+
+class CortxConfig:
+    """ CORTX Configuration """
+    def __init__(self):
+        pass
+
+    def save(self, config_store):
+        pass
+

@@ -15,109 +15,17 @@
 
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
-from cortx.utils.kv_store.kv_store_collection import DictKvStore
+from cortx.provisioner.error import CortxProvisionerError
+from cortx.provisioner.config_store import ConfigStore
+from cortx.provisioner.config import CortxConfig
+from cortx.provisioner.cluster import CortxCluster
 
-
-class ConfigStore:
-    """ CORTX Config Store """
-
-    _conf_idx = "cortx_conf"
-
-    def __init__(self, conf_url):
-        self._conf_url = conf_url
-        Conf.load(self._conf_idx, self._conf_url)
-
-    def set_kvs(self, kvs: list):
-        """ 
-        Parameters:
-        kvs - List of KV tuple, e.g. [('k1','v1'),('k2','v2')]
-        """
-        
-        for key, val in kvs:
-            Conf.set(self._conf_idx, key, val)
-        Conf.save(self._conf_idx)
-
-    def set(self, key: str, val: str):
-        Conf.set(self._conf_idx, key, val)
-        Conf.save(self._conf_idx)
-
-    def get(self, key: str) -> str:
-        """ Returns value for the given key """
-        return Conf.get(self._conf_idx, key)
-
-
-class CortxConfig:
-    """ CORTX Configuration """
-    def __init__(self):
-        pass
-
-    def save(self, config_store):
-        pass
-
-
-class CortxCluster:
-    """ Represents CORTX Cluster """
-
-    def __init__(self, node_list: list = []):
-        """
-        Creates cluster from the list of nodes.
-        Each node in the is is a dict and contains following attributes
-        - name: <name>
-          id: <uniq id>
-          storage_set: <storage_set_name>
-          hostname: <fqdn>
-          components:
-          - name: <component 1>
-            services:
-            - <service name 1>
-            - <service name 2>
-          - name: <component 2>
-            ...
-          storage:
-          - name: <cvg name>
-            type: <cvg type>
-            data_devices:
-            - /dev/<device 1>
-            - /dev/<device 2>
-            metadata_devices:
-            - /dev/<device 1>
-            - /dev/<device 2>
-        """
-        self._node_list = node_list
-        for node in node_list:
-            self._validate(node)
-
-    def _validate(self, node: dict):
-        """ 
-        validates a give node to habve required properties
-        Raises exception if there is any entry missing
-        """
-        pass
-
-    def add_node(self, node: dict):
-        self._validate(node)
-        self._node_list.append(node)
-
-    def save(self, config_store):
-        """ Saves cluster information onto the conf store """
-
-        kvs = []
-        for node in self._node_list:
-            node_id = node.pop('id')
-            key_prefix = f'node>{node_id}>'
-            for attr in node.keys():
-                kv = (key_prefix + attr, node[attr])
-                kvs.append(kv)
-
-        config_store.set_kvs(kvs)
-        
 
 class CortxProvisioner:
     """ CORTX Provosioner """
 
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
-    _cortx_index = "cortx_conf"
 
     @staticmethod
     def init():

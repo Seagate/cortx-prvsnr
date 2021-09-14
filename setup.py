@@ -55,7 +55,7 @@ def get_install_requirements() -> list:
 def get_conf_files() -> list:
     """ returns list of conf files """
 
-    return []
+    return glob.glob('conf/*')
 
 def get_requirements_files() -> list:
     """ Returns requirements file """
@@ -65,28 +65,30 @@ def get_requirements_files() -> list:
     return []
 
 setup(name='cortx-provisioner',
-      version=get_version(),
-      url='https://github.com/Seagate/cortx-provisioner',
-      license='Seagate',
-      author='CORTX Dev',
-      author_email='cortx@seagate.com',
-      description='CORTX Provisioner',
-      package_dir={'provisioner': 'src'},
-      packages=['provisioner'],
-      package_data={
-          'cortx': ['py.typed']
-      },
-      entry_points={
-          'console_scripts': [
-              'cortx_setup = provisioner.cortx_setup:main'
-          ]
-      },
-      data_files=[
-          ('/opt/seagate/cortx/provisioner/conf', get_conf_files()),
-          ('/opt/seagate/cortx/provisioner/conf', get_requirements_files())
-      ],
-      long_description=get_description(),
-      zip_safe=False,
-      python_requires='>=3.6',
-      install_requires=get_install_requirements()
+    version=get_version(),
+    url='https://github.com/Seagate/cortx-provisioner',
+    license='Seagate',
+    author='CORTX Dev',
+    author_email='cortx@seagate.com',
+    description='CORTX Provisioner',
+    package_dir={'cortx': 'src'},
+    packages=[
+        'cortx.provisioner', 'cortx.setup'
+    ],
+    package_data={
+        'cortx': ['py.typed']
+    },
+    entry_points={
+        'console_scripts': [
+            'cortx_setup = cortx.setup.cortx_setup:main'
+        ]
+    },
+    data_files=[
+        ('/opt/seagate/cortx/provisioner/conf', get_conf_files()),
+        ('/opt/seagate/cortx/provisioner/conf', get_requirements_files())
+    ],
+    long_description=get_description(),
+    zip_safe=False,
+    python_requires='>=3.6',
+    install_requires=get_install_requirements()
 )

@@ -15,6 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 set -e
+
 PROG=$(basename "$0")
 SCRIPT_DIR=$(realpath $(dirname "$0"))
 BASE_DIR=$SCRIPT_DIR/..
@@ -50,6 +51,11 @@ done
 [ -z "$BUILD_NUMBER" ] && BUILD_NUMBER=1
 REL="${BUILD_NUMBER}_${GIT_VER}"
 
+rpm -q rpm-build > /dev/null || {
+    echo "error: rpm-build is not installed. Install rpm-build and run $PROG"
+    exit 1;
+}
+    
 # Create version file
 echo $VER > $BASE_DIR/VERSION
 /bin/chmod +rx $BASE_DIR/VERSION
