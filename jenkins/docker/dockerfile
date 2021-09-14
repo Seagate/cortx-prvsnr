@@ -1,26 +1,24 @@
 FROM centos:7.9.2009
 
 ARG BUILD_URL
-
-# CORTX Provisioner 
-RUN mkdir -p /opt/seagate/cortx/provisioner/bin
-COPY ./tmp/cortx_setup.py /opt/seagate/cortx/provisioner/cortx_setup.py
-RUN ln -s /opt/seagate/cortx/provisioner/cortx_setup.py \
-    /opt/seagate/cortx/provisioner/bin/cortx_setup
-COPY ./tmp/provisioner.py /opt/seagate/cortx/provisioner/provisioner.py
-RUN chmod +x /opt/seagate/cortx/provisioner/bin/cortx_setup
+ARG RPM
 
 # CORTX Utils
-RUN yum-config-manager --add-repo ${BUILD_URL}/cortx_iso && \
+RUN yum-config-manager --add-repo $BUILD_URL/cortx_iso && \
     curl ${BUILD_URL}/RELEASE.INFO -o RELEASE.INFO
-COPY ./python_requirements.txt /tmp/python_requirements.txt
-COPY ./python_requirements.ext.txt /tmp/python_requirements.ext.txt
+COPY ./python_requirements.txt ./tmp/python_requirements.txt
+COPY ./python_requirements.ext.txt ./tmp/python_requirements.ext.txt
 RUN yum install --nogpgcheck -y python3
 RUN yum install --nogpgcheck -y sudo which python3-pip
 RUN pip3 install --no-cache-dir --trusted-host $(echo $BUILD_URL \
   | awk -F '/' '{print $3}')  -i $BUILD_URL/python_deps \
-  -r /tmp/python_requirements.txt -r /tmp/python_requirements.ext.txt
+  -r ./tmp/python_requirements.txt -r ./tmp/python_requirements.ext.txt
 RUN yum install --nogpgcheck -y cortx-py-utils
+
+# CORTX Provisioner
+RUN pwd
+RUN ls -l ./tmp/
+RUN rpm -ivh ./tmp/$RPM
 
 RUN rm -rf /var/cache/yum
 

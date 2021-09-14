@@ -21,21 +21,21 @@ import traceback
 import sys
 import unittest
 from cortx.utils.cmd_framework import Cmd
-from provisioner import cortx_setup
+from cortx.setup import cortx_setup
 
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+cortx_conf_url = "yaml:///tmp/test.conf"
 
 class TestSetup(unittest.TestCase):
     """Test EventMessage send and receive functionality."""
 
     def test_config_apply(self):
-        """ Test Cmd and Args """
+        """ Test Config Apply """
 
         rc = 0
         try:
-            argv = [ 'config', 'apply', solution_conf_url ]
-            print(solution_conf_url)
-            cmd = Cmd.get_command(sys.modules['provisioner.cortx_setup'], 'test_setup', argv)
+            argv = [ 'config', 'apply', '-f', solution_conf_url, '-o', cortx_conf_url ]
+            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)
 
         except Exception as e:
@@ -43,6 +43,23 @@ class TestSetup(unittest.TestCase):
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
         self.assertEqual(rc, 0)
+
+# TODO: Uncomment. Test fails due to a bug
+#
+#    def test_cluster_bootstrap(self):
+#        """ Test Cluster Bootstrap """
+#
+#        rc = 0
+#        try:
+#            argv = [ 'cluster', 'bootstrap', '1', cortx_conf_url ]
+#            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
+#            self.assertEqual(cmd.process(), 0)
+#
+#        except Exception as e:
+#            print('Exception: ', e)
+#            sys.stderr.write("%s\n" % traceback.format_exc())
+#            rc = 1
+#        self.assertEqual(rc, 0)
 
 if __name__ == '__main__':
     unittest.main()
