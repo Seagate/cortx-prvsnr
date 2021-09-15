@@ -11,4 +11,4 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/var/log/demoLogger"
+    path: "/var/log/demo-logger"
