@@ -16,8 +16,9 @@ RUN pip3 install --no-cache-dir --trusted-host $(echo $BUILD_URL \
 RUN yum install --nogpgcheck -y cortx-py-utils
 
 # CORTX Provisioner
-RUN pwd
-RUN ls -l ./tmp/
+#RUN pwd
+#RUN ls -l ./tmp/
+COPY ./tmp/*.rpm /tmp/
 RUN rpm -ivh ./tmp/$RPM
 
 RUN rm -rf /var/cache/yum
