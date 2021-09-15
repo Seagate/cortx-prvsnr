@@ -42,6 +42,9 @@ cortx:
       endpoints:
       - http://s3.seagate.com:80
       - https://s3.seagate.com:443
+    internal:
+      endpoints:
+      - http://s3.seagate.com:28049
     service_instances: 11
     io_max_units: 32
   motr:

@@ -73,17 +73,32 @@ class CortxProvisioner:
                 node_map[node_type['name']] = node_type
 
             cluster_id = Conf.get(CortxProvisioner._solution_index, "cluster>id")
+            if cluster_id is None:
+                raise CortxProvisionerError(
+                    errno.EINVAL,
+                    f'cluster_id property is unspecified for cluster.')
+
             cluster_name = Conf.get(CortxProvisioner._solution_index, "cluster>name")
+            if cluster_name is None:
+                raise CortxProvisionerError(
+                    errno.EINVAL,
+                    f'cluster_name property is unspecified for cluster.')
             cluster_keys = [("id", cluster_id), ("name", cluster_name)]
             cortx_config_store.set('cluster', cluster_keys)
 
             storage_sets = Conf.get(CortxProvisioner._solution_index, 'cluster>storage_sets')
+            if storage_sets is None:
+                raise CortxProvisionerError(
+                    errno.EINVAL,
+                    f'storage_sets property is unspecified for cluster.')
+
             nodes = []
             for storage_set in storage_sets:
                 for node in storage_set['nodes']:
                     node_type = node['type']
                     node = dict(node_map[node_type], **node)
                     node['storage_set'] = storage_set['name']
+                    node['storage_set_count'] = len(storage_sets)
                     node['cluster_id'] = cluster_id
                     nodes.append(node)
 
@@ -116,7 +131,7 @@ class CortxProvisioner:
         for comp_name in components.keys():
             services = cortx_config_store.get(f'node>{node_id}>components>{comp_name}>services')
             service = 'all' if services is None else ','.join(services)
-            print(f"{comp_name}_setup --config {CortxProvisioner._cortx_conf_url} --services %s" %service)
+            print(f"{comp_name}_setup --config {CortxProvisioner._cortx_conf_url} --services %s" % service)
 
             # TODO: Enable this code
             # rc, output = SimpleProcess(f"{components[i]}_setup --config \

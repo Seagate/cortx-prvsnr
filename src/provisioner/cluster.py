@@ -55,11 +55,15 @@ class CortxCluster:
         Raises exception if there is any entry missing
         """
 
-        required_keys_for_node = [
-            'name', 'id', 'components', 'storage_set', 'hostname']
+        node_name = node.get('name')
+        if node_name is None:
+            raise CortxProvisionerError(errno.EINVAL, 'Missing name for the node entry')
+        required_keys_for_node = ['id', 'components', 'storage_set', 'hostname']
         for k in required_keys_for_node:
             if node.get(k) is None:
-                raise VError(errno.EINVAL, f'{k} key is missing in node dict.')
+                raise CortxProvisionerError(
+                    errno.EINVAL,
+                    f"'{k}' property is unspecified for node {node_name}")
 
     def add_node(self, node: dict):
         self._validate(node)
@@ -73,7 +77,7 @@ class CortxCluster:
         elif isinstance(node, list):
             for i, n in enumerate(node):
                 kvs.extend(self._get_kvs(f'{prefix}[{i}]', n))
-        elif isinstance(node, str) or type(node) == int:
+        elif isinstance(node, str) or isinstance(node, int):
             kvs.append((prefix, node))
         return kvs
 
@@ -84,7 +88,6 @@ class CortxCluster:
         try:
             for node in self._node_list:
                 node_id = node.pop('id')
-                node['storage_set_count'] = 1
                 components = {}
                 for component in node.pop('components'):
                     comp_name = component.get('name')
@@ -123,11 +126,16 @@ class CortxStorageSet:
         validates a give storage_sets to have required properties
         Raises exception if there is any entry missing
         """
-        required_keys_for_storage_set = [
-            'name', 'durability', 'nodes']
+        s_set_name = s_set.get('name')
+        if s_set_name is None:
+            raise CortxProvisionerError(
+                errno.EINVAL, 'Missing name for the storage_set entry')
+        required_keys_for_storage_set = ['durability', 'nodes']
         for k in required_keys_for_storage_set:
             if s_set.get(k) is None:
-                raise VError(errno.EINVAL, f'{k} key is missing in storage_sets.')
+                raise VError(
+                    errno.EINVAL,
+                    f"'{k}' property is unspecified for storage_set {s_set_name}.")
 
     def save(self, config_store):
         """ Converts storage_set confstore keys

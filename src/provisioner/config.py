@@ -15,13 +15,14 @@
 
 import errno
 from cortx.provisioner.error import CortxProvisionerError
+from cortx.utils.validator.error import VError
 
 class CortxConfig:
     """ CORTX Configuration """
 
     def __init__(self, cortx_config: dict = {}):
         self._cortx_config = cortx_config
-        self._validate(self._cortx_config )
+        self._validate(self._cortx_config)
 
     def _validate(self, cortx_conf: dict):
         """
@@ -32,7 +33,8 @@ class CortxConfig:
             'external', 'common']
         for k in required_keys_for_cortx_conf:
             if cortx_conf.get(k) is None:
-                raise VError(errno.EINVAL, f'{k} key is missing in cortx_config.')
+                raise VError(
+                    errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
 
     def save(self, config_store):
         """ Save cortx-config into confstore """
