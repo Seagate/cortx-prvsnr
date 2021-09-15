@@ -35,7 +35,7 @@ cortx:
   utils:
     message_bus_backend: kafka
   s3:
-  iam:
+    iam:
       endpoints:
       - https://s3-iam.seagate.com:9443
     data:

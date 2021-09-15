@@ -82,6 +82,7 @@ class CortxProvisioner:
                     node_type = node['type']
                     node = dict(node_map[node_type], **node)
                     node['storage_set'] = storage_set['name']
+                    node['cluster_id'] = cluster_id
                     nodes.append(node)
 
             cs = CortxCluster(nodes)

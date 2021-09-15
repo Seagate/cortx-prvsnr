@@ -71,7 +71,7 @@ class CortxCluster:
         elif type(node) == list:
             for i in range(0, len(node)):
                 kvs.extend(self._get_kvs(f'{prefix}[{i}]', node[i]))
-        elif type(node) == str:
+        elif type(node) == str or type(node) == int:
             kvs.append((prefix, node))
         return kvs
 

@@ -20,13 +20,12 @@ import glob
 from fnmatch import fnmatch
 from setuptools import setup
 import json
-import sys
 
 def get_version() ->str:
     """ returns version string """
     if os.path.isfile("./VERSION"):
         with open("VERSION") as v:
-            return v.read().strip() 
+            return v.read().strip()
     return "2.0.0"
 
 

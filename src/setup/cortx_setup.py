@@ -56,7 +56,6 @@ class ClusterCmd(Cmd):
 
     def __init__(self, args: dict):
         super().__init__(args)
-
     @staticmethod
     def add_args(parser: str):
         """ Add Command args for parsing """
