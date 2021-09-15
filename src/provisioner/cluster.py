@@ -13,8 +13,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from cortx.provisioner.config_store import ConfigStore
-
 
 class CortxCluster:
     """ Represents CORTX Cluster """
@@ -49,7 +47,7 @@ class CortxCluster:
             self._validate(node)
 
     def _validate(self, node: dict):
-        """ 
+        """
         validates a give node to habve required properties
         Raises exception if there is any entry missing
         """

@@ -55,11 +55,11 @@ rpm -q rpm-build > /dev/null || {
     echo "error: rpm-build is not installed. Install rpm-build and run $PROG"
     exit 1;
 }
-    
+
 # Create version file
 echo $VER > "$BASE_DIR"/VERSION
 /bin/chmod +rx "$BASE_DIR"/VERSION
 
 cd $BASE_DIR
 
-./setup.py bdist_rpm --release="$REL" 
+./setup.py bdist_rpm --release="$REL"

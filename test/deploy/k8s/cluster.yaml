@@ -4,7 +4,7 @@ cluster:
     - name: storage_node
       components:
         - name: motr             # (motr_setup --services=io)
-          services: 
+          services:
             - io
         - name: hare             # (hare_setup --services=all)
         - name: s3
@@ -29,7 +29,7 @@ cluster:
             - /dev/sdy
             - /dev/sdz
     - name: control_node
-      components: 
+      components:
         - name: csm             # (csm_setup --services=agent)
           services:
             - agent

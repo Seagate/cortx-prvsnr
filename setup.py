@@ -59,7 +59,7 @@ def get_conf_files() -> list:
 def get_requirements_files() -> list:
     """ Returns requirements file """
 
-    if os.path.exists('requirements.txt'): 
+    if os.path.exists('requirements.txt'):
       return ['requirements.txt']
     return []
 

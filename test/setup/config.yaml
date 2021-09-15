@@ -39,7 +39,7 @@ cortx:
     client_instances: 2
   hare:
     ports:
-      hax: 
+      hax:
         - 28000/tcp
   csm:
     ports:

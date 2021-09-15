@@ -1,4 +1,4 @@
-#!/bin/bash -x 
+#!/bin/bash -x
 
 SCRIPT_DIR=$(dirname $0)
 

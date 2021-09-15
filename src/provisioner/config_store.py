@@ -14,8 +14,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 from cortx.utils.conf_store import Conf
-from cortx.provisioner.error import CortxProvisionerError
-
 
 class ConfigStore:
     """ CORTX Config Store """

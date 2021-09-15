@@ -1,18 +1,18 @@
 README
 ~~~~~~
 
-Preparation 
+Preparation
 
-1. Prepare input for cortx_setup. There are two files in this folder. 
-   a. cluster.conf 
+1. Prepare input for cortx_setup. There are two files in this folder.
+   a. cluster.conf
    b. config.conf
 
-2. Install cortx-utils and cortx-provisioner rpms. 
+2. Install cortx-utils and cortx-provisioner rpms.
    Make sure PYTHON_PATH includes src folder, if you are not using rpm.
 
 Testing Manually
 
-1. Run apply command 
+1. Run apply command
    $ cortx_setup.py config apply yaml://`pwd`/config.yaml yaml:///tmp/mp.conf
 
 2. Run bootstrap command
@@ -30,4 +30,4 @@ Testing Manually
 Running the Tests
 
 Run the following command
-    $ ./test_provisioner.py 
+    $ ./test_provisioner.py

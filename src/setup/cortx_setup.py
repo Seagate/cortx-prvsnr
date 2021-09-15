@@ -1,4 +1,4 @@
-#!/bin/env python3 
+#!/bin/env python3
 
 # CORTX Python common library.
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
@@ -18,8 +18,6 @@
 import sys
 import traceback
 import errno
-import argparse
-import inspect
 
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
@@ -27,7 +25,7 @@ from cortx.utils.cmd_framework import Cmd
 
 
 class ConfigCmd(Cmd):
-    """ PostInstall Setup Cmd """  
+    """ PostInstall Setup Cmd """
 
     name = "config"
 
@@ -77,7 +75,7 @@ def main():
     try:
         # Parse and Process Arguments
         command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', sys.argv[1:])
-        rc = command.process() 
+        rc = command.process()
 
     except CortxProvisionerError as e:
         sys.stderr.write("%s\n\n" % str(e))

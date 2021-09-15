@@ -74,7 +74,7 @@ class CortxProvisioner:
                 node = dict(node_map[node_type], **node)
                 node['storage_set'] = storage_set['name']
                 nodes.append(node)
-          
+
         cs = CortxCluster(nodes)
         cs.save(cortx_config_store)
 
