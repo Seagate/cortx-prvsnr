@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sb-pod
+spec:
+  volumes:
+    - name: shared-storage
+      persistentVolumeClaim:
+        claimName: read-pv-claim
+    - name: sb-storage
+      persistentVolumeClaim:
+        claimName: sb-write-pv-claim
+  containers:
+    - name: cortx-sb
+      image: support_bundle:1.1
+      volumeMounts:
+        - mountPath: "/var/log"
+          name: shared-storage
+        - mountPath: "/opt"
+          name: sb-storage
+  restartPolicy: Never
