@@ -3,22 +3,25 @@
 import logging
 import socket
 import time
+import os
 import sys
 
-LOG_DIR = "/var/log/demoLogger/"
-HOSTNAME = socket.gethostname()
-LOG_FILE = LOG_DIR + HOSTNAME + ".log"
+LOG_DIR = "/var/log/"
+APP = "demo-logger"
+HOSTNAME = socket.gethostname().replace('.', '-')
+LOG_FILE = os.path.join(LOG_DIR, APP, HOSTNAME + ".log")
+LOG_LEVEL = logging.DEBUG
 
 def initialize_logger():
-    log = logging.getLogger("demo-logger")
-    log.setLevel(level=logging.DEBUG)
+    log = logging.getLogger(APP)
+    log.setLevel(level=LOG_LEVEL)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh = logging.FileHandler(LOG_FILE)
-    fh.setLevel(level=logging.DEBUG)
+    fh.setLevel(level=LOG_LEVEL)
     fh.setFormatter(formatter)
     log.addHandler(fh)
     return log
-    
+
 def infi_logger(logger=None):
     i = 0
     while True:
@@ -27,7 +30,7 @@ def infi_logger(logger=None):
             logger.info(logline)
         else:
             print(logline)
-        time.sleep(20)
+        time.sleep(5)
         i += 1
 
 
@@ -36,7 +39,7 @@ if __name__ == "__main__":
         logger = initialize_logger()
         infi_logger(logger)
     except KeyboardInterrupt:
-        print("Stopping the demoLogger.")
+        print(f"Stopping the {APP}.")
         sys.exit(0)
     except Exception as err:
         print(err)
