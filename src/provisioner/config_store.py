@@ -31,7 +31,7 @@ class ConfigStore:
         Parameters:
         kvs - List of KV tuple, e.g. [('k1','v1'),('k2','v2')]
         """
-        
+
         for key, val in kvs:
             Conf.set(self._conf_idx, key, val)
         Conf.save(self._conf_idx)

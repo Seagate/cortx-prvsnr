@@ -14,7 +14,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 from cortx.provisioner.config_store import ConfigStore
-from cortx.provisioner.error import CortxProvisionerError
 
 
 class CortxCluster:
@@ -62,13 +61,13 @@ class CortxCluster:
 
     def _get_kvs(self, prefix, node):
         kvs = []
-        if type(node) == dict:
+        if isinstance(node, dict):
             for attr, val in node.items():
                 kvs.extend(self._get_kvs(f'{prefix}>{attr}', val))
-        elif type(node) == list:
-            for i in range(0, len(node)):
-                kvs.extend(self._get_kvs(f'{prefix}[{i}]', node[i]))
-        elif type(node) == str:
+        elif isinstance(node, list):
+            for i, n in enumerate(node):
+                kvs.extend(self._get_kvs(f'{prefix}[{i}]', n))
+        elif isinstance(node, str):
             kvs.append((prefix, node))
         return kvs
 

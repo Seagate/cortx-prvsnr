@@ -13,13 +13,14 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.error import CortxProvisionerError
 
 
 class CortxConfig:
     """ CORTX Configuration """
+
     def __init__(self):
+        """ CORTX Config Initialization """
         pass
 
     def save(self, config_store):

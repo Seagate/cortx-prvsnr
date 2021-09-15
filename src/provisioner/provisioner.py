@@ -13,11 +13,10 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from cortx.utils.process import SimpleProcess
+# TODO: Uncomment when mini provisioners are enabled
+# from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
-from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
-from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster
 
 
@@ -63,7 +62,7 @@ class CortxProvisioner:
     @staticmethod
     def config_apply_cluster(cortx_config_store):
         node_map = {}
-        node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types') 
+        node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
         for node_type in node_types:
             node_map[node_type['name']] = node_type
 
