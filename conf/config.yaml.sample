@@ -1,5 +1,5 @@
 cortx:
-  external_services:
+  external:
     kafka:
       endpoints:
         - kafka-server1.cortx-cluster.lyve-cloud.com
@@ -9,12 +9,24 @@ cortx:
     openldap:
       endpoints:
         - oldap-server1.cortx-cluster.lyve-cloud.com
+      servers:
+        - oldap-server1.cortx-cluster.lyve-cloud.com
+        - oldap-server2.cortx-cluster.lyve-cloud.com
+        - oldap-server3.cortx-cluster.lyve-cloud.com
+      admin: admin
+      secret: gAAAAABf
+      base_dn: dc=seagate,dc=com
     consul:
       endpoints:
         - consul-server1.cortx-cluster.lyve-cloud.com
+      admin: admin
+      secret: gAAAAABf
   common:
     product_release: LC
     environment_type: K8
+    service:
+      admin: admin
+      secret: gAAAAABf
     storage:
       shared: /share/var/data/cortx
       log: /share/var/log/cortx
@@ -23,26 +35,33 @@ cortx:
   utils:
     message_bus_backend: kafka
   s3:
+    iam:
+      endpoints:
+      - https://s3-iam.seagate.com:9443
+    data:
+      endpoints:
+      - http://s3.seagate.com:80
+      - https://s3.seagate.com:443
     service_instances: 11
     io_max_units: 32
-    ports:
-      iam:
-        - 9443/https
-        - 9080/https
-      data:
-        - 80/http
-        - 443/https
-      background:
-        - 81111/http
-        - 82222/https
   motr:
     client_instances: 2
+    interface_type: tcp
+    interface_family: inet
+    transport_type: libfab
+    ios:
+      endpoints:
+      - motr://motr-data1.cortx-cluster.lyve-cloud.com:3232
   hare:
     ports:
-      hax:
-        - 28000/tcp
+      endpoints:
+      - tcp://hax.seagate.com:28000
   csm:
-    ports:
-      agent:
-        - 8080/http
-        - 8081/https
+    auth_admin: admin
+    auth_secret: gAAAAABf
+    mgmt_admin: cortxadmin
+    mgmt_secret: gAAAAABf
+    email_address: cortx@seagate.com
+    agent:
+      endpoints:
+      - https://csm.seagate.com:8081

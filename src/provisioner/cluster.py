@@ -13,6 +13,9 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+import errno
+from cortx.provisioner.error import CortxProvisionerError
+from cortx.utils.validator.error import VError
 
 class CortxCluster:
     """ Represents CORTX Cluster """
@@ -48,10 +51,15 @@ class CortxCluster:
 
     def _validate(self, node: dict):
         """
-        validates a give node to habve required properties
+        validates a give node to have required properties
         Raises exception if there is any entry missing
         """
-        pass
+
+        required_keys_for_node = [
+            'name', 'id', 'components', 'storage_set', 'hostname']
+        for k in required_keys_for_node:
+            if node.get(k) is None:
+                raise VError(errno.EINVAL, f'{k} key is missing in node dict.')
 
     def add_node(self, node: dict):
         self._validate(node)
@@ -65,7 +73,7 @@ class CortxCluster:
         elif isinstance(node, list):
             for i, n in enumerate(node):
                 kvs.extend(self._get_kvs(f'{prefix}[{i}]', n))
-        elif isinstance(node, str):
+        elif isinstance(node, str) or type(node) == int:
             kvs.append((prefix, node))
         return kvs
 
@@ -73,9 +81,93 @@ class CortxCluster:
         """ Saves cluster information onto the conf store """
 
         kvs = []
-        for node in self._node_list:
-            node_id = node['id']
-            key_prefix = f'node>{node_id}'
-            kvs.extend(self._get_kvs(key_prefix, node))
+        try:
+            for node in self._node_list:
+                node_id = node.pop('id')
+                node['storage_set_count'] = 1
+                components = {}
+                for component in node.pop('components'):
+                    comp_name = component.get('name')
+                    components.update({
+                        comp_name:  component.get('services')
+                        })
+                node['components'] = components
+                if node['type'] == 'storage_node':
+                    cvg_list = node.pop("storage")
+                    node['storage'] = {
+                        'cvg_count': len(cvg_list),
+                        'cvg': cvg_list
+                    }
 
-        config_store.set_kvs(kvs)
+                key_prefix = f'node>{node_id}'
+                kvs.extend(self._get_kvs(key_prefix, node))
+
+            config_store.set_kvs(kvs)
+
+        except KeyError as e:
+            raise CortxProvisionerError(
+                errno.EINVAL,
+                f'Error occurred while adding node information into confstore {e}')
+
+
+class CortxStorageSet:
+    """ Represents CORTX storage_set """
+
+    def __init__(self, storage_sets: list = []):
+        self._storage_sets = storage_sets
+        for s_set in self._storage_sets:
+            self._validate(s_set)
+
+    def _validate(self, s_set: dict):
+        """
+        validates a give storage_sets to have required properties
+        Raises exception if there is any entry missing
+        """
+        required_keys_for_storage_set = [
+            'name', 'durability', 'nodes']
+        for k in required_keys_for_storage_set:
+            if s_set.get(k) is None:
+                raise VError(errno.EINVAL, f'{k} key is missing in storage_sets.')
+
+    def save(self, config_store):
+        """ Converts storage_set confstore keys
+        and add into conf_store.
+        constore representation for storage_set key:
+         storage_set:
+            - durability:
+                dix:
+                    data: '1'
+                    parity: '7'
+                    spare: '0'
+                sns:
+                    data: '8'
+                    parity: '7'
+                    spare: '0'
+                name: storage-set-1
+                nodes: []
+        """
+        kvs = []
+        node_ids = []
+        try:
+            for storage_set in self._storage_sets:
+                # Fetch node_ids of all nodes.
+                for node in storage_set["nodes"]:
+                    node_ids.append(node["id"])
+                storage_set["nodes"] = node_ids
+                # Read sns and dix value from storage_set
+                durability = storage_set["durability"]
+                for k, v in durability.items():
+                    res = v.split("+")
+                    durability[k] = {
+                        "data": res[0],
+                        "parity": res[1],
+                        "spare": res[2]
+                    }
+                key_prefix = "cluster>storage_set"
+                kvs.extend(CortxCluster()._get_kvs(key_prefix, storage_set))
+
+            config_store.set_kvs(kvs)
+        except KeyError as e:
+            raise CortxProvisionerError(
+                errno.EINVAL,
+                f'Error occurred while adding storage_sets to confstore {e}')
