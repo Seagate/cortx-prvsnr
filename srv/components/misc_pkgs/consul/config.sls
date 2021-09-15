@@ -15,9 +15,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-include:
-  - components.misc_pkgs.consul.prepare
-  - components.misc_pkgs.consul.install
+# include:
+#   - components.misc_pkgs.consul.prepare
+#   - components.misc_pkgs.consul.install
 
 # Set consul in bash_profile:
 #   file.blockreplace:
@@ -37,9 +37,13 @@ include:
 #     - require:
 #       - Set consul in bash_profile
 
-Reload service daemons for consul-agent.service:
+# Reload service daemons for consul-agent.service:
+#   cmd.run:
+#     - name: systemctl daemon-reload
+#     - require:
+#       - file: Create Consul Agent Service
+#       - Consul installed
+
+Stage - Config setup for Consul:
   cmd.run:
-    - name: systemctl daemon-reload
-    - require:
-      - file: Create Consul Agent Service
-      - Consul installed
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/consul_setup.yaml', 'consul:config')

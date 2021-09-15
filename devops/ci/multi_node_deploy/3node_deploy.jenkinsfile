@@ -135,7 +135,7 @@ node ('provisioning'){
                             echo \"\"\"
                             [${remote.name}]
                             hostname=${remote.host}
-                            roles=primary,openldap_server,kafka_server
+                            roles=primary,openldap_server,kafka_server,consul_server
                             storage.cvg.0.data_devices=\${device_list#*,}
                             storage.cvg.0.metadata_devices=\${device_list%%,*}
 
@@ -148,7 +148,7 @@ node ('provisioning'){
                             echo \"\"\"
                             [${remote.name}]
                             hostname=${remote.host}
-                            roles=secondary,openldap_server,kafka_server
+                            roles=secondary,openldap_server,kafka_server,consul_server
                             storage.cvg.0.data_devices=\${device_list#*,}
                             storage.cvg.0.metadata_devices=\${device_list%%,*}
 

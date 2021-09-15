@@ -37,9 +37,8 @@ execution:
       - misc_pkgs.elasticsearch
       - misc_pkgs.kibana
       - misc_pkgs.statsd
-      - misc_pkgs.consul.install
       - misc_pkgs.lustre
-      - misc_pkgs.consul.install
+      - misc_pkgs.consul
       - ha.corosync-pacemaker.install
       - ha.corosync-pacemaker.config.base
   cortx_components:

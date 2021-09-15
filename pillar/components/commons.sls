@@ -57,6 +57,9 @@ commons:
     utils:
       base_sls: components.cortx_utils
       mini: /opt/seagate/cortx/utils/conf/setup.yaml
+    consul:
+      base_sls: components.misc_pkgs.cosul
+      mini: /opt/seagate/cortx/utils/conf/consul_setup.yaml
     motr:
       base_sls: components.motr
       mini: /opt/seagate/cortx/motr/conf/setup.yaml

@@ -85,3 +85,7 @@
 #     - makedirs: True
 #     - mode: 640
 #     - template: jinja
+
+Stage - Prepare setup for Consul:
+  cmd.run:
+    - name: __slot__:salt:setup_conf.conf_cmd('/opt/seagate/cortx/utils/conf/consul_setup.yaml', 'consul:prepare')

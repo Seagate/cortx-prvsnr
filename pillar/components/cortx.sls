@@ -43,6 +43,9 @@ cortx:
     support:
       user: cortxsupport
       password:
+    consul:
+      config_path: /opt/consul/conf
+      data_path: /opt/consul/data
   release:
     product: LR2
     setup: cortx

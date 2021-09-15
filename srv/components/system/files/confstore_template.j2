@@ -9,6 +9,8 @@ cortx>software>openldap>sgiam>user=>{{ pillar['cortx']['software']['openldap']['
 cortx>software>openldap>sgiam>secret=>{{ pillar['cortx']['software']['openldap']['sgiam']['secret'] }}
 cortx>software>corosync>user=>{{ pillar['cortx']['software']['corosync-pacemaker']['user'] }}
 cortx>software>corosync>secret=>{{ pillar['cortx']['software']['corosync-pacemaker']['secret'] }}
+cortx>software>consul>config_path=>{{ pillar['cortx']['software']['consul']['config_path'] }}
+cortx>software>consul>data_path=>{{ pillar['cortx']['software']['consul']['data_path'] }}
 cortx>software>common>message_bus_type=>kafka
 {% if 'physical' in grains['virtual'] %}
 cortx>software>s3>service>instances=>11

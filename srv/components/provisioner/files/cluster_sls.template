@@ -45,6 +45,9 @@ cluster:
       {%- if 0 == (node_num // 3) %}
       - kafka_server
       {%- endif %}
+      {%- if 0 == (node_num // 3) %}
+      - consul_server
+      {%- endif %}
     {%- if 0 == node_num %}
     is_primary: True
     {%- else %}
