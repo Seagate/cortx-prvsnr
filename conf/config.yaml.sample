@@ -1,0 +1,48 @@
+cortx:
+  external_services:
+    kafka:
+      endpoints:
+        - kafka-server1.cortx-cluster.lyve-cloud.com
+        - kafka-server2.cortx-cluster.lyve-cloud.com
+      user: admin
+      secret: gAAAAABf
+    openldap:
+      endpoints:
+        - oldap-server1.cortx-cluster.lyve-cloud.com
+    consul:
+      endpoints:
+        - consul-server1.cortx-cluster.lyve-cloud.com
+  common:
+    product_release: LC
+    environment_type: K8
+    storage:
+      shared: /share/var/data/cortx
+      log: /share/var/log/cortx
+      misc: /var/data/cortx
+      config: /etc/cortx
+  utils:
+    message_bus_backend: kafka
+  s3:
+    service_instances: 11
+    io_max_units: 32
+    ports:
+      iam:
+        - 9443/https
+        - 9080/https
+      data:
+        - 80/http
+        - 443/https
+      background:
+        - 81111/http
+        - 82222/https
+  motr:
+    client_instances: 2
+  hare:
+    ports:
+      hax:
+        - 28000/tcp
+  csm:
+    ports:
+      agent:
+        - 8080/http
+        - 8081/https

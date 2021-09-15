@@ -15,12 +15,12 @@ spec:
         app: cortx-provisioner
     spec:
       volumes:
-      - name: config-pvc-volume
+      - name: cortx-config
         persistentVolumeClaim:
           claimName: cortx-config-pvc
-      - name: cortx-config
+      - name: solution-config
         configMap:
-          name: cortx-config
+          name: solution-config
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -44,13 +44,9 @@ spec:
           ls /etc/cortx;
           cat /etc/cortx/cluster.conf;
           ls -l /etc/cortx/solution;
-          cat /etc/cortx/solution/node-id;
-          ln -sf /etc/cortx/solution/machine-id /etc/machine-id;
-          cat /etc/cortx/solution/machine-id;
-          cat /etc/machine-id;
           while true; do sleep 30; echo "Hello Kubernetes"; done;
         volumeMounts:
-        - name: cortx-config
+        - name: solution-config
           mountPath: /etc/cortx/solution
-        - name: config-pvc-volume
+        - name: cortx-config
           mountPath: /etc/cortx
