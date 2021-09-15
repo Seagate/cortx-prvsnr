@@ -57,8 +57,8 @@ rpm -q rpm-build > /dev/null || {
 }
     
 # Create version file
-echo $VER > $BASE_DIR/VERSION
-/bin/chmod +rx $BASE_DIR/VERSION
+echo $VER > "$BASE_DIR"/VERSION
+/bin/chmod +rx "$BASE_DIR"/VERSION
 
 cd $BASE_DIR
 
