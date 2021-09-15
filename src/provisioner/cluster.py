@@ -83,12 +83,13 @@ class CortxCluster:
             for node in self._node_list:
                 node_id = node.pop('id')
                 node['storage_set_count'] = 1
-                components = node.pop('components')
-                for component in components:
+                components = {}
+                for component in node.pop('components'):
                     comp_name = component.get('name')
-                    node['components'] = {
+                    components.update({
                         comp_name:  component.get('services')
-                        }
+                        })
+                node['components'] = components
                 if node['type'] == 'storage_node':
                     cvg_list = node.pop("storage")
                     node['storage'] = {

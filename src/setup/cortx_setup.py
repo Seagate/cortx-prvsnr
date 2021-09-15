@@ -27,7 +27,7 @@ from cortx.utils.cmd_framework import Cmd
 
 
 class ConfigCmd(Cmd):
-    """ PostInstall Setup Cmd """  
+    """ Config Setup Cmd """
 
     name = "config"
 
@@ -50,13 +50,13 @@ class ConfigCmd(Cmd):
 
 
 class ClusterCmd(Cmd):
-    """ PostInstall Setup Cmd """
+    """ Cluster Setup Cmd """
 
     name = "cluster"
 
     def __init__(self, args: dict):
         super().__init__(args)
-     
+
     @staticmethod
     def add_args(parser: str):
         """ Add Command args for parsing """
@@ -76,7 +76,7 @@ def main():
     try:
         # Parse and Process Arguments
         command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', sys.argv[1:])
-        rc = command.process() 
+        rc = command.process()
 
     except CortxProvisionerError as e:
         sys.stderr.write("%s\n\n" % str(e))

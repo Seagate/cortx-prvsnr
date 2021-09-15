@@ -16,7 +16,6 @@
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.provisioner.error import CortxProvisionerError
-from cortx.utils.conf_store.error import ConfError
 from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster, CortxStorageSet
