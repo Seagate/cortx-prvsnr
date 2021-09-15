@@ -2,6 +2,7 @@
 
 SCRIPT_DIR=$(dirname $0)
 
+$SCRIPT_DIR/destroy.sh
 
 kubectl create namespace cortx
 kubectl create cm cortx-config --from-file=$SCRIPT_DIR/cluster.yaml \
