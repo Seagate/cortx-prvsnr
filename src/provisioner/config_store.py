@@ -23,11 +23,12 @@ class ConfigStore:
     _conf_idx = "cortx_conf"
 
     def __init__(self, conf_url):
+        """ Initialize with the CONF URL """
         self._conf_url = conf_url
         Conf.load(self._conf_idx, self._conf_url, skip_reload=True)
 
     def set_kvs(self, kvs: list):
-        """ 
+        """
         Parameters:
         kvs - List of KV tuple, e.g. [('k1','v1'),('k2','v2')]
         """
@@ -37,10 +38,11 @@ class ConfigStore:
         Conf.save(self._conf_idx)
 
     def set(self, key: str, val: str):
+        """  """
         Conf.set(self._conf_idx, key, val)
         Conf.save(self._conf_idx)
 
     def get(self, key: str) -> str:
         """ Returns value for the given key """
-        return Conf.get(self._conf_idx, key)
 
+        return Conf.get(self._conf_idx, key)

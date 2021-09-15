@@ -6,11 +6,7 @@ SCRIPT_DIR=$(dirname $0)
 
 kubectl create namespace cortx
 kubectl create cm solution-config --from-file="$SCRIPT_DIR"/cluster.yaml \
-    --from-file="$SCRIPT_DIR"/config.yaml --namespace cortx
-
-kubectl create cm node-id-1 --from-literal "node-id=1" --namespace cortx
-kubectl create cm node-id-2 --from-literal "node-id=2" --namespace cortx
-kubectl create cm node-id-3 --from-literal "node-id=3" --namespace cortx
+    --from-file="$SCRIPT_DIR"/config.yaml --from-literal "node-id=123" --namespace cortx
 
 #kubectl apply -f "$SCRIPT_DIR"/cortx-cm-machine-id.yml --namespace cortx
 kubectl apply -f "$SCRIPT_DIR"/cortx-pv-config.yml --namespace cortx
