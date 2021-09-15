@@ -1,5 +1,6 @@
 cluster:
   name: cortx-cluster
+  id: 'C01'
   node_types:
     - name: storage_node
       components:
@@ -17,17 +18,14 @@ cluster:
             - message_bus
       storage:
         - name: cvg-01
-          metadata_devices:
-            - /dev/sda
-          data_devices:
+          type: cas       # io (default), cas
+          devices:
+            log: /dev/sdh           # 4G
+            meta0: /dev/sdj         # 1M
+            metadata: /dev/sda      # ~ Same as size of data device
+            data:
             - /dev/sdb
             - /dev/sdc
-        - name: cvg-02
-          metadata_devices:
-            - /dev/sdx
-          data_devices:
-            - /dev/sdy
-            - /dev/sdz
     - name: control_node
       components:
         - name: csm             # (csm_setup --services=agent)
@@ -44,14 +42,17 @@ cluster:
       durability:
         sns: 8+7+0
         dix: 1+7+0
-      logical_nodes:
+      nodes:
         - name: pod-1
+          id: 1
           host_name: pod-1.colo.seagate.com
           type: storage_node
         - name: pod-2
+          id: 2
           host_name: pod-2.colo.seagate.com
           type: control_node
-        - name: pod-*          # TBD: Future Optimization
-          host_name: pod-*.colo.seagate.com
+        - name: pod-3      # TBD: Future Optimization
+          id: 3
+          host_name: pod-3.colo.seagate.com
           type: storage_node
           index: 0-14
