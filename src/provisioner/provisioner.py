@@ -13,8 +13,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-# TODO: Uncomment when mini provisioners are enabled
-# from cortx.utils.process import SimpleProcess
+from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.cluster import CortxCluster
