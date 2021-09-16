@@ -5,7 +5,7 @@ cortx:
         - kafka-server1.cortx-cluster.lyve-cloud.com
         - kafka-server2.cortx-cluster.lyve-cloud.com
       user: admin
-      secret: gAAAAABf
+      secret: kafka-secret
     openldap:
       endpoints:
         - oldap-server1.cortx-cluster.lyve-cloud.com
