@@ -22,11 +22,9 @@ import sys
 import unittest
 from cortx.utils.cmd_framework import Cmd
 from cortx.setup import cortx_setup
-from cortx.provisioner.provisioner import CortxProvisioner
 
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
-
 
 class TestSetup(unittest.TestCase):
     """Test EventMessage send and receive functionality."""
