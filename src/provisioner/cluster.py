@@ -47,9 +47,10 @@ class CortxCluster:
         """
         self._node_list = node_list
         for node in node_list:
-            self._validate(node)
+            CortxCluster._validate(node)
 
-    def _validate(self, node: dict):
+    @staticmethod
+    def _validate(node: dict):
         """
         validates a give node to have required properties
         Raises exception if there is any entry missing
@@ -119,9 +120,10 @@ class CortxStorageSet:
     def __init__(self, storage_sets: list = []):
         self._storage_sets = storage_sets
         for s_set in self._storage_sets:
-            self._validate(s_set)
+            CortxStorageSet._validate(s_set)
 
-    def _validate(self, s_set: dict):
+    @staticmethod
+    def _validate(s_set: dict):
         """
         validates a give storage_sets to have required properties
         Raises exception if there is any entry missing

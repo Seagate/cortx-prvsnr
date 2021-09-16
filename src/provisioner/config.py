@@ -20,11 +20,14 @@ from cortx.utils.validator.error import VError
 class CortxConfig:
     """ CORTX Configuration """
 
-    def __init__(self, cortx_config: dict = {}):
-        self._cortx_config = cortx_config
-        self._validate(self._cortx_config)
+    def __init__(self, cortx_config: list = []):
+        """ Create CORTX config """
 
-    def _validate(self, cortx_conf: dict):
+        self._cortx_config = cortx_config
+        CortxConfig._validate(self._cortx_config)
+
+    @staticmethod
+    def _validate(cortx_conf: dict):
         """
         validates a give node to have required properties
         Raises exception if there is any entry missing
