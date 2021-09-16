@@ -16,42 +16,45 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-import sys
 import os
-import traceback
+import yaml
 import unittest
 from cortx.provisioner.provisioner import CortxProvisioner
 
-solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
-class TestProvisioner(unittest.TestCase):
-    """Test EventMessage send and receive functionality."""
 
-    def test_config_apply_bootstrap(self):
-        """ Test Config Apply """
+class TestInvalidClusterConf(unittest.TestCase):
+    """ Test invalid cluster config """
 
+    def test_invalid_cluster_config(self):
+        """ Test config_apply for invalid cluster.yaml """
+
+        cluster_conf_file_path = "/tmp/invalid_cluster.yaml"
+        # cluster_id, node_types, nodes are missing in below data.
+        # config_apply should fail.
+        data = {
+            "cluster": {
+                "name": "cortx-cluster",
+                "storage_sets": [
+                    {"name": "storage-set-1"}
+                ]
+            }
+        }
+        f = open(cluster_conf_file_path, 'w+')
+        f.write(yaml.dump(data))
+        f.close()
+        cluster_conf_url = f"yaml://{cluster_conf_file_path}"
         rc = 0
         try:
-            CortxProvisioner.config_apply(solution_conf_url, cortx_conf_url)
+            CortxProvisioner.config_apply(cluster_conf_url, cortx_conf_url)
 
         except Exception as e:
-            print('Exception: ', e)
-            sys.stderr.write("%s\n" % traceback.format_exc())
+            print(e)
             rc = 1
 
-        self.assertEqual(rc, 0)
-
-        rc = 0
-        try:
-            CortxProvisioner.cluster_bootstrap('1', cortx_conf_url)
-
-        except Exception as e:
-            print('Exception: ', e)
-            sys.stderr.write("%s\n" % traceback.format_exc())
-            rc = 1
-
-        self.assertEqual(rc, 0)
+        self.assertEqual(rc, 1)
+        os.remove(cluster_conf_file_path)
 
 if __name__ == '__main__':
     unittest.main()
