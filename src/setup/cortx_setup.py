@@ -54,7 +54,8 @@ class ConfigCmd(Cmd):
 
         path = urlparse(self._args.solution_conf).path
         if not os.path.exists(path):
-            raise CortxProvisionerError(errno.EINVAL, 'Solution config URL does not exist')
+            raise CortxProvisionerError(errno.EINVAL,
+                'Solution config URL %s does not exist' % self._args.solution_conf)
 
     def process(self):
         """ Apply Config """
@@ -86,7 +87,8 @@ class ClusterCmd(Cmd):
 
         path = urlparse(self._args.cortx_conf).path
         if not os.path.exists(path):
-            raise CortxProvisionerError(errno.EINVAL, 'CORTX config URL does not exist')
+            raise CortxProvisionerError(errno.EINVAL,
+                'CORTX config URL %s does not exist' % self._args.cortx_conf)
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
@@ -97,7 +99,8 @@ class ClusterCmd(Cmd):
 
 def main():
     log_path = os.path.join('/var/log/cortx', 'provisioner')
-    Log.init('cortx_setup', log_path, console_output=True)
+    log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+    Log.init('cortx_setup', log_path, level=log_level, console_output=True)
 
     try:
         # Parse and Process Arguments

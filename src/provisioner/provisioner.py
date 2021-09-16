@@ -44,7 +44,7 @@ class CortxProvisioner:
         [IN]  Solution Config URL
         [OUT] CORTX Config URL
         """
-
+        Log.info('Applying config %s' % solution_conf_url)
         Conf.load(CortxProvisioner._solution_index, solution_conf_url)
 
         if cortx_conf_url is None:
@@ -74,6 +74,7 @@ class CortxProvisioner:
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             CortxProvisioner.config_apply_cortx(cortx_config_store)
 
+        CortxProvisionerV.validate_config("common", cortx_conf_url)
 
     @staticmethod
     def config_apply_cortx(cortx_config_store):
