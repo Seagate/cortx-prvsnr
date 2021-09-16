@@ -44,7 +44,7 @@ class TestSetup(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
 
-   def test_cluster_bootstrap(self):
+    def test_cluster_bootstrap(self):
        """ Test Cluster Bootstrap """
 
        rc = 0
