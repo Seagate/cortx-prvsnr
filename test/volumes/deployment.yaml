@@ -15,7 +15,6 @@ spec:
         app: cortx-vols
     spec:
       volumes:
-<<<<<<< HEAD
         - name: cortx-shared
           persistentVolumeClaim:
             claimName: cortx-pvc-shared
@@ -47,36 +46,3 @@ spec:
               mountPath: /share/var/log/cortx
             - name: cortx-config
               mountPath: /etc/cortx
-=======
-      - name: cortx-shared
-        persistentVolumeClaim:
-          claimName: cortx-pvc-shared
-      - name: cortx-logs
-        persistentVolumeClaim:
-          claimName: cortx-pvc-logs
-      - name: cortx-config
-        persistentVolumeClaim:
-          claimName: cortx-pvc-config
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - topologyKey: kubernetes.io/hostname
-            labelSelector:
-              matchLabels:
-                app: cortx-vols
-      containers:
-      - name: cortx-vols
-        image: busybox
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - while true; do sleep 30; echo "Hello Kubernetes"; done;
-        volumeMounts:
-        - name: cortx-shared
-          mountPath: /share
-        - name: cortx-logs
-          mountPath: /share/var/log/cortx
-        - name: cortx-config
-          mountPath: /etc/cortx
->>>>>>> ed99336cbaeedb48da700547afc9ab73a90e26a3
