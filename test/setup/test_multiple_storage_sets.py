@@ -30,7 +30,7 @@ class TestMultipleStorageSet(unittest.TestCase):
     def test_for_multiple_storage_sets(self):
         """ Test for multiple storage sets """
 
-        cluster_conf_file_path = "/tmp/invalid_cluster.yaml"
+        cluster_conf_file_path = "/tmp/cluster.yaml"
         data = {
             "cluster": {
                 "name": "cortx-cluster",
