@@ -44,7 +44,7 @@ class TestProvisioner(unittest.TestCase):
 
         rc = 0
         try:
-            CortxProvisioner.cluster_bootstrap('1', cortx_conf_url)
+            CortxProvisioner.cluster_bootstrap(cortx_conf_url)
 
         except Exception as e:
             print('Exception: ', e)
