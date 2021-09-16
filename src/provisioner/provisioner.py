@@ -96,11 +96,17 @@ class CortxProvisioner:
 
         components = cortx_config_store.get(f'node>{node_id}>components')
         num_components = len(components)
-        for j in range(0, num_components):
-            services = cortx_config_store.get(f'node>{node_id}>components[{j}]>services')
-            service = 'all' if services is None else ','.join(services)
-            print(f"{components[j]['name']}_setup --config {CortxProvisioner._cortx_conf_url} --services %s" %service)
+        mp_interfaces = ['post_install', 'prepare', 'config', 'init']
+        for interface in mp_interfaces:
+            for j in range(0, num_components):
+                services = cortx_config_store.get(
+                    f'node>{node_id}>components[{j}]>services')
+                service = 'all' if services is None else ','.join(services)
+                print(f"{components[j]['name']}_setup --config \
+                    {CortxProvisioner._cortx_conf_url} {interface} --services \
+                    %s" % service)
 
-            # TODO: Enable this code
-            # rc, output = SimpleProcess(f"{components[i]}_setup --config \
-            #  {CortxProvisioner._cortx_conf_url} --services %s" %services.join(","))
+                # TODO: Enable this code
+                rc, output = SimpleProcess(f"{components[j]['name']}_setup \
+                    --config {CortxProvisioner._cortx_conf_url} {interface} \
+                    --services %s" % service)
