@@ -22,9 +22,11 @@ import sys
 import unittest
 from cortx.utils.cmd_framework import Cmd
 from cortx.setup import cortx_setup
+from cortx.provisioner.provisioner import CortxProvisioner
 
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
+
 
 class TestSetup(unittest.TestCase):
     """Test EventMessage send and receive functionality."""
@@ -44,22 +46,17 @@ class TestSetup(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
 
-# TODO: Uncomment. Test fails due to a bug
-#
-#    def test_cluster_bootstrap(self):
-#        """ Test Cluster Bootstrap """
-#
-#        rc = 0
-#        try:
-#            argv = [ 'cluster', 'bootstrap', '1', cortx_conf_url ]
-#            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
-#            self.assertEqual(cmd.process(), 0)
-#
-#        except Exception as e:
-#            print('Exception: ', e)
-#            sys.stderr.write("%s\n" % traceback.format_exc())
-#            rc = 1
-#        self.assertEqual(rc, 0)
+        rc = 0
+        try:
+            argv = ['cluster', 'bootstrap', '1', cortx_conf_url]
+            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
+            self.assertEqual(cmd.process(), 0)
+
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
 
 if __name__ == '__main__':
     unittest.main()

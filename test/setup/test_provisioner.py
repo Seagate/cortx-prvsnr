@@ -18,6 +18,7 @@
 
 import sys
 import os
+import yaml
 import traceback
 import unittest
 from cortx.provisioner.provisioner import CortxProvisioner
@@ -52,6 +53,88 @@ class TestProvisioner(unittest.TestCase):
             rc = 1
 
         self.assertEqual(rc, 0)
+
+    def test_invalid_cluster_config(self):
+        """ Test config_apply for invalid cluster.yaml """
+
+        cluster_conf_file_path = "/tmp/invalid_cluster.yaml"
+        # cluster_id, node_types, nodes are missing in below data.
+        # config_apply should fail.
+        data = {
+            "cluster": {
+                "name": "cortx-cluster",
+                "storage_sets": [
+                    {"name": "storage-set-1"}
+                ]
+            }
+        }
+        f = open(cluster_conf_file_path, 'w+')
+        f.write(yaml.dump(data))
+        f.close()
+        cluster_conf_url = f"yaml://{cluster_conf_file_path}"
+        rc = 0
+        try:
+            CortxProvisioner.config_apply(cluster_conf_url, cortx_conf_url)
+
+        except Exception:
+            rc = 1
+
+        self.assertEqual(rc, 1)
+        os.remove(cluster_conf_file_path)
+
+    def test_invalid_cortx_config(self):
+        """ Test config_apply for invalid config.yaml """
+
+        config_conf_file_path = "/tmp/invalid_config.yaml"
+        # 'common' are missing in below data.
+        # config_apply should fail.
+        data = {
+            "cortx": {
+                "external": ""
+            }
+        }
+        f = open(config_conf_file_path, 'w+')
+        f.write(yaml.dump(data))
+        f.close()
+        config_conf_url = f"yaml://{config_conf_file_path}"
+        rc = 0
+        try:
+            CortxProvisioner.config_apply(config_conf_url, cortx_conf_url)
+
+        except Exception:
+            rc = 1
+
+        self.assertEqual(rc, 1)
+        os.remove(config_conf_file_path)
+
+    def test_for_multiple_storage_sets(self):
+        """ Test for multiple storage sets """
+
+        cluster_conf_file_path = "/tmp/invalid_cluster.yaml"
+        data = {
+            "cluster": {
+                "name": "cortx-cluster",
+                "id": 'C01',
+                "node_types": {},
+                "storage_sets": [
+                    {"name": "storage-set-1"},
+                    {"name": "storage-set-2"}
+                ]
+            }
+        }
+        f = open(cluster_conf_file_path, 'w+')
+        f.write(yaml.dump(data))
+        f.close()
+        cluster_conf_url = f"yaml://{cluster_conf_file_path}"
+        rc = 0
+        try:
+            CortxProvisioner.config_apply(cluster_conf_url, cortx_conf_url)
+
+        except Exception:
+            rc = 1
+
+        self.assertEqual(rc, 1)
+        os.remove(cluster_conf_file_path)
 
 if __name__ == '__main__':
     unittest.main()
