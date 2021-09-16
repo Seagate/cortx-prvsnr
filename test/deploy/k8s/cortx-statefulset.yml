@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: cortx-provisioner
+  name: podnode
   labels:
     app: cortx-provisioner
 spec:
+  serviceName: "cortx-provisioner"
   replicas: 1
   selector:
     matchLabels:
@@ -24,6 +25,12 @@ spec:
       - name: cortx-secret
         secret:
           secretName: cortx-secret
+      - name: podinfo
+        downwardAPI:
+          items:
+          - path: "name"
+            fieldRef:
+              fieldPath: metadata.name
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -41,9 +48,10 @@ spec:
         - set -x;
           export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
           CORTX_CONF=yaml:/etc/cortx/cluster.conf;
+          cat /etc/cortx/solution/cluster.yaml | grep -A 1 `cat /etc/podinfo/name` | grep id | awk {'print $2'} > /etc/machine-id;
           cortx_setup config apply -f yaml:///etc/cortx/solution/config.yaml -o $CORTX_CONF;
           cortx_setup config apply -f yaml:///etc/cortx/solution/cluster.yaml -o $CORTX_CONF;
-          cortx_setup cluster bootstrap -f $CORTX_CONF;
+          cortx_setup cluster bootstrap '1111' $CORTX_CONF;
           ls /etc/cortx;
           cat /etc/cortx/cluster.conf;
           ls -l /etc/cortx/solution;
@@ -53,5 +61,5 @@ spec:
           mountPath: /etc/cortx/solution
         - name: cortx-config
           mountPath: /etc/cortx
-        - name: cortx-secret
-          mountPath: /etc/cortx/secret
+        - name: podinfo
+          mountPath: /etc/podinfo

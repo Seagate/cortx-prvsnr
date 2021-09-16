@@ -45,19 +45,20 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(rc, 0)
 
     def test_cluster_bootstrap(self):
-       """ Test Cluster Bootstrap """
+        """ Test Cluster Bootstrap """
 
-       rc = 0
-       try:
-           argv = [ 'cluster', 'bootstrap', '-f', cortx_conf_url ]
-           cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
-           self.assertEqual(cmd.process(), 0)
+        rc = 0
+        try:
+            argv = [ 'cluster', 'bootstrap', '-f', cortx_conf_url ]
+            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
+            self.assertEqual(cmd.process(), 0)
 
-       except Exception as e:
-           print('Exception: ', e)
-           sys.stderr.write("%s\n" % traceback.format_exc())
-           rc = 1
-       self.assertEqual(rc, 0)
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
