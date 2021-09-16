@@ -9,7 +9,7 @@ import time
 from sb_config import PV_CLAIM_LIST, SB_FILE_PATH, SB_TAG
 
 
-class SSPLBundleError(Exception):
+class SupportBundleError(Exception):
 
     """Generic Exception with error code and output."""
 
@@ -20,7 +20,7 @@ class SSPLBundleError(Exception):
 
     def __str__(self):
         """Format error string."""
-        print("SSPLBundleError(%d): %s" %(self._rc, self._desc))
+        print("SupportBundleError(%d): %s" %(self._rc, self._desc))
 
 class SupportBundleInterface:
 
@@ -42,13 +42,13 @@ class SupportBundleInterface:
         _, _, rc = self._run_command(cmd)
         if rc != 0:
             msg = "Failed to deploy the supoort-bundle pod."
-            raise SSPLBundleError(1, msg)
+            raise SupportBundleError(1, msg)
         time.sleep(10)
         if os.path.exists(SB_FILE_PATH):
             print(f"Support Bundle generated successfully at path:{SB_FILE_PATH} !!!")
         else:
             msg = "Cortx Logs tarfile is not generated at specified path."
-            raise SSPLBundleError(1, msg)
+            raise SupportBundleError(1, msg)
 
     @staticmethod
     def untar_cortx_bundle():
@@ -62,11 +62,11 @@ class SupportBundleInterface:
         response, err, _ = self._run_command(cmd)
         if err:
             msg = f"Failed in Validating PV-claim. ERROR:{err}"
-            raise SSPLBundleError(1, msg)
+            raise SupportBundleError(1, msg)
         for pvc in PV_CLAIM_LIST:
             if pvc and "Bound" not in response:
                 msg = f"Please check PV-Claim:{pvc} exists and in 'Bound' state."
-                raise SSPLBundleError(1, msg)
+                raise SupportBundleError(1, msg)
 
     def check_sb_image(self):
         cmd = "docker images"
@@ -77,7 +77,7 @@ class SupportBundleInterface:
             response, err, rc = self._run_command(cmd)
             if rc != 0:
                 msg = f"Failed to build support-bundle image. ERROR:{err}"
-                raise SSPLBundleError(1, msg)
+                raise SupportBundleError(1, msg)
             else:
                 print("==== Building Support-bundle Image. ====")
                 print(response)
@@ -87,14 +87,14 @@ class SupportBundleInterface:
         file_path = os.path.abspath("sb-pod.yaml")
         if not os.path.exists(file_path):
             msg = f"support bundle deployment yaml doesn't exist"
-            raise SSPLBundleError(1, msg)
+            raise SupportBundleError(1, msg)
 
     def cleanup(self):
         cmd = f"{self.KUBECTL} delete pod sb-pod"
         _, _, rc = self._run_command(cmd)
         if rc != 0:
             msg = "Failed to delete the support-bundle pod"
-            raise SSPLBundleError(1, msg)
+            raise SupportBundleError(1, msg)
 
     def _run_command(self, command):
         """Run the command and get the response and error returned."""

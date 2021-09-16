@@ -12,18 +12,11 @@ Service to generate a support bundle of Cortx logs in a containerised env.
       - Docker and Kubernetes is installed.
       - kubernetes or docker cluster is up & running
     - Commands 
-      - Create Persistent Volume
+      - Create Persistent Volume and Persistent Volume Claim
         ```bash
-        kubectl apply -f persistent_volumes/pv.yaml
-        kubectl apply -f persistent_volumes/pv2.yaml
+        ./deploy_pvc.sh
         # verify
         kubectl get pv
-        ```
-      - Create a Persistent Volume Claim
-        ```bash
-        kubectl apply -f persistent_volumes/pv-claim.yaml
-        kubectl apply -f persistent_volumes/pv-claim2.yaml
-        # verify
         kubectl get pvc
         ```
       - User request to generate support-bundle

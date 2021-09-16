@@ -6,7 +6,7 @@ import sys
 
 from sb_config import ARCHIEVE_DIR, SB_FILE_PATH
 
-class SSPLBundleError(Exception):
+class SupportBundleError(Exception):
 
     """Generic Exception with error code and output."""
 
@@ -18,7 +18,7 @@ class SSPLBundleError(Exception):
     def __str__(self):
         """Format error string."""
         if self._rc == 0: return self._desc
-        return "SSPLBundleError(%d): %s" %(self._rc, self._desc)
+        return "SupportBundleError(%d): %s" %(self._rc, self._desc)
 
 class SupportBundle(object):
 
@@ -29,7 +29,7 @@ class SupportBundle(object):
                     for file in files:
                         tar_handle.add(os.path.join(root, file))
         except Exception as err:
-            raise SSPLBundleError(1, str(err))
+            raise SupportBundleError(1, str(err))
 
 if __name__ == "__main__":
     try:
