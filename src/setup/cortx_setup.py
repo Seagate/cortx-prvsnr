@@ -64,7 +64,7 @@ class ClusterCmd(Cmd):
 
         parser.add_argument('action', help='bootstrap')
         parser.add_argument('node_id', help='node_id')
-        parser.add_argument('cortx_conf', nargs='?', help='CORTX Config URL')
+        parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
