@@ -45,14 +45,14 @@ cluster:
       nodes:
         - name: pod-1
           id: 1
-          host_name: pod-1.colo.seagate.com
+          hostname: pod-1.colo.seagate.com
           type: storage_node
         - name: pod-2
           id: 2
-          host_name: pod-2.colo.seagate.com
+          hostname: pod-2.colo.seagate.com
           type: control_node
-        - name: pod-3      # TBD: Future Optimization
+        - name: pod-*          # TBD: Future Optimization
           id: 3
-          host_name: pod-3.colo.seagate.com
+          hostname: pod-*.colo.seagate.com
           type: storage_node
           index: 0-14

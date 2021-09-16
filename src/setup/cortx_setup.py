@@ -25,7 +25,7 @@ from cortx.utils.cmd_framework import Cmd
 
 
 class ConfigCmd(Cmd):
-    """ PostInstall Setup Cmd """
+    """ Config Setup Cmd """
 
     name = 'config'
 
@@ -51,7 +51,7 @@ class ConfigCmd(Cmd):
 
 
 class ClusterCmd(Cmd):
-    """ PostInstall Setup Cmd """
+    """ Cluster Setup Cmd """
 
     name = 'cluster'
 

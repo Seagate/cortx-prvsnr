@@ -13,14 +13,46 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+import errno
+from cortx.provisioner.error import CortxProvisionerError
+from cortx.utils.validator.error import VError
 
 class CortxConfig:
     """ CORTX Configuration """
 
-    def __init__(self):
-        """ CORTX Config Initialization """
-        pass
+    def __init__(self, cortx_config: list = []):
+        """ Create CORTX config """
+
+        self._cortx_config = cortx_config
+        CortxConfig._validate(self._cortx_config)
+
+    @staticmethod
+    def _validate(cortx_conf: dict):
+        """
+        validates a give node to have required properties
+        Raises exception if there is any entry missing
+        """
+        required_keys_for_cortx_conf = [
+            'external', 'common']
+        for k in required_keys_for_cortx_conf:
+            if cortx_conf.get(k) is None:
+                raise VError(
+                    errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
 
     def save(self, config_store):
-        pass
+        """ Save cortx-config into confstore """
 
+        kvs = []
+        try:
+            # Update configmap keys as per confstore keys.
+            self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
+                'environment_type')
+            key_prefix = 'cortx>'
+            for attr in self._cortx_config.keys():
+                kv = (key_prefix + attr, self._cortx_config[attr])
+                kvs.append(kv)
+            config_store.set_kvs(kvs)
+        except KeyError as e:
+            raise CortxProvisionerError(
+                errno.EINVAL,
+                f'Error occurred while adding CORTX config information into confstore {e}')
