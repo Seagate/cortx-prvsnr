@@ -26,6 +26,11 @@ from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.cmd_framework import Cmd
 from cortx.utils.log import Log
 
+# Initialize log
+log_path = os.path.join('/var/log/cortx', 'provisioner')
+log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+Log.init('cortx_setup', log_path, level=log_level, console_output=True)
+
 
 class ConfigCmd(Cmd):
     """ Config Setup Cmd """
@@ -46,7 +51,7 @@ class ConfigCmd(Cmd):
         parser.add_argument('-o', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
 
-    def validate(self):
+    def _validate(self):
         """ Validate config command args """
 
         if self._args.action not in ['apply']:
@@ -59,6 +64,8 @@ class ConfigCmd(Cmd):
 
     def process(self):
         """ Apply Config """
+        self._validate()
+
         if self._args.action == 'apply':
             CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
         return 0
@@ -79,7 +86,7 @@ class ClusterCmd(Cmd):
         parser.add_argument('action', help='bootstrap')
         parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
 
-    def validate(self):
+    def _validate(self):
         """ Validate cluster command args """
 
         if self._args.action not in ['bootstrap']:
@@ -92,21 +99,17 @@ class ClusterCmd(Cmd):
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
+        self._validate()
         if self._args.action == 'bootstrap':
             CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
         return 0
 
 
 def main():
-    log_path = os.path.join('/var/log/cortx', 'provisioner')
-    log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-    Log.init('cortx_setup', log_path, level=log_level, console_output=True)
-
     try:
         # Parse and Process Arguments
         command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', \
             sys.argv[1:])
-        command.validate()
         rc = command.process()
 
     except CortxProvisionerError as e:
