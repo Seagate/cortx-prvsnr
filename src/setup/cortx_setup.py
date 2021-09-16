@@ -27,7 +27,7 @@ from cortx.utils.cmd_framework import Cmd
 class ConfigCmd(Cmd):
     """ PostInstall Setup Cmd """
 
-    name = "config"
+    name = 'config'
 
     def __init__(self, args: dict):
         """ Initialize Command line parameters """
@@ -38,8 +38,10 @@ class ConfigCmd(Cmd):
         """ Add Command args for parsing """
 
         parser.add_argument('action', help='apply')
-        parser.add_argument('-f', dest='solution_conf', help='Solution Config URL')
-        parser.add_argument('-o', dest='cortx_conf', nargs='?', help='CORTX Config URL')
+        parser.add_argument('-f', dest='solution_conf', \
+            help='Solution Config URL')
+        parser.add_argument('-o', dest='cortx_conf', nargs='?', \
+            help='CORTX Config URL')
 
     def process(self):
         """ Apply Config """
@@ -51,7 +53,7 @@ class ConfigCmd(Cmd):
 class ClusterCmd(Cmd):
     """ PostInstall Setup Cmd """
 
-    name = "cluster"
+    name = 'cluster'
 
     def __init__(self, args: dict):
         super().__init__(args)
@@ -66,15 +68,17 @@ class ClusterCmd(Cmd):
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
-        if self._args.action == "bootstrap":
-            CortxProvisioner.cluster_bootstrap(self._args.node_id, self._args.cortx_conf)
+        if self._args.action == 'bootstrap':
+            CortxProvisioner.cluster_bootstrap(self._args.node_id, \
+                self._args.cortx_conf)
         return 0
 
 
 def main():
     try:
         # Parse and Process Arguments
-        command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', sys.argv[1:])
+        command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', \
+            sys.argv[1:])
         rc = command.process()
 
     except CortxProvisionerError as e:
