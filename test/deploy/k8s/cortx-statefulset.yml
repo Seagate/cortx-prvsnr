@@ -68,3 +68,5 @@ spec:
           mountPath: /etc/cortx
         - name: podinfo
           mountPath: /etc/podinfo
+        - name: cortx-secret
+          mountPath: /etc/cortx/solution/secret

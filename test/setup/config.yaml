@@ -54,7 +54,7 @@ cortx:
     transport_type: libfab
     ios:
       endpoints:
-      - motr://motr-data1.cortx-cluster.lyve-cloud.com:3232
+      - motr://motr-data1.cortx-cluster.com:3232
   hare:
     ports:
       endpoints:

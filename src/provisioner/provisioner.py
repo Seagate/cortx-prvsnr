@@ -16,6 +16,7 @@
 import errno
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
+from cortx.utils.security.cipher import Cipher
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.config import CortxConfig
@@ -48,6 +49,23 @@ class CortxProvisioner:
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
+        # source code for encrypting and storing secret key
+        cluster_id = ConfigStore.get('cluster>id')
+        if cluster_id is None:
+            raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
+        encryption_key = Cipher.gen_key(cluster_id, 'cluster')
+        for key in Conf.get_keys(CortxProvisioner._solution_index):
+            # TODO: use /etc/cortx/solution/secret to confirm secret 
+            if key.endswith('secret'):
+                secret_val = Conf.get(CortxProvisioner._solution_index, key)
+                val = None
+                with open(os.path.join('/etc/cortx/solution/secret', secret_val)) as f:
+                    val = f.read()
+                if val is None:
+                    raise CortxProvisionerError(errno.EINVAL,
+                        'Could not find the Secret in /etc/cortx/solution/secret')
+                val = Cipher.encrypt(encryption_key, val.encode('ascii'))
+                Conf.set(CortxProvisioner._solution_index, key, val)
 
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.config_apply_cluster(cortx_config_store)
@@ -68,28 +86,22 @@ class CortxProvisioner:
         node_map = {}
         try:
             node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
+            cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
+            cluster_name = Conf.get(CortxProvisioner._solution_index, 'cluster>name')
+            storage_sets = Conf.get(CortxProvisioner._solution_index, 'cluster>storage_sets')
+            for key in [cluster_id, cluster_name, storage_sets, node_types]:
+                if key is None:
+                    raise CortxProvisionerError(
+                        errno.EINVAL,
+                        f"One of the key [id, name,storage_sets,node_types]"
+                        " is unspecified for cluster.")
+
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
 
-            cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
-            if cluster_id is None:
-                raise CortxProvisionerError(
-                    errno.EINVAL,
-                    f'cluster_id property is unspecified for cluster.')
 
-            cluster_name = Conf.get(CortxProvisioner._solution_index, 'cluster>name')
-            if cluster_name is None:
-                raise CortxProvisionerError(
-                    errno.EINVAL,
-                    f'cluster_name property is unspecified for cluster.')
             cluster_keys = [('id', cluster_id), ('name', cluster_name)]
             cortx_config_store.set('cluster', cluster_keys)
-
-            storage_sets = Conf.get(CortxProvisioner._solution_index, 'cluster>storage_sets')
-            if storage_sets is None:
-                raise CortxProvisionerError(
-                    errno.EINVAL,
-                    f'storage_sets property is unspecified for cluster.')
 
             nodes = []
             for storage_set in storage_sets:
