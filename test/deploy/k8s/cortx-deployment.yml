@@ -21,6 +21,9 @@ spec:
       - name: solution-config
         configMap:
           name: solution-config
+      - name: cortx-secret
+        secret:
+          secretName: cortx-secret
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -50,3 +53,5 @@ spec:
           mountPath: /etc/cortx/solution
         - name: cortx-config
           mountPath: /etc/cortx
+        - name: cortx-secret
+          mountPath: /etc/cortx/secret
