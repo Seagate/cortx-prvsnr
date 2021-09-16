@@ -23,7 +23,7 @@ spec:
       CORTX_CONF=yaml:/etc/cortx/cluster.conf;
       cortx_setup config apply -f yaml:/etc/cortx/solution/config.yaml -o $CORTX_CONF;
       cortx_setup config apply -f yaml:/etc/cortx/solution/cluster.yaml -o $CORTX_CONF;
-      cortx_setup cluster bootstrap '1' $CORTX_CONF;
+      cortx_setup cluster bootstrap '1' -f $CORTX_CONF;
       ls /etc/cortx;
       cat /etc/cortx/cluster.conf;
       ls -l /etc/cortx/solution;
