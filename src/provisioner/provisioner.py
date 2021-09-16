@@ -72,18 +72,18 @@ class CortxProvisioner:
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
 
-            cluster_id = Conf.get(CortxProvisioner._solution_index, "cluster>id")
+            cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
             if cluster_id is None:
                 raise CortxProvisionerError(
                     errno.EINVAL,
                     f'cluster_id property is unspecified for cluster.')
 
-            cluster_name = Conf.get(CortxProvisioner._solution_index, "cluster>name")
+            cluster_name = Conf.get(CortxProvisioner._solution_index, 'cluster>name')
             if cluster_name is None:
                 raise CortxProvisionerError(
                     errno.EINVAL,
                     f'cluster_name property is unspecified for cluster.')
-            cluster_keys = [("id", cluster_id), ("name", cluster_name)]
+            cluster_keys = [('id', cluster_id), ('name', cluster_name)]
             cortx_config_store.set('cluster', cluster_keys)
 
             storage_sets = Conf.get(CortxProvisioner._solution_index, 'cluster>storage_sets')
@@ -97,6 +97,19 @@ class CortxProvisioner:
                 for node in storage_set['nodes']:
                     node_type = node['type']
                     node = dict(node_map[node_type], **node)
+                    components = {}
+                    for component in node.pop('components'):
+                        comp_name = component.get('name')
+                        components.update({
+                            comp_name:  component.get('services')
+                            })
+                    node['components'] = components
+                    if node['type'] == 'storage_node':
+                        cvg_list = node.pop('storage')
+                        node['storage'] = {
+                            'cvg_count': len(cvg_list),
+                            'cvg': cvg_list
+                        }
                     node['storage_set'] = storage_set['name']
                     node['storage_set_count'] = len(storage_sets)
                     node['cluster_id'] = cluster_id

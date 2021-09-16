@@ -45,8 +45,8 @@ class CortxConfig:
         kvs = []
         try:
             # Update configmap keys as per confstore keys.
-            self._cortx_config["common"]["setup_type"] = self._cortx_config["common"].pop(
-                "environment_type")
+            self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
+                'environment_type')
             key_prefix = 'cortx>'
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])

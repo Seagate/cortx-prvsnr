@@ -47,10 +47,9 @@ class CortxCluster:
         """
         self._node_list = node_list
         for node in node_list:
-            CortxCluster._validate(node)
+            self._validate(node)
 
-    @staticmethod
-    def _validate(node: dict):
+    def _validate(self, node: dict):
         """
         validates a give node to have required properties
         Raises exception if there is any entry missing
@@ -86,32 +85,12 @@ class CortxCluster:
         """ Saves cluster information onto the conf store """
 
         kvs = []
-        try:
-            for node in self._node_list:
-                node_id = node.pop('id')
-                components = {}
-                for component in node.pop('components'):
-                    comp_name = component.get('name')
-                    components.update({
-                        comp_name:  component.get('services')
-                        })
-                node['components'] = components
-                if node['type'] == 'storage_node':
-                    cvg_list = node.pop("storage")
-                    node['storage'] = {
-                        'cvg_count': len(cvg_list),
-                        'cvg': cvg_list
-                    }
+        for node in self._node_list:
+            node_id = node.pop('id')
+            key_prefix = f'node>{node_id}'
+            kvs.extend(self._get_kvs(key_prefix, node))
 
-                key_prefix = f'node>{node_id}'
-                kvs.extend(self._get_kvs(key_prefix, node))
-
-            config_store.set_kvs(kvs)
-
-        except KeyError as e:
-            raise CortxProvisionerError(
-                errno.EINVAL,
-                f'Error occurred while adding node information into confstore {e}')
+        config_store.set_kvs(kvs)
 
 
 class CortxStorageSet:
@@ -120,10 +99,9 @@ class CortxStorageSet:
     def __init__(self, storage_sets: list = []):
         self._storage_sets = storage_sets
         for s_set in self._storage_sets:
-            CortxStorageSet._validate(s_set)
+            self._validate(s_set)
 
-    @staticmethod
-    def _validate(s_set: dict):
+    def _validate(self, s_set: dict):
         """
         validates a give storage_sets to have required properties
         Raises exception if there is any entry missing
@@ -154,26 +132,25 @@ class CortxStorageSet:
                     parity: '7'
                     spare: '0'
                 name: storage-set-1
-                nodes: []
         """
         kvs = []
         node_ids = []
         try:
             for storage_set in self._storage_sets:
                 # Fetch node_ids of all nodes.
-                for node in storage_set["nodes"]:
-                    node_ids.append(node["id"])
-                storage_set["nodes"] = node_ids
+                for node in storage_set['nodes']:
+                    node_ids.append(node['id'])
+                storage_set['nodes'] = node_ids
                 # Read sns and dix value from storage_set
-                durability = storage_set["durability"]
+                durability = storage_set['durability']
                 for k, v in durability.items():
-                    res = v.split("+")
+                    res = v.split('+')
                     durability[k] = {
-                        "data": res[0],
-                        "parity": res[1],
-                        "spare": res[2]
+                        'data': res[0],
+                        'parity': res[1],
+                        'spare': res[2]
                     }
-                key_prefix = "cluster>storage_set"
+                key_prefix = 'cluster>storage_set'
                 kvs.extend(CortxCluster()._get_kvs(key_prefix, storage_set))
 
             config_store.set_kvs(kvs)
