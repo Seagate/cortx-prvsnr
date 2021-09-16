@@ -156,5 +156,4 @@ class CortxProvisioner:
                 _, err, rc = cmd_proc.run()
                 if rc != 0:
                     raise CortxProvisionerError(rc, "Unable to execute " \
-                        "%s phase for %s. %s", interface, components[j]['name'], \
-                        err)
+                        "%s phase for %s. %s", interface, comp_name, err)
