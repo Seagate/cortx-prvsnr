@@ -18,10 +18,13 @@
 import sys
 import traceback
 import errno
+import os
+from urllib.parse import urlparse
 
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.cmd_framework import Cmd
+from cortx.utils.log import Log
 
 
 class ConfigCmd(Cmd):
@@ -42,6 +45,16 @@ class ConfigCmd(Cmd):
             help='Solution Config URL')
         parser.add_argument('-o', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
+
+    def validate(self):
+        """ Validate config command args """
+
+        if self._args.action not in ['apply']:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
+
+        path = urlparse(self._args.solution_conf).path
+        if not os.path.exists(path):
+            raise CortxProvisionerError(errno.EINVAL, 'Solution config URL does not exist')
 
     def process(self):
         """ Apply Config """
@@ -65,6 +78,16 @@ class ClusterCmd(Cmd):
         parser.add_argument('action', help='bootstrap')
         parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
 
+    def validate(self):
+        """ Validate cluster command args """
+
+        if self._args.action not in ['bootstrap']:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
+
+        path = urlparse(self._args.cortx_conf).path
+        if not os.path.exists(path):
+            raise CortxProvisionerError(errno.EINVAL, 'CORTX config URL does not exist')
+
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
         if self._args.action == 'bootstrap':
@@ -73,24 +96,28 @@ class ClusterCmd(Cmd):
 
 
 def main():
+    log_path = os.path.join('/var/log/cortx', 'provisioner')
+    Log.init('cortx_setup', log_path, console_output=True)
+
     try:
         # Parse and Process Arguments
         command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', \
             sys.argv[1:])
+        command.validate()
         rc = command.process()
 
     except CortxProvisionerError as e:
-        sys.stderr.write("%s\n\n" % str(e))
-        sys.stderr.write("%s\n" % traceback.format_exc())
+        Log.error('%s' % str(e))
+        Log.error('%s' % traceback.format_exc())
         rc = e.rc
 
     except Exception as e:
-        sys.stderr.write("%s\n\n" % str(e))
-        sys.stderr.write("%s\n" % traceback.format_exc())
+        Log.error('%s' % str(e))
+        Log.error('%s' % traceback.format_exc())
         rc = errno.EINVAL
 
     return rc
 
 
 if __name__ == "__main__":
-  sys.exit(main())
+    sys.exit(main())
