@@ -9,6 +9,7 @@ kubectl create cm solution-config --from-file="$SCRIPT_DIR"/cluster.yaml \
     --from-file="$SCRIPT_DIR"/config.yaml --from-literal "node-id=123" --namespace cortx
 
 #kubectl apply -f "$SCRIPT_DIR"/cortx-cm-machine-id.yml --namespace cortx
+kubectl apply -f "$SCRIPT_DIR"/cortx-secret.yml --namespace cortx
 kubectl apply -f "$SCRIPT_DIR"/cortx-pv-config.yml --namespace cortx
 kubectl apply -f "$SCRIPT_DIR"/cortx-pvc-config.yml --namespace cortx
 kubectl apply -f "$SCRIPT_DIR"/cortx-deployment.yml --namespace cortx
