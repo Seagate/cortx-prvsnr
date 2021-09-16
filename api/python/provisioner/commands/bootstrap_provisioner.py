@@ -156,7 +156,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
             _server_numbers = set()
             for _node in nodes:
-                if _node is not node:
+                if _node is not node or (len(nodes) == 1):
                     _minion_id = _node.minion_id
                     _server_number = _minion_id.split('-')[1]
                     _server_numbers.add(_server_number)
@@ -202,7 +202,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         # TODO IMPROVE EOS-8473 hardcoded
         if len(run_args.nodes) == 1:
             res[run_args.nodes[0].minion_id] = [
-                run_args.salt_master
+                run_args.salt_master if run_args.salt_master
+                else run_args.nodes[0].host
             ]
             return res
 
@@ -220,7 +221,8 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     # note: any node may be a salt-master
                     if _node.minion_id in salt_masters:
                         res[node.minion_id].append(
-                            salt_masters[_node.minion_id]
+                            run_args.nodes[0].host if _node is node
+                            else salt_masters[_node.minion_id]
                         )
         else:
             res = {
