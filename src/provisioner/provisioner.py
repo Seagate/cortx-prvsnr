@@ -124,7 +124,7 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def cluster_bootstrap(node_id: str, cortx_conf_url: str = None):
+    def cluster_bootstrap(cortx_conf_url: str = None):
         """
         Description:
         Configures Cluster Components
@@ -138,6 +138,11 @@ class CortxProvisioner:
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
+
+        node_id = Conf.machine_id
+        if node_id is None:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid node_id: %s', \
+                node_id)
 
         components = cortx_config_store.get(f'node>{node_id}>components')
         num_components = len(components)

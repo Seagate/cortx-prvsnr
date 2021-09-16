@@ -63,14 +63,12 @@ class ClusterCmd(Cmd):
         """ Add Command args for parsing """
 
         parser.add_argument('action', help='bootstrap')
-        parser.add_argument('node_id', help='node_id')
         parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
         if self._args.action == 'bootstrap':
-            CortxProvisioner.cluster_bootstrap(self._args.node_id, \
-                self._args.cortx_conf)
+            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
         return 0
 
 
