@@ -101,11 +101,11 @@ class CortxProvisioner:
                 services = cortx_config_store.get(
                     f'node>{node_id}>components[{j}]>services')
                 service = 'all' if services is None else ','.join(services)
-                print(f"{components[j]['name']}_setup --config" \
-                    f"{CortxProvisioner._cortx_conf_url} {interface}"\
+                print(f"{components[j]['name']}_setup --config " \
+                    f"{CortxProvisioner._cortx_conf_url} {interface} "\
                     f"--services %s" % service)
 
                 # TODO: Enable this code
-                rc, output = SimpleProcess(f"{components[j]['name']}_setup" \
-                    f"--config {CortxProvisioner._cortx_conf_url} {interface}" \
+                rc, output = SimpleProcess(f"{components[j]['name']}_setup " \
+                    f"--config {CortxProvisioner._cortx_conf_url} {interface} " \
                     f"--services %s" % service)
