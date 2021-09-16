@@ -17,6 +17,7 @@ import errno
 # TODO: Uncomment when mini provisioners are enabled
 # from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
+from cortx.utils.security.cipher import Cipher
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.config import CortxConfig
@@ -49,6 +50,23 @@ class CortxProvisioner:
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
+        # source code for encrypting and storing secret key
+        cluster_id = ConfigStore.get('cluster>id')
+        if cluster_id is None:
+            raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
+        encryption_key = Cipher.gen_key(cluster_id, 'cluster')
+        for key in Conf.get_keys(CortxProvisioner._solution_index):
+            # TODO: use /etc/cortx/solution/secret to confirm secret 
+            if key.endswith('secret'):
+                secret_val = Conf.get(CortxProvisioner._solution_index, key)
+                val = None
+                with open(os.path.join('/etc/cortx/solution/secret', secret_val)) as f:
+                    val = f.read()
+                if val is None:
+                    raise CortxProvisionerError(errno.EINVAL,
+                        'Could not find the Secret in /etc/cortx/solution/secret')
+                val = Cipher.encrypt(encryption_key, val.encode('ascii'))
+                Conf.set(CortxProvisioner._solution_index, key, val)
 
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.config_apply_cluster(cortx_config_store)
