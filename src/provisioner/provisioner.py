@@ -17,6 +17,7 @@ from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.cluster import CortxCluster
+from cortx.provisioner.error import CortxProvisionerError
 
 
 class CortxProvisioner:
@@ -101,11 +102,10 @@ class CortxProvisioner:
                 services = cortx_config_store.get(
                     f'node>{node_id}>components[{j}]>services')
                 service = 'all' if services is None else ','.join(services)
-                print(f"{components[j]['name']}_setup --config " \
-                    f"{CortxProvisioner._cortx_conf_url} {interface} "\
-                    f"--services %s" % service)
-
-                # TODO: Enable this code
-                rc, output = SimpleProcess(f"{components[j]['name']}_setup " \
+                cmd_proc = SimpleProcess(f"{components[j]['name']}_setup " \
                     f"--config {CortxProvisioner._cortx_conf_url} {interface} " \
                     f"--services %s" % service)
+                _, err, rc = cmd_proc.run()
+                if rc != 0:
+                    raise CortxProvisionerError(rc, "Unable to execute " \
+                        "%s phase for %s", interface, components[j]['name'])
