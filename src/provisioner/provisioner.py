@@ -44,7 +44,7 @@ class CortxProvisioner:
         [IN]  Solution Config URL
         [OUT] CORTX Config URL
         """
-        Log.info('Applying config %s' % solution_conf_url)
+        PLog.info('Applying config %s' % solution_conf_url)
         Conf.load(CortxProvisioner._solution_index, solution_conf_url)
 
         if cortx_conf_url is None:
@@ -74,7 +74,7 @@ class CortxProvisioner:
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             CortxProvisioner.config_apply_cortx(cortx_config_store)
 
-        Log.debug('Successfully applied %s' % solution_conf_url)
+        PLog.debug('Successfully applied %s' % solution_conf_url)
 
     @staticmethod
     def config_apply_cortx(cortx_config_store):
@@ -164,11 +164,11 @@ class CortxProvisioner:
 
         node_name = cortx_config_store.get(f'node>{node_id}>name')
 
-        Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
+        PLog.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
 
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
-            Log.warn(f"No component specified for {node_name} in CORTX config")
+            PLog.warn(f"No component specified for {node_name} in CORTX config")
 
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
         for interface in mp_interfaces:
@@ -185,4 +185,4 @@ class CortxProvisioner:
                     raise CortxProvisionerError(rc, "Unable to execute " \
                         "%s phase for %s. %s", interface, comp_name, err)
 
-        Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
+        PLog.info(f'Finished cluster bootstrap on {node_id}:{node_name}')

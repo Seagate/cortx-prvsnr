@@ -1,3 +1,5 @@
+#!/bin/env python3
+
 # CORTX Python common library.
 # Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 # This program is free software: you can redistribute it and/or modify
@@ -13,6 +15,30 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from cortx.provisioner.provisioner import CortxProvisioner
-from cortx.provisioner.error import CortxProvisionerError
-from cortx.provisioner import PLog
+import os
+from cortx.utils.log import Log
+
+
+class CortxProvisionerLog(Log):
+    """ Cortx provisioner log """
+
+    logger = None
+
+    @staticmethod
+    def init(service_name, log_path=None, console_output=False):
+        """ Initialize log """
+
+        if not log_path:
+            log_path = os.path.join('/var/log/cortx', 'provisioner')
+
+        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+        if log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            log_level = 'INFO'
+
+        Log.init(service_name, log_path, level=log_level,
+                 console_output=console_output)
+        CortxProvisionerLog.logger = Log.logger
+
+
+if not CortxProvisionerLog.logger:
+    CortxProvisionerLog.init("cortx_setup", console_output=True)

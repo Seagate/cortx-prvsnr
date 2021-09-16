@@ -24,12 +24,7 @@ from urllib.parse import urlparse
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.cmd_framework import Cmd
-from cortx.utils.log import Log
-
-# Initialize log
-log_path = os.path.join('/var/log/cortx', 'provisioner')
-log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-Log.init('cortx_setup', log_path, level=log_level, console_output=True)
+from cortx.provisioner import PLog
 
 
 class ConfigCmd(Cmd):
@@ -113,13 +108,13 @@ def main():
         rc = command.process()
 
     except CortxProvisionerError as e:
-        Log.error('%s' % str(e))
-        Log.error('%s' % traceback.format_exc())
+        PLog.error('%s' % str(e))
+        PLog.error('%s' % traceback.format_exc())
         rc = e.rc
 
     except Exception as e:
-        Log.error('%s' % str(e))
-        Log.error('%s' % traceback.format_exc())
+        PLog.error('%s' % str(e))
+        PLog.error('%s' % traceback.format_exc())
         rc = errno.EINVAL
 
     return rc
