@@ -43,16 +43,16 @@ cluster:
         sns: 8+7+0
         dix: 1+7+0
       nodes:
-        - name: pod-1
-          id: 1
+        - name: podnode-0
+          id: 1111
           hostname: pod-1.colo.seagate.com
           type: storage_node
-        - name: pod-2
-          id: 2
+        - name: podnode-1
+          id: 2222
           hostname: pod-2.colo.seagate.com
           type: control_node
-        - name: pod-*          # TBD: Future Optimization
-          id: 3
+        - name: podnode-2          # TBD: Future Optimization
+          id: 3333
           hostname: pod-*.colo.seagate.com
           type: storage_node
           index: 0-14
