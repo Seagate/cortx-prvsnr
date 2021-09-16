@@ -16,6 +16,8 @@
 import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
+from cortx.utils.log import Log
+
 
 class CortxCluster:
     """ Represents CORTX Cluster """
@@ -58,12 +60,17 @@ class CortxCluster:
         node_name = node.get('name')
         if node_name is None:
             raise CortxProvisionerError(errno.EINVAL, 'Missing name for the node entry')
+
+        Log.debug("Validating node '%s' properties" % node_name)
+
         required_keys_for_node = ['id', 'components', 'storage_set', 'hostname']
         for k in required_keys_for_node:
             if node.get(k) is None:
                 raise CortxProvisionerError(
                     errno.EINVAL,
                     f"'{k}' property is unspecified for node {node_name}")
+
+        Log.debug('Successfully validated node properties')
 
     def add_node(self, node: dict):
         self._validate(node)
@@ -110,12 +117,17 @@ class CortxStorageSet:
         if s_set_name is None:
             raise CortxProvisionerError(
                 errno.EINVAL, 'Missing name for the storage_set entry')
+
+        Log.debug("Validating storage set '%s' properties" % s_set_name)
+
         required_keys_for_storage_set = ['durability', 'nodes']
         for k in required_keys_for_storage_set:
             if s_set.get(k) is None:
                 raise VError(
                     errno.EINVAL,
                     f"'{k}' property is unspecified for storage_set {s_set_name}.")
+
+        Log.debug('Successfully validated storage set properties')
 
     def save(self, config_store):
         """ Converts storage_set confstore keys

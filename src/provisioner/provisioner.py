@@ -74,7 +74,7 @@ class CortxProvisioner:
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             CortxProvisioner.config_apply_cortx(cortx_config_store)
 
-        CortxProvisionerV.validate_config("common", cortx_conf_url)
+        Log.debug('Successfully applied %s' % solution_conf_url)
 
     @staticmethod
     def config_apply_cortx(cortx_config_store):
@@ -163,6 +163,7 @@ class CortxProvisioner:
                 errno.EINVAL, f"node id '{node_id}' not found in cortx config.")
 
         node_name = cortx_config_store.get(f'node>{node_id}>name')
+
         Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
 
         components = cortx_config_store.get(f'node>{node_id}>components')
@@ -183,3 +184,5 @@ class CortxProvisioner:
                 if rc != 0:
                     raise CortxProvisionerError(rc, "Unable to execute " \
                         "%s phase for %s. %s", interface, comp_name, err)
+
+        Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
