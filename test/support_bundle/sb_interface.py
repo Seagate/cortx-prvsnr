@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import subprocess
+import shlex
 import tarfile
 import time
 
@@ -9,6 +10,7 @@ from sb_config import PV_CLAIM_LIST, SB_FILE_PATH, SB_TAG
 
 
 class SSPLBundleError(Exception):
+
     """Generic Exception with error code and output."""
 
     def __init__(self, rc, message, *args):
@@ -20,8 +22,14 @@ class SSPLBundleError(Exception):
         """Format error string."""
         print("SSPLBundleError(%d): %s" %(self._rc, self._desc))
 
-class SupportBundle:
+class SupportBundleInterface:
 
+    """ SupportBundle interface to generate a support bundle of cortx logs,
+        in a containerised env.
+
+        For example: python3 sb_interface.py --generate
+
+    """
     KUBECTL = "kubectl"
     def validate(self):
         self.check_shared_storageclass()
@@ -42,27 +50,28 @@ class SupportBundle:
             msg = "Cortx Logs tarfile is not generated at specified path."
             raise SSPLBundleError(1, msg)
 
-    def untar_cortx_bundle(self):
+    @staticmethod
+    def untar_cortx_bundle():
         if os.path.exists(SB_FILE_PATH):
             tar = tarfile.open(SB_FILE_PATH, "r:gz")
             tar.extractall()
             tar.close()
 
     def check_shared_storageclass(self):
+        cmd = f"{self.KUBECTL} get pvc"
+        response, err, _ = self._run_command(cmd)
+        if err:
+            msg = f"Failed in Validating PV-claim. ERROR:{err}"
+            raise SSPLBundleError(1, msg)
         for pvc in PV_CLAIM_LIST:
-            cmd = f"{self.KUBECTL} get pvc | grep {pvc}"
-            response, err, rc = self._run_command(cmd)
-            if err:
-                msg = f"Failed in Validating PV-claim:{pvc}. ERROR:{err}" 
-                raise SSPLBundleError(1, msg)
-            if "Bound" not in response:
-                msg = f"PV-claim:{pvc} status is not Bound."
+            if pvc and "Bound" not in response:
+                msg = f"Please check PV-Claim:{pvc} exists and in 'Bound' state."
                 raise SSPLBundleError(1, msg)
 
     def check_sb_image(self):
-        cmd = "docker images | grep 'support_bundle' "
+        cmd = "docker images"
         response, _, _ = self._run_command(cmd)
-        if not response:
+        if "support_bundle" not in response:
             # Support_bundle image not present, build docker image
             cmd = f"docker build -f Dockerfile -t support_bundle:{SB_TAG} ."
             response, err, rc = self._run_command(cmd)
@@ -70,10 +79,11 @@ class SupportBundle:
                 msg = f"Failed to build support-bundle image. ERROR:{err}"
                 raise SSPLBundleError(1, msg)
             else:
-                print("Building Support-bundle Image.")
+                print("==== Building Support-bundle Image. ====")
                 print(response)
 
-    def check_sb_pod_yaml_exists(self):
+    @staticmethod
+    def check_sb_pod_yaml_exists():
         file_path = os.path.abspath("sb-pod.yaml")
         if not os.path.exists(file_path):
             msg = f"support bundle deployment yaml doesn't exist"
@@ -87,11 +97,14 @@ class SupportBundle:
             raise SSPLBundleError(1, msg)
 
     def _run_command(self, command):
-        """Run the command and get the response and error returned"""
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
-        return_code = process.wait()
-        response, error = process.communicate()
-        return response.rstrip('\n'), error.rstrip('\n'), return_code
+        """Run the command and get the response and error returned."""
+        cmd = shlex.split(command) if isinstance(command, str) else command
+        process = subprocess.run(cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, shell=False)
+        output = process.stdout.decode('UTF-8')
+        error = process.stderr.decode('UTF-8')
+        returncode = process.returncode
+        return output, error, returncode
 
     @staticmethod
     def parse_args():
@@ -104,13 +117,14 @@ class SupportBundle:
         return args
 
 def main():
-    args = SupportBundle.parse_args()
+    args = SupportBundleInterface.parse_args()
+    SupportBundleObj = SupportBundleInterface()
     if args.generate:
-        SupportBundle().validate()
-        SupportBundle().process()
-        SupportBundle().cleanup()
+        SupportBundleObj.validate()
+        SupportBundleObj.process()
+        SupportBundleObj.cleanup()
     if args.untar:
-        SupportBundle().untar_cortx_bundle()
+        SupportBundleInterface.untar_cortx_bundle()
 
 
 if __name__ == "__main__":

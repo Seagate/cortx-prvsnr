@@ -2,12 +2,12 @@ cortx-support-bundle-inside-container 📝
 Service to generate a support bundle of Cortx logs in a containerised env.
 ***
 
-## ⚽ Current Functionality:
-  - sb_interface.py provides an interface for user to request the support-bundle generation.
-    it will deploy a pod which will be responsible to generate support-bundle and will write 
-    the tarfile at path: /opt/ using PV & PVC
+## ⚽ Current Functionality
+    - sb_interface.py provides an interface for user to request the support-bundle generation.
+      it will deploy a pod which will be responsible to generate support-bundle and will write 
+      the tarfile at path: /opt/ using PV & PVC
 
-### 💻 Quick Start:
+### 💻 Quick Start
     - Pre Requisites:
       - Docker and Kubernetes is installed.
       - kubernetes or docker cluster is up & running
@@ -38,4 +38,3 @@ Service to generate a support bundle of Cortx logs in a containerised env.
         # output
         # Interface will untar the cortx-logs files
         ```
-
