@@ -51,7 +51,7 @@ class CortxProvisioner:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
         # source code for encrypting and storing secret key
-        cluster_id = ConfigStore.get('cluster>id')
+        cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
         if cluster_id is None:
             raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
         encryption_key = Cipher.gen_key(cluster_id, 'cluster')
