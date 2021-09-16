@@ -17,16 +17,16 @@ Testing Manually
    $ cortx_setup.py config apply -f yaml://`pwd`/cluster.yaml -o yaml:///tmp/mp.conf
 
 2. Run bootstrap command
-   $ cortx_setup.py cluster bootstrap '1' yaml:///tmp/mp.conf
+   $ cortx_setup.py cluster bootstrap -f yaml:///tmp/mp.conf
 
    output will look something like this...
-    motr_setup --config yaml:/etc/cortx/cortx.conf --services io
-    hare_setup --config yaml:/etc/cortx/cortx.conf --services all
-    s3_setup --config yaml:/etc/cortx/cortx.conf --services io,auth,bg_consumer
-    utils_setup --config yaml:/etc/cortx/cortx.conf --services message_bus
-    csm_setup --config yaml:/etc/cortx/cortx.conf --services agent
-    motr_setup --config yaml:/etc/cortx/cortx.conf --services fsm
-    s3_setup --config yaml:/etc/cortx/cortx.conf --services bg_producer
+    motr_setup post_install --config yaml:/etc/cortx/cortx.conf --services io
+    hare_setup post_install --config yaml:/etc/cortx/cortx.conf --services all
+    s3_setup post_install --config yaml:/etc/cortx/cortx.conf --services io,auth,bg_consumer
+    utils_setup post_install --config yaml:/etc/cortx/cortx.conf --services message_bus
+    csm_setup post_install --config yaml:/etc/cortx/cortx.conf --services agent
+    motr_setup post_install --config yaml:/etc/cortx/cortx.conf --services fsm
+    s3_setup post_install --config yaml:/etc/cortx/cortx.conf --services bg_producer
 
 Running the Tests
 

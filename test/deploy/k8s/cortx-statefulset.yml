@@ -51,7 +51,12 @@ spec:
           cat /etc/cortx/solution/cluster.yaml | grep -A 1 `cat /etc/podinfo/name` | grep id | awk {'print $2'} > /etc/machine-id;
           cortx_setup config apply -f yaml:///etc/cortx/solution/config.yaml -o $CORTX_CONF;
           cortx_setup config apply -f yaml:///etc/cortx/solution/cluster.yaml -o $CORTX_CONF;
-          cortx_setup cluster bootstrap '1111' $CORTX_CONF;
+          echo -e "#!/bin/bash\necho $*" > /usr/bin/motr_setup;
+          chmod +x /usr/bin/motr_setup;
+          cp -pf /usr/bin/motr_setup /usr/bin/s3_setup;
+          cp -pf /usr/bin/motr_setup /usr/bin/hare_setup;
+          cp -pf /usr/bin/motr_setup /usr/bin/csm_setup;
+          cortx_setup cluster bootstrap -f $CORTX_CONF;
           ls /etc/cortx;
           cat /etc/cortx/cluster.conf;
           ls -l /etc/cortx/solution;
