@@ -20,7 +20,7 @@ spec:
             claimName: logger-pv-claim
       containers:
         - name: logger
-          image: demo-logger:1.1
+          image: demo-logger:1.2
           volumeMounts:
             - name: logger-storage
-              mountPath: "/var/log/demoLogger"
+              mountPath: "/var/log/cortx/"
