@@ -65,7 +65,6 @@ class CortxProvisioner:
             cipher_key = Cipher.gen_key(cluster_id, 'cluster')
             with open(CIPHER_KEY, 'wb') as cipher_obj:
                 cipher_obj.write(cipher_key)
-            
             CortxProvisioner.config_apply_cluster(cortx_config_store)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
