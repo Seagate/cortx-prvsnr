@@ -221,8 +221,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     # note: any node may be a salt-master
                     if _node.minion_id in salt_masters:
                         res[node.minion_id].append(
-                            run_args.nodes[0].host if _node is node
-                            else salt_masters[_node.minion_id]
+                            salt_masters[_node.minion_id]
                         )
         else:
             res = {
