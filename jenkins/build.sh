@@ -63,5 +63,3 @@ echo $VER > "$BASE_DIR"/VERSION
 cd $BASE_DIR
 
 ./setup.py bdist_rpm --release="$REL"
-
-export CORTX_PROVISIONER_DEBUG_LEVEL="INFO"

@@ -13,6 +13,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+from cortx.provisioner.log import Log
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
-from cortx.provisioner import PLog

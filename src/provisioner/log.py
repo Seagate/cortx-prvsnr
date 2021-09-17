@@ -20,25 +20,28 @@ from cortx.utils.log import Log
 
 
 class CortxProvisionerLog(Log):
-    """ Cortx provisioner log """
+    """ Redirect log message to log file and console using cortx utils logger """
 
     logger = None
 
     @staticmethod
-    def init(service_name, log_path=None, console_output=False):
-        """ Initialize log """
+    def init(service_name, log_path=None, level='INFO', console_output=False):
+        """
+        Initialize and use cortx-utils logger to log message in file and console.
+        If console_output is True, log message will be displayed in console.
+        """
 
         if not log_path:
             log_path = os.path.join('/var/log/cortx', 'provisioner')
 
-        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-        if log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-            log_level = 'INFO'
+        if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            level = 'INFO'
 
-        Log.init(service_name, log_path, level=log_level,
-                 console_output=console_output)
+        Log.init(service_name, log_path, level=level, console_output=console_output)
         CortxProvisionerLog.logger = Log.logger
 
 
 if not CortxProvisionerLog.logger:
-    CortxProvisionerLog.init("cortx_setup", console_output=True)
+
+    log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+    CortxProvisionerLog.init("cortx_setup", level=log_level, console_output=True)

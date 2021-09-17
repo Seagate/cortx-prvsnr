@@ -19,12 +19,11 @@ import sys
 import traceback
 import errno
 import os
-from urllib.parse import urlparse
 
+from cortx.provisioner.log import Log
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.cmd_framework import Cmd
-from cortx.provisioner import PLog
 
 
 class ConfigCmd(Cmd):
@@ -45,6 +44,7 @@ class ConfigCmd(Cmd):
             help='Solution Config URL')
         parser.add_argument('-o', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
+        parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
         """ Validate config command args """
@@ -52,15 +52,16 @@ class ConfigCmd(Cmd):
         if self._args.action not in ['apply']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
-        path = urlparse(self._args.solution_conf).path
-        if not os.path.exists(path):
-            raise CortxProvisionerError(errno.EINVAL,
-                'Solution config URL %s does not exist' % self._args.solution_conf)
+        if self._args.log_level:
+            if self._args.log_level not in \
+                ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+                    raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
+            else:
+                Log.logger.setLevel(self._args.log_level)
 
     def process(self):
         """ Apply Config """
         self._validate()
-
         if self._args.action == 'apply':
             CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
         return 0
@@ -80,6 +81,7 @@ class ClusterCmd(Cmd):
 
         parser.add_argument('action', help='bootstrap')
         parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
+        parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
         """ Validate cluster command args """
@@ -87,10 +89,12 @@ class ClusterCmd(Cmd):
         if self._args.action not in ['bootstrap']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
-        path = urlparse(self._args.cortx_conf).path
-        if not os.path.exists(path):
-            raise CortxProvisionerError(errno.EINVAL,
-                'CORTX config URL %s does not exist' % self._args.cortx_conf)
+        if self._args.log_level:
+            if self._args.log_level not in \
+                ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+                    raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
+            else:
+                Log.logger.setLevel(self._args.log_level)
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
@@ -108,13 +112,13 @@ def main():
         rc = command.process()
 
     except CortxProvisionerError as e:
-        PLog.error('%s' % str(e))
-        PLog.error('%s' % traceback.format_exc())
+        Log.error('%s' % str(e))
+        Log.error('%s' % traceback.format_exc())
         rc = e.rc
 
     except Exception as e:
-        PLog.error('%s' % str(e))
-        PLog.error('%s' % traceback.format_exc())
+        Log.error('%s' % str(e))
+        Log.error('%s' % traceback.format_exc())
         rc = errno.EINVAL
 
     return rc
