@@ -28,17 +28,19 @@ Logging Service to demonstrate the distributed logging with log collector.
 
         ```bash
         git clone https://github.com/Seagate/cortx-prvsnr.git -b kubernetes
-        cd cortx-prvsnr/test/logging-to-pvc-demo
+        cd cortx-prvsnr/experiments/logging/local/
         ```
 
       - Build logger app image.
         - Deault app_name is `demo-logger`,\
           to change it to `cortx-motr` for example, edit the last line in Dockerfile as follows\
           `ENTRYPOINT ["python3", "/opt/demo-logger/logger.py", "--app-name", "cortx-motr"]`
+
         - run the command
           ```bash
           docker build -t <app_name>:<tag> <path to Dockerfile>
           ```
+
         - Update the `image_name:tag` in deployment.yaml as well the default is `demo-logger:1.1`
 
       - Create Persistent Volume
