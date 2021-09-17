@@ -14,6 +14,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 import errno
+import os
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
@@ -22,12 +23,14 @@ from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster,  CortxStorageSet
 
+CIPHER_KEY = '/etc/cipher'
 
 class CortxProvisioner:
     """ CORTX Provosioner """
 
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
+    _secrets_path = "/etc/cortx/solution/secret"
 
     @staticmethod
     def init():
@@ -50,27 +53,37 @@ class CortxProvisioner:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
         # source code for encrypting and storing secret key
-        cluster_id = ConfigStore.get('cluster>id')
-        if cluster_id is None:
-            raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
-        encryption_key = Cipher.gen_key(cluster_id, 'cluster')
-        for key in Conf.get_keys(CortxProvisioner._solution_index):
-            # TODO: use /etc/cortx/solution/secret to confirm secret 
-            if key.endswith('secret'):
-                secret_val = Conf.get(CortxProvisioner._solution_index, key)
-                val = None
-                with open(os.path.join('/etc/cortx/solution/secret', secret_val)) as f:
-                    val = f.read()
-                if val is None:
-                    raise CortxProvisionerError(errno.EINVAL,
-                        'Could not find the Secret in /etc/cortx/solution/secret')
-                val = Cipher.encrypt(encryption_key, val.encode('ascii'))
-                Conf.set(CortxProvisioner._solution_index, key, val)
-
+        cipher_key = None
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
+            # generating encryption key
+            cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
+            if cluster_id is None:
+                cluster_id = ConfigStore.get('cluster>id')
+            if cluster_id is None:
+                raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
+            # TODO: Find a better way to store the encryption key
+            cipher_key = Cipher.gen_key(cluster_id, 'cluster')
+            with open(CIPHER_KEY, 'wb') as cipher_obj:
+                cipher_obj.write(cipher_key)
             CortxProvisioner.config_apply_cluster(cortx_config_store)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+            # TODO: use /etc/cortx/solution/secret to confirm secret 
+            for key in Conf.get_keys(CortxProvisioner._solution_index):
+            # TODO: use /etc/cortx/solution/secret to confirm secret 
+                if key.endswith('secret'):
+                    secret_val = Conf.get(CortxProvisioner._solution_index, key)
+                    val = None
+                    with open(os.path.join(CortxProvisioner._secrets_path, secret_val)) as secret:
+                        val = secret.read()
+                    if val is None:
+                        raise CortxProvisionerError(errno.EINVAL,
+                            f'Could not find the Secret in  {CortxProvisioner._secrets_path}')
+                    with open(CIPHER_KEY, 'rb') as cipher_obj:
+                        cipher_key = cipher_obj.read()
+                    val = Cipher.encrypt(cipher_key, val.encode('ascii'))
+                    Conf.set(CortxProvisioner._solution_index, key, val)
+
             CortxProvisioner.config_apply_cortx(cortx_config_store)
 
 

@@ -49,8 +49,8 @@ spec:
           export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
           CORTX_CONF=yaml:/etc/cortx/cluster.conf;
           cat /etc/cortx/solution/cluster.yaml | grep -A 1 `cat /etc/podinfo/name` | grep id | awk {'print $2'} > /etc/machine-id;
-          cortx_setup config apply -f yaml:///etc/cortx/solution/config.yaml -o $CORTX_CONF;
           cortx_setup config apply -f yaml:///etc/cortx/solution/cluster.yaml -o $CORTX_CONF;
+          cortx_setup config apply -f yaml:///etc/cortx/solution/config.yaml -o $CORTX_CONF;
           echo -e "#!/bin/bash\necho $*" > /usr/bin/motr_setup;
           chmod +x /usr/bin/motr_setup;
           cp -pf /usr/bin/motr_setup /usr/bin/s3_setup;
