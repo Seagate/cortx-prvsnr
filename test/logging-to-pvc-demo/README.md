@@ -5,8 +5,8 @@ Logging Service to demonstrate the distributed logging with log collector.
 
 ## ⚽ Current Functionality
 
-  - logger.py periodically logs the sample logs in /var/log/demo-logger/ directory
-    per container instance which automatically gets copied to the /var/log/demo-logger/
+  - logger.py periodically logs the sample logs in `/var/log/cortx/<app_name>` directory
+    per container instance which automatically gets copied to the same
     directory present on the node using PV and PVC.
 
 ## 🥅 Next Things to Acheive
@@ -31,11 +31,15 @@ Logging Service to demonstrate the distributed logging with log collector.
         cd cortx-prvsnr/test/logging-to-pvc-demo
         ```
 
-      - Build logger app image, version_num/tag of the image and mentioned in the deployment.yaml should be same.
-
-        ```bash
-        docker build -f Dockerfile -t demo-logger:<tag> <path to Dockerfile>
-        ```
+      - Build logger app image.
+        - Deault app_name is `demo-logger`,\
+          to change it to `cortx-motr` for example, edit the last line in Dockerfile as follows\
+          `ENTRYPOINT ["python3", "/opt/demo-logger/logger.py", "--app-name", "cortx-motr"]`
+        - run the command
+          ```bash
+          docker build -t <app_name>:<tag> <path to Dockerfile>
+          ```
+        - Update the `image_name:tag` in deployment.yaml as well the default is `demo-logger:1.1`
 
       - Create Persistent Volume
 
@@ -54,7 +58,6 @@ Logging Service to demonstrate the distributed logging with log collector.
         ```
 
       - Create the deployment
-
         ```bash
         kubectl apply -f deployment.yaml
         # verify Deployment, ReplicaSet & PODS status
@@ -65,5 +68,5 @@ Logging Service to demonstrate the distributed logging with log collector.
       - Check if the logs are generated
 
         ```bash
-        less /var/log/demo-logger/<container_name>.log
+        less /var/log/cortx/<app_name>/<container_name>.log
         ```
