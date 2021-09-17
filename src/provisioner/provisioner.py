@@ -75,11 +75,11 @@ class CortxProvisioner:
                 if key.endswith('secret'):
                     secret_val = Conf.get(CortxProvisioner._solution_index, key)
                     val = None
-                    with open(os.path.join(_secrets_path, secret_val)) as secret:
+                    with open(os.path.join(CortxProvisioner._secrets_path, secret_val)) as secret:
                         val = secret.read()
                     if val is None:
                         raise CortxProvisionerError(errno.EINVAL,
-                            f'Could not find the Secret in  {_secrets_path}')
+                            f'Could not find the Secret in  {CortxProvisioner._secrets_path}')
                     with open(CIPHER_KEY, 'rb') as cipher_obj:
                         cipher_key = cipher_obj.read()
                     val = Cipher.encrypt(cipher_key, val.encode('ascii'))
