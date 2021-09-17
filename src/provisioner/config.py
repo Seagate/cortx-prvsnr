@@ -34,10 +34,23 @@ class CortxConfig:
         """
         required_keys_for_cortx_conf = [
             'external', 'common']
+
         for k in required_keys_for_cortx_conf:
             if cortx_conf.get(k) is None:
                 raise VError(
                     errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
+
+            if k == 'external':
+                required_external_keys = ['kafka', 'openldap', 'consul']
+                for e_key in required_external_keys:
+                    try:
+                        if cortx_conf[k][e_key]['endpoints'] is None:
+                            raise VError(errno.EINVAL,
+                                f"'Endpoint for {e_key}' is unspecified in cortx_config.")
+                    except KeyError as e:
+                        raise CortxProvisionerError(
+                            errno.EINVAL,
+                            f'{str(e)} is unspecified for external in cortx_config.')
 
     def save(self, config_store):
         """ Save cortx-config into confstore """
