@@ -28,6 +28,7 @@ repo_url="file:///mnt/cortx"
 nodejs_tar=
 use_local_repo=false
 iso_downloaded_path="/opt/isos"
+MANAGEMENT_IP="$(ip -4 addr show ens32 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')"
 
 function trap_handler {
     exit_code=$?
@@ -260,13 +261,13 @@ config_local_salt()
 setup_repos_hosted()
 {
     repo=$1
-    for repo_file in $(grep -lE "cortx-storage.colo.seagate.com|file://" /etc/yum.repos.d/*.repo); do
+    for repo_file in $(grep -lE "cortx-storage.colo.seagate.com|baseurl=file:///" /etc/yum.repos.d/*.repo); do
         echo "DEBUG: Removing old repo file: $repo_file" >> "${LOG_FILE}"
         rm -f "$repo_file"
     done
 
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
-    yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
+    yum-config-manager --add-repo --nogpgcheck "${repo}/3rd_party/" >> "${LOG_FILE}"
     echo "Configuring the repository: ${repo}/cortx_iso" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/cortx_iso/" >> "${LOG_FILE}"
 
@@ -279,7 +280,7 @@ setup_repos_hosted()
 [global]
 timeout: 60
 index-url: $repo_url/python_deps/
-trusted-host: cortx-storage.colo.seagate.com
+trusted-host: '${MANAGEMENT_IP}'
 EOL
     echo "DEBUG: generated pip3 conf file" >> "${LOG_FILE}"
     cat /etc/pip.conf >> "${LOG_FILE}"
