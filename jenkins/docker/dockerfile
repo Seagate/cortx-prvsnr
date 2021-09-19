@@ -17,6 +17,10 @@ RUN yum install --nogpgcheck -y cortx-py-utils
 RUN yum install -y python36-dbus --nogpgcheck
 RUN pip3 install docutils==0.15.2
 RUN pip3 install urllib3==1.25.6
+RUN yum install epel-release -y --nogpgcheck
+RUN yum update -y --nogpgcheck
+RUN yum install jq -y --nogpgcheck
+RUN pip3 install yq
 # CORTX Provisioner
 COPY ./tmp/*.rpm /tmp/
 RUN rpm -ivh ./tmp/$RPM

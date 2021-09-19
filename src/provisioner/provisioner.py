@@ -72,7 +72,7 @@ class CortxProvisioner:
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             for key in Conf.get_keys(CortxProvisioner._solution_index):
-                # using /etc/cortx/solution/secret to confirm secret 
+                # using /etc/cortx/solution/secret to confirm secret
                 if key.endswith('secret'):
                     secret_val = Conf.get(CortxProvisioner._solution_index, key)
                     val = None
