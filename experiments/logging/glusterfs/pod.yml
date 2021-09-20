@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: s3server
+spec:
+  containers:
+  - name: s3server
+    image: s3server
+    volumeMounts:
+    # mountPath will come form confstore
+    - mountPath: "/share/var/log/cortx"
+      name: logsvol
+    imagePullPolicy : IfNotPresent
+    env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+  volumes:
+  - name: logsvol
+    persistentVolumeClaim:
+      claimName: glusterfs-pvc
