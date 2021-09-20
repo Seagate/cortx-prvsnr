@@ -9,7 +9,7 @@ Logging Service to demonstrate the distributed logging with log collector.
     per container instance which automatically gets copied to the same
     directory present on the node using PV and PVC.
 
-## 🥅 Next Things to Acheive
+## 🥅 Next Things to Achieve
 
   - Implement Log rotation.
   - Implement a log collector to gather all the log and bundle them.
