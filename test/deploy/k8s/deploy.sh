@@ -16,8 +16,8 @@ sleep 10
 kubectl get statefulset podnode --namespace cortx
 kubectl get pods --namespace cortx
 pods=$(kubectl get pods --namespace cortx | grep podnode | awk '{print $1;}')
-for pod in "$pods"
+for pod in $pods
 do
     echo "---- $pod ----"
-    kubectl logs "$pod" --namespace cortx
+    kubectl logs $pod --namespace cortx
 done
