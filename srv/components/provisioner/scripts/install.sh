@@ -280,7 +280,7 @@ setup_repos_hosted()
 [global]
 timeout: 60
 index-url: $repo_url/python_deps/
-trusted-host: '${LOCAL_IP}'
+trusted-host: cortx-storage.colo.seagate.com
 EOL
     echo "DEBUG: generated pip3 conf file" >> "${LOG_FILE}"
     cat /etc/pip.conf >> "${LOG_FILE}"
