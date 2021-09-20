@@ -60,18 +60,19 @@ class CortxProvisioner:
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
             if cluster_id is None:
                 cluster_id = ConfigStore.get('cluster>id')
-            if cluster_id is None:
-                raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
+                if cluster_id is None:
+                    raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
             # TODO: Find a better way to store the encryption key
             cipher_key = Cipher.gen_key(cluster_id, 'cluster')
+            if cipher_key is None:
+                raise CortxProvisionerError(errno.EINVAL, 'Cipher key not specified')
             with open(CIPHER_KEY, 'wb') as cipher_obj:
                 cipher_obj.write(cipher_key)
             CortxProvisioner.config_apply_cluster(cortx_config_store)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
-            # TODO: use /etc/cortx/solution/secret to confirm secret 
             for key in Conf.get_keys(CortxProvisioner._solution_index):
-            # TODO: use /etc/cortx/solution/secret to confirm secret 
+                # using /etc/cortx/solution/secret to confirm secret
                 if key.endswith('secret'):
                     secret_val = Conf.get(CortxProvisioner._solution_index, key)
                     val = None
@@ -82,6 +83,8 @@ class CortxProvisioner:
                             f'Could not find the Secret in  {CortxProvisioner._secrets_path}')
                     with open(CIPHER_KEY, 'rb') as cipher_obj:
                         cipher_key = cipher_obj.read()
+                    if cipher_key is None:
+                        raise CortxProvisionerError(errno.EINVAL, 'Cipher key not specified')
                     val = Cipher.encrypt(cipher_key, val.encode('ascii'))
                     Conf.set(CortxProvisioner._solution_index, key, val)
 

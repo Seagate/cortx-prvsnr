@@ -1,6 +1,6 @@
 cluster:
   name: cortx-cluster
-  id: 'C01'
+  id: 3e765bbb-8425-4e7f-8ee3-487e65ff2c8c
   node_types:
     - name: storage_node
       components:
@@ -44,15 +44,10 @@ cluster:
         dix: 1+7+0
       nodes:
         - name: podnode-0
-          id: 1111
-          hostname: pod-1.colo.seagate.com
+          id: 285d6133-3645-46b7-96a7-56917cd3cb43
+          hostname: storagenode.colo.seagate.com
           type: storage_node
         - name: podnode-1
-          id: 2222
-          hostname: pod-2.colo.seagate.com
+          id: 0d213319-dbc5-463f-af39-c21d2501ea3e
+          hostname: controlnode.colo.seagate.com
           type: control_node
-        - name: podnode-2          # TBD: Future Optimization
-          id: 3333
-          hostname: pod-*.colo.seagate.com
-          type: storage_node
-          index: 0-14

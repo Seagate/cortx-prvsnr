@@ -25,7 +25,7 @@ spec:
       - name: cortx-secret
         secret:
           secretName: cortx-secret
-      - name: podinfo
+      - name: node-info
         downwardAPI:
           items:
           - path: "name"
@@ -42,21 +42,41 @@ spec:
       - name: cortx-provisioner
         image: cortx-provisioner:latest
         imagePullPolicy: IfNotPresent
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_INFO
+          value: "/etc/cortx/nodeinfo.json"
+        - name: NODE_ID
+          value: "/etc/machine-id"
+        - name: CONFIG_INFO
+          value: "yaml:///etc/cortx/solution/config.yaml"
+        - name: CLUSTER_INFO
+          value: "yaml:///etc/cortx/solution/cluster.yaml"
+        - name: CORTX_CONFIG
+          value: "yaml:///etc/cortx/cluster.conf"
         args:
         - /bin/sh
         - -c
         - set -x;
           export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
-          CORTX_CONF=yaml:/etc/cortx/cluster.conf;
-          cat /etc/cortx/solution/cluster.yaml | grep -A 1 `cat /etc/podinfo/name` | grep id | awk {'print $2'} > /etc/machine-id;
-          cortx_setup config apply -f yaml:///etc/cortx/solution/cluster.yaml -o $CORTX_CONF;
-          cortx_setup config apply -f yaml:///etc/cortx/solution/config.yaml -o $CORTX_CONF;
+          yq -r .cluster.storage_sets[0].nodes[] /etc/cortx/solution/cluster.yaml | jq '. | select (.name == env.NODE_NAME)' > $NODE_INFO;
+          echo "Node INFO:";
+          cat $NODE_INFO;
+          jq -r .id $NODE_INFO > $NODE_ID;
+          echo "Node ID:";
+          cat $NODE_ID;
+          cortx_setup config apply -f $CLUSTER_INFO -o $CORTX_CONFIG;
+          cortx_setup config apply -f $CONFIG_INFO -o $CORTX_CONFIG;
           echo -e "#!/bin/bash\necho $*" > /usr/bin/motr_setup;
           chmod +x /usr/bin/motr_setup;
           cp -pf /usr/bin/motr_setup /usr/bin/s3_setup;
           cp -pf /usr/bin/motr_setup /usr/bin/hare_setup;
           cp -pf /usr/bin/motr_setup /usr/bin/csm_setup;
-          cortx_setup cluster bootstrap -f $CORTX_CONF;
+          cp -pf /usr/bin/motr_setup /usr/bin/utils_setup;
+          cortx_setup cluster bootstrap -f  $CORTX_CONFIG;
           ls /etc/cortx;
           cat /etc/cortx/cluster.conf;
           ls -l /etc/cortx/solution;
@@ -66,7 +86,7 @@ spec:
           mountPath: /etc/cortx/solution
         - name: cortx-config
           mountPath: /etc/cortx
-        - name: podinfo
-          mountPath: /etc/podinfo
+        - name: node-info
+          mountPath: /etc/cortx/solution/node
         - name: cortx-secret
           mountPath: /etc/cortx/solution/secret
