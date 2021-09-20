@@ -124,13 +124,6 @@ class CortxProvisioner:
                 for node in storage_set['nodes']:
                     node_type = node['type']
                     node = dict(node_map[node_type], **node)
-                    components = {}
-                    for component in node.pop('components'):
-                        comp_name = component.get('name')
-                        components.update({
-                            comp_name:  component.get('services')
-                            })
-                    node['components'] = components
                     if node['type'] == 'storage_node':
                         cvg_list = node.pop('storage')
                         node['storage'] = {
@@ -183,20 +176,20 @@ class CortxProvisioner:
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
-
+        num_components = len(components)
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
         for interface in mp_interfaces:
-            for comp_name in components.keys():
+            for comp_idx in range(0, num_components):
                 services = cortx_config_store.get(
-                    f'node>{node_id}>components>{comp_name}>services')
+                    f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
-                cmd = (f"{comp_name}_setup {interface} --config {cortx_conf_url} "
-                       f"--services {service}")
+                cmd = (f"{components[comp_idx]['name']}_setup {interface} --config "
+                       f"{cortx_conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
                 if rc != 0:
                     raise CortxProvisionerError(rc, "Unable to execute " \
-                        "%s phase for %s. %s", interface, comp_name, err)
+                        "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
