@@ -28,6 +28,7 @@ repo_url="file:///mnt/cortx"
 nodejs_tar=
 use_local_repo=false
 iso_downloaded_path="/opt/isos"
+export LOCAL_IP=`ip -o addr | grep -v -w lo |awk '{print $4}' |head -1 |cut -c -14`
 
 function trap_handler {
     exit_code=$?
@@ -279,7 +280,7 @@ setup_repos_hosted()
 [global]
 timeout: 60
 index-url: $repo_url/python_deps/
-trusted-host: 127.0.0.1
+trusted-host: '${LOCAL_IP}'
 EOL
     echo "DEBUG: generated pip3 conf file" >> "${LOG_FILE}"
     cat /etc/pip.conf >> "${LOG_FILE}"
