@@ -179,17 +179,17 @@ class CortxProvisioner:
         num_components = len(components)
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
         for interface in mp_interfaces:
-            for j in range(0, num_components):
+            for comp_idx in range(0, num_components):
                 services = cortx_config_store.get(
-                    f'node>{node_id}>components[{j}]>services')
+                    f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
-                cmd = (f"{components[j]['name']}_setup {interface} --config "
+                cmd = (f"{components[comp_idx]['name']}_setup {interface} --config "
                        f"{cortx_conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
                 if rc != 0:
                     raise CortxProvisionerError(rc, "Unable to execute " \
-                        "%s phase for %s. %s", interface, comp_name, err)
+                        "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
