@@ -267,7 +267,7 @@ setup_repos_hosted()
     done
 
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
-    yum-config-manager --add-repo --nogpgcheck "${repo}/3rd_party/" >> "${LOG_FILE}"
+    yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
     echo "Configuring the repository: ${repo}/cortx_iso" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/cortx_iso/" >> "${LOG_FILE}"
 
