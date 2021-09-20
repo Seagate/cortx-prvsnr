@@ -181,7 +181,7 @@ class CortxProvisioner:
         for interface in mp_interfaces:
             for j in range(0, num_components):
                 services = cortx_config_store.get(
-                    f'node>{node_id}>components>components[{j}]>services')
+                    f'node>{node_id}>components[{j}]>services')
                 service = 'all' if services is None else ','.join(services)
                 cmd = (f"{components[j]['name']}_setup {interface} --config "
                        f"{cortx_conf_url} --services {service}")
