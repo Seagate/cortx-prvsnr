@@ -54,7 +54,7 @@ def get_install_requirements() -> list:
 def get_conf_files() -> list:
     """ returns list of conf files """
 
-    return glob.glob('conf/*')
+    return glob.glob('conf/*.yaml*')
 
 def get_requirements_files() -> list:
     """ Returns requirements file """
@@ -62,6 +62,10 @@ def get_requirements_files() -> list:
     if os.path.exists('requirements.txt'):
       return ['requirements.txt']
     return []
+
+def get_secret_files() -> list:
+    """Returns secret files"""
+    return glob.glob('conf/secret/*')
 
 setup(name='cortx-provisioner',
     version=get_version(),
@@ -84,7 +88,8 @@ setup(name='cortx-provisioner',
     },
     data_files=[
         ('/opt/seagate/cortx/provisioner/conf', get_conf_files()),
-        ('/opt/seagate/cortx/provisioner/conf', get_requirements_files())
+        ('/opt/seagate/cortx/provisioner/conf', get_requirements_files()),
+        ('/etc/cortx/solution/secret/', get_secret_files())
     ],
     long_description=get_description(),
     zip_safe=False,
