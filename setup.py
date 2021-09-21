@@ -54,7 +54,7 @@ def get_install_requirements() -> list:
 def get_conf_files() -> list:
     """ returns list of conf files """
 
-    return glob.glob('conf/*(.)')
+    return glob.glob('conf/*.yaml*')
 
 def get_requirements_files() -> list:
     """ Returns requirements file """
