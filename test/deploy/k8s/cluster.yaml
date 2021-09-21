@@ -43,11 +43,19 @@ cluster:
         sns: 8+7+0
         dix: 1+7+0
       nodes:
-        - name: podnode-0
+        - name: control_node-0
           id: 285d6133-3645-46b7-96a7-56917cd3cb43
-          hostname: storagenode.colo.seagate.com
-          type: storage_node
-        - name: podnode-1
-          id: 0d213319-dbc5-463f-af39-c21d2501ea3e
           hostname: controlnode.colo.seagate.com
           type: control_node
+        - name: storage_node-0
+          id: 0d213319-dbc5-463f-af39-c21d2501ea3e
+          hostname: storagenode1.colo.seagate.com
+          type: storage_node
+        - name: storage_node-1
+          id: ew733872-des4-283h-af39-c21d2501ea3e
+          hostname: storagenode2.colo.seagate.com
+          type: storage_node
+        - name: storage_node-2
+          id: af733872-des4-283h-af39-c21d2501ea3e
+          hostname: storagenode3.colo.seagate.com
+          type: storage_node
