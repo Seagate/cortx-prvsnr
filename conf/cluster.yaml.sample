@@ -18,7 +18,7 @@ cluster:
             - message_bus
       storage:
         - name: cvg-01
-          type: cas       # io (default), cas
+          type: ios       # ios (default), cas
           devices:
             log: /dev/sdh           # 4G
             meta0: /dev/sdj         # 1M
