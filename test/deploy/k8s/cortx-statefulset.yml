@@ -40,7 +40,7 @@ spec:
                 app: cortx-provisioner
       containers:
       - name: cortx-provisioner
-        image: cortx-provisioner:latest
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME

@@ -1,5 +1,6 @@
 #!/bin/bash -x
-
+ARG=$2
+replicas='echo $ARG | tr -d -c 0-9'
 SCRIPT_DIR=$(dirname $0)
 "$SCRIPT_DIR"/destroy.sh
 kubectl create namespace cortx
