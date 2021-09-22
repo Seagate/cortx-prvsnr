@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: storage_node
+  name: storagenode
   labels:
-    app: cortx-provisioner
+    app: storagenode
 spec:
-  serviceName: "cortx-provisioner"
+  serviceName: "storageservice"
   replicas: 3
   selector:
     matchLabels:
-      app: cortx-provisioner
+      app: storagenode
   template:
     metadata:
       labels:
-        app: cortx-provisioner
+        app: storagenode
     spec:
       volumes:
       - name: cortx-config
@@ -37,10 +37,12 @@ spec:
           - topologyKey: kubernetes.io/hostname
             labelSelector:
               matchLabels:
-                app: cortx-provisioner
+                app: storagenode
+      setHostnameAsFQDN: true
+      dnsPolicy: ClusterFirst
       containers:
-      - name: cortx-provisioner
-        image: ghcr.io/seagate/cortx-all:2.0.0-157-custom-ci
+      - name: storage-provisioner
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
