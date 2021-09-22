@@ -2,31 +2,31 @@ cortx:
   external:
     kafka:
       endpoints:
-        - kafka-server1.cortx-cluster.lyve-cloud.com
-        - kafka-server2.cortx-cluster.lyve-cloud.com
+        - kafka-server1.cortx-cluster.com
+        - kafka-server2.cortx-cluster.com
       user: admin
-      secret: gAAAAABf
+      secret: kafka-secret
     openldap:
       endpoints:
-        - oldap-server1.cortx-cluster.lyve-cloud.com
+        - oldap-server1.cortx-cluster.com
       servers:
-        - oldap-server1.cortx-cluster.lyve-cloud.com
-        - oldap-server2.cortx-cluster.lyve-cloud.com
-        - oldap-server3.cortx-cluster.lyve-cloud.com
+        - oldap-server1.cortx-cluster.com
+        - oldap-server2.cortx-cluster.com
+        - oldap-server3.cortx-cluster.com
       admin: admin
-      secret: gAAAAABf
+      secret: openldap-secret
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - consul-server1.cortx-cluster.lyve-cloud.com
+        - consul-server1.cortx-cluster.com
       admin: admin
-      secret: gAAAAABf
+      secret: consul-secret
   common:
     product_release: LC
     environment_type: K8
     service:
       admin: admin
-      secret: gAAAAABf
+      secret: common-secret
     storage:
       shared: /share/var/data/cortx
       log: /share/var/log/cortx
@@ -61,9 +61,9 @@ cortx:
       - tcp://hax.seagate.com:28000
   csm:
     auth_admin: admin
-    auth_secret: gAAAAABf
+    auth_secret: auth-secret
     mgmt_admin: cortxadmin
-    mgmt_secret: gAAAAABf
+    mgmt_secret: mgmt-secret
     email_address: cortx@seagate.com
     agent:
       endpoints:
