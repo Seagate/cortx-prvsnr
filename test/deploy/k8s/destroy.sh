@@ -1,5 +1,8 @@
 #!/bin/bash -x
 
+kubectl delete -f ./cortx-headless-service.yml --namespace cortx
+kubectl delete -f ./cortx-controlnode-service.yml --namespace cortx
+kubectl delete -f ./cortx-storagenode-service.yml --namespace cortx
 kubectl delete -f ./cortx-controlnode-statefulset.yml --namespace cortx
 kubectl delete -f ./cortx-storagenode-statefulset.yml --namespace cortx
 kubectl delete pvc cortx-config-pvc --namespace cortx

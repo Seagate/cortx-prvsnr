@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: control_node
+  name: controlnode
   labels:
-    app: cortx-control-node
+    app: controlnode
 spec:
-  serviceName: "cortx-control-node"
+  serviceName: "controlservice"
   replicas: 1
   selector:
     matchLabels:
-      app: cortx-control-node
+      app: controlnode
   template:
     metadata:
       labels:
-        app: cortx-control-node
+        app: controlnode
     spec:
       volumes:
       - name: cortx-config
@@ -31,9 +31,11 @@ spec:
           - path: "name"
             fieldRef:
               fieldPath: metadata.name
+      setHostnameAsFQDN: true
+      dnsPolicy: ClusterFirst
       containers:
       - name: cortx-control-node
-        image: ghcr.io/seagate/cortx-all:2.0.0-157-custom-ci
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
