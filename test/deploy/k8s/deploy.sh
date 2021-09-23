@@ -1,10 +1,6 @@
 #!/bin/bash -x
 set -eu
-
 SCRIPT_DIR=$(dirname $0)
-
-#sed -ri 's/^(\s*)(replicas\s*:\s.*\s*$)/\1replicas: '"$replicas_count"'/' "$SCRIPT_DIR"/cortx-storagenode-statefulset.yml
-
 "$SCRIPT_DIR"/destroy.sh || true
 kubectl create namespace cortx
 kubectl create cm solution-config --from-file="$SCRIPT_DIR"/cluster.yaml \
