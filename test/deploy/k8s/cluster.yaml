@@ -45,17 +45,17 @@ cluster:
       nodes:
         - name: controlnode-0
           id: 285d6133-3645-46b7-96a7-56917cd3cb43
-          hostname: controlnode.colo.seagate.com
+          hostname: controlnode-0.controlservice.cortx.svc.cluster.local
           type: control_node
         - name: storagenode-0
           id: 0d213319-dbc5-463f-af39-c21d2501ea3e
-          hostname: storagenode1.colo.seagate.com
+          hostname: storagenode-0.storageservice.cortx.svc.cluster.local
           type: storage_node
         - name: storagenode-1
           id: ew733872-des4-283h-af39-c21d2501ea3e
-          hostname: storagenode2.colo.seagate.com
+          hostname: storagenode-1.storageservice.cortx.svc.cluster.local
           type: storage_node
         - name: storagenode-2
           id: af733872-des4-283h-af39-c21d2501ea3e
-          hostname: storagenode3.colo.seagate.com
+          hostname: storagenode-2.storageservice.cortx.svc.cluster.local
           type: storage_node
