@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: controlnode
+  labels:
+    app: controlnode
+spec:
+  hostname: controlnode
+  restartPolicy: Never
+  nodeSelector:
+    node-name: node1
+  volumes:
+  - name: solution-config
+    configMap:
+      name: solution-config
+  - name: cortx-config-1
+    persistentVolumeClaim:
+      claimName: cortx-config-pvc-1
+  - name: cortx-config-2
+    persistentVolumeClaim:
+      claimName: cortx-config-pvc-2
+  - name: cortx-config-3
+    persistentVolumeClaim:
+      claimName: cortx-config-pvc-3
+  containers:
+  - name: cortx-control-node
+    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    imagePullPolicy: IfNotPresent
+    args:
+    - /bin/sh
+    - -c
+    - set -x;
+      export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
+      cortx_setup --help;
+      while true; do sleep 30; echo "Hello Kubernetes"; done;
+    volumeMounts:
+    - name: solution-config
+      mountPath: /etc/cortx/solution
+    - name: cortx-config-1
+      mountPath: /etc/cortx
+    - name: cortx-config-2
+      mountPath: /var/data/cortx
+    - name: cortx-config-3
+      mountPath: /var/log/cortx

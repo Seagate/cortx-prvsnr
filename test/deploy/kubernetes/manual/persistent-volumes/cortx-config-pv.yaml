@@ -1,0 +1,38 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: cortx-config-pv-1
+spec:
+  storageClassName: config-pv
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/etc/cortx"
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: cortx-config-pv-2
+spec:
+  storageClassName: config-pv
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/var/data/cortx"
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: cortx-config-pv-3
+spec:
+  storageClassName: config-pv
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/var/log/cortx"
