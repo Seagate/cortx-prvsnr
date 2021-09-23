@@ -1,3 +1,0 @@
-nginx: 
-  container_name: 'nginx' 
-  replicas: 14
