@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: etc-cortx-3
+  namespace: cortx
+spec:
+  storageClassName: storage-device
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 512Mi
+  volumeName: etc-cortx-3
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: var-data-cortx-3
+  namespace: cortx
+spec:
+  storageClassName: storage-device
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 512Mi
+  volumeName: var-data-cortx-3
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: var-log-cortx-3
+  namespace: cortx
+spec:
+  storageClassName: storage-device
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 512Mi
+  volumeName: var-log-cortx-3

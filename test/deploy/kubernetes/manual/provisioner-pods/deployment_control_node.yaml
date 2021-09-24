@@ -14,18 +14,20 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
-  - name: etc-cortx
+  - name: etc-cortx-1
     persistentVolumeClaim:
       claimName: etc-cortx
   - name: cortx-secret
     secret:
       secretName: cortx-secret
   - name: var-data-cortx
+      claimName: etc-cortx-1
+  - name: var-data-cortx-1
     persistentVolumeClaim:
-      claimName: var-data-cortx
-  - name: var-log-cortx
+      claimName: var-data-cortx-1
+  - name: var-log-cortx-1
     persistentVolumeClaim:
-      claimName: var-log-cortx
+      claimName: var-log-cortx-1
   containers:
   - name: cortx-control-node
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
@@ -64,11 +66,11 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
-    - name: etc-cortx
+    - name: etc-cortx-1
       mountPath: /etc/cortx
-    - name: var-data-cortx
+    - name: var-data-cortx-1
       mountPath: /var/data/cortx
-    - name: var-log-cortx
+    - name: var-log-cortx-1
       mountPath: /var/log/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret

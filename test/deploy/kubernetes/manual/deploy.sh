@@ -11,10 +11,10 @@ function print_header {
 
 #Label Nodes
 NODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2)
-COUNT=1; 
+COUNT=1;
 for NODE in ${NODES[@]}; do
-    kubectl label nodes $NODE --overwrite=true node-name=node$COUNT; 
-    COUNT=$(($COUNT+1)); 
+    kubectl label nodes $NODE --overwrite=true node-name=node$COUNT;
+    COUNT=$(($COUNT+1));
 done
 
 # Create NameSpace
@@ -26,26 +26,44 @@ kubectl create configmap solution-config \
     --from-file=$SCRIPT_DIR/solution-config/config.yaml \
     --namespace $NAMESPACE
 
-# Create Persistent Volumes and Claims for Local directories
-kubectl apply -f $SCRIPT_DIR/persistent-volumes/cortx-config-pv.yaml  --namespace $NAMESPACE
-kubectl apply -f $SCRIPT_DIR/volume-claims/cortx-config-pvc.yaml --namespace $NAMESPACE
+# Create Secrets
+kubectl apply -f $SCRIPT_DIR/solution-config/cortx-secret.yml --namespace $NAMESPACE
 
-# Create Persistent Volumes
+# Create Persistent Volumes for Block Devices
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Creating Persistent Volumes - $NODE_NAME"
-    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/block_volume_$NODE_NAME.yaml;
+    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/block_devices_$NODE_NAME.yaml;
     kubectl apply -f $NODE_PVOL --namespace $NAMESPACE;
     sleep 2;
     kubectl get pv --namespace $NAMESPACE | grep $NODE_NAME;
 done
 
-# Create Persistent Volume Claims
+# Create Persistent Volume Claims for Block Devices
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Creating Persistent Volume Claims - $NODE_NAME"
-    NODE_PVCS=$SCRIPT_DIR/volume-claims/block_volumeclaim_$NODE_NAME.yaml;
+    NODE_PVCS=$SCRIPT_DIR/volume-claims/blockdevices_claim_$NODE_NAME.yaml;
     kubectl apply -f $NODE_PVCS --namespace $NAMESPACE;
+    sleep 2;
+done
+
+# Create Persistent Volumes for Block Volumes
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node"$NODE_INDEX;
+    print_header "Creating Persistent Volumes - $NODE_NAME"
+    NODE_BVOL=$SCRIPT_DIR/persistent-volumes/block_volumes_$NODE_NAME.yaml;
+    kubectl apply -f $NODE_BVOL --namespace $NAMESPACE;
+    sleep 2;
+    kubectl get pv --namespace $NAMESPACE | grep $NODE_NAME;
+done
+
+# Create Persistent Volume Claims for Block Volumes
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node"$NODE_INDEX;
+    print_header "Creating Persistent Volume Claims - $NODE_NAME"
+    NODE_BVOLC=$SCRIPT_DIR/volume-claims/blockvolumes_claim_$NODE_NAME.yaml;
+    kubectl apply -f $NODE_BVOLC --namespace $NAMESPACE;
     sleep 2;
 done
 
@@ -67,9 +85,6 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     sleep 20;
     kubectl get pods --namespace $NAMESPACE;
 done
-
-#Create Secretes
-kubectl apply -f $SCRIPT_DIR/solution-config/cortx-secret.yml --namespace $NAMESPACE
 
 # Deploy Control POD
 kubectl apply -f $SCRIPT_DIR/external-services/headless_control_node.yaml --namespace $NAMESPACE
