@@ -16,12 +16,10 @@ spec:
       name: solution-config
   - name: etc-cortx-1
     persistentVolumeClaim:
-      claimName: etc-cortx
+      claimName: etc-cortx-1
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: var-data-cortx
-      claimName: etc-cortx-1
   - name: var-data-cortx-1
     persistentVolumeClaim:
       claimName: var-data-cortx-1

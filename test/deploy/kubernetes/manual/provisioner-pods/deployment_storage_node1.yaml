@@ -14,14 +14,10 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
-<<<<<<< HEAD
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: etc-cortx
-=======
   - name: etc-cortx-1
->>>>>>> 3e0b136701a19040345a7eec500eb3dd493eed41
     persistentVolumeClaim:
       claimName: etc-cortx-1
   - name: var-data-cortx-1
@@ -96,13 +92,9 @@ spec:
       mountPath: /etc/cortx
     - name: var-data-cortx-1
       mountPath: /var/data/cortx
-<<<<<<< HEAD
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
-    - name: var-log-cortx
-=======
     - name: var-log-cortx-1
->>>>>>> 3e0b136701a19040345a7eec500eb3dd493eed41
       mountPath: /var/log/cortx
     volumeDevices:
     - name: sdb
