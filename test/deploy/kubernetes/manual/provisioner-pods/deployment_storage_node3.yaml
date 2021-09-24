@@ -3,7 +3,8 @@ kind: Pod
 metadata:
   name: storagenode-3
   labels:
-    app: storagenode-3
+    app: storagenode-
+    id: af733872-des4-283h-af39-c21d2501ea3e
 spec:
   hostname: storagenode-3
   restartPolicy: Never
@@ -13,6 +14,9 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
+  - name: cortx-secret
+    secret:
+      secretName: cortx-secret
   - name: etc-cortx
     persistentVolumeClaim:
       claimName: etc-cortx
@@ -50,18 +54,44 @@ spec:
   - name: cortx-data
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
     imagePullPolicy: IfNotPresent
+    env:
+    - name: NODE_ID
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.labels['id']
+    - name: CONFIG_INFO
+      value: "yaml:///etc/cortx/solution/config.yaml"
+    - name: CLUSTER_INFO
+      value: "yaml:///etc/cortx/solution/cluster.yaml"
+    - name: CORTX_CONFIG
+      value: "yaml:///etc/cortx/cluster.conf"
     args:
     - /bin/sh
     - -c
     - set -x;
       export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
-      cortx_setup --help;
+      echo $NODE_ID > "/etc/machine-id";
+      cat /etc/machine-id;
+      cortx_setup config apply -f $CLUSTER_INFO -o $CORTX_CONFIG;
+      cortx_setup config apply -f $CONFIG_INFO -o $CORTX_CONFIG;
+      echo -e "#!/bin/bash\necho $*" > /usr/bin/motr_setup;
+      chmod +x /usr/bin/motr_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/s3_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/hare_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/csm_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/utils_setup;
+      cortx_setup cluster bootstrap -f  $CORTX_CONFIG;
+      ls /etc/cortx;
+      cat /etc/cortx/cluster.conf;
+      ls -l /etc/cortx/solution;
       while true; do sleep 30; echo "Hello Kubernetes"; done;
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
     - name: etc-cortx
       mountPath: /etc/cortx
+    - name: cortx-secret
+      mountPath: /etc/cortx/solution/secret
     - name: var-data-cortx
       mountPath: /var/data/cortx
     - name: var-log-cortx
