@@ -84,6 +84,7 @@ spec:
       ls /etc/cortx;
       cat /etc/cortx/cluster.conf;
       ls -l /etc/cortx/solution;
+      cortx_setup --help;
       while true; do sleep 30; echo "Hello Kubernetes"; done;
     volumeMounts:
     - name: solution-config

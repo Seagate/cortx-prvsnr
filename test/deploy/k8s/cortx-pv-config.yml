@@ -9,4 +9,4 @@ spec:
   accessModes:
   - ReadWriteOnce
   hostPath:
-    path: "/data/pv"
+    path: "/etc/cortx"

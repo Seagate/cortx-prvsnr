@@ -45,7 +45,7 @@ cluster:
       nodes:
         - name: control-node
           id: 285d6133-3645-46b7-96a7-56917cd3cb43
-          hostname: controlnode-0.controlservice.cortx.svc.cluster.local
+          hostname: control-node
           type: control_node
         - name: storage-node1
           id: 0d213319-dbc5-463f-af39-c21d2501ea3e
