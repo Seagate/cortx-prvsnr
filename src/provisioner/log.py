@@ -16,32 +16,68 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 import os
+
 from cortx.utils.log import Log
+from cortx.provisioner import const
 
 
 class CortxProvisionerLog(Log):
     """ Redirect log message to log file and console using cortx utils logger """
 
+    default_log_path = '/var/log/cortx'
+    app_name = 'provisioner'
     logger = None
 
     @staticmethod
-    def init(service_name, log_path=None, level='INFO', console_output=False):
+    def initialize(service_name, log_path=None, level='INFO', console_output=False):
         """
         Initialize and use cortx-utils logger to log message in file and console.
         If console_output is True, log message will be displayed in console.
         """
+        if not CortxProvisionerLog.logger:
+            log_path = log_path if log_path else CortxProvisionerLog.default_log_path
+            log_path = os.path.join(log_path, CortxProvisionerLog.app_name)
 
-        if not log_path:
-            log_path = os.path.join('/var/log/cortx', 'provisioner')
+            if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+                level = 'INFO'
 
-        if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-            level = 'INFO'
-
-        Log.init(service_name, log_path, level=level, console_output=console_output)
-        CortxProvisionerLog.logger = Log.logger
+            Log.init(service_name, log_path, level=level, console_output=console_output)
+            CortxProvisionerLog.logger = Log.logger
 
 
-if not CortxProvisionerLog.logger:
+    @staticmethod
+    def reinitialize(service_name, log_path=None, level='INFO', console_output=False):
+        """
+        Reinitialize cortx-utils logger with given log path
 
-    log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-    CortxProvisionerLog.init("cortx_setup", level=log_level, console_output=True)
+        Add captured log message from temporary log file to log file in
+        configured log path
+        """
+        if Log.logger:
+
+            log_path = log_path if log_path else CortxProvisionerLog.default_log_path
+            log_path = os.path.join(log_path, CortxProvisionerLog.app_name)
+
+            if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+                level = 'INFO'
+
+            # Remove current logging handlers before truncating
+            for handler in Log.logger.handlers[:]:
+                Log.logger.removeHandler(handler)
+
+            temp_log_file = '%s/%s/%s.log' % (
+                const.TMP_LOG_PATH, CortxProvisionerLog.app_name, const.SERVICE_NAME)
+
+            if os.path.exists(temp_log_file):
+                with open(temp_log_file, 'r') as f:
+                    lines = f.read()
+                with open(temp_log_file, 'w') as f:
+                    f.write("")
+                # Append log message in configured log file
+                if not os.path.exists(log_path):
+                    os.makedirs(log_path)
+                with open(os.path.join(log_path, '%s.log' % const.SERVICE_NAME),
+                        'a+') as f:
+                    f.writelines(lines)
+
+        Log.init(const.SERVICE_NAME, log_path, level=level, console_output=console_output)
