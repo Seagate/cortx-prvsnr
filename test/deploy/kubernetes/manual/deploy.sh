@@ -45,24 +45,23 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Creating headless service for - $NODE_NAME"
-    NODE_SVC=$SCRIPT_DIR/external-services/headless_svc_$NODE_NAME.yaml;
+    NODE_SVC=$SCRIPT_DIR/external-services/headless_storage_$NODE_NAME.yaml;
     kubectl apply -f $NODE_SVC --namespace $NAMESPACE;
     sleep 2;
 done
 
-# Create POD for each node
+# Deploy Storage POD for each node
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Creating POD for - $NODE_NAME"
-    NODE_POD=$SCRIPT_DIR/provisioner-pods/prov_pod_$NODE_NAME.yaml;
+    NODE_POD=$SCRIPT_DIR/provisioner-pods/deployment_storage_$NODE_NAME.yaml;
     kubectl apply -f $NODE_POD --namespace $NAMESPACE;
     sleep 20;
     kubectl get pods --namespace $NAMESPACE;
 done
 
-# Launch controlnode POD
-kubectl apply -f $SCRIPT_DIR/external-services/headless_svc_controlnode1.yaml --namespace $NAMESPACE
-kubectl apply -f $SCRIPT_DIR/provisioner-pods/controlnode1.yaml --namespace $NAMESPACE
+# Deploy Control POD
+kubectl apply -f $SCRIPT_DIR/external-services/headless_control_node.yaml --namespace $NAMESPACE
+kubectl apply -f $SCRIPT_DIR/provisioner-pods/deployment_control_node.yaml --namespace $NAMESPACE
 sleep 10
 kubectl get pods --namespace $NAMESPACE
-

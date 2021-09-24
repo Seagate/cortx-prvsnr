@@ -1,9 +1,9 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: cortx-config-pv-1
+  name: etc-cortx
 spec:
-  storageClassName: config-pv
+  storageClassName: storage-device
   capacity:
     storage: 1Gi
   accessModes:
@@ -14,9 +14,9 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: cortx-config-pv-2
+  name: var-data-cortx
 spec:
-  storageClassName: config-pv
+  storageClassName: storage-device
   capacity:
     storage: 1Gi
   accessModes:
@@ -27,9 +27,9 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: cortx-config-pv-3
+  name: var-log-cortx
 spec:
-  storageClassName: config-pv
+  storageClassName: storage-device
   capacity:
     storage: 1Gi
   accessModes:
