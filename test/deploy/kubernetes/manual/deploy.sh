@@ -68,6 +68,9 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     kubectl get pods --namespace $NAMESPACE;
 done
 
+#Create Secretes
+kubectl apply -f $SCRIPT_DIR/solution-config/cortx-secret.yml --namespace $NAMESPACE
+
 # Deploy Control POD
 kubectl apply -f $SCRIPT_DIR/external-services/headless_control_node.yaml --namespace $NAMESPACE
 kubectl apply -f $SCRIPT_DIR/provisioner-pods/deployment_control_node.yaml --namespace $NAMESPACE
