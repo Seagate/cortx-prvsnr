@@ -14,7 +14,7 @@ NODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2)
 COUNT=1;
 for NODE in ${NODES[@]}; do
     kubectl label nodes $NODE --overwrite=true node-name=node$COUNT;
-    COUNT=$(($COUNT+1));
+    COUNT=$((COUNT+1));
 done
 
 # Create NameSpace
