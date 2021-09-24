@@ -1,0 +1,207 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdb-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdb-node2
+  local:
+    path: /dev/sdb
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdc-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdc-node2
+  local:
+    path: /dev/sdc
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdd-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdd-node2
+  local:
+    path: /dev/sdd
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdf-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdf-node2
+  local:
+    path: /dev/sdf
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdg-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdg-node2
+  local:
+    path: /dev/sdg
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdh-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdh-node2
+  local:
+    path: /dev/sdh
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdi-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdi-node2
+  local:
+    path: /dev/sdi
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-sdj-node2
+  namespace: cortx
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-sdj-node2
+  local:
+    path: /dev/sdj
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2

@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dev-{DEVICE_NAME}-{NODE_NAME}
+spec:
+  capacity:
+    storage: {STORAGE_SIZE}Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: cortx
+    name: dev-{DEVICE_NAME}-{NODE_NAME}
+  local:
+    path: /dev/{DEVICE_NAME}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - {NODE_NAME}

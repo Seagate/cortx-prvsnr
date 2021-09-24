@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-node1
+  labels:
+    app: storage-node1
+spec:
+  hostname: storage-node1
+  restartPolicy: Never
+  nodeSelector:
+    node-name: node1
+  volumes:
+  - name: solution-config
+    configMap:
+      name: solution-config
+  - name: etc-cortx-1
+    persistentVolumeClaim:
+      claimName: etc-cortx-1
+  - name: var-data-cortx-1
+    persistentVolumeClaim:
+      claimName: var-data-cortx-1
+  - name: var-log-cortx-1
+    persistentVolumeClaim:
+      claimName: var-log-cortx-1
+  - name: sdb
+    persistentVolumeClaim:
+      claimName: dev-sdb-node1
+  - name: sdc
+    persistentVolumeClaim:
+      claimName: dev-sdc-node1
+  - name: sdd
+    persistentVolumeClaim:
+      claimName: dev-sdd-node1
+  - name: sdf
+    persistentVolumeClaim:
+      claimName: dev-sdf-node1
+  - name: sdg
+    persistentVolumeClaim:
+      claimName: dev-sdg-node1
+  - name: sdh
+    persistentVolumeClaim:
+      claimName: dev-sdh-node1
+  - name: sdi
+    persistentVolumeClaim:
+      claimName: dev-sdi-node1
+  - name: sdj
+    persistentVolumeClaim:
+      claimName: dev-sdj-node1
+  containers:
+  - name: cortx-data
+    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    imagePullPolicy: IfNotPresent
+    args:
+    - /bin/sh
+    - -c
+    - set -x;
+      export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
+      cortx_setup --help;
+      while true; do sleep 30; echo "Hello Kubernetes"; done;
+    volumeMounts:
+    - name: solution-config
+      mountPath: /etc/cortx/solution
+    - name: etc-cortx-1
+      mountPath: /etc/cortx
+    - name: var-data-cortx-1
+      mountPath: /var/data/cortx
+    - name: var-log-cortx-1
+      mountPath: /var/log/cortx
+    volumeDevices:
+    - name: sdb
+      devicePath: /dev/sdb
+    - name: sdc
+      devicePath: /dev/sdc
+    - name: sdd
+      devicePath: /dev/sdd
+    - name: sdf
+      devicePath: /dev/sdf
+    - name: sdg
+      devicePath: /dev/sdg
+    - name: sdh
+      devicePath: /dev/sdh
+    - name: sdi
+      devicePath: /dev/sdi
+    - name: sdj
+      devicePath: /dev/sdj

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-node2
+  namespace: cortx 
+spec:
+  selector:
+    app: storage-node2
+  clusterIP: None
