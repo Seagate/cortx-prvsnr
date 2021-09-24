@@ -18,7 +18,7 @@ kubectl create configmap solution-config \
     --from-file=$SCRIPT_DIR/solution-config/config.yaml \
     --namespace $NAMESPACE
 
-#Create Storage Volumes
+# Create Persistent Volumes and Claims for Local directories
 kubectl apply -f $SCRIPT_DIR/persistent-volumes/cortx-config-pv.yaml  --namespace $NAMESPACE
 kubectl apply -f $SCRIPT_DIR/volume-claims/cortx-config-pvc.yaml --namespace $NAMESPACE
 

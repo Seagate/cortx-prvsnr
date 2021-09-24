@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: storagenode-3
+  name: storage-node3
   labels:
-    app: storagenode-3
+    app: storage-node3
 spec:
-  hostname: storagenode-3
+  hostname: storage-node3
   restartPolicy: Never
   nodeSelector:
     node-name: node3

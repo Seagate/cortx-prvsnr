@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: controlnode
+  name: control-node
   namespace: cortx 
 spec:
   selector:
-    app: controlnode
+    app: control-node
   clusterIP: None
