@@ -43,20 +43,20 @@ cluster:
         sns: 8+7+0
         dix: 1+7+0
       nodes:
-        - name: controlnode-0
+        - name: control-node
           id: 285d6133-3645-46b7-96a7-56917cd3cb43
-          hostname: controlnode-0.controlservice.cortx.svc.cluster.local
+          hostname: control-node
           type: control_node
-        - name: storagenode-0
+        - name: storage-node1
           id: 0d213319-dbc5-463f-af39-c21d2501ea3e
-          hostname: storagenode-0.storageservice.cortx.svc.cluster.local
+          hostname: storage-node1
           type: storage_node
-        - name: storagenode-1
+        - name: storage-node2
           id: ew733872-des4-283h-af39-c21d2501ea3e
-          hostname: storagenode-1.storageservice.cortx.svc.cluster.local
+          hostname: storage-node2
           type: storage_node
-        - name: storagenode-2
+        - name: storage-node3
           id: af733872-des4-283h-af39-c21d2501ea3e
-          hostname: storagenode-2.storageservice.cortx.svc.cluster.local
+          hostname: storage-node3
           type: storage_node
 

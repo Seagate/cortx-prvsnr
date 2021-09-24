@@ -9,6 +9,14 @@ function print_header {
     echo -e "---------------------------------------------------"
 }
 
+#Label Nodes
+NODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2)
+COUNT=1;
+for NODE in ${NODES[@]}; do
+    kubectl label nodes $NODE --overwrite=true node-name=node$COUNT;
+    COUNT=$((COUNT+1));
+done
+
 # Create NameSpace
 kubectl create namespace $NAMESPACE
 
@@ -17,6 +25,9 @@ kubectl create configmap solution-config \
     --from-file=$SCRIPT_DIR/solution-config/cluster.yaml \
     --from-file=$SCRIPT_DIR/solution-config/config.yaml \
     --namespace $NAMESPACE
+
+# Create Secrets
+kubectl apply -f $SCRIPT_DIR/solution-config/cortx-secret.yml --namespace $NAMESPACE
 
 # Create Persistent Volumes for Block Devices
 for NODE_INDEX in $(seq 1 $MAXNODES); do

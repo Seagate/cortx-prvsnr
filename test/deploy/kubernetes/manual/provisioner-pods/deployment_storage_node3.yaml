@@ -4,6 +4,7 @@ metadata:
   name: storage-node3
   labels:
     app: storage-node3
+    id: af733872-des4-283h-af39-c21d2501ea3e
 spec:
   hostname: storage-node3
   restartPolicy: Never
@@ -13,6 +14,9 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
+  - name: cortx-secret
+    secret:
+      secretName: cortx-secret
   - name: etc-cortx-3
     persistentVolumeClaim:
       claimName: etc-cortx-3
@@ -50,11 +54,36 @@ spec:
   - name: cortx-data
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
     imagePullPolicy: IfNotPresent
+    env:
+    - name: NODE_ID
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.labels['id']
+    - name: CONFIG_INFO
+      value: "yaml:///etc/cortx/solution/config.yaml"
+    - name: CLUSTER_INFO
+      value: "yaml:///etc/cortx/solution/cluster.yaml"
+    - name: CORTX_CONFIG
+      value: "yaml:///etc/cortx/cluster.conf"
     args:
     - /bin/sh
     - -c
     - set -x;
       export PATH=$PATH:/opt/seagate/cortx/provisioner/bin;
+      echo $NODE_ID > "/etc/machine-id";
+      cat /etc/machine-id;
+      cortx_setup config apply -f $CLUSTER_INFO -o $CORTX_CONFIG;
+      cortx_setup config apply -f $CONFIG_INFO -o $CORTX_CONFIG;
+      echo -e "#!/bin/bash\necho $*" > /usr/bin/motr_setup;
+      chmod +x /usr/bin/motr_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/s3_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/hare_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/csm_setup;
+      cp -pf /usr/bin/motr_setup /usr/bin/utils_setup;
+      cortx_setup cluster bootstrap -f  $CORTX_CONFIG;
+      ls /etc/cortx;
+      cat /etc/cortx/cluster.conf;
+      ls -l /etc/cortx/solution;
       cortx_setup --help;
       while true; do sleep 30; echo "Hello Kubernetes"; done;
     volumeMounts:
@@ -62,6 +91,8 @@ spec:
       mountPath: /etc/cortx/solution
     - name: etc-cortx-3
       mountPath: /etc/cortx
+    - name: cortx-secret
+      mountPath: /etc/cortx/solution/secret
     - name: var-data-cortx-3
       mountPath: /var/data/cortx
     - name: var-log-cortx-3

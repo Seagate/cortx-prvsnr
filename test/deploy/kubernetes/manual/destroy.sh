@@ -34,7 +34,7 @@ kubectl delete -f $SCRIPT_DIR/provisioner-pods/deployment_control_node.yaml --na
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Deleting Persistent Volume Claims - $NODE_NAME"
-    NODE_PVCS=$SCRIPT_DIR/persistent-volumes/block_devices_$NODE_NAME.yaml;
+    NODE_PVCS=$SCRIPT_DIR/volume-claims/blockdevices_claim_$NODE_NAME.yaml;
     kubectl delete -f $NODE_PVCS --namespace $NAMESPACE;
     sleep 2;
 done
@@ -43,8 +43,17 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Deleting Persistent Volumes - $NODE_NAME"
-    NODE_PVOL=$SCRIPT_DIR/volumes-claims/blockdevices_claim_$NODE_NAME.yaml;
+    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/block_devices_$NODE_NAME.yaml;
     kubectl delete -f $NODE_PVOL --namespace $NAMESPACE;
+    sleep 2;
+done
+
+# Delete Persistent Volume Claims for Block Volumes
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node"$NODE_INDEX;
+    print_header "Creating Persistent Volume Claims - $NODE_NAME"
+    NODE_BVOLC=$SCRIPT_DIR/volume-claims/blockvolumes_claim_$NODE_NAME.yaml;
+    kubectl delete -f $NODE_BVOLC --namespace $NAMESPACE;
     sleep 2;
 done
 
@@ -58,14 +67,6 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     kubectl get pv --namespace $NAMESPACE | grep $NODE_NAME;
 done
 
-# Delete Persistent Volume Claims for Block Volumes
-for NODE_INDEX in $(seq 1 $MAXNODES); do
-    NODE_NAME="node"$NODE_INDEX;
-    print_header "Creating Persistent Volume Claims - $NODE_NAME"
-    NODE_BVOLC=$SCRIPT_DIR/volume-claims/blockvolumes_claim_$NODE_NAME.yaml;
-    kubectl delete -f $NODE_BVOLC --namespace $NAMESPACE;
-    sleep 2;
-done
 kubectl delete pv --all --force --namespace $NAMESPACE
 
 # Delete Config Map
