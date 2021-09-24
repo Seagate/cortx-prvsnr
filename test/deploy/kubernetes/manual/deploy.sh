@@ -26,7 +26,7 @@ kubectl create configmap solution-config \
     --from-file=$SCRIPT_DIR/solution-config/config.yaml \
     --namespace $NAMESPACE
 
-#Create Storage Volumes
+# Create Persistent Volumes and Claims for Local directories
 kubectl apply -f $SCRIPT_DIR/persistent-volumes/cortx-config-pv.yaml  --namespace $NAMESPACE
 kubectl apply -f $SCRIPT_DIR/volume-claims/cortx-config-pvc.yaml --namespace $NAMESPACE
 
@@ -34,7 +34,7 @@ kubectl apply -f $SCRIPT_DIR/volume-claims/cortx-config-pvc.yaml --namespace $NA
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Creating Persistent Volumes - $NODE_NAME"
-    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/device_volume_$NODE_NAME.yaml;
+    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/block_volume_$NODE_NAME.yaml;
     kubectl apply -f $NODE_PVOL --namespace $NAMESPACE;
     sleep 2;
     kubectl get pv --namespace $NAMESPACE | grep $NODE_NAME;
@@ -44,7 +44,7 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Creating Persistent Volume Claims - $NODE_NAME"
-    NODE_PVCS=$SCRIPT_DIR/volume-claims/device_volumeclaim_$NODE_NAME.yaml;
+    NODE_PVCS=$SCRIPT_DIR/volume-claims/block_volumeclaim_$NODE_NAME.yaml;
     kubectl apply -f $NODE_PVCS --namespace $NAMESPACE;
     sleep 2;
 done

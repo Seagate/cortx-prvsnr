@@ -34,7 +34,7 @@ kubectl delete -f $SCRIPT_DIR/provisioner-pods/deployment_control_node.yaml --na
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Deleting Persistent Volume Claims - $NODE_NAME"
-    NODE_PVCS=$SCRIPT_DIR/volume-claims/device_volumeclaim_$NODE_NAME.yaml;
+    NODE_PVCS=$SCRIPT_DIR/volume-claims/block_volumeclaim_$NODE_NAME.yaml;
     kubectl delete -f $NODE_PVCS --namespace $NAMESPACE;
     sleep 2;
 done
@@ -43,7 +43,7 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
     print_header "Deleting Persistent Volumes - $NODE_NAME"
-    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/device_volume_$NODE_NAME.yaml;
+    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/block_volume_$NODE_NAME.yaml;
     kubectl delete -f $NODE_PVOL --namespace $NAMESPACE;
     sleep 2;
 done
