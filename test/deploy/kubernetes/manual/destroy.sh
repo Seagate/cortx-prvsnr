@@ -66,7 +66,7 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     kubectl delete -f $NODE_BVOLC --namespace $NAMESPACE;
     sleep 2;
 done
-kubectl delete pv --all --grace-period=0 --force --namespace $NAMESPACE
+kubectl delete pv --all --force --namespace $NAMESPACE
 
 # Delete Config Map
 kubectl delete configmap solution-config --namespace cortx
