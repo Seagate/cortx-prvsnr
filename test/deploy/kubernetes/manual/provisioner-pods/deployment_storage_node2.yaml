@@ -13,15 +13,15 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
-  - name: etc-cortx
+  - name: etc-cortx-2
     persistentVolumeClaim:
-      claimName: etc-cortx
-  - name: var-data-cortx
+      claimName: etc-cortx-2
+  - name: var-data-cortx-2
     persistentVolumeClaim:
-      claimName: var-data-cortx
-  - name: var-log-cortx
+      claimName: var-data-cortx-2
+  - name: var-log-cortx-2
     persistentVolumeClaim:
-      claimName: var-log-cortx
+      claimName: var-log-cortx-2
   - name: sdb
     persistentVolumeClaim:
       claimName: dev-sdb-node2
@@ -60,11 +60,11 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
-    - name: etc-cortx
+    - name: etc-cortx-2
       mountPath: /etc/cortx
-    - name: var-data-cortx
+    - name: var-data-cortx-2
       mountPath: /var/data/cortx
-    - name: var-log-cortx
+    - name: var-log-cortx-2
       mountPath: /var/log/cortx
     volumeDevices:
     - name: sdb
