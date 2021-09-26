@@ -17,15 +17,15 @@ spec:
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: etc-cortx-2
+  - name: etc-cortx-node2
     persistentVolumeClaim:
-      claimName: etc-cortx-2
-  - name: var-data-cortx-2
+      claimName: etc-cortx-node2
+  - name: var-data-cortx-node2
     persistentVolumeClaim:
-      claimName: var-data-cortx-2
-  - name: var-log-cortx-2
+      claimName: var-data-cortx-node2
+  - name: var-log-cortx-node2
     persistentVolumeClaim:
-      claimName: var-log-cortx-2
+      claimName: var-log-cortx-node2
   - name: sdb
     persistentVolumeClaim:
       claimName: dev-sdb-node2
@@ -88,13 +88,13 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
-    - name: etc-cortx-2
+    - name: etc-cortx-node2
       mountPath: /etc/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
-    - name: var-data-cortx-2
+    - name: var-data-cortx-node2
       mountPath: /var/data/cortx
-    - name: var-log-cortx-2
+    - name: var-log-cortx-node2
       mountPath: /var/log/cortx
     volumeDevices:
     - name: sdb

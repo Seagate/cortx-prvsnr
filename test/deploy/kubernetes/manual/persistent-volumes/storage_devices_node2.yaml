@@ -1,7 +1,7 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: etc-cortx-3
+  name: etc-cortx-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -17,12 +17,12 @@ spec:
         - key: node-name
           operator: In
           values:
-          - node3
+          - node2
 ---
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: var-data-cortx-3
+  name: var-data-cortx-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -38,12 +38,12 @@ spec:
         - key: node-name
           operator: In
           values:
-          - node3
+          - node2
 ---
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: var-log-cortx-3
+  name: var-log-cortx-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -59,4 +59,4 @@ spec:
         - key: node-name
           operator: In
           values:
-          - node3
+          - node2

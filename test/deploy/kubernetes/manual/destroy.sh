@@ -1,73 +1,86 @@
-#!/bin/bash
-SCRIPT_DIR=$(dirname $0)
-MAXNODES="3"
+#!/bin/bash -x
+BASEPATH=$(dirname $0)
+MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
 NAMESPACE="cortx"
 
 function print_header {
-    echo -e "---------------------------------------------------"
+    echo -e "--------------------------------------------------------------------------"
     echo -e "$1"
-    echo -e "---------------------------------------------------"
+    echo -e "--------------------------------------------------------------------------"
 }
 
-# Delete Storage PODs
+# Delete Storage Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
-    print_header "Deleting POD for - $NODE_NAME"
-    NODE_POD=$SCRIPT_DIR/provisioner-pods/deployment_storage_$NODE_NAME.yaml;
-    kubectl delete -f $NODE_POD --namespace $NAMESPACE;
-    sleep 5;
-done
-
-# Delete Headless Storage services
-for NODE_INDEX in $(seq 1 $MAXNODES); do
-    NODE_NAME="node"$NODE_INDEX;
-    print_header "Deleting headless service for - $NODE_NAME"
-    NODE_SVC=$SCRIPT_DIR/external-services/headless_storage_$NODE_NAME.yaml;
+    print_header "Deleting Storage Service - $NODE_NAME"
+    NODE_SVC=$BASEPATH/external-services/headless_storage_$NODE_NAME.yaml;
     kubectl delete -f $NODE_SVC --namespace $NAMESPACE;
-done
-
-#Delete Control POD and Headless Control service
-kubectl delete -f $SCRIPT_DIR/external-services/headless_control_node.yaml --namespace $NAMESPACE
-kubectl delete -f $SCRIPT_DIR/provisioner-pods/deployment_control_node.yaml --namespace $NAMESPACE
-
-# Delete Persistent Volume Claims
-for NODE_INDEX in $(seq 1 $MAXNODES); do
-    NODE_NAME="node"$NODE_INDEX;
-    print_header "Deleting Persistent Volume Claims - $NODE_NAME"
-    NODE_PVCS=$SCRIPT_DIR/volume-claims/blockdevices_claim_$NODE_NAME.yaml;
-    kubectl delete -f $NODE_PVCS --namespace $NAMESPACE;
     sleep 2;
 done
 
-# Delete Persistent Volumes
+# Delete Storage Node (POD)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
-    print_header "Deleting Persistent Volumes - $NODE_NAME"
-    NODE_PVOL=$SCRIPT_DIR/persistent-volumes/block_devices_$NODE_NAME.yaml;
-    kubectl delete -f $NODE_PVOL --namespace $NAMESPACE;
+    print_header "Deleting Storage Node - $NODE_NAME"
+    NODE_POD=$BASEPATH/provisioner-pods/deployment_storage_$NODE_NAME.yaml;
+    kubectl delete -f $NODE_POD --namespace $NAMESPACE;
     sleep 2;
 done
 
-# Delete Persistent Volume Claims for Block Volumes
-for NODE_INDEX in $(seq 1 $MAXNODES); do
-    NODE_NAME="node"$NODE_INDEX;
-    print_header "Creating Persistent Volume Claims - $NODE_NAME"
-    NODE_BVOLC=$SCRIPT_DIR/volume-claims/blockvolumes_claim_$NODE_NAME.yaml;
-    kubectl delete -f $NODE_BVOLC --namespace $NAMESPACE;
-    sleep 2;
-done
+# Delete Control Service (Headless)
+print_header "Deleting Cotrol Service - Cluster"
+kubectl delete -f $BASEPATH/external-services/headless_control_node.yaml --namespace $NAMESPACE
 
-# Delete Persistent Volumes for Block Volumes
+# Delete Control Node (POD)
+print_header "Deleting Cotrol Node - Cluster"
+kubectl delete -f $BASEPATH/provisioner-pods/deployment_control_node.yaml --namespace $NAMESPACE
+
+# Delete Persistent Volume Claims for Block Devices (PVC)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node"$NODE_INDEX;
-    print_header "Creating Persistent Volumes - $NODE_NAME"
-    NODE_BVOL=$SCRIPT_DIR/persistent-volumes/block_volumes_$NODE_NAME.yaml;
+    print_header "Deleting Persistent Volume Claims for Block Devices - $NODE_NAME"
+    NODE_BVOL=$BASEPATH/volume-claims/block_volumes_$NODE_NAME.yaml;
     kubectl delete -f $NODE_BVOL --namespace $NAMESPACE;
     sleep 2;
-    kubectl get pv --namespace $NAMESPACE | grep $NODE_NAME;
 done
 
+# Delete Persistent Volumes for Block Devices (PV)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node"$NODE_INDEX;
+    print_header "Deleting Persistent Volumes for Block Devices - $NODE_NAME"
+    NODE_BDEV=$BASEPATH/persistent-volumes/block_devices_$NODE_NAME.yaml;
+    kubectl delete -f $NODE_BDEV --namespace $NAMESPACE;
+    sleep 2;
+done
+
+# Delete Persistent Volume Claims for Storage Devices (PVC)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node"$NODE_INDEX;
+    print_header "Deleting Persistent Volume Claims for Storage Devices - $NODE_NAME"
+    NODE_SVOL=$BASEPATH/volume-claims/storage_volumes_$NODE_NAME.yaml;
+    kubectl delete -f $NODE_SVOL --namespace $NAMESPACE;
+    sleep 2;
+done
+
+# Delete Persistent Volumes for Storage Devices (PV)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node"$NODE_INDEX;
+    print_header "Deleting Persistent Volumes for Storage Devices - $NODE_NAME"
+    NODE_SDEV=$BASEPATH/persistent-volumes/storage_devices_$NODE_NAME.yaml;
+    kubectl delete -f $NODE_SDEV --namespace $NAMESPACE;
+    sleep 2;
+done
+
+# Remove remaining PVC
+kubectl delete pvc --all --force --namespace $NAMESPACE
+kubectl get pvc --namespace $NAMESPACE | grep $NODE_NAME
+
+# Remove remaining PV
 kubectl delete pv --all --force --namespace $NAMESPACE
+kubectl get pv --namespace $NAMESPACE | grep $NODE_NAME
+
+# Delete Secrets
+kubectl delete -f $BASEPATH/solution-config/secrets.yaml --namespace $NAMESPACE
 
 # Delete Config Map
 kubectl delete configmap solution-config --namespace cortx
@@ -75,3 +88,5 @@ kubectl delete configmap solution-config --namespace cortx
 # Delete NameSpace
 kubectl delete namespace $NAMESPACE
 
+# Validate no resources in Namespace
+kubectl get all -n cortx
