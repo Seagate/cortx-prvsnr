@@ -95,7 +95,7 @@ spec:
     - name: share-node2
       mountPath: /share
     - name:  share-var-log-cortx-node2
-      mountPath: /var/log/cortx
+      mountPath: /share/var/log/cortx
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb

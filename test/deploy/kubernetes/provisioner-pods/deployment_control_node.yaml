@@ -69,6 +69,6 @@ spec:
     - name: share-node1
       mountPath: /share
     - name: share-var-log-cortx-node1
-      mountPath: /var/log/cortx
+      mountPath: /share/var/log/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
