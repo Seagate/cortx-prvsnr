@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: etc-cortx-2
+  name: etc-cortx-node3
   namespace: cortx
 spec:
   storageClassName: storage-device
@@ -10,12 +10,12 @@ spec:
   resources:
     requests:
       storage: 512Mi
-  volumeName: etc-cortx-2
+  volumeName: etc-cortx-node3
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: var-data-cortx-2
+  name: var-data-cortx-node3
   namespace: cortx
 spec:
   storageClassName: storage-device
@@ -24,12 +24,12 @@ spec:
   resources:
     requests:
       storage: 512Mi
-  volumeName: var-data-cortx-2
+  volumeName: var-data-cortx-node3
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: var-log-cortx-2
+  name: var-log-cortx-node3
   namespace: cortx
 spec:
   storageClassName: storage-device
@@ -38,4 +38,4 @@ spec:
   resources:
     requests:
       storage: 512Mi
-  volumeName: var-log-cortx-2
+  volumeName: var-log-cortx-node3
