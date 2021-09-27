@@ -29,7 +29,7 @@ cortx:
       secret: common-secret
     storage:
       shared: /share/var/data/cortx
-      log: /share/var/log/cortx
+      log: /var/log/cortx
       misc: /var/data/cortx
       config: /etc/cortx
   utils:
