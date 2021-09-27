@@ -28,11 +28,11 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
 done
 
 # Delete Control Service (Headless)
-print_header "Deleting Cotrol Service - Cluster"
+print_header "Deleting Control Service - Cluster"
 kubectl delete -f "$BASEPATH/external-services/headless_control_node.yaml" --namespace "$NAMESPACE"
 
 # Delete Control Node (POD)
-print_header "Deleting Cotrol Node - Cluster"
+print_header "Deleting Control Node - Cluster"
 kubectl delete -f "$BASEPATH/provisioner-pods/deployment_control_node.yaml" --namespace "$NAMESPACE"
 
 # Delete Persistent Volume Claims for Block Devices (PVC)
