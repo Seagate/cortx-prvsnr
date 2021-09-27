@@ -95,7 +95,7 @@ spec:
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
     - name: share-var-log-cortx-node1
-      mountPath: //share/var/log/cortx
+      mountPath: /var/log/cortx
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb
