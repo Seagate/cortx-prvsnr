@@ -20,12 +20,12 @@ spec:
   - name: etc-cortx-node1
     persistentVolumeClaim:
       claimName: etc-cortx-node1
-  - name: var-data-cortx-node1
+  - name: share-node1
     persistentVolumeClaim:
-      claimName: var-data-cortx-node1
-  - name: var-log-cortx-node1
+      claimName: share-node1
+  - name: share-var-log-cortx-node1
     persistentVolumeClaim:
-      claimName: var-log-cortx-node1
+      claimName: share-var-log-cortx-node1
   - name: sdb
     persistentVolumeClaim:
       claimName: dev-sdb-node1
@@ -90,12 +90,12 @@ spec:
       mountPath: /etc/cortx/solution
     - name: etc-cortx-node1
       mountPath: /etc/cortx
-    - name: var-data-cortx-node1
-      mountPath: /var/data/cortx
+    - name: share-node1
+      mountPath: /share
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
-    - name: var-log-cortx-node1
-      mountPath: /var/log/cortx
+    - name: share-var-log-cortx-node1
+      mountPath: //share/var/log/cortx
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb

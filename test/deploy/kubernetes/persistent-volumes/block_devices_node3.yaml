@@ -5,7 +5,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -31,7 +31,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -57,7 +57,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -83,7 +83,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -109,7 +109,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -135,7 +135,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -161,7 +161,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block
@@ -187,7 +187,7 @@ metadata:
   namespace: cortx
 spec:
   capacity:
-    storage: 10Gi
+    storage: 25Gi
   accessModes:
     - ReadWriteMany
   volumeMode: Block

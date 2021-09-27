@@ -22,7 +22,7 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: var-data-cortx-node2
+  name: share-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -30,7 +30,7 @@ spec:
   accessModes:
   - ReadWriteOnce
   hostPath:
-    path: "/var/data/cortx"
+    path: "/share"
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -43,7 +43,7 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: var-log-cortx-node2
+  name: share-var-log-cortx-node2
 spec:
   storageClassName: storage-device
   capacity:
