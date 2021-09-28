@@ -82,6 +82,9 @@ class ClusterCmd(Cmd):
         parser.add_argument('action', help='bootstrap')
         parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
+        parser.add_argument('-m', dest='mock', action="store_true",
+            help='Boolean - Enable Mocking.')
+
 
     def _validate(self):
         """ Validate cluster command args """
@@ -100,7 +103,8 @@ class ClusterCmd(Cmd):
         """ Bootsrap Cluster """
         self._validate()
         if self._args.action == 'bootstrap':
-            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
+            mock = True if self._args.mock else False
+            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf, mock)
         return 0
 
 

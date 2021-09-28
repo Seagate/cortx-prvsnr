@@ -145,7 +145,7 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def cluster_bootstrap(cortx_conf_url: str = None):
+    def cluster_bootstrap(cortx_conf_url: str = None, mock=False):
         """
         Description:
         Configures Cluster Components
@@ -183,13 +183,17 @@ class CortxProvisioner:
                 services = cortx_config_store.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
-                cmd = (f"{components[comp_idx]['name']}_setup {interface} --config "
-                       f"{cortx_conf_url} --services {service}")
-                Log.info(f"{cmd}")
-                cmd_proc = SimpleProcess(cmd)
-                _, err, rc = cmd_proc.run()
-                if rc != 0:
-                    raise CortxProvisionerError(rc, "Unable to execute " \
-                        "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
+                comp_name = components[comp_idx]['name']
+                cmd = (f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
+                       f" --config {cortx_conf_url} --services {service}")
+                if mock:
+                    print(cmd)
+                else:
+                    Log.info(f"{cmd}")
+                    cmd_proc = SimpleProcess(cmd)
+                    _, err, rc = cmd_proc.run()
+                    if rc != 0:
+                        raise CortxProvisionerError(rc, "Unable to execute " \
+                            "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
