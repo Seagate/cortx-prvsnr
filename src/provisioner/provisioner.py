@@ -42,7 +42,6 @@ class CortxProvisioner:
         """
         Description:
         Parses input config and store in CORTX config location
-
         Parameters:
         [IN]  Solution Config URL
         [OUT] CORTX Config URL
@@ -151,7 +150,6 @@ class CortxProvisioner:
         Configures Cluster Components
         1. Reads Cortx Config and obtain cluster components
         2. Invoke Mini Provisioners of cluster components
-
         Paramaters:
         [IN] CORTX Config URL
         """
