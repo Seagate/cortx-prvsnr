@@ -88,14 +88,6 @@ class CortxProvisioner:
                     val = Cipher.encrypt(cipher_key, val)
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
-                    decipher = "/etc/decrypt"
-                    value = "/etc/value"
-                    with open(decipher, 'w') as cipher_obj:
-                        cipher_obj.write(Cipher.decrypt(cipher_key, val).decode('utf-8'))
-                    with open(value, 'wb') as cipher_obj:
-                        cipher_obj.write(val)
-
-
             CortxProvisioner.config_apply_cortx(cortx_config_store)
 
     @staticmethod
