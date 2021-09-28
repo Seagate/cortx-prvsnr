@@ -115,8 +115,9 @@ class CortxProvisioner:
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
 
-
-            cluster_keys = [('cluster>id', cluster_id), ('cluster>name', cluster_name)]
+            cluster_keys = [('cluster>id', cluster_id),
+                ('cluster>name', cluster_name),
+                ('cluster>storage_set_count', len(storage_sets))]
             cortx_config_store.set_kvs(cluster_keys)
 
             nodes = []
@@ -131,7 +132,6 @@ class CortxProvisioner:
                             'cvg': cvg_list
                         }
                     node['storage_set'] = storage_set['name']
-                    node['storage_set_count'] = len(storage_sets)
                     node['cluster_id'] = cluster_id
                     nodes.append(node)
 
