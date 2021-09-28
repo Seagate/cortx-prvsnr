@@ -44,6 +44,7 @@ cortx:
     iam:
       endpoints:
       - https://iam.seagate.com:9443
+      - http://iam.seagate.com:9080
     data:
       endpoints:
       - http://s3.seagate.com:80
@@ -53,7 +54,7 @@ cortx:
       - http://s3.seagate.com:28049
     service_instances: 2
     io_max_units: 8
-    auth_admin: admin
+    auth_admin: sgiamadmin
     auth_secret: s3-auth-secret
   motr:
     client_instances: 1
