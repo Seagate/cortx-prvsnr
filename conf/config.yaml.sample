@@ -4,11 +4,12 @@ cortx:
       endpoints:
         - kafka-server1.cortx-cluster.com
         - kafka-server2.cortx-cluster.com
-      user: admin
+      admin: admin
       secret: kafka-secret
     openldap:
       endpoints:
-        - oldap-server1.cortx-cluster.com
+        - ldap://oldap-server.cortx-cluster.com:389
+        - ssl://oldap-server.cortx-cluster.com:636
       servers:
         - oldap-server1.cortx-cluster.com
         - oldap-server2.cortx-cluster.com
@@ -18,26 +19,31 @@ cortx:
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - consul-server1.cortx-cluster.com
+        - http://consul-server.cortx-cluster.com:80
       admin: admin
       secret: consul-secret
   common:
     product_release: LC
     environment_type: K8
+    setup_size: small
     service:
       admin: admin
       secret: common-secret
     storage:
-      shared: /share/var/data/cortx
-      log: /share/var/log/cortx
-      misc: /var/data/cortx
+      shared: /share
+      log: /share/var/log/cortx/
+      local: /etc/cortx
       config: /etc/cortx
+    security:
+      ssl_certificate: /opt/seagate/cortx/s3/install/haproxy/ssl/s3.seagate.com.pem
+      domain_certificate: /etc/cortx/solution/ssl/stx.pem
+      device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
     message_bus_backend: kafka
   s3:
     iam:
       endpoints:
-      - https://s3-iam.seagate.com:9443
+      - https://iam.seagate.com:9443
     data:
       endpoints:
       - http://s3.seagate.com:80
@@ -45,23 +51,25 @@ cortx:
     internal:
       endpoints:
       - http://s3.seagate.com:28049
-    service_instances: 11
-    io_max_units: 32
+    service_instances: 2
+    io_max_units: 8
+    auth_admin: admin
+    auth_secret: s3auth-secret
   motr:
-    client_instances: 2
+    client_instances: 1
     interface_type: tcp
     interface_family: inet
     transport_type: libfab
     ios:
       endpoints:
-      - motr://motr-data1.cortx-cluster.com:3232
+      - motr://data1-node1.cortx-cluster.com:3232
   hare:
-    ports:
+    hax:
       endpoints:
       - tcp://hax.seagate.com:28000
   csm:
     auth_admin: admin
-    auth_secret: auth-secret
+    csmauth_secret: auth-secret
     mgmt_admin: cortxadmin
     mgmt_secret: mgmt-secret
     email_address: cortx@seagate.com

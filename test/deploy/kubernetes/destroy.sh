@@ -9,6 +9,17 @@ function print_header {
     echo "--------------------------------------------------------------------------"
 }
 
+# Delete Cluster.conf for Control Node (POD)
+kubectl exec -it control-node --namespace "$NAMESPACE" -- /bin/bash -c "rm -rf /etc/cortx/cluster.conf";
+
+# Delete Cluster.conf from all storage Node (POD)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="storage-node$NODE_INDEX";
+    print_header "Deleting Cluster.conf for - $NODE_NAME"
+    kubectl exec -it "$NODE_NAME" --namespace "$NAMESPACE" -- /bin/bash -c "rm -rf /etc/cortx/cluster.conf";
+done
+
+
 # Delete Storage Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
