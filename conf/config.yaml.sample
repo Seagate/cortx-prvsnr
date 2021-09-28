@@ -69,7 +69,7 @@ cortx:
       - tcp://hax.seagate.com:28000
   csm:
     auth_admin: admin
-    csmauth_secret: csmauth-secret
+    auth_secret: csmauth-secret
     mgmt_admin: cortxadmin
     mgmt_secret: mgmt-secret
     email_address: cortx@seagate.com
