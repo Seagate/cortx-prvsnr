@@ -183,8 +183,9 @@ class CortxProvisioner:
                 services = cortx_config_store.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
-                cmd = (f"{components[comp_idx]['name']}_setup {interface} --config "
-                       f"{cortx_conf_url} --services {service}")
+                comp_name = components[comp_idx]['name']
+                cmd = (f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
+                       f" --config {cortx_conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
