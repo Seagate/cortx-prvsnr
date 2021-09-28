@@ -115,7 +115,6 @@ class CortxProvisioner:
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
 
-
             cluster_keys = [('cluster>id', cluster_id),
                 ('cluster>name', cluster_name),
                 ('cluster>storage_set_count', len(storage_sets))]
