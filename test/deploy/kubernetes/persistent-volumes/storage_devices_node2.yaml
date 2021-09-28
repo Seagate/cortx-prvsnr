@@ -1,7 +1,7 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: etc-cortx-node2
+  name: config-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -22,7 +22,7 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: var-data-cortx-node2
+  name: shared-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -30,7 +30,7 @@ spec:
   accessModes:
   - ReadWriteOnce
   hostPath:
-    path: "/var/data/cortx"
+    path: "/share"
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -43,7 +43,7 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: var-log-cortx-node2
+  name: log-node2
 spec:
   storageClassName: storage-device
   capacity:
@@ -52,6 +52,27 @@ spec:
   - ReadWriteOnce
   hostPath:
     path: "/var/log/cortx"
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node2
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: local-node2
+spec:
+  storageClassName: storage-device
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/var/data/cortx"
   nodeAffinity:
     required:
       nodeSelectorTerms:

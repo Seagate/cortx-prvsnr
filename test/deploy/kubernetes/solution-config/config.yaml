@@ -54,7 +54,7 @@ cortx:
     service_instances: 2
     io_max_units: 8
     auth_admin: admin
-    auth_secret: s3auth-secret
+    auth_secret: s3-auth-secret
   motr:
     client_instances: 1
     interface_type: tcp
@@ -69,9 +69,9 @@ cortx:
       - tcp://hax.seagate.com:28000
   csm:
     auth_admin: admin
-    auth_secret: csmauth-secret
+    auth_secret: csm-auth-secret
     mgmt_admin: cortxadmin
-    mgmt_secret: mgmt-secret
+    mgmt_secret: csm-mgmt-secret
     email_address: cortx@seagate.com
     agent:
       endpoints:
