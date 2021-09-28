@@ -143,6 +143,7 @@ class CortxStorageSet:
         """
         kvs = []
         node_ids = []
+        storage_sets = []
         try:
             for storage_set in self._storage_sets:
                 # Fetch node_ids of all nodes.
@@ -158,8 +159,10 @@ class CortxStorageSet:
                         'parity': res[1],
                         'spare': res[2]
                     }
-                key_prefix = 'cluster>storage_set'
-                kvs.extend(CortxCluster()._get_kvs(key_prefix, storage_set))
+                storage_sets.append(storage_set)
+
+            key_prefix = 'cluster>storage_set'
+            kvs.extend(CortxCluster()._get_kvs(key_prefix, storage_sets))
 
             config_store.set_kvs(kvs)
         except KeyError as e:
