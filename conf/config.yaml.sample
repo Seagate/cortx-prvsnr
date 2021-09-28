@@ -44,6 +44,7 @@ cortx:
     iam:
       endpoints:
       - https://iam.seagate.com:9443
+      - http://iam.seagate.com:9080
     data:
       endpoints:
       - http://s3.seagate.com:80
