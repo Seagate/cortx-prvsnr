@@ -148,14 +148,25 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
 
         for node in nodes:
             pings = set()
+            targets = set()
             candidates = set(addrs[node.minion_id])
             for _node in nodes:
                 if _node is not node:
                     candidates -= addrs[_node.minion_id]
 
-            targets = '|'.join(
-                [_node.minion_id for _node in nodes if _node is not node]
-            )
+            _server_numbers = set()
+            for _node in nodes:
+                if _node is not node or (len(nodes) == 1):
+                    _minion_id = _node.minion_id
+                    _server_number = _minion_id.split('-')[1]
+                    _server_numbers.add(_server_number)
+
+            # Convert server_numbers list to comma separated string
+            # e.g. Convert {'1', '2', '3', .., 'n'} to "1,2,3,..,n"
+            _target_server_numbers = ",".join(_num for _num in _server_numbers)
+
+            # Create targets glob as: "srvnode-[1,2,3,4,5,6,...,n]"
+            targets = "srvnode-[" + _target_server_numbers + "]"
 
             for addr in candidates:
                 try:
@@ -192,7 +203,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
         if len(run_args.nodes) == 1:
             res[run_args.nodes[0].minion_id] = [
                 run_args.salt_master if run_args.salt_master
-                else config.LOCALHOST_IP
+                else run_args.nodes[0].host
             ]
             return res
 
@@ -210,8 +221,7 @@ class BootstrapProvisioner(SetupCmdBase, CommandParserFillerMixin):
                     # note: any node may be a salt-master
                     if _node.minion_id in salt_masters:
                         res[node.minion_id].append(
-                            config.LOCALHOST_IP if _node is node
-                            else salt_masters[_node.minion_id]
+                            salt_masters[_node.minion_id]
                         )
         else:
             res = {

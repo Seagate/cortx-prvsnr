@@ -19,6 +19,7 @@ salt_master_config_updated:
   file.managed:
     - name: /etc/salt/master
     - source: salt://components/provisioner/salt_master/files/master
+    - template: jinja
 
 # Always start glusterfshsaredstorage before salt-master
 Update glusterfssharedstorage.service:

@@ -86,6 +86,7 @@ class CortxProvisioner:
                     if cipher_key is None:
                         raise CortxProvisionerError(errno.EINVAL, 'Cipher key not specified')
                     val = Cipher.encrypt(cipher_key, val)
+                    # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
                     decipher = "/etc/decrypt"
                     value = "/etc/value"
@@ -123,8 +124,8 @@ class CortxProvisioner:
                 node_map[node_type['name']] = node_type
 
 
-            cluster_keys = [('id', cluster_id), ('name', cluster_name)]
-            cortx_config_store.set('cluster', cluster_keys)
+            cluster_keys = [('cluster>id', cluster_id), ('cluster>name', cluster_name)]
+            cortx_config_store.set_kvs(cluster_keys)
 
             nodes = []
             for storage_set in storage_sets:
@@ -152,7 +153,7 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def cluster_bootstrap(cortx_conf_url: str = None):
+    def cluster_bootstrap(cortx_conf_url: str = None, mock=False):
         """
         Description:
         Configures Cluster Components
@@ -190,13 +191,17 @@ class CortxProvisioner:
                 services = cortx_config_store.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
-                cmd = (f"{components[comp_idx]['name']}_setup {interface} --config "
-                       f"{cortx_conf_url} --services {service}")
-                Log.info(f"{cmd}")
-                cmd_proc = SimpleProcess(cmd)
-                _, err, rc = cmd_proc.run()
-                if rc != 0:
-                    raise CortxProvisionerError(rc, "Unable to execute " \
-                        "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
+                comp_name = components[comp_idx]['name']
+                cmd = (f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
+                       f" --config {cortx_conf_url} --services {service}")
+                if mock:
+                    print(cmd)
+                else:
+                    Log.info(f"{cmd}")
+                    cmd_proc = SimpleProcess(cmd)
+                    _, err, rc = cmd_proc.run()
+                    if rc != 0:
+                        raise CortxProvisionerError(rc, "Unable to execute " \
+                            "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
