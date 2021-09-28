@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: etc-cortx-node1
+  name: config-node1
   namespace: cortx
 spec:
   storageClassName: storage-device
@@ -9,13 +9,13 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 512Mi
-  volumeName: etc-cortx-node1
+      storage: 1Gi
+  volumeName: config-node1
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: share-node1
+  name: shared-node1
   namespace: cortx
 spec:
   storageClassName: storage-device
@@ -23,13 +23,13 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 512Mi
-  volumeName: share-node1
+      storage: 1Gi
+  volumeName: shared-node1
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: share-var-log-cortx-node1
+  name: log-node1
   namespace: cortx
 spec:
   storageClassName: storage-device
@@ -37,5 +37,19 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 512Mi
-  volumeName: share-var-log-cortx-node1
+      storage: 1Gi
+  volumeName: log-node1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-node1
+  namespace: cortx
+spec:
+  storageClassName: storage-device
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: local-node1
