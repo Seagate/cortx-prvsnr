@@ -49,7 +49,7 @@ class TestSetup(unittest.TestCase):
 
         rc = 0
         try:
-            argv = [ 'cluster', 'bootstrap', '-f', cortx_conf_url ]
+            argv = [ 'cluster', 'bootstrap', '-f', cortx_conf_url, '-m' ]
 
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)
