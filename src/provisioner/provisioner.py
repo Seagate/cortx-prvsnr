@@ -116,8 +116,8 @@ class CortxProvisioner:
                 node_map[node_type['name']] = node_type
 
 
-            cluster_keys = [('id', cluster_id), ('name', cluster_name)]
-            cortx_config_store.set('cluster', cluster_keys)
+            cluster_keys = [('cluster>id', cluster_id), ('cluster>name', cluster_name)]
+            cortx_config_store.set_kvs(cluster_keys)
 
             nodes = []
             for storage_set in storage_sets:
