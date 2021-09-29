@@ -76,7 +76,7 @@ class CortxProvisioner:
                 if key.endswith('secret'):
                     secret_val = Conf.get(CortxProvisioner._solution_index, key)
                     val = None
-                    with open(os.path.join(CortxProvisioner._secrets_path, secret_val)) as secret:
+                    with open(os.path.join(CortxProvisioner._secrets_path, secret_val), 'rb') as secret:
                         val = secret.read()
                     if val is None:
                         raise CortxProvisionerError(errno.EINVAL,
@@ -85,9 +85,9 @@ class CortxProvisioner:
                         cipher_key = cipher_obj.read()
                     if cipher_key is None:
                         raise CortxProvisionerError(errno.EINVAL, 'Cipher key not specified')
-                    val = Cipher.encrypt(cipher_key, val.encode('ascii'))
-                    Conf.set(CortxProvisioner._solution_index, key, val)
-
+                    val = Cipher.encrypt(cipher_key, val)
+                    # decoding the byte string in val variable
+                    Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
             CortxProvisioner.config_apply_cortx(cortx_config_store)
 
     @staticmethod
