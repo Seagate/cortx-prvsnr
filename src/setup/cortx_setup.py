@@ -42,7 +42,7 @@ class ConfigCmd(Cmd):
         parser.add_argument('action', help='apply')
         parser.add_argument('-f', dest='solution_conf', \
             help='Solution Config URL')
-        parser.add_argument('-o', dest='cortx_conf', nargs='?', \
+        parser.add_argument('-c', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
@@ -80,7 +80,7 @@ class ClusterCmd(Cmd):
         """ Add Command args for parsing """
 
         parser.add_argument('action', help='bootstrap')
-        parser.add_argument('-f', dest='cortx_conf', help='Cortx Config URL')
+        parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
         parser.add_argument('-m', dest='mock', action="store_true",
             help='Boolean - Enable Mocking.')
