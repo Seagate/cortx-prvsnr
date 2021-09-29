@@ -94,11 +94,13 @@ export PATH=$PATH:/opt/seagate/provisioner/bin
 echo $NODE_ID > "/etc/machine-id";
 log $DEBUG node_id=$NODE_ID
 # Apply Cluster Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -o "$CORTX_CONFSTORE"
+log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -o '$CORTX_CONFSTORE'"
 cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -o "$CORTX_CONFSTORE";
+
 # Apply Common Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -o "$CORTX_CONFSTORE"
+log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -o '$CORTX_CONFSTORE'"
 cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -o "$CORTX_CONFSTORE"
+
 # Bootstrap Cluster
 log $INFO "cortx_setup cluster bootstrap -f "$CORTX_CONFSTORE" $SETUP_ARGS"
 cortx_setup cluster bootstrap -f "$CORTX_CONFSTORE" $SETUP_ARGS;
