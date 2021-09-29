@@ -89,7 +89,8 @@ setup(name='cortx-provisioner',
     data_files=[
         ('/opt/seagate/cortx/provisioner/conf', get_conf_files()),
         ('/opt/seagate/cortx/provisioner/conf', get_requirements_files()),
-        ('/etc/cortx/solution/secret/', get_secret_files())
+        ('/etc/cortx/solution/secret/', get_secret_files()),
+        ('/opt/seagate/cortx/provisioner/bin', ['src/setup/cortx_deploy'])
     ],
     long_description=get_description(),
     zip_safe=False,

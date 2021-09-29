@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# Log Levels:
+DEBUG=1
+INFO=2
+WARNING=3
+ERROR=4
+FATAL=5
+DEFAULT_LOG_LEVEL=${DEFAULT_LOG_LEVEL:-$INFO}
+
+function log {
+    LEVEL=$1; shift
+    LOG_LEVEL=${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}
+    [[ $LEVEL -lt $LOG_LEVEL ]] && return
+
+    echo "log: $*"
+}
+
+function show_usage {
+    echo -e "usage: $(basename $0) -n NODE-ID [-f SOLUTION-CONFIG] [-d LEVEL][-c CORTX-CONFIG-URL]"
+    echo -e "Where:"
+    echo -e "..."
+    echo -e " NODE-ID         : Unique Node ID"
+    echo -e " SOLUTION-CONFIG : Solution-Config directory containing -\
+                                config.yaml, cluster.yaml and secrets.yaml"
+    echo -e "                   (Default: /etc/cortx/solution)"
+    echo -e " LOG LEVEL       : Log Level. Default 2"
+    echo -e "                   Supported log levels: DEBUG=1 INFO=2"
+    echo -e "                   WARNING=3 ERROR=4 FATAL=5"
+    echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration."
+    echo -e "                   Default is yaml:///etc/cortx/cluster.conf"
+    exit 1
+}
+
+function validate_config {
+    local config=$1
+    if [ ! -f $config ]; then
+        echo -e "ERROR: Config $config not found"
+    fi
+}
+
+function yaml_config {
+    local config=$1
+    echo "yaml://$config"
+}
+
+# Constants
+NODE_ID=0
+SETUP_ARGS=""
+SOLUTION_CONFIG="/etc/cortx/solution"
+CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
+
+while [ $# -gt 0 ];  do
+    case $1 in
+    -d )
+        shift 1
+        LOG_LEVEL=$1;
+        ;;
+    -n )
+        shift 1
+        NODE_ID=$1
+        ;;
+    -m )
+        SETUP_ARGS="-m"
+        ;;
+    -f )
+        shift 1
+        SOLUTION_CONFIG=$1
+        ;;
+    -c )
+        shift 1
+        CORTX_CONFSTORE=$1
+        ;;
+    -h )
+        show_usage
+        ;;
+    * )
+        echo "Invalid argument provided : $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+    shift 1
+done
+
+# path for solution-config cluster.yaml and config.yaml files
+CONFIG_INFO="$SOLUTION_CONFIG/config.yaml"
+validate_config $CONFIG_INFO
+CLUSTER_INFO="$SOLUTION_CONFIG/cluster.yaml"
+validate_config $CLUSTER_INFO
+
+export PATH=$PATH:/opt/seagate/provisioner/bin
+[ -z $NODE_ID ] && echo -e "ERROR: Missing NODE-ID" && show_usage
+echo $NODE_ID > "/etc/machine-id";
+log $DEBUG node_id=$NODE_ID
+# Apply Cluster Config
+log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -o "$CORTX_CONFSTORE"
+cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -o "$CORTX_CONFSTORE";
+# Apply Common Config
+log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -o "$CORTX_CONFSTORE"
+cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -o "$CORTX_CONFSTORE"
+# Bootstrap Cluster
+log $INFO "cortx_setup cluster bootstrap -f "$CORTX_CONFSTORE" $SETUP_ARGS"
+cortx_setup cluster bootstrap -f "$CORTX_CONFSTORE" $SETUP_ARGS;
