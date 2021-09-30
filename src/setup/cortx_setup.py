@@ -53,12 +53,12 @@ class ConfigCmd(Cmd):
         if self._args.action not in ['apply']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
-        if self._args.log_level:
-            if self._args.log_level not in \
-                ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                    raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
-            else:
-                Log.logger.setLevel(self._args.log_level)
+        log_level = self._args.log_level
+        if not log_level:
+            log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+        if log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
+        Log.logger.setLevel(log_level)
 
     def process(self):
         """ Apply Config """
@@ -93,12 +93,12 @@ class ClusterCmd(Cmd):
         if self._args.action not in ['bootstrap']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
-        if self._args.log_level:
-            if self._args.log_level not in \
-                ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                    raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
-            else:
-                os.environ['CORTX_PROVISIONER_DEBUG_LEVEL'] = self._args.log_level
+        log_level = self._args.log_level
+        if not log_level:
+            log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+        if log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
+        os.environ['CORTX_PROVISIONER_DEBUG_LEVEL'] = log_level
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
