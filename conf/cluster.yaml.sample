@@ -47,8 +47,8 @@ cluster:
   storage_sets:
     - name: storage-set-1
       durability:
-        sns: 4+2+0
-        dix: 1+2+0
+        sns: 8+7+0
+        dix: 1+7+0
       nodes:
         - name: control-node
           id: 285d6133-3645-46b7-96a7-56917cd3cb43
