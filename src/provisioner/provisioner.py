@@ -154,16 +154,17 @@ class CortxProvisioner:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
 
-        # Reinitialize logging with configured log path
-        log_path = cortx_config_store.get('cortx>common>storage>log')
-        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-        CortxProvisionerLog.reinitialize(
-            const.SERVICE_NAME, log_path, level=log_level, console_output=True)
-
         node_id = Conf.machine_id
         if node_id is None:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid node_id: %s', \
                 node_id)
+
+        # Reinitialize logging with configured log path
+        log_path = os.path.join(
+            cortx_config_store.get('cortx>common>storage>log'), node_id)
+        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+        CortxProvisionerLog.reinitialize(
+            const.SERVICE_NAME, log_path, level=log_level, console_output=True)
 
         if cortx_config_store.get(f'node>{node_id}') is None:
             raise CortxProvisionerError(
