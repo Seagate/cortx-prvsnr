@@ -15,3 +15,6 @@
 
 TMP_LOG_PATH = "/tmp/"
 SERVICE_NAME = "cortx_setup"
+DEFAULT_LOG_PATH = "/var/log/cortx"
+APP_NAME = "provisioner"
+SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]

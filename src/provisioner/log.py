@@ -24,49 +24,39 @@ from cortx.provisioner import const
 class CortxProvisionerLog(Log):
     """ Redirect log message to log file and console using cortx utils logger """
 
-    default_log_path = '/var/log/cortx'
-    app_name = 'provisioner'
     logger = None
 
     @staticmethod
-    def initialize(service_name, log_path=None, level='INFO', console_output=False):
+    def initialize(service_name, log_path=const.DEFAULT_LOG_PATH, level='INFO', console_output=True):
         """
         Initialize and use cortx-utils logger to log message in file and console.
         If console_output is True, log message will be displayed in console.
         """
         if not CortxProvisionerLog.logger:
-            log_path = log_path if log_path else CortxProvisionerLog.default_log_path
-            log_path = os.path.join(log_path, CortxProvisionerLog.app_name)
-
-            if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                level = 'INFO'
-
+            log_path = os.path.join(log_path, const.APP_NAME)
+            level = level if level in const.SUPPORTED_LOG_LEVELS else 'INFO'
             Log.init(service_name, log_path, level=level, console_output=console_output)
             CortxProvisionerLog.logger = Log.logger
 
 
     @staticmethod
-    def reinitialize(service_name, log_path=None, level='INFO', console_output=False):
+    def reinitialize(service_name, log_path=const.DEFAULT_LOG_PATH, level='INFO', console_output=True):
         """
-        Reinitialize cortx-utils logger with given log path
+        Reinitialize existing logger.
 
-        Add captured log message from temporary log file to log file in
-        configured log path
+        This removes logging handler from existing logger and moves captured
+        logs from temporary log file to target log path file.
         """
         if Log.logger:
-
-            log_path = log_path if log_path else CortxProvisionerLog.default_log_path
-            log_path = os.path.join(log_path, CortxProvisionerLog.app_name)
-
-            if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                level = 'INFO'
+            log_path = os.path.join(log_path, const.APP_NAME)
+            level = level if level in const.SUPPORTED_LOG_LEVELS else 'INFO'
 
             # Remove current logging handlers before truncating
             for handler in Log.logger.handlers[:]:
                 Log.logger.removeHandler(handler)
 
             temp_log_file = '%s/%s/%s.log' % (
-                const.TMP_LOG_PATH, CortxProvisionerLog.app_name, const.SERVICE_NAME)
+                const.TMP_LOG_PATH, const.APP_NAME, const.SERVICE_NAME)
 
             if os.path.exists(temp_log_file):
                 with open(temp_log_file, 'r') as f:

@@ -48,7 +48,7 @@ class CortxProvisioner:
         """
         if Log.logger is None:
             CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH,
-                level='INFO', console_output=True)
+                level='INFO')
         Log.info('Applying config %s' % solution_conf_url)
         Conf.load(CortxProvisioner._solution_index, solution_conf_url)
 
@@ -164,7 +164,7 @@ class CortxProvisioner:
             cortx_config_store.get('cortx>common>storage>log'), node_id)
         log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
         CortxProvisionerLog.reinitialize(
-            const.SERVICE_NAME, log_path, level=log_level, console_output=True)
+            const.SERVICE_NAME, log_path, level=log_level)
 
         if cortx_config_store.get(f'node>{node_id}') is None:
             raise CortxProvisionerError(

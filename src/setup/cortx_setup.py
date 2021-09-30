@@ -56,7 +56,7 @@ class ConfigCmd(Cmd):
         log_level = self._args.log_level
         if not log_level:
             log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-        if log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+        if log_level not in const.SUPPORTED_LOG_LEVELS:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
         Log.logger.setLevel(log_level)
 
@@ -96,7 +96,7 @@ class ClusterCmd(Cmd):
         log_level = self._args.log_level
         if not log_level:
             log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-        if log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+        if log_level not in const.SUPPORTED_LOG_LEVELS:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
         os.environ['CORTX_PROVISIONER_DEBUG_LEVEL'] = log_level
 
@@ -111,7 +111,7 @@ class ClusterCmd(Cmd):
 
 def main():
     CortxProvisionerLog.initialize(
-        const.SERVICE_NAME, const.TMP_LOG_PATH, level='INFO', console_output=True)
+        const.SERVICE_NAME, const.TMP_LOG_PATH, level='INFO')
     try:
         # Parse and Process Arguments
         command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', \
