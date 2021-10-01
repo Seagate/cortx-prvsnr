@@ -16,7 +16,7 @@ cortx:
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - tcp://consulserver.default.svc.cluster.local:8301
+        - tcp://consul-server.default.svc.cluster.local:8301
       admin: admin
       secret: consul_admin_secret
   common:
@@ -66,7 +66,7 @@ cortx:
       endpoints:
       - tcp://hax.seagate.com:28000
   csm:
-    auth_admin: admin
+    auth_admin: authadmin
     auth_secret: csm_auth_admin_secret
     mgmt_admin: cortxadmin
     mgmt_secret: csm_mgmt_admin_secret
