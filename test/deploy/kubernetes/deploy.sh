@@ -1,6 +1,7 @@
 #!/bin/bash
 BASEPATH=$(dirname $0)
-MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
+#MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
+MAXNODES=3
 NAMESPACE="cortx"
 
 # Calling 3rd party component deployment scrip
