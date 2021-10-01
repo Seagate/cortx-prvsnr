@@ -33,8 +33,7 @@ fi
 helm install "consul" hashicorp/consul \
     --set global.name="consul" \
     --set server.storageClass=$storage_class \
-    --set server.replicas=$num_worker_nodes \
-    --set server.port=8381
+    --set server.replicas=$num_worker_nodes 
 
 printf "######################################################\n"
 printf "# Deploy Zookeeper                                    \n"

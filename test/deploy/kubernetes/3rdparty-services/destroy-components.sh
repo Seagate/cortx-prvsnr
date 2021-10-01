@@ -1,7 +1,7 @@
 #!/bin/bash
 
 namespace="default"
-pvc_consul_filter="data-cortx-consul"
+pvc_consul_filter="data-default-consul"
 pvc_kafka_filter="kafka"
 pvc_zookeeper_filter="zookeeper"
 openldap_pvc="openldap-data"
