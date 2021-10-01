@@ -16,7 +16,9 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 import os
+
 from cortx.utils.log import Log
+from cortx.provisioner import const
 
 
 class CortxProvisionerLog(Log):
@@ -25,23 +27,51 @@ class CortxProvisionerLog(Log):
     logger = None
 
     @staticmethod
-    def init(service_name, log_path=None, level='INFO', console_output=False):
+    def initialize(service_name, log_path=const.DEFAULT_LOG_PATH,
+                   level=const.DEFAULT_LOG_LEVEL, console_output=True):
         """
         Initialize and use cortx-utils logger to log message in file and console.
         If console_output is True, log message will be displayed in console.
         """
-
-        if not log_path:
-            log_path = os.path.join('/var/log/cortx', 'provisioner')
-
-        if level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-            level = 'INFO'
-
-        Log.init(service_name, log_path, level=level, console_output=console_output)
-        CortxProvisionerLog.logger = Log.logger
+        if not CortxProvisionerLog.logger:
+            log_path = os.path.join(log_path, const.APP_NAME)
+            if level not in const.SUPPORTED_LOG_LEVELS:
+                level = const.DEFAULT_LOG_LEVEL
+            Log.init(service_name, log_path, level=level, console_output=console_output)
+            CortxProvisionerLog.logger = Log.logger
 
 
-if not CortxProvisionerLog.logger:
+    @staticmethod
+    def reinitialize(service_name, log_path=const.DEFAULT_LOG_PATH,
+                     level=const.DEFAULT_LOG_LEVEL, console_output=True):
+        """
+        Reinitialize existing logger.
 
-    log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
-    CortxProvisionerLog.init("cortx_setup", level=log_level, console_output=True)
+        This removes logging handler from existing logger and moves captured
+        logs from temporary log file to target log path file.
+        """
+        if Log.logger:
+            log_path = os.path.join(log_path, const.APP_NAME)
+            if level not in const.SUPPORTED_LOG_LEVELS:
+                level = const.DEFAULT_LOG_LEVEL
+
+            # Remove current logging handlers before truncating
+            for handler in Log.logger.handlers[:]:
+                Log.logger.removeHandler(handler)
+
+            temp_log_file = '%s/%s/%s.log' % (
+                const.TMP_LOG_PATH, const.APP_NAME, const.SERVICE_NAME)
+
+            if os.path.exists(temp_log_file):
+                with open(temp_log_file, 'r') as f:
+                    lines = f.read()
+                with open(temp_log_file, 'w') as f:
+                    f.write("")
+                # Append log message in configured log file
+                if not os.path.exists(log_path):
+                    os.makedirs(log_path)
+                with open(os.path.join(log_path, '%s.log' % const.SERVICE_NAME),
+                        'a+') as f:
+                    f.writelines(lines)
+
+        Log.init(const.SERVICE_NAME, log_path, level=level, console_output=console_output)

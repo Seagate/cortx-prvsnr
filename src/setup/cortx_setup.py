@@ -20,10 +20,11 @@ import traceback
 import errno
 import os
 
-from cortx.provisioner.log import Log
+from cortx.provisioner.log import CortxProvisionerLog, Log
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.cmd_framework import Cmd
+from cortx.provisioner import const
 
 
 class ConfigCmd(Cmd):
@@ -52,12 +53,12 @@ class ConfigCmd(Cmd):
         if self._args.action not in ['apply']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
-        if self._args.log_level:
-            if self._args.log_level not in \
-                ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                    raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
-            else:
-                Log.logger.setLevel(self._args.log_level)
+        log_level = self._args.log_level
+        if not log_level:
+            log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
+        if log_level not in const.SUPPORTED_LOG_LEVELS:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
+        Log.logger.setLevel(log_level)
 
     def process(self):
         """ Apply Config """
@@ -92,12 +93,12 @@ class ClusterCmd(Cmd):
         if self._args.action not in ['bootstrap']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
-        if self._args.log_level:
-            if self._args.log_level not in \
-                ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                    raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
-            else:
-                Log.logger.setLevel(self._args.log_level)
+        log_level = self._args.log_level
+        if not log_level:
+            log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
+        if log_level not in const.SUPPORTED_LOG_LEVELS:
+            raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
+        os.environ['CORTX_PROVISIONER_DEBUG_LEVEL'] = log_level
 
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
@@ -109,6 +110,7 @@ class ClusterCmd(Cmd):
 
 
 def main():
+    CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
     try:
         # Parse and Process Arguments
         command = Cmd.get_command(sys.modules[__name__], 'cortx_setup', \

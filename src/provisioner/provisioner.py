@@ -18,7 +18,8 @@ import os
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
-from cortx.utils.log import Log
+from cortx.provisioner import const
+from cortx.provisioner.log import CortxProvisionerLog, Log
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
 from cortx.provisioner.config import CortxConfig
@@ -45,6 +46,8 @@ class CortxProvisioner:
         [IN]  Solution Config URL
         [OUT] CORTX Config URL
         """
+        if Log.logger is None:
+            CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
         Log.info('Applying config %s' % solution_conf_url)
         Conf.load(CortxProvisioner._solution_index, solution_conf_url)
 
@@ -154,6 +157,13 @@ class CortxProvisioner:
         if node_id is None:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid node_id: %s', \
                 node_id)
+
+        # Reinitialize logging with configured log path
+        log_path = os.path.join(
+            cortx_config_store.get('cortx>common>storage>log'), node_id)
+        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
+        CortxProvisionerLog.reinitialize(
+            const.SERVICE_NAME, log_path, level=log_level)
 
         if cortx_config_store.get(f'node>{node_id}') is None:
             raise CortxProvisionerError(
