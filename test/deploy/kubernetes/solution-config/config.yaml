@@ -2,24 +2,23 @@ cortx:
   external:
     kafka:
       endpoints:
-        - kafka-server1.cortx-cluster.com
-        - kafka-server2.cortx-cluster.com
+        - tcp://kafka.default.svc.cluster.local:9092
       admin: admin
       secret: kafka_admin_secret
     openldap:
       endpoints:
-        - ldap://oldap-server.cortx-cluster.com:389
-        - ssl://oldap-server.cortx-cluster.com:636
+        - ldap://openldap-svc.default.svc.cluster.local:389
+        - ssl://openldap-svc.default.svc.cluster.local:636
       servers:
-        - oldap-server1.cortx-cluster.com
-        - oldap-server2.cortx-cluster.com
-        - oldap-server3.cortx-cluster.com
+        - openldap-svc.default.svc.cluster.local
+        - openldap-svc.default.svc.cluster.local
+        - openldap-svc.default.svc.cluster.local
       admin: admin
       secret: openldap_admin_secret
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - http://consul-server.cortx-cluster.com:80
+        - tcp://consulserver.default.svc.cluster.local:8301
       admin: admin
       secret: consul_admin_secret
   common:
