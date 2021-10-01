@@ -1,6 +1,5 @@
 #!/bin/bash
 
-namespace="default"
 storage_class=${1:-'local-path'}
 
 
@@ -9,7 +8,6 @@ while IFS= read -r line; do
     if [[ $line != *"AGE"* ]]
     then
         IFS=" " read -r -a node_name <<< "$line"
-        openldap_worker_node_list[num_worker_nodes]=$node_name
         num_worker_nodes=$((num_worker_nodes+1))
     fi
 done <<< "$(kubectl get nodes)"
@@ -29,7 +27,7 @@ helm repo add hashicorp https://helm.releases.hashicorp.com
 if [[ $storage_class == "local-path" ]]
 then
     printf "Install Rancher Local Path Provisioner"
-    kubectl create -f 3rd_party_services/cortx-cloud-3rd-party-pkg/local-path-storage.yaml
+    kubectl create -f 3rdparty-services/configure-storage.yaml
 fi
 
 helm install "consul" hashicorp/consul \

@@ -103,4 +103,4 @@ kubectl delete namespace "$NAMESPACE"
 kubectl get all --namespace "$NAMESPACE"
 
 #Delete 3rd party compnent 
-sh 3rd_party_services/destroy-3rd-party-comp.sh
+./3rdparty-services/destroy-components.sh

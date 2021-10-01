@@ -5,7 +5,7 @@ NAMESPACE="cortx"
 
 # Calling 3rd party component deployment scrip
 
-sh 3rd_party_services/deploy-3rd-party-comp.sh
+./3rdparty-services/deploy-components.sh
 
 function print_header {
     echo -e "--------------------------------------------------------------------------"
@@ -99,5 +99,3 @@ done
 
 sleep 10
 kubectl get pods --namespace "$NAMESPACE"
-
-#sh 3rd_party_services/deploy-cortx-cloud.sh
