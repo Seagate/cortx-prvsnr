@@ -1,7 +1,8 @@
 #!/bin/bash
 BASEPATH=$(dirname $0)
 MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
-NAMESPACE="cortx"
+NAMESPACE="default"
+DEF3PLOGS="/tmp/3rdparty_services_install.log"
 
 function print_header {
     echo -e "--------------------------------------------------------------------------"
@@ -17,8 +18,15 @@ for NODE in ${NODES[@]}; do
     COUNT=$((COUNT+1));
 done
 
-# Create NameSpace
-kubectl create namespace $NAMESPACE
+# Create non-default namespace
+if [[ "$NAMESPACE" != "default" ]]; then
+    kubectl create namespace $NAMESPACE
+fi
+
+# Install 3rdParty Services
+print_header "Configuring 3rdParty Services"
+./3rdparty-services/deploy_components.sh > $DEF3PLOGS 2>&1
+kubectl get service --namespace $NAMESPACE
 
 # Create ConfigMap
 kubectl create configmap solution-config \

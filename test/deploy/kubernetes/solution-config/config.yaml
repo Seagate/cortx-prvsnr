@@ -2,24 +2,21 @@ cortx:
   external:
     kafka:
       endpoints:
-        - kafka-server1.cortx-cluster.com
-        - kafka-server2.cortx-cluster.com
+        - tcp://kafka.default.svc.cluster.local:9092
       admin: admin
       secret: kafka_admin_secret
     openldap:
       endpoints:
-        - ldap://oldap-server.cortx-cluster.com:389
-        - ssl://oldap-server.cortx-cluster.com:636
+        - ldap://openldap-svc.default.svc.cluster.local:389
+        - ssl://openldap-svc.default.svc.cluster.local:636
       servers:
-        - oldap-server1.cortx-cluster.com
-        - oldap-server2.cortx-cluster.com
-        - oldap-server3.cortx-cluster.com
+        - openldap-svc.default.svc.cluster.local
       admin: admin
       secret: openldap_admin_secret
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - http://consul-server.cortx-cluster.com:80
+        - tcp://consul-server.default.svc.cluster.local:8301
       admin: admin
       secret: consul_admin_secret
   common:
@@ -51,7 +48,7 @@ cortx:
       - https://s3.seagate.com:443
     internal:
       endpoints:
-      - http://s3.seagate.com:28049
+      - http://cortx-io-svc:28049
     service_instances: 2
     io_max_units: 8
     auth_admin: sgiamadmin
@@ -69,7 +66,7 @@ cortx:
       endpoints:
       - tcp://hax.seagate.com:28000
   csm:
-    auth_admin: admin
+    auth_admin: authadmin
     auth_secret: csm_auth_admin_secret
     mgmt_admin: cortxadmin
     mgmt_secret: csm_mgmt_admin_secret
@@ -77,3 +74,4 @@ cortx:
     agent:
       endpoints:
       - https://csm.seagate.com:8081
+

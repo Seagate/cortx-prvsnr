@@ -1,7 +1,8 @@
 #!/bin/bash
 BASEPATH=$(dirname $0)
 MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
-NAMESPACE="cortx"
+NAMESPACE="default"
+DEF3PLOGS="/tmp/3rdparty_services_destroy.log"
 
 function print_header {
     echo "--------------------------------------------------------------------------"
@@ -18,7 +19,6 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     print_header "Deleting Cluster.conf for - $NODE_NAME"
     kubectl exec -it "$NODE_NAME" --namespace "$NAMESPACE" -- /bin/bash -c "rm -rf /etc/cortx/cluster.conf";
 done
-
 
 # Delete Storage Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
@@ -82,6 +82,9 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     sleep 2;
 done
 
+# Uninstall 3rdParty Services
+./3rdparty-services/destroy_components.sh > $DEF3PLOGS 2>&1
+
 # Remove remaining PVC
 kubectl delete pvc --all --force --namespace "$NAMESPACE"
 kubectl get pvc --namespace "$NAMESPACE" | grep "$NODE_NAME"
@@ -96,8 +99,10 @@ kubectl delete -f "$BASEPATH/solution-config/secrets.yaml" --namespace "$NAMESPA
 # Delete Config Map
 kubectl delete configmap solution-config --namespace "$NAMESPACE"
 
-# Delete NameSpace
-kubectl delete namespace "$NAMESPACE"
+# Delete non-default namespace
+if [[ "$NAMESPACE" != "default" ]]; then
+    kubectl delete namespace $NAMESPACE
+fi
 
 # Validate no resources in Namespace
 kubectl get all --namespace "$NAMESPACE"

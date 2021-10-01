@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: config-node1
-  namespace: cortx
+  namespace: default
 spec:
   storageClassName: storage-device
   accessModes:
@@ -16,7 +16,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: shared-node1
-  namespace: cortx
+  namespace: default
 spec:
   storageClassName: storage-device
   accessModes:
@@ -30,7 +30,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: log-node1
-  namespace: cortx
+  namespace: default
 spec:
   storageClassName: storage-device
   accessModes:
@@ -44,7 +44,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: local-node1
-  namespace: cortx
+  namespace: default
 spec:
   storageClassName: storage-device
   accessModes:
