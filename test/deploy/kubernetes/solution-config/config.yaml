@@ -11,8 +11,6 @@ cortx:
         - ssl://openldap-svc.default.svc.cluster.local:636
       servers:
         - openldap-svc.default.svc.cluster.local
-        - openldap-svc.default.svc.cluster.local
-        - openldap-svc.default.svc.cluster.local
       admin: admin
       secret: openldap_admin_secret
       base_dn: dc=seagate,dc=com
