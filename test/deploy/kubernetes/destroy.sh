@@ -99,8 +99,9 @@ kubectl delete configmap solution-config --namespace "$NAMESPACE"
 # Delete NameSpace
 kubectl delete namespace "$NAMESPACE"
 
+#Delete 3rd party compnent 
+./3rdparty-services/destroy-components.sh
+
 # Validate no resources in Namespace
 kubectl get all --namespace "$NAMESPACE"
 
-#Delete 3rd party compnent 
-./3rdparty-services/destroy-components.sh
