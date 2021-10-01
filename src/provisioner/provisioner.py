@@ -192,7 +192,7 @@ class CortxProvisioner:
                     Log.info(f"{cmd}")
                     cmd_proc = SimpleProcess(cmd)
                     _, err, rc = cmd_proc.run()
-                    if rc != 0:
+                    if rc != 0 or err.decode('utf-8') != '':
                         raise CortxProvisionerError(rc, "Unable to execute " \
                             "%s phase for %s. %s", interface, components[comp_idx]['name'], err)
 
