@@ -7,7 +7,7 @@ num_worker_nodes=0
 while IFS= read -r line; do
     if [[ $line != *"AGE"* ]]
     then
-        IFS=" " read -r -a node_name <<< "$line"
+        IFS=" " read  <<< "$line"
         num_worker_nodes=$((num_worker_nodes+1))
     fi
 done <<< "$(kubectl get nodes)"
