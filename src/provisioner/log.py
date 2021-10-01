@@ -35,7 +35,8 @@ class CortxProvisionerLog(Log):
         """
         if not CortxProvisionerLog.logger:
             log_path = os.path.join(log_path, const.APP_NAME)
-            level = level if level in const.SUPPORTED_LOG_LEVELS else 'INFO'
+            if level not in const.SUPPORTED_LOG_LEVELS:
+                level = const.DEFAULT_LOG_LEVEL
             Log.init(service_name, log_path, level=level, console_output=console_output)
             CortxProvisionerLog.logger = Log.logger
 
@@ -51,7 +52,8 @@ class CortxProvisionerLog(Log):
         """
         if Log.logger:
             log_path = os.path.join(log_path, const.APP_NAME)
-            level = level if level in const.SUPPORTED_LOG_LEVELS else 'INFO'
+            if level not in const.SUPPORTED_LOG_LEVELS:
+                level = const.DEFAULT_LOG_LEVEL
 
             # Remove current logging handlers before truncating
             for handler in Log.logger.handlers[:]:

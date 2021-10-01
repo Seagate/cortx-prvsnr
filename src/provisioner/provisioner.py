@@ -47,8 +47,7 @@ class CortxProvisioner:
         [OUT] CORTX Config URL
         """
         if Log.logger is None:
-            CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH,
-                level='INFO')
+            CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
         Log.info('Applying config %s' % solution_conf_url)
         Conf.load(CortxProvisioner._solution_index, solution_conf_url)
 
@@ -162,7 +161,7 @@ class CortxProvisioner:
         # Reinitialize logging with configured log path
         log_path = os.path.join(
             cortx_config_store.get('cortx>common>storage>log'), node_id)
-        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', 'INFO')
+        log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
