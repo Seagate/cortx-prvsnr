@@ -27,7 +27,8 @@ class CortxProvisionerLog(Log):
     logger = None
 
     @staticmethod
-    def initialize(service_name, log_path=const.DEFAULT_LOG_PATH, level='INFO', console_output=True):
+    def initialize(service_name, log_path=const.DEFAULT_LOG_PATH,
+                   level=const.DEFAULT_LOG_LEVEL, console_output=True):
         """
         Initialize and use cortx-utils logger to log message in file and console.
         If console_output is True, log message will be displayed in console.
@@ -40,7 +41,8 @@ class CortxProvisionerLog(Log):
 
 
     @staticmethod
-    def reinitialize(service_name, log_path=const.DEFAULT_LOG_PATH, level='INFO', console_output=True):
+    def reinitialize(service_name, log_path=const.DEFAULT_LOG_PATH,
+                     level=const.DEFAULT_LOG_LEVEL, console_output=True):
         """
         Reinitialize existing logger.
 
