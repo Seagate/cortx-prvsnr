@@ -83,6 +83,12 @@ kubectl apply -f "$BASEPATH/external-services/headless_control_node.yaml" --name
 print_header "Creating Cotrol Node - Cluster"
 kubectl apply -f "$BASEPATH/provisioner-pods/deployment_control_node.yaml" --namespace "$NAMESPACE"
 
+# Wait for Control-POD execution 
+while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "completed" ]; do
+   echo "Waiting for Control-pod to complete the execution"
+   sleep 20;
+done
+
 # Create Storage Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
