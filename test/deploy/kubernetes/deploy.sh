@@ -2,6 +2,8 @@
 BASEPATH=$(dirname $0)
 MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
 NAMESPACE="default"
+TIMEDELAY="5"
+INTRDELAY="2"
 DEF3PLOGS="/tmp/3rdparty_services_install.log"
 
 function print_header {
@@ -11,7 +13,7 @@ function print_header {
 }
 
 # Label Nodes
-     NODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2)
+NODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2)
 COUNT=1;
 for NODE in ${NODES[@]}; do
     kubectl label nodes "$NODE" --overwrite=true node-name=node$COUNT;
@@ -43,7 +45,7 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     print_header "Creating Persistent Volumes for Block Devices - $NODE_NAME"
     NODE_BDEV="$BASEPATH/persistent-volumes/block_devices_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_BDEV" --namespace "$NAMESPACE";
-    sleep 2;
+    sleep $INTRDELAY;
     kubectl get pv --namespace "$NAMESPACE" | grep "$NODE_NAME";
 done
 
@@ -53,7 +55,7 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     print_header "Creating Persistent Volume Claims for Block Devices - $NODE_NAME"
     NODE_BVOL="$BASEPATH/volume-claims/block_volumes_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_BVOL" --namespace "$NAMESPACE";
-    sleep 2;
+    sleep $INTRDELAY;
 done
 
 # Create Persistent Volumes for Storage Devices (PV)
@@ -62,7 +64,7 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     print_header "Creating Persistent Volumes for Storage Devices - $NODE_NAME"
     NODE_SDEV="$BASEPATH/persistent-volumes/storage_devices_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_SDEV" --namespace "$NAMESPACE";
-    sleep 2;
+    sleep $INTRDELAY;
     kubectl get pv --namespace "$NAMESPACE" | grep "$NODE_NAME";
 done
 
@@ -72,7 +74,7 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     print_header "Creating Persistent Volume Claims for Storage Devices - $NODE_NAME"
     NODE_SVOL="$BASEPATH/volume-claims/storage_volumes_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_SVOL" --namespace "$NAMESPACE";
-    sleep 2;
+    sleep $INTRDELAY;
 done
 
 # Create Control Service (Headless)
@@ -83,13 +85,20 @@ kubectl apply -f "$BASEPATH/external-services/headless_control_node.yaml" --name
 print_header "Creating Cotrol Node - Cluster"
 kubectl apply -f "$BASEPATH/provisioner-pods/deployment_control_node.yaml" --namespace "$NAMESPACE"
 
+# Wait for Control-POD execution
+printf "Waiting for Control Node."
+while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Completed" ]; do
+    printf "."
+    sleep $TIMEDELAY;
+done
+
 # Create Storage Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Creating Storage Service - $NODE_NAME"
     NODE_SVC="$BASEPATH/external-services/headless_storage_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_SVC" --namespace "$NAMESPACE";
-    sleep 2;
+    sleep $INTRDELAY;
 done
 
 # Create Storage Node (POD)
@@ -98,8 +107,9 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     print_header "Creating Storage Node - $NODE_NAME"
     NODE_POD="$BASEPATH/provisioner-pods/deployment_storage_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
-    sleep 2;
+    sleep $TIMEDELAY;
 done
 
-sleep 10
-kubectl get pods --namespace "$NAMESPACE"
+sleep $TIMEDELAY;
+kubectl get pods --namespace "$NAMESPACE";
+exit 0;
