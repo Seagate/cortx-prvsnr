@@ -91,7 +91,7 @@ while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Complet
         echo "Error, exiting"
         exit 1
     fi
-    try=$(( $try + 1 ))
+    try=$((try + 1 ))
     echo "."
     sleep 20;
 done
