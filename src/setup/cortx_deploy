@@ -91,7 +91,8 @@ validate_config $CLUSTER_INFO
 
 export PATH=$PATH:/opt/seagate/provisioner/bin
 [ -z $NODE_ID ] && echo -e "ERROR: Missing NODE-ID" && show_usage
-echo $NODE_ID > "/etc/machine-id";
+echo $NODE_ID > "/etc/cortx/solution/node-id";
+ln -sf /etc/cortx/solution/node-id /etc/machine-id;
 log $DEBUG node_id=$NODE_ID
 # Apply Cluster Config
 log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
