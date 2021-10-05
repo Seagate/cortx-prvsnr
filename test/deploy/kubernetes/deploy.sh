@@ -90,7 +90,7 @@ echo -e "Waiting for Control Node."
 try=1; max_tries=100
 while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Completed" ]; do
     if [[ "$try" -gt "$max_tries" ]]; then
-        echo "Error, exiting"
+        echo "Error: The control node didn't complete the execution after 100 retries, exiting"
         exit 1
     fi
     try=$(( $try + 1 ))
