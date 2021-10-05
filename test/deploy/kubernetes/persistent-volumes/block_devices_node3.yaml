@@ -79,6 +79,32 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  name: dev-sde-node3
+  namespace: default
+spec:
+  capacity:
+    storage: 25Gi
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Block
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: default
+    name: dev-sde-node3
+  local:
+    path: /dev/sde
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-name
+          operator: In
+          values:
+          - node3
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
   name: dev-sdf-node3
   namespace: default
 spec:
@@ -171,32 +197,6 @@ spec:
     name: dev-sdi-node3
   local:
     path: /dev/sdi
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: node-name
-          operator: In
-          values:
-          - node3
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dev-sdj-node3
-  namespace: default
-spec:
-  capacity:
-    storage: 25Gi
-  accessModes:
-    - ReadWriteMany
-  volumeMode: Block
-  persistentVolumeReclaimPolicy: Retain
-  claimRef:
-    namespace: default
-    name: dev-sdj-node3
-  local:
-    path: /dev/sdj
   nodeAffinity:
     required:
       nodeSelectorTerms:
