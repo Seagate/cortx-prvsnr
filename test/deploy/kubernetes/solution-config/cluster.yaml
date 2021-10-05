@@ -34,6 +34,9 @@ cluster:
     - name: control_node
       components:
       - name: utils
+      - name: motr
+        services:
+        - fsm
       - name: s3
         services:
         - bg_producer
