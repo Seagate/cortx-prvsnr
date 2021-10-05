@@ -23,9 +23,6 @@ spec:
   - name: shared-node2
     persistentVolumeClaim:
       claimName: shared-node2
-  - name: log-node2
-    persistentVolumeClaim:
-      claimName: log-node2
   - name: local-node2
     persistentVolumeClaim:
       claimName: local-node2
@@ -76,8 +73,6 @@ spec:
       mountPath: /etc/cortx/solution/secret
     - name: shared-node2
       mountPath: /share
-    - name:  log-node2
-      mountPath: /share/var/log/cortx
     - name:  local-node2
       mountPath: /var/cortx
     volumeDevices:

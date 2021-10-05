@@ -43,27 +43,6 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: log-node1
-spec:
-  storageClassName: storage-device
-  capacity:
-    storage: 1Gi
-  accessModes:
-  - ReadWriteOnce
-  hostPath:
-    path: "/var/log/cortx"
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: node-name
-          operator: In
-          values:
-          - node1
----
-kind: PersistentVolume
-apiVersion: v1
-metadata:
   name: local-node1
 spec:
   storageClassName: storage-device
@@ -72,7 +51,7 @@ spec:
   accessModes:
   - ReadWriteOnce
   hostPath:
-    path: "/var/data/cortx"
+    path: "/var/cortx"
   nodeAffinity:
     required:
       nodeSelectorTerms:
