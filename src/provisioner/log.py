@@ -34,7 +34,6 @@ class CortxProvisionerLog(Log):
         If console_output is True, log message will be displayed in console.
         """
         if not CortxProvisionerLog.logger:
-            log_path = os.path.join(log_path, const.APP_NAME)
             if level not in const.SUPPORTED_LOG_LEVELS:
                 level = const.DEFAULT_LOG_LEVEL
             Log.init(service_name, log_path, level=level, console_output=console_output)
@@ -51,7 +50,6 @@ class CortxProvisionerLog(Log):
         logs from temporary log file to target log path file.
         """
         if Log.logger:
-            log_path = os.path.join(log_path, const.APP_NAME)
             if level not in const.SUPPORTED_LOG_LEVELS:
                 level = const.DEFAULT_LOG_LEVEL
 
@@ -59,8 +57,8 @@ class CortxProvisionerLog(Log):
             for handler in Log.logger.handlers[:]:
                 Log.logger.removeHandler(handler)
 
-            temp_log_file = '%s/%s/%s.log' % (
-                const.TMP_LOG_PATH, const.APP_NAME, const.SERVICE_NAME)
+            temp_log_file = '%s/%s.log' % (
+                const.TMP_LOG_PATH, const.SERVICE_NAME)
 
             if os.path.exists(temp_log_file):
                 with open(temp_log_file, 'r') as f:

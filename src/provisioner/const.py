@@ -13,9 +13,9 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-TMP_LOG_PATH = "/tmp/"
 SERVICE_NAME = "cortx_setup"
 APP_NAME = "provisioner"
-DEFAULT_LOG_PATH = "/var/log/cortx"
+TMP_LOG_PATH = "/tmp/%s" % APP_NAME
+DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
 DEFAULT_LOG_LEVEL = "INFO"
 SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]

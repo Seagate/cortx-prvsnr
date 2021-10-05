@@ -160,7 +160,7 @@ class CortxProvisioner:
 
         # Reinitialize logging with configured log path
         log_path = os.path.join(
-            cortx_config_store.get('cortx>common>storage>log'), node_id)
+            cortx_config_store.get('cortx>common>storage>log'), const.APP_NAME, node_id)
         log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
