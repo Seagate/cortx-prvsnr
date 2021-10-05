@@ -38,6 +38,9 @@ spec:
   - name: sdd
     persistentVolumeClaim:
       claimName: dev-sdd-node3
+  - name: sde
+    persistentVolumeClaim:
+      claimName: dev-sde-node3
   - name: sdf
     persistentVolumeClaim:
       claimName: dev-sdf-node3
@@ -50,9 +53,6 @@ spec:
   - name: sdi
     persistentVolumeClaim:
       claimName: dev-sdi-node3
-  - name: sdj
-    persistentVolumeClaim:
-      claimName: dev-sdj-node3
   containers:
   - name: cortx-data
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
@@ -87,6 +87,8 @@ spec:
       devicePath: /dev/sdc
     - name: sdd
       devicePath: /dev/sdd
+    - name: sde
+      devicePath: /dev/sde
     - name: sdf
       devicePath: /dev/sdf
     - name: sdg
@@ -95,5 +97,3 @@ spec:
       devicePath: /dev/sdh
     - name: sdi
       devicePath: /dev/sdi
-    - name: sdj
-      devicePath: /dev/sdj
