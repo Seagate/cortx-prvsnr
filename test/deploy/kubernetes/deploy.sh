@@ -86,15 +86,9 @@ print_header "Creating Cotrol Node - Cluster"
 kubectl apply -f "$BASEPATH/provisioner-pods/deployment_control_node.yaml" --namespace "$NAMESPACE"
 
 # Wait for Control-POD execution
-echo -e "Waiting for Control Node."
-try=1; max_tries=100
+printf "Waiting for Control Node."
 while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Completed" ]; do
-    if [[ "$try" -gt "$max_tries" ]]; then
-        echo "Error: The control node didn't complete the execution after 100 retries, exiting"
-        exit 1
-    fi
-    try=$(( $try + 1 ))
-    echo "."
+    printf "."
     sleep $TIMEDELAY;
 done
 
