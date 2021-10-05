@@ -51,18 +51,18 @@ cluster:
         dix: 1+2+0
       nodes:
         - name: control-node
-          id: 285d6133-3645-46b7-96a7-56917cd3cb43
+          id: 285d6133364546b796a756917cd3cb43
           hostname: control-node
           type: control_node
         - name: storage-node1
-          id: 0d213319-dbc5-463f-af39-c21d2501ea3e
+          id: 0d213319dbc5463faf39c21d2501ea3e
           hostname: storage-node1
           type: storage_node
         - name: storage-node2
-          id: ew733872-des4-283h-af39-c21d2501ea3e
+          id: ew733872des4283haf39c21d2501ea3e
           hostname: storage-node2
           type: storage_node
         - name: storage-node3
-          id: af733872-des4-283h-af39-c21d2501ea3e
+          id: af733872des4283haf39c21d2501ea3e
           hostname: storage-node3
           type: storage_node
