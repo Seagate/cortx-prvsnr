@@ -181,20 +181,38 @@ class NodeFinalize(Command):
                 targets=node_id
             )
 
-            self.logger.debug(f"Creating user: '{user}'")
-            StateFunExecuter.execute(
-                'user.present',
-                fun_kwargs=dict(
-                    name=user,
-                    password="Seagate123!",     # TODO: remove from cli, add this to vault in future
-                    hash_password=True,
-                    home=str(home_dir),
-                    groups=[ugroup],
-                    shell=default_login        # nosec
-                ),
-                targets=node_id,
-                secure=True
-            )
+            try:
+                self.logger.debug(f"Creating user: '{user}'")
+                StateFunExecuter.execute(
+                    'user.present',
+                    fun_kwargs=dict(
+                        name=user,
+                        password="Seagate123!",     # TODO: remove from cli, add this to vault in future
+                        hash_password=True,
+                        home=str(home_dir),
+                        groups=[ugroup],
+                        shell=default_login        # nosec
+                    ),
+                    targets=node_id,
+                    secure=True
+                )
+            except:
+                self.logger.debug(
+                    f"Attempting one more time to create user: '{user}'"
+                )
+                StateFunExecuter.execute(
+                    'user.present',
+                    fun_kwargs=dict(
+                        name=user,
+                        password="Seagate123!",     # TODO: remove from cli, add this to vault in future
+                        hash_password=True,
+                        home=str(home_dir),
+                        groups=[ugroup],
+                        shell=default_login        # nosec
+                    ),
+                    targets=node_id,
+                    secure=True
+                )
             StateFunExecuter.execute(
                 'file.directory',
                 fun_kwargs=dict(
