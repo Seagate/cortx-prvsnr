@@ -196,9 +196,10 @@ class NodeFinalize(Command):
                     targets=node_id,
                     secure=True
                 )
-            except:
+            except Exception as exc:
                 self.logger.debug(
                     f"Attempting one more time to create user: '{user}'"
+                    f"Ignoring exception: '{exc}'"
                 )
                 StateFunExecuter.execute(
                     'user.present',
