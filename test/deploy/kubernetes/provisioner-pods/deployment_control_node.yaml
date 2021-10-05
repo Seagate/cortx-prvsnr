@@ -4,7 +4,7 @@ metadata:
   name: control-node
   labels:
     app: control-node
-    id: 285d6133-3645-46b7-96a7-56917cd3cb43
+    id: 285d6133364546b796a756917cd3cb43
 spec:
   hostname: control-node
   restartPolicy: Never

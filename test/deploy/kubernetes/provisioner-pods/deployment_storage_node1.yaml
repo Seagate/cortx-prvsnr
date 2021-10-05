@@ -4,7 +4,7 @@ metadata:
   name: storage-node1
   labels:
     app: storage-node1
-    id: 0d213319-dbc5-463f-af39-c21d2501ea3e
+    id: 0d213319dbc5463faf39c21d2501ea3e
 spec:
   hostname: storage-node1
   restartPolicy: Never
