@@ -15,42 +15,86 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+import sys
 import errno
+import inspect
+import argparse
 
 from cortx.utils.conf_store import Conf
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
 
 
-class ConfigValidation:
-    """ Validate Config """
+class Validator:
+    """ Validator Framework """
 
+    name = "validator"
+
+    def process(*args):
+        """ This interface needs to be implemented in derived class """
+        pass
+
+    @staticmethod
+    def validate(validations: list, *args):
+        """ Return the validator after parsing the validator list """
+
+        validators = [
+            y for x, y in inspect.getmembers(sys.modules[__name__])
+            if x.endswith('Validator') and y.name in validations]
+        for validator in validators:
+            validator.process(args)
+
+
+class ConfigValidator(Validator):
+    """ Config Validator """
+
+    name = "Config"
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_config"
 
-    def __init__(self, solution_conf_url: str, cortx_conf_url: str = None):
-        """ Validate conf_store config """
+    @staticmethod
+    def process(*args):
+        """ Process input parameters """
+
+        parser = argparse.ArgumentParser('provisioner_config_validator')
+        parser.add_argument(
+            '-f', dest='solution_conf', help='Solution Config URL')
+        parser.add_argument(
+            '-c', dest='cortx_conf', nargs='?', help='CORTX Config URL')
+        input_args = parser.parse_args()
+
+        if input_args.solution_conf is None:
+            raise CortxProvisionerError(
+                errno.EINVAL, 'Please provide solution_conf url')
+
+        solution_conf_url = input_args.solution_conf
+        cortx_conf_url = input_args.cortx_conf
+        if cortx_conf_url is None:
+            cortx_conf_url = ConfigValidator._cortx_conf_url
+
+        ConfigValidator().validate(solution_conf_url, cortx_conf_url)
+
+    def validate(self, solution_conf_url, cortx_conf_url):
+        """ Validate Config """
+
+        self.load_config(solution_conf_url, cortx_conf_url)
+
+        if Conf.get(ConfigValidator._solution_index, 'cluster') is not None:
+            self.check_storage_sets()
+            self.check_number_of_nodes()
+
+        if Conf.get(ConfigValidator._solution_index, 'cortx') is not None:
+            self.check_external_services()
+
+    def load_config(self, solution_conf_url, cortx_conf_url):
+        """ Load config """
 
         self.solution_conf_url = solution_conf_url
-        if cortx_conf_url is None:
-            self.cortx_conf_url = self._cortx_conf_url
         self.cortx_conf_url = cortx_conf_url
         Conf.load(self._solution_index, self.solution_conf_url)
         self.cortx_config_store = ConfigStore(self.cortx_conf_url)
 
-    def validate_config(self):
-        """ Validate config_store """
-
-        if Conf.get(ConfigValidation._solution_index, 'cluster') is not None:
-            self.validate_storage_sets()
-            self.validate_number_of_nodes()
-
-        if Conf.get(ConfigValidation._solution_index, 'cortx') is not None:
-            self.validate_external_services()
-
-        return 0
-
-    def validate_storage_sets(self):
+    def check_storage_sets(self):
         """ Check no of storage_sets present in conf_store
             and solution_config is same. """
 
@@ -68,7 +112,7 @@ class ConfigValidation:
 
         return 0
 
-    def validate_number_of_nodes(self):
+    def check_number_of_nodes(self):
         """ Check no. of nodes present in conf_store
             and solution config is same. """
 
@@ -103,7 +147,7 @@ class ConfigValidation:
 
         return 0
 
-    def validate_external_services(self):
+    def check_external_services(self):
         """" Validate no of external services in cortx config """
 
         sol_conf_ext_services = self.get_value_from_solution_config(
@@ -125,13 +169,13 @@ class ConfigValidation:
                 raise CortxProvisionerError(errno.EINVAL,
                     f'{service} endpoints define in conf_store is not same as '
                     'solution_config.')
-
+        return 0
 
     def get_value_from_solution_config(self, key):
         """ Read config value for key from solution_config """
 
         config_value = Conf.get(
-            ConfigValidation._solution_index, key)
+            ConfigValidator._solution_index, key)
         if config_value is None:
             raise CortxProvisionerError(
                 errno.EINVAL,
@@ -149,3 +193,7 @@ class ConfigValidation:
                 f'{key} key is unspecified for {self.cortx_conf_url}')
 
         return config_value
+
+
+if __name__ == "__main__":
+    Validator.validate(['Config'], sys.argv[1:])

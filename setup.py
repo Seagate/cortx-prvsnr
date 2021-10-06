@@ -83,14 +83,16 @@ setup(name='cortx-provisioner',
     },
     entry_points={
         'console_scripts': [
-            'cortx_setup = cortx.setup.cortx_setup:main'
+            'cortx_setup = cortx.setup.cortx_setup:main',
+            'validators = cortx.provisioner.validators.main'
         ]
     },
     data_files=[
         ('/opt/seagate/cortx/provisioner/conf', get_conf_files()),
         ('/opt/seagate/cortx/provisioner/conf', get_requirements_files()),
         ('/etc/cortx/solution/secret/', get_secret_files()),
-        ('/opt/seagate/cortx/provisioner/bin', ['src/setup/cortx_deploy'])
+        ('/opt/seagate/cortx/provisioner/bin', ['src/setup/cortx_deploy',
+            'src/provisioner/validators.py'])
     ],
     long_description=get_description(),
     zip_safe=False,
