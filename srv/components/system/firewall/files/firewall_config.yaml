@@ -25,6 +25,49 @@ firewall:
         - 9092/tcp
       lnet:
         - 988/tcp
+      LF_hax:
+        - 3073/tcp
+      LF_motr_service:
+        - 5121/tcp
+        - 5122/tcp
+        - 5123/tcp
+        - 5124/tcp
+        - 5125/tcp
+        - 5126/tcp
+        - 5127/tcp
+        - 5128/tcp
+      LF_motr_client:
+        - 9217/tcp
+        - 9218/tcp
+        - 9219/tcp
+        - 9220/tcp
+        - 9221/tcp
+        - 9222/tcp
+        - 9223/tcp
+        - 9224/tcp
+      LF_s3server:
+        - 7169/tcp
+        - 7170/tcp
+        - 7171/tcp
+        - 7172/tcp
+        - 7173/tcp
+        - 7174/tcp
+        - 7175/tcp
+        - 7176/tcp
+        - 7177/tcp
+        - 7178/tcp
+        - 7179/tcp
+        - 7180/tcp
+        - 7181/tcp
+        - 7182/tcp
+        - 7183/tcp
+        - 7184/tcp
+        - 7185/tcp
+        - 7186/tcp
+        - 7187/tcp
+        - 7188/tcp
+        - 7189/tcp
+        - 7190/tcp
       s3server:
         - 28071/tcp
         - 28072/tcp
