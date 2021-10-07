@@ -46,6 +46,8 @@ class ConfigCmd(Cmd):
             help='Solution Config URL')
         parser.add_argument('-c', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
+        parser.add_argument('-v', dest='validations', nargs='?', \
+            help='config')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
@@ -67,7 +69,10 @@ class ConfigCmd(Cmd):
         if self._args.action == 'apply':
             CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
         if self._args.action == 'validate':
-            Validator.validate(['Config'], self._args.solution_conf, self._args.cortx_conf)
+            validations = ['all']
+            if self._args.validations is not None:
+                validations = self._args.validations.split(',')
+            Validator.validate(validations, self._args.solution_conf, self._args.cortx_conf)
 
         return 0
 

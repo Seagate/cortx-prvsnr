@@ -29,6 +29,7 @@ class Validator:
 
     name = "validator"
 
+    @staticmethod
     def process(*args):
         """ This interface needs to be implemented in derived class """
         pass
@@ -39,7 +40,8 @@ class Validator:
 
         validators = [
             y for x, y in inspect.getmembers(sys.modules[__name__])
-            if x.endswith('Validator') and y.name in validations]
+            if x.endswith('Validator') and (
+                y.name in validations or validations == ['all'])]
         for validator in validators:
             validator.process(args)
 
@@ -47,8 +49,7 @@ class Validator:
 class ConfigValidator(Validator):
     """ Config Validator """
 
-    name = "Config"
-    _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
+    name = "config"
     _solution_index = "solution_config"
 
     @staticmethod
@@ -57,8 +58,9 @@ class ConfigValidator(Validator):
 
         config_urls = args[0]
         if len(config_urls) < 2:
-            solution_conf_url = config_urls[0]
-            cortx_conf_url = ConfigValidator._cortx_conf_url
+            raise CortxProvisionerError(errno.EINVAL,
+                'Please provide solution_config and conf_store '
+                'url as input parameters.')
         elif len(config_urls) >= 2:
             solution_conf_url = config_urls[0]
             cortx_conf_url = config_urls[1]
