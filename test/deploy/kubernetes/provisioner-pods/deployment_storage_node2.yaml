@@ -4,13 +4,19 @@ metadata:
   name: storage-node2
   labels:
     app: storage-node2
-    id: ew733872des4283haf39c21d2501ea3e
+    id: bbb340f79047df9bb52fa460615c32a5
 spec:
   hostname: storage-node2
   restartPolicy: Never
   nodeSelector:
     node-name: node2
   volumes:
+  - name: node-id
+    downwardAPI:
+      items:
+      - path: "id"
+        fieldRef:
+          fieldPath: metadata.labels['id']
   - name: solution-config
     configMap:
       name: solution-config
@@ -51,19 +57,16 @@ spec:
   - name: cortx-data
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
     imagePullPolicy: IfNotPresent
-    env:
-    - name: NODE_ID
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.labels['id']
     args:
     - /bin/sh
     - -c
     - set -x;
-      /opt/seagate/cortx/provisioner/bin/cortx_deploy -n $NODE_ID -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
     - name: local-node2
       mountPath: /etc/cortx
     - name: cortx-secret
