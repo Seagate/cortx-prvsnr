@@ -118,9 +118,9 @@ fi
 if ! [ -z $VALIDATE_CONF ];
 then
     log $INFO "cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
+    cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" || exit 1
     log $INFO "cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE"
+    cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || exit 1
 fi
 
 # Bootstrap Cluster

@@ -43,7 +43,7 @@ class Validator:
             if x.endswith('Validator') and (
                 y.name in validations or validations == ['all'])]
         for validator in validators:
-            validator.process(args)
+            validator.process(*args)
 
 
 class ConfigValidator(Validator):
@@ -51,22 +51,21 @@ class ConfigValidator(Validator):
 
     name = "config"
     _solution_index = "solution_config"
-    _key_storage_set_SC = 'cluster>storage_sets'
-    _key_storage_set_CS = 'cluster>storage_set'
+    _key_storage_set_sc = 'cluster>storage_sets'
+    _key_storage_set_cs = 'cluster>storage_set'
     _key_ext_service = 'cortx>external'
 
     @staticmethod
     def process(*args):
         """ Process input parameters """
 
-        config_urls = args[0]
-        if len(config_urls) < 2:
+        if len(args) < 2:
             raise CortxProvisionerError(errno.EINVAL,
                 'Please provide solution_config and conf_store '
                 'url as input parameters.')
-        elif len(config_urls) >= 2:
-            solution_conf_url = config_urls[0]
-            cortx_conf_url = config_urls[1]
+        elif len(args) >= 2:
+            solution_conf_url = args[0]
+            cortx_conf_url = args[1]
 
         ConfigValidator.load_config(solution_conf_url, cortx_conf_url)
 
@@ -98,9 +97,9 @@ class ConfigValidator(Validator):
             and solution_config is same. """
 
         input_storage_sets = self._get_value_from_solution_config(
-            ConfigValidator._key_storage_set_SC)
+            ConfigValidator._key_storage_set_sc)
         output_storage_sets = self._get_value_from_conf_store(
-            ConfigValidator._key_storage_set_CS)
+            ConfigValidator._key_storage_set_cs)
 
         if len(input_storage_sets) != len(output_storage_sets):
             raise CortxProvisionerError(errno.EINVAL,
@@ -116,7 +115,7 @@ class ConfigValidator(Validator):
             and solution config is same. """
 
         input_storage_sets = self._get_value_from_solution_config(
-            ConfigValidator._key_storage_set_SC)
+            ConfigValidator._key_storage_set_sc)
         # Get nodes in each storage_set from solution_conf.
         storage_set_in_sol_conf = {}
         for storage_set in input_storage_sets:
@@ -136,13 +135,13 @@ class ConfigValidator(Validator):
         # validate nodes define for each storage_set in conf_store,
         # is same as nodes define in solution_config
         for key in storage_set_in_conf_store.keys():
-            CS_nodes = storage_set_in_conf_store[key]
-            SC_nodes = storage_set_in_sol_conf[key]
-            if len(CS_nodes) != len(SC_nodes):
+            cs_nodes = storage_set_in_conf_store[key]
+            sc_nodes = storage_set_in_sol_conf[key]
+            if len(cs_nodes) != len(sc_nodes):
                 raise CortxProvisionerError(errno.EINVAL,
                     'No of nodes define in conf_store is not same as solution_config.'
-                    f' Nodes in {self.solution_conf_url} is {len(SC_nodes)} and '
-                    f'in {self.cortx_conf_url} is {len(CS_nodes)}')
+                    f' Nodes in {self.solution_conf_url} is {len(sc_nodes)} and '
+                    f'in {self.cortx_conf_url} is {len(cs_nodes)}')
 
         return 0
 
