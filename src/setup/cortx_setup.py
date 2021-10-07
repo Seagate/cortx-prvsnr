@@ -23,6 +23,7 @@ import os
 from cortx.provisioner.log import CortxProvisionerLog, Log
 from cortx.provisioner.provisioner import CortxProvisioner
 from cortx.provisioner.error import CortxProvisionerError
+from cortx.provisioner.validators import Validator
 from cortx.utils.cmd_framework import Cmd
 from cortx.provisioner import const
 
@@ -40,17 +41,19 @@ class ConfigCmd(Cmd):
     def add_args(parser: str):
         """ Add Command args for parsing """
 
-        parser.add_argument('action', help='apply')
+        parser.add_argument('action', help='apply, validate')
         parser.add_argument('-f', dest='solution_conf', \
             help='Solution Config URL')
         parser.add_argument('-c', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
+        parser.add_argument('-v', dest='validations', nargs='?', \
+            help='config')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
         """ Validate config command args """
 
-        if self._args.action not in ['apply']:
+        if self._args.action not in ['apply', 'validate']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
         log_level = self._args.log_level
@@ -65,6 +68,12 @@ class ConfigCmd(Cmd):
         self._validate()
         if self._args.action == 'apply':
             CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
+        if self._args.action == 'validate':
+            validations = ['all']
+            if self._args.validations is not None:
+                validations = self._args.validations.split(',')
+            Validator.validate(validations, self._args.solution_conf, self._args.cortx_conf)
+
         return 0
 
 
