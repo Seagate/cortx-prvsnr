@@ -23,15 +23,9 @@ spec:
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: config-node3
-    persistentVolumeClaim:
-      claimName: config-node3
   - name: shared-node3
     persistentVolumeClaim:
       claimName: shared-node3
-  - name: log-node3
-    persistentVolumeClaim:
-      claimName: log-node3
   - name: local-node3
     persistentVolumeClaim:
       claimName: local-node3
@@ -73,16 +67,12 @@ spec:
       mountPath: /etc/cortx/solution
     - name: node-id
       mountPath: /etc/cortx/solution/node
-    - name: config-node3
+    - name: local-node3
       mountPath: /etc/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
     - name: shared-node3
       mountPath: /share
-    - name: log-node3
-      mountPath: /share/var/log/cortx
-    - name: local-node3
-      mountPath: /var/cortx
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: config-node2
+  name: local-node2
   namespace: default
 spec:
   storageClassName: storage-device
@@ -10,7 +10,7 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  volumeName: config-node2
+  volumeName: local-node2
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -25,31 +25,3 @@ spec:
     requests:
       storage: 1Gi
   volumeName: shared-node2
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: log-node2
-  namespace: default
-spec:
-  storageClassName: storage-device
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  volumeName: log-node2
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: local-node2
-  namespace: default
-spec:
-  storageClassName: storage-device
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  volumeName: local-node2
