@@ -17,9 +17,6 @@ spec:
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: config-node2
-    persistentVolumeClaim:
-      claimName: config-node2
   - name: shared-node2
     persistentVolumeClaim:
       claimName: shared-node2
@@ -67,14 +64,12 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
-    - name: config-node2
+    - name: local-node2
       mountPath: /etc/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
     - name: shared-node2
       mountPath: /share
-    - name:  local-node2
-      mountPath: /var/cortx
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb

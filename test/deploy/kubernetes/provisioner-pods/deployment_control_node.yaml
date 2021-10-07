@@ -14,9 +14,6 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
-  - name: config-node1
-    persistentVolumeClaim:
-      claimName: config-node1
   - name: cortx-secret
     secret:
       secretName: cortx-secret
@@ -43,11 +40,9 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
-    - name: config-node1
+    - name: local-node1
       mountPath: /etc/cortx
     - name: shared-node1
       mountPath: /share
-    - name: local-node1
-      mountPath: /var/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
