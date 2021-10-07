@@ -11,6 +11,12 @@ spec:
   nodeSelector:
     node-name: node3
   volumes:
+  - name: node-id
+    downwardAPI:
+      items:
+      - path: "id"
+        fieldRef:
+          fieldPath: metadata.labels['id']
   - name: solution-config
     configMap:
       name: solution-config
@@ -70,6 +76,8 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
     - name: config-node3
       mountPath: /etc/cortx
     - name: cortx-secret

@@ -11,6 +11,12 @@ spec:
   nodeSelector:
     node-name: node1
   volumes:
+  - name: node-id
+    downwardAPI:
+      items:
+      - path: "id"
+        fieldRef:
+          fieldPath: metadata.labels['id']
   - name: solution-config
     configMap:
       name: solution-config
@@ -31,7 +37,7 @@ spec:
       claimName: local-node1
   containers:
   - name: cortx-control-node
-    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    image: ghcr.io/seagate/cortx-all:2.0.0-243-custom-ci
     imagePullPolicy: IfNotPresent
     env:
     - name: NODE_ID
@@ -46,6 +52,8 @@ spec:
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
     - name: config-node1
       mountPath: /etc/cortx
     - name: shared-node1

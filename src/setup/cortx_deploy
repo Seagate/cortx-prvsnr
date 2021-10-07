@@ -17,18 +17,19 @@ function log {
 }
 
 function show_usage {
-    echo -e "usage: $(basename $0) -n NODE-ID [-f SOLUTION-CONFIG] [-d LEVEL][-c CORTX-CONFIG-URL]"
+    echo -e "usage: $(basename $0) [-f SOLUTION-CONFIG] [-l LOG-LEVEL][-c CORTX-CONFIG-URL] [-m] [-d]"
     echo -e "Where:"
     echo -e "..."
-    echo -e " NODE-ID         : Unique Node ID"
     echo -e " SOLUTION-CONFIG : Solution-Config directory containing -\
                                 config.yaml, cluster.yaml and secrets.yaml"
     echo -e "                   (Default: /etc/cortx/solution)"
-    echo -e " LOG LEVEL       : Log Level. Default 2"
-    echo -e "                   Supported log levels: DEBUG=1 INFO=2"
-    echo -e "                   WARNING=3 ERROR=4 FATAL=5"
-    echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration."
-    echo -e "                   Default is yaml:///etc/cortx/cluster.conf"
+    echo -e " LOG-LEVEL       : Log Level (Default: 2)"
+    echo -e "                   Supported log levels:"
+    echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
+    echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
+    echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
+    echo -e " ENABLE MOCK     : Enable Mocking CORTX Deployment (Default: False)"
+    echo -e " ENABLE DEBUG    : Enable Debugging CORTX Deployment (Default: False)"
     exit 1
 }
 
@@ -45,16 +46,17 @@ function yaml_config {
 }
 
 # Constants
-NODE_ID=0
+DEBUG_FLAG=false
+MOCK_FLAG=false
 SETUP_ARGS=""
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
 
 while [ $# -gt 0 ];  do
     case $1 in
-    -d )
+    -l )
         shift 1
-        LOG_LEVEL=$1;
+        LOG_LEVEL=$1
         ;;
     -n )
         shift 1
@@ -62,6 +64,10 @@ while [ $# -gt 0 ];  do
         ;;
     -m )
         SETUP_ARGS="-m"
+        MOCK_FLAG=true
+        ;;
+    -d )
+        DEBUG_FLAG=true
         ;;
     -f )
         shift 1
@@ -75,7 +81,7 @@ while [ $# -gt 0 ];  do
         show_usage
         ;;
     * )
-        echo "Invalid argument provided : $1"
+        echo -e "Invalid argument provided : $1"
         show_usage
         exit 1
         ;;
@@ -90,18 +96,27 @@ CLUSTER_INFO="$SOLUTION_CONFIG/cluster.yaml"
 validate_config $CLUSTER_INFO
 
 export PATH=$PATH:/opt/seagate/provisioner/bin
-[ -z $NODE_ID ] && echo -e "ERROR: Missing NODE-ID" && show_usage
-echo $NODE_ID > "/etc/cortx/solution/node-id";
-ln -sf /etc/cortx/solution/node-id /etc/machine-id;
-log $DEBUG node_id=$NODE_ID
+
 # Apply Cluster Config
 log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
 cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
 
 # Apply Common Config
 log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
-cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE"
+cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
+
+# Check if mocking is enabled
+if [ $MOCK_FLAG = true ]; then
+    log $INFO "cortx_setup MOCK enabled...";
+    sleep infinity;
+fi
 
 # Bootstrap Cluster
 log $INFO "cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $SETUP_ARGS"
 cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $SETUP_ARGS;
+
+# Check if debugging is enabled
+if [ $DEBUG_FLAG = true ]; then
+    log $INFO "cortx_setup DEBUG enabled...";
+    sleep infinity;
+fi
