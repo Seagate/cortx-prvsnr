@@ -80,6 +80,9 @@ while [ $# -gt 0 ];  do
     -h )
         show_usage
         ;;
+    -v )
+        VALIDATE_CONF="-v"
+        ;;
     * )
         echo -e "Invalid argument provided : $1"
         show_usage
@@ -109,6 +112,15 @@ cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
 if [ $MOCK_FLAG = true ]; then
     log $INFO "cortx_setup MOCK enabled...";
     sleep infinity;
+fi
+
+# Validate config
+if ! [ -z $VALIDATE_CONF ];
+then
+    log $INFO "cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
+    cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
+    log $INFO "cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
+    cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE"
 fi
 
 # Bootstrap Cluster
