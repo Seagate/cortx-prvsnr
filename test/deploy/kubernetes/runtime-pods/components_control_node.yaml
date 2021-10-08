@@ -20,9 +20,6 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
-  - name: cortx-secret
-    secret:
-      secretName: cortx-secret
   - name: shared-node1
     persistentVolumeClaim:
       claimName: shared-node1
@@ -49,8 +46,6 @@ spec:
       mountPath: /share
     - name: local-node1
       mountPath: /etc/cortx
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
   - name: s3-bg-producer
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
     imagePullPolicy: IfNotPresent
@@ -68,5 +63,3 @@ spec:
       mountPath: /share
     - name: local-node1
       mountPath: /etc/cortx
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret

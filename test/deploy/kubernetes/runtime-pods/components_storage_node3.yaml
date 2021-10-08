@@ -20,9 +20,6 @@ spec:
   - name: solution-config
     configMap:
       name: solution-config
-  - name: cortx-secret
-    secret:
-      secretName: cortx-secret
   - name: shared-node3
     persistentVolumeClaim:
       claimName: shared-node3
@@ -70,8 +67,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
   - name: cortx-confd
@@ -90,8 +85,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
   - name: cortx-ios1
@@ -110,8 +103,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
     volumeDevices:
@@ -147,8 +138,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
     volumeDevices:
@@ -184,8 +173,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
   - name: cortx-s32
@@ -204,8 +191,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
   - name: cortx-s3auth
@@ -223,8 +208,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
   - name: cortx-s3haproxy
@@ -242,8 +225,6 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
     ports:
@@ -272,7 +253,5 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: shared-node3
       mountPath: /share
-    - name: cortx-secret
-      mountPath: /etc/cortx/solution/secret
     - name: local-node3
       mountPath: /etc/cortx
