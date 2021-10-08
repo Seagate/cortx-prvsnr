@@ -13,7 +13,7 @@ function print_header {
 }
 
 # Label Nodes
-NODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2)
+NODES=$(kubectl get nodes | tail -n+2 | sort -k3 | awk '{print $1}')
 COUNT=1;
 for NODE in ${NODES[@]}; do
     kubectl label nodes "$NODE" --overwrite=true node-name=node$COUNT;

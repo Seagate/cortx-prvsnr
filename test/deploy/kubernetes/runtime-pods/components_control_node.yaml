@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: control-node
+  labels:
+    app: control-node
+    id: 9995f539f4f770e2a3fe9e2e615c32a8
+spec:
+  hostname: control-node
+  restartPolicy: Never
+  nodeSelector:
+    node-name: node1
+  volumes:
+  - name: node-id
+    downwardAPI:
+      items:
+      - path: "id"
+        fieldRef:
+          fieldPath: metadata.labels['id']
+  - name: solution-config
+    configMap:
+      name: solution-config
+  - name: shared-node1
+    persistentVolumeClaim:
+      claimName: shared-node1
+  - name: local-node1
+    persistentVolumeClaim:
+      claimName: local-node1
+  containers:
+  - name: csm-agent
+    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort: 8081
+      name: "port-8081"
+    args:
+    - /bin/sh
+    - -c
+    - set -x;
+      /usr/bin/csm_agent start -c yaml:///etc/cortx/cluster.conf;
+    volumeMounts:
+    - name: solution-config
+      mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
+    - name: shared-node1
+      mountPath: /share
+    - name: local-node1
+      mountPath: /etc/cortx
+  - name: s3-bg-producer
+    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    imagePullPolicy: IfNotPresent
+    args:
+    - /bin/sh
+    - -c
+    - set -x;
+      /opt/seagate/cortx/s3/bin/s3_start --service s3bgproducer -c yaml:///etc/cortx/cluster.conf;
+    volumeMounts:
+    - name: solution-config
+      mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
+    - name: shared-node1
+      mountPath: /share
+    - name: local-node1
+      mountPath: /etc/cortx
