@@ -16,7 +16,7 @@ sysctl -w vm.max_map_count=30000000;
 
 # Delete previous images
 docker images | grep "cortx-all" | tr -s ' ' | cut -d ' ' -f 3 > $IMAGE_LIST;
-for IMAGE_MATCH in `cat $IMAGE_LIST`; do
+for IMAGE_MATCH in $(cat $IMAGE_LIST); do
     echo -e "Deleting Image ID: $IMAGE_MATCH";
     docker rmi -f $IMAGE_MATCH;
 done
