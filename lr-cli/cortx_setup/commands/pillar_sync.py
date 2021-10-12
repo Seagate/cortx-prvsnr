@@ -66,7 +66,7 @@ class PillarSync(Command):
         conf_copy = 'components.provisioner.confstore_copy'
         StatesApplier.apply([conf_copy])
         # backup local pillar data
-        cmd_run(f"rm -rf {PRVSNR_DATA_ROOT_DIR}/.backup ",  **kwargs)
+        cmd_run(f"rm -rf {PRVSNR_DATA_ROOT_DIR}/.backup || true",  **kwargs)
         cmd_run(f"mkdir -p {PRVSNR_DATA_ROOT_DIR}/.backup",  **kwargs)
         cmd_run(f"mv {PRVSNR_USER_LOCAL_PILLAR_DIR}/* "
-                f"{PRVSNR_DATA_ROOT_DIR}/.backup/",  **kwargs)
+                f"{PRVSNR_DATA_ROOT_DIR}/.backup/ || true",  **kwargs)
