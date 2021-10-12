@@ -15,8 +15,8 @@ function print_header {
 }
 
 function show_usage {
-    print_header "usage: $(basename $0) [--tag CORTX-ALL IMAGE TAG]"
-    print_header " CUSTOM IMAGE TAG    : Provide Custom cortx-all image tag (Default: Latest)"
+    echo -e "Usage: $(basename $0) [--tag CUSTOM-TAG]"
+    echo -e "Default Image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci"
     exit 1
 }
 
@@ -35,8 +35,8 @@ while [ $# -gt 0 ];  do
     shift 1
 done
 
-print_header "NOTE: This script will cleanup resources for fresh deployment";
-print_header "      Please run this script on all cluster nodes";
+echo -e "NOTE: This script will cleanup resources for fresh deployment";
+echo -e "      Please run this script on all cluster nodes";
 
 # Install Helm
 print_header "Installing helm";
@@ -48,27 +48,40 @@ chmod 700 get_helm.sh;
 print_header "Increasing virtual memory limit";
 sysctl -w vm.max_map_count=30000000;
 
-# Delete previous images
-docker images | grep "cortx-all" | tr -s ' ' | cut -d ' ' -f 3 > $IMAGE_LIST;
+# Delete previous old images
+print_header "Downloading CORTX Image";
+docker images | grep "cortx-all" | tr -s ' ' | cut -d ' ' -f 2 > $IMAGE_LIST;
 for IMAGE_MATCH in $(cat $IMAGE_LIST); do
-    print_header "Deleting Image ID: $IMAGE_MATCH";
-    docker rmi -f $IMAGE_MATCH;
+    echo -e "Deleting Old Image: $IMAGE_NAME:$IMAGE_MATCH";
+    docker rmi -f $IMAGE_NAME:$IMAGE_MATCH;
 done
 
-# Download latest cortx image
-print_header "Pulling Cortx-all Docker image with tag $CUSTOM_TAG";
+# Download latest new image
+echo -e "Pulling New Image: $IMAGE_NAME:$CUSTOM_TAG";
 docker pull $IMAGE_NAME:$CUSTOM_TAG;
-print_header "Renaming Custom Image: $IMAGE_NAME:$CUSTOM_TAG to Latest Image: $IMAGE_NAME:$LATEST_TAG";
+if [[ "$CUSTOM_TAG" != "$LATEST_TAG" ]]; then
+    echo -e "Updating Image: $IMAGE_NAME:$CUSTOM_TAG --> $IMAGE_NAME:$LATEST_TAG";
+    docker tag $IMAGE_NAME:$CUSTOM_TAG $IMAGE_NAME:$LATEST_TAG;
+fi
 
 # Pull 3rd party Docker images
+print_header "Updating 3rdParty Image: symas-openldap";
 docker pull ghcr.io/seagate/symas-openldap:latest;
-docker pull bitnami/kafka;
-docker pull rancher/local-path-provisioner:v0.0.20;
-docker pull bitnami/zookeeper;
-docker pull hashicorp/consul:1.10.2;
-docker pull busybox;
 
-docker tag $IMAGE_NAME:$CUSTOM_TAG $IMAGE_NAME:$LATEST_TAG;
+print_header "Updating 3rdParty Image: Kafka";
+docker pull bitnami/kafka;
+
+print_header "Updating 3rdParty Image: Rancher";
+docker pull rancher/local-path-provisioner:v0.0.20;
+
+print_header "Updating 3rdParty Image: Zookeeper";
+docker pull bitnami/zookeeper;
+
+print_header "Updating 3rdParty Image: Consul";
+docker pull hashicorp/consul:1.10.2;
+
+print_header "Updating 3rdParty Image: Busybox";
+docker pull busybox;
 
 # Delete local
 print_header "Cleaning Local: $LOCAL_PATH";
