@@ -32,7 +32,7 @@ cortx:
       local: /etc/cortx
       config: /etc/cortx
     security:
-      ssl_certificate: /opt/seagate/cortx/s3/install/haproxy/ssl/s3.seagate.com.pem
+      ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
       device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
@@ -54,7 +54,7 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 1
+    client_instances: 0
     interface_type: tcp
     interface_family: inet
     transport_type: libfab
