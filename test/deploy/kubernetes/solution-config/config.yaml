@@ -54,7 +54,7 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 1
+    client_instances: 0
     interface_type: tcp
     interface_family: inet
     transport_type: libfab
