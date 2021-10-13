@@ -1,6 +1,6 @@
 cluster:
   name: cortx-cluster
-  id: 3e765bbb-8425-4e7f-8ee3-487e65ff2c8c
+  id: 1117ec45379e36d9fa089a3d615c32a3
   node_types:
     - name: storage_node
       components:
@@ -27,10 +27,10 @@ cluster:
           type: ios
           devices:
             metadata:
-            - /dev/sde
-            data:
             - /dev/sdf
+            data:
             - /dev/sdg
+            - /dev/sdh
     - name: control_node
       components:
       - name: utils
@@ -47,22 +47,22 @@ cluster:
   storage_sets:
     - name: storage-set-1
       durability:
-        sns: 8+7+0
-        dix: 1+7+0
+        sns: 1+0+0
+        dix: 1+0+0
       nodes:
         - name: control-node
-          id: 285d6133-3645-46b7-96a7-56917cd3cb43
+          id: 9995f539f4f770e2a3fe9e2e615c32a8
           hostname: control-node
           type: control_node
         - name: storage-node1
-          id: 0d213319-dbc5-463f-af39-c21d2501ea3e
+          id: aaa120a9e051d103c164f605615c32a4
           hostname: storage-node1
           type: storage_node
         - name: storage-node2
-          id: ew733872-des4-283h-af39-c21d2501ea3e
+          id: bbb340f79047df9bb52fa460615c32a5
           hostname: storage-node2
           type: storage_node
         - name: storage-node3
-          id: af733872-des4-283h-af39-c21d2501ea3e
+          id: ccc8700fe6797ed532e311b0615c32a7
           hostname: storage-node3
           type: storage_node
