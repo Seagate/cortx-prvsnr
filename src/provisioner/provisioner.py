@@ -31,7 +31,7 @@ class CortxProvisioner:
 
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
-    _secrets_path = "/etc/cortx/solution/secret"
+    _secrets_path = "/etc/cortx/solution/secret/cortx-secret"
 
     @staticmethod
     def init():
