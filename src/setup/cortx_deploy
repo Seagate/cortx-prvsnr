@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e;
 # Log Levels:
 DEBUG=1
 INFO=2
