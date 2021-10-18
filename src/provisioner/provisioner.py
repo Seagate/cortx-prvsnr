@@ -121,6 +121,11 @@ class CortxProvisioner:
                     node = dict(node_map[node_type], **node)
                     if node['type'] == 'storage_node':
                         cvg_list = node.pop('storage')
+                        for cvg in cvg_list:
+                            metadata_device = cvg['devices']['metadata']
+                            # Convert metadata value to list.
+                            if isinstance(metadata_device, str):
+                                cvg['devices']['metadata'] = metadata_device.split(',')
                         node['storage'] = {
                             'cvg_count': len(cvg_list),
                             'cvg': cvg_list
