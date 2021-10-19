@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e;
+
 # Log Levels:
 DEBUG=1
 INFO=2
@@ -37,6 +37,14 @@ function validate_config {
     local config=$1
     if [ ! -f $config ]; then
         echo -e "ERROR: Config $config not found"
+    fi
+}
+
+function validate_success {
+    local retcode=$1
+    if [ $retcode != 0 ]; then
+        echo -e "ERROR: cortx_setup command failed";
+        exit 1;
     fi
 }
 
@@ -103,10 +111,12 @@ export PATH=$PATH:/opt/seagate/provisioner/bin
 # Apply Cluster Config
 log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
 cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
+validate_success $?;
 
 # Apply Common Config
 log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
 cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
+validate_success $?;
 
 # Check if mocking is enabled
 if [ $MOCK_FLAG = true ]; then
@@ -126,6 +136,7 @@ fi
 # Bootstrap Cluster
 log $INFO "cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $SETUP_ARGS"
 cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $SETUP_ARGS;
+validate_success $?;
 
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then
