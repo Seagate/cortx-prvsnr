@@ -260,13 +260,13 @@ config_local_salt()
 setup_repos_hosted()
 {
     repo=$1
-    for repo_file in $(grep -lE "cortx-storage.colo.seagate.com|file://" /etc/yum.repos.d/*.repo); do
+    for repo_file in $(grep -lE "cortx-storage.colo.seagate.com|baseurl=file:///" /etc/yum.repos.d/*.repo); do
         echo "DEBUG: Removing old repo file: $repo_file" >> "${LOG_FILE}"
         rm -f "$repo_file"
     done
 
     echo "Configuring the repository: ${repo}/3rd_party" | tee -a "${LOG_FILE}"
-    yum-config-manager --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
+    yum-config-manager --nogpgcheck --add-repo "${repo}/3rd_party/" >> "${LOG_FILE}"
     echo "Configuring the repository: ${repo}/cortx_iso" | tee -a "${LOG_FILE}"
     yum-config-manager --add-repo "${repo}/cortx_iso/" >> "${LOG_FILE}"
 
