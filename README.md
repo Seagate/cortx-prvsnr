@@ -14,9 +14,6 @@ The main feature of the CORTX-Provisioner is to:
 
 Please also read and contribute to our [Wiki](https://github.com/Seagate/cortx-prvsnr/wiki) and [docs folder](/docs) where we maintain a lot more documentation about this repository.
 
-## Get CORTX-Provisioner Ready! 
-
-Jump to the [CORTX-Provisioner Quickstart Guide](Cortx-ProvisionerQuickstartGuide.md) to set up CORTX-Provisioner. 
 
 ## Contribute to CORTX-Provisioner
 
