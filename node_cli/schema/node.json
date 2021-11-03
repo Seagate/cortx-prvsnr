@@ -172,7 +172,7 @@
             {
               "flag": "--force",
               "type": "bool",
-              "default": "False",
+              "default": "",
               "help": "Over-ride finalize validation checks"
             },
             {

@@ -90,7 +90,7 @@
         {
             "flag": "--ha",
             "type": "bool",
-            "default": "False",
+            "default": "",
             "help": "Provide HA option for multi-node setup e.g: --ha"
         },
         {
