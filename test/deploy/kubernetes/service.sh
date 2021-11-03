@@ -10,6 +10,8 @@ function print_header {
     echo -e "--------------------------------------------------------------------------"
 }
 
+echo "Welcome"
+
 # Delete Storage RunTime Node (POD)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
