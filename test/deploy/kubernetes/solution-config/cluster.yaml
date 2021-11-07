@@ -66,3 +66,4 @@ cluster:
           id: ccc8700fe6797ed532e311b0615c32a7
           hostname: storage-node3
           type: storage_node
+

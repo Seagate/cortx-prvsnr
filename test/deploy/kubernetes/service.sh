@@ -26,6 +26,12 @@ sleep $TIMEDELAY;
 # Wait for delete control/storage nodes
 wait;
 
+# Create Config Map For Machine-id
+kubectl create configmap control-node-id --from-literal=id=9995f539f4f770e2a3fe9e2e615c32a8 --namespace "$NAMESPACE";
+kubectl create configmap storage-node1-id --from-literal=id=aaa120a9e051d103c164f605615c32a4 --namespace "$NAMESPACE";
+kubectl create configmap storage-node2-id --from-literal=id=bbb340f79047df9bb52fa460615c32a5 --namespace "$NAMESPACE";
+kubectl create configmap storage-node3-id --from-literal=id=ccc8700fe6797ed532e311b0615c32a7 --namespace "$NAMESPACE";
+
 # Create Control RunTime Node (POD)
 print_header "Creating Cotrol RunTime Node - Cluster";
 kubectl apply -f "$BASEPATH/runtime-pods/components_control_node.yaml" --namespace "$NAMESPACE";
