@@ -51,6 +51,7 @@ cortx:
       - http://cortx-io-svc:28049
     service_instances: 2
     io_max_units: 8
+    max_start_timeout: 240
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
