@@ -4,13 +4,37 @@ MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
 NAMESPACE="default"
 TIMEDELAY="5"
 INTRDELAY="2"
-UPGRADE_IMAGE="ghcr.io/seagate/cortx-all:2.0.0-401-RC3.6"
+
+function show_usage {
+    echo -e "usage: $(basename $0) [-i UPGRADE-IMAGE]"
+    echo -e "Where:"
+    echo -e "..."
+    echo -e " UPGARDE-IMAGE : Image TAG To be Provided for Software Upgrade"
+    exit 1
+}
 
 function print_header {
     echo -e "--------------------------------------------------------------------------"
     echo -e "$1"
     echo -e "--------------------------------------------------------------------------"
 }
+
+while [ $# -gt 0 ];  do
+    case $1 in
+    -i )
+        shift 1
+        UPGRADE_IMAGE=$1
+        ;;
+    * )
+        echo -e "Invalid argument provided : $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+    shift 1
+done
+
+[ -z $UPGRADE_IMAGE ] && echo -e "ERROR: Missing Upgrade Image tag. Please Provide Image TAG for Upgrade" && show_usage
 
 # Create Upgrade Control POD
 print_header "Creating Upgrade Control Node - Cluster";
