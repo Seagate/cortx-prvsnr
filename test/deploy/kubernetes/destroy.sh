@@ -92,6 +92,12 @@ kubectl delete -f "$BASEPATH/solution-config/secrets.yaml" --namespace "$NAMESPA
 
 # Delete Config Map
 kubectl delete configmap solution-config --namespace "$NAMESPACE";
+kubectl delete configmap control-node-id --namespace "$NAMESPACE";
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="storage-node$NODE_INDEX-id";
+    kubectl delete configmap $NODE_NAME --namespace "$NAMESPACE";
+    sleep $INTRDELAY;
+done
 
 # Delete non-default namespace
 if [[ "$NAMESPACE" != "default" ]]; then
