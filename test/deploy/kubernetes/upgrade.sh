@@ -35,6 +35,18 @@ done
 
 [ -z $UPGRADE_IMAGE ] && echo -e "ERROR: Missing Upgrade Image tag. Please Provide Image TAG for Upgrade" && show_usage
 
+# Pause Runtime Control POD
+print_header "Pausing Runtime Control Node - Cluster";
+kubectl rollout pause deployment control-node
+
+# Pause Runtime Storage 
+print_header "Pausing Runtime Storage Node - Cluster";
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="storage-node$NODE_INDEX";
+    kubectl rollout pause deployment $NODE_NAME;
+    sleep $TIMEDELAY;
+done
+
 # Create Upgrade Control POD
 print_header "Creating Upgrade Control Node - Cluster";
 kubectl apply -f "$BASEPATH/upgrade-pods/upgrade_control_node.yaml" --namespace "$NAMESPACE";
@@ -93,4 +105,18 @@ done
 
 # Upgrade Runtime Control POD
 kubectl set image deployment control-node csm-agent=$UPGRADE_IMAGE s3-bg-producer=$UPGRADE_IMAGE
+
+
+
+# Resume Runtime Control POD
+print_header "Pausing Runtime Control Node - Cluster";
+kubectl rollout resume deployment control-node
+
+# Resume Runtime Storage
+print_header "Pausing Runtime Storage Node - Cluster";
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="storage-node$NODE_INDEX";
+    kubectl rollout resume deployment $NODE_NAME;
+    sleep $TIMEDELAY;
+done
 
