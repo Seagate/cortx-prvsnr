@@ -31,7 +31,7 @@ spec:
       claimName: local-node1
   containers:
   - name: cortx-control-node
-    image: ghcr.io/seagate/cortx-all:2.0.0-405-RC4
+    image: ghcr.io/seagate/cortx-all:version1
     imagePullPolicy: IfNotPresent
     args:
     - /bin/sh
