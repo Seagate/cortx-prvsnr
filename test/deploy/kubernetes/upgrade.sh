@@ -2,7 +2,7 @@
 BASEPATH=$(dirname $0)
 MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
 NAMESPACE="default"
-TIMEDELAY="5"
+TIMEDELAY="20"
 
 function show_usage {
     echo -e "usage: $(basename $0) [-i UPGRADE-IMAGE]"
@@ -51,11 +51,13 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Pausing Runtime Storage Node $STORAGE_NODE";
     kubectl rollout pause deployment $STORAGE_NODE;
+    sleep $TIMEDELAY;
 
     # Create Upgrade Storage POD
     print_header "Creating Upgrade Storage Node - $NODE_NAME";
     NODE_POD="$BASEPATH/upgrade-pods/upgrade_storage_$NODE_NAME.yaml";
     kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
+    sleep $TIMEDELAY;
 
     # Wait for Upgrade Storage-POD execution
     printf "\nWaiting for Upgrade Storage Node $NODE_NAME";
@@ -67,11 +69,11 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     # Upgrade Runtime POD for each node
     print_header "Upgrading Runtime Storage Node for - $NODE_NAME";
     kubectl set image deployment $STORAGE_NODE cortx-hax=$UPGRADE_IMAGE cortx-confd=$UPGRADE_IMAGE cortx-ios1=$UPGRADE_IMAGE cortx-ios2=$UPGRADE_IMAGE cortx-s31=$UPGRADE_IMAGE  cortx-s32=$UPGRADE_IMAGE cortx-s3auth=$UPGRADE_IMAGE  cortx-s3haproxy=$UPGRADE_IMAGE cortx-s3bgc=$UPGRADE_IMAGE;
+    sleep $TIMEDELAY;
 
     # Resume Runtime Storage
     print_header "Resuming Runtime Storage Node - Cluster";
     kubectl rollout resume deployment $STORAGE_NODE;
-
     sleep $TIMEDELAY;
 
 done
@@ -94,10 +96,12 @@ printf "\n";
 
 # Upgrade Runtime Control POD
 kubectl set image deployment control-node csm-agent=$UPGRADE_IMAGE s3-bg-producer=$UPGRADE_IMAGE
+sleep $TIMEDELAY;
 
 # Resume Runtime Control POD
 print_header "Resuming Runtime Control Node - Cluster";
 kubectl rollout resume deployment control-node
+sleep $TIMEDELAY;
 
 # Delete Upgrade Storage RunTime Node (POD)
 for NODE_INDEX in $(seq 1 $MAXNODES); do

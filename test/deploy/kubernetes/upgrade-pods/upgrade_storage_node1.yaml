@@ -55,7 +55,7 @@ spec:
       claimName: dev-sdi-node1
   containers:
   - name: cortx-data
-    image: ghcr.io/seagate/cortx-all:2.0.0-405-RC4
+    image: ghcr.io/seagate/cortx-all:version1
     imagePullPolicy: IfNotPresent
     args:
     - /bin/sh
