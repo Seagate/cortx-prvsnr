@@ -111,7 +111,6 @@ cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
 # Check if mocking is enabled
 if [ $MOCK_FLAG = true ]; then
     log $INFO "cortx_setup MOCK enabled...";
-    sleep infinity;
 fi
 
 # Validate config

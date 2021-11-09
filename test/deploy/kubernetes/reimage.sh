@@ -78,7 +78,7 @@ print_header "Updating 3rdParty Image: Zookeeper";
 docker pull bitnami/zookeeper;
 
 print_header "Updating 3rdParty Image: Consul";
-docker pull hashicorp/consul:1.10.2;
+docker pull hashicorp/consul:1.10.3;
 
 print_header "Updating 3rdParty Image: Busybox";
 docker pull busybox;

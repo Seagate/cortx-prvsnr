@@ -34,7 +34,7 @@ spec:
       - name: shared-node3
         persistentVolumeClaim:
           claimName: shared-node3
-      - name: local-node1
+      - name: local-node3
         persistentVolumeClaim:
           claimName: local-node3
       - name: sdb

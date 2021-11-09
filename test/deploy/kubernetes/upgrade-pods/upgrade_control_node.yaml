@@ -31,13 +31,13 @@ spec:
       claimName: local-node1
   containers:
   - name: cortx-control-node
-    image: ghcr.io/seagate/cortx-all:2.0.0-401-RC3.6
+    image: ghcr.io/seagate/cortx-all:2.0.0-405-RC4
     imagePullPolicy: IfNotPresent
     args:
     - /bin/sh
     - -c
     - set -x;
-      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf ;
+      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf -m ;
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
