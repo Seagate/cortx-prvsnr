@@ -47,8 +47,6 @@ function yaml_config {
 
 # Constants
 DEBUG_FLAG=false
-MOCK_FLAG=false
-SETUP_ARGS=""
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
 
@@ -61,10 +59,6 @@ while [ $# -gt 0 ];  do
     -n )
         shift 1
         NODE_ID=$1
-        ;;
-    -m )
-        SETUP_ARGS="-m"
-        MOCK_FLAG=true
         ;;
     -d )
         DEBUG_FLAG=true
@@ -108,12 +102,6 @@ cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
 log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
 cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
 
-# Check if mocking is enabled
-if [ $MOCK_FLAG = true ]; then
-    log $INFO "cortx_setup MOCK enabled...";
-    sleep infinity;
-fi
-
 # Validate config
 if ! [ -z $VALIDATE_CONF ];
 then
@@ -124,8 +112,8 @@ then
 fi
 
 # Bootstrap Cluster
-log $INFO "cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $SETUP_ARGS"
-cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $SETUP_ARGS;
+log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE'"
+cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE";
 
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then
