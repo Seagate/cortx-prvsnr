@@ -61,7 +61,7 @@ spec:
     - /bin/sh
     - -c
     - set -x;
-      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf -m ;
+      echo "Calling upgrade miniprovisioner of storage-node 1 components";
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
