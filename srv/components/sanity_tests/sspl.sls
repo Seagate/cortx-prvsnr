@@ -30,7 +30,7 @@ Create SSPL Sanity test script:
           #!/bin/bash
           echo "Runnign SSPL sanity"
           echo "state=active" > /var/cortx/sspl/data/state.txt
-          PID=$(/usr/bin/pgrep -d " " -f /usr/bin/sspl_ll_d)
+          PID=$(/usr/bin/pgrep -d " " -f /usr/bin/sspld)
             kill -s SIGHUP $PID
           sh /opt/seagate/cortx/sspl/sspl_test/run_tests.sh
 

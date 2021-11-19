@@ -15,7 +15,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Start service sspl-ll:
+Start service sspl:
   service.running:
-    - name: sspl-ll
+    - name: sspl
     - enable: true
