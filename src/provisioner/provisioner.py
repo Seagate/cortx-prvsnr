@@ -178,6 +178,8 @@ class CortxProvisioner:
 
         Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
 
+        CortxProvisioner.load_state_file(cortx_config_store, node_id)
+        CortxProvisioner.add_release_info('pre_update_rpms')
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
@@ -195,8 +197,66 @@ class CortxProvisioner:
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
+                    CortxProvisioner.update_component_status(
+                        comp_name, interface, "fail", "fail")
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
+                # Update component MP status.
+                CortxProvisioner.update_component_status(
+                    comp_name, interface, "success", "in-progress")
+
+        # Update overall cortx miniprovisioner status from in-progress to success.
+        CortxProvisioner.update_component_status("", "", "", "success")
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
+
+    @staticmethod
+    def load_state_file(cortx_config_store, id):
+        """ Load state_file """
+        state = 'state'
+        path = cortx_config_store.get(
+            'cortx>common>storage>local') + '/state_files'
+        if not os.path.exists(path):
+            os.mkdir(path)
+        state_file = os.path.join(path, f'status_{id}')
+        Conf.load(state, f'json://{state_file}')
+
+    @staticmethod
+    def add_release_info(key):
+        """ Add pre-update and post-update release info state file. """
+
+        if not os.path.exists(const.RELEASE_INFO_FILE):
+            Log.error(f"{const.RELEASE_INFO_FILE} not exists.")
+        Conf.load('release_info', f'yaml://{const.RELEASE_INFO_FILE}')
+        rpm_info = Conf.get('release_info', 'COMPONENTS', '')
+        Conf.set('state', key, rpm_info)
+        Conf.save('state')
+
+    @staticmethod
+    def update_component_status(comp="", interface="", status="",
+        overall_mp_status="", overall_update_status=""):
+        """ Update component level miniprovisioner status in state file.
+            eg: {
+                utils: {
+                    'interface': 'init',
+                    'status': 'success',
+                },
+                s3: {
+                    'interface': 'config',
+                    'status': 'fail',
+                }
+                'overall_mp_status': 'fail',
+                'overall_update_status': '',
+                'pre_update_rpms': []
+            }
+         """
+        if comp:
+            comp_info = {
+                    "interface": interface,
+                    "status": status,
+                }
+            Conf.set('state', comp, comp_info)
+        Conf.set('state', 'overall_mp_status', overall_mp_status)
+        Conf.set('state', 'overall_update_status', overall_update_status)
+        Conf.save('state')
