@@ -175,7 +175,7 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _cluster_provisioning(cortx_conf_url: str, mp_interfaces: list):
+    def _provision_cluster(cortx_conf_url: str, mp_interfaces: list):
         """ Invoke Mini Provisioners of cluster components """
 
         cortx_config_store = CortxProvisioner._get_config_store(cortx_conf_url)
@@ -215,7 +215,7 @@ class CortxProvisioner:
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf_url)
         Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
-        CortxProvisioner._cluster_provisioning(cortx_conf_url, mp_interfaces)
+        CortxProvisioner._provision_cluster(cortx_conf_url, mp_interfaces)
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
 
     @staticmethod
@@ -234,5 +234,5 @@ class CortxProvisioner:
         # TODO: validations
 
         mp_interfaces = ['upgrade']
-        CortxProvisioner._cluster_provisioning(cortx_conf_url, mp_interfaces)
+        CortxProvisioner._provision_cluster(cortx_conf_url, mp_interfaces)
         Log.info(f'Finished cluster upgrade on {node_id}:{node_name}')
