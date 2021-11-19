@@ -15,6 +15,6 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
-Stop service sspl-ll:
+Stop service sspl:
   service.dead:
-    - name: sspl-ll
+    - name: sspl
