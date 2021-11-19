@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-node1
+  labels:
+    app: storage-node1
+    id: aaa120a9e051d103c164f605615c32a4
+spec:
+  hostname: storage-node1
+  restartPolicy: Never
+  nodeSelector:
+    node-name: node1
+  volumes:
+  - name: node-id
+    downwardAPI:
+      items:
+      - path: "id"
+        fieldRef:
+          fieldPath: metadata.labels['id']
+  - name: solution-config
+    configMap:
+      name: solution-config
+  - name: cortx-secret
+    secret:
+      secretName: cortx-secret
+  - name: shared-node1
+    persistentVolumeClaim:
+      claimName: shared-node1
+  - name: local-node1
+    persistentVolumeClaim:
+      claimName: local-node1
+  - name: sdb
+    persistentVolumeClaim:
+      claimName: dev-sdb-node1
+  - name: sdc
+    persistentVolumeClaim:
+      claimName: dev-sdc-node1
+  - name: sdd
+    persistentVolumeClaim:
+      claimName: dev-sdd-node1
+  - name: sde
+    persistentVolumeClaim:
+      claimName: dev-sde-node1
+  - name: sdf
+    persistentVolumeClaim:
+      claimName: dev-sdf-node1
+  - name: sdg
+    persistentVolumeClaim:
+      claimName: dev-sdg-node1
+  - name: sdh
+    persistentVolumeClaim:
+      claimName: dev-sdh-node1
+  - name: sdi
+    persistentVolumeClaim:
+      claimName: dev-sdi-node1
+  containers:
+  - name: cortx-data
+    image: ghcr.io/seagate/cortx-all:version1
+    imagePullPolicy: IfNotPresent
+    args:
+    - /bin/sh
+    - -c
+    - set -x;
+      echo "Calling upgrade miniprovisioner of storage-node 1 components";
+    volumeMounts:
+    - name: solution-config
+      mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
+    - name: local-node1
+      mountPath: /etc/cortx
+    - name: cortx-secret
+      mountPath: /etc/cortx/solution/secret
+    - name: shared-node1
+      mountPath: /share
+    volumeDevices:
+    - name: sdb
+      devicePath: /dev/sdb
+    - name: sdc
+      devicePath: /dev/sdc
+    - name: sdd
+      devicePath: /dev/sdd
+    - name: sde
+      devicePath: /dev/sde
+    - name: sdf
+      devicePath: /dev/sdf
+    - name: sdg
+      devicePath: /dev/sdg
+    - name: sdh
+      devicePath: /dev/sdh
+    - name: sdi
+      devicePath: /dev/sdi

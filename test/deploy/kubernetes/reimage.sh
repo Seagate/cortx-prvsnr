@@ -48,14 +48,6 @@ chmod 700 get_helm.sh;
 print_header "Increasing virtual memory limit";
 sysctl -w vm.max_map_count=30000000;
 
-# Delete previous old images
-print_header "Downloading CORTX Image";
-docker images | grep "cortx-all" | tr -s ' ' | cut -d ' ' -f 2 > $IMAGE_LIST;
-for IMAGE_MATCH in $(cat $IMAGE_LIST); do
-    echo -e "Deleting Old Image: $IMAGE_NAME:$IMAGE_MATCH";
-    docker rmi -f $IMAGE_NAME:$IMAGE_MATCH;
-done
-
 # Download latest new image
 echo -e "Pulling New Image: $IMAGE_NAME:$CUSTOM_TAG";
 docker pull $IMAGE_NAME:$CUSTOM_TAG;
@@ -78,7 +70,7 @@ print_header "Updating 3rdParty Image: Zookeeper";
 docker pull bitnami/zookeeper;
 
 print_header "Updating 3rdParty Image: Consul";
-docker pull hashicorp/consul:1.10.2;
+docker pull hashicorp/consul:1.10.3;
 
 print_header "Updating 3rdParty Image: Busybox";
 docker pull busybox;
