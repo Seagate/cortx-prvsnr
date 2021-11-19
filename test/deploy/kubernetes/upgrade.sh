@@ -3,6 +3,13 @@ BASEPATH=$(dirname $0)
 MAXNODES=$(kubectl get nodes | awk -v col=1 '{print $col}' | tail -n+2 | wc -l)
 NAMESPACE="default"
 TIMEDELAY="10"
+FAILED='\033[0;31m'       #RED
+PASSED='\033[0;32m'       #GREEN
+ALERT='\033[0;33m'        #YELLOW
+INFO='\033[0;36m'        #CYAN
+NC='\033[0m'              #NO COLOUR
+num_pods=$(($MAXNODES+1))
+count=0
 
 function show_usage {
     echo -e "usage: $(basename $0) [-i UPGRADE-IMAGE]"
@@ -34,6 +41,35 @@ while [ $# -gt 0 ];  do
 done
 
 [ -z $UPGRADE_IMAGE ] && echo -e "ERROR: Missing Upgrade Image tag. Please Provide Image TAG for Upgrade" && show_usage
+
+# Validate if All Pods are running
+printf "${INFO}| Checking Pods |${NC}\n"
+while IFS= read -r line; do
+    IFS=" " read -r -a status <<< "$line"
+    IFS="/" read -r -a ready_status <<< "${status[1]}"
+    if [[ "${status[0]}" != "" ]]; then
+        printf "${status[0]}..."
+        if [[ "${status[2]}" != "Running" || "${ready_status[0]}" != "${ready_status[1]}" ]]; then
+            printf "${FAILED}FAILED${NC}\n"
+        else
+            printf "${PASSED}PASSED${NC}\n"
+            count=$((count+1))
+        fi
+    fi
+done <<< "$(kubectl get pods --namespace=$namespace | grep 'storage\|control')"
+
+if [[ $num_pods -eq $count ]]; then
+    printf "OVERALL STATUS: ${PASSED}PASSED${NC}\n"
+else
+    printf "OVERALL STATUS: ${FAILED}FAILED${NC}\n"
+fi
+
+# Validate if all CORTX Cluster services are online
+torage_pod=$(kubectl get pods | grep 'storage' | awk 'FNR==1 {print $1}')
+cluster_status=$(kubectl exec -it "$storage_pod" -c cortx-hax -- bash -c "hctl status | grep 'offline'")
+if [ ! -z "$cluster_status" -a "$cluster_status" != " " ]; then
+        echo "ERROR: Some CORTX Cluster services are in offline state, Upgrade cannot be performed on UnHealthy Cluster"
+fi
 
 # Update Image in Upgrade PODs
 print_header "Updating Upgrade image in Upgrade Pods - Cluster";
