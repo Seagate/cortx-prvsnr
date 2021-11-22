@@ -144,19 +144,11 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def _get_config_store(cortx_conf_url: str):
-        if cortx_conf_url is None:
-            cortx_conf_url = CortxProvisioner._cortx_conf_url
-        return ConfigStore(cortx_conf_url)
-
-    @staticmethod
-    def _get_node_info(cortx_conf_url: str):
+    def _get_node_info(cortx_config_store: ConfigStore):
         """ To get the node information """
-
-        cortx_config_store = CortxProvisioner._get_config_store(cortx_conf_url)
         node_id = Conf.machine_id
         if node_id is None:
-            raise CortxProvisionerError(errno.EINVAL, 'Invalid node_id: %s', \
+            raise CortxProvisionerError(errno.EINVAL, "Invalid node_id: %s", \
                 node_id)
 
         # Reinitialize logging with configured log path
@@ -175,11 +167,9 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _provision_cluster(cortx_conf_url: str, mp_interfaces: list):
+    def _provision_components(cortx_config_store: ConfigStore, mp_interfaces: list):
         """ Invoke Mini Provisioners of cluster components """
-
-        cortx_config_store = CortxProvisioner._get_config_store(cortx_conf_url)
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf_url)
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
@@ -192,7 +182,7 @@ class CortxProvisioner:
                 comp_name = components[comp_idx]['name']
                 cmd = (
                     f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
-                    f" --config {cortx_conf_url} --services {service}")
+                    f" --config {cortx_config_store._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
@@ -211,12 +201,15 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
+        if cortx_conf_url is None:
+            cortx_conf_url = CortxProvisioner._cortx_conf_url
+        cortx_config_store = ConfigStore(cortx_conf_url)
 
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf_url)
-        Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
+        Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
-        CortxProvisioner._provision_cluster(cortx_conf_url, mp_interfaces)
-        Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
+        CortxProvisioner._provision_components(cortx_config_store, mp_interfaces)
+        Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
     def cluster_upgrade(cortx_conf_url: str = None):
@@ -228,11 +221,14 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
+        if cortx_conf_url is None:
+            cortx_conf_url = CortxProvisioner._cortx_conf_url
+        cortx_config_store = ConfigStore(cortx_conf_url)
 
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf_url)
-        Log.info(f'Starting cluster upgrade on {node_id}:{node_name}')
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
+        Log.info(f"Starting cluster upgrade on {node_id}:{node_name}")
         # TODO: validations
 
         mp_interfaces = ['upgrade']
-        CortxProvisioner._provision_cluster(cortx_conf_url, mp_interfaces)
-        Log.info(f'Finished cluster upgrade on {node_id}:{node_name}')
+        CortxProvisioner._provision_components(cortx_config_store, mp_interfaces)
+        Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")

@@ -34,7 +34,7 @@ class TestSetup(unittest.TestCase):
 
         rc = 0
         try:
-            argv = [ 'config', 'apply', '-f', solution_conf_url, '-o', cortx_conf_url ]
+            argv = ['config', 'apply', '-c', solution_conf_url, '-o', cortx_conf_url]
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)
 
@@ -49,7 +49,23 @@ class TestSetup(unittest.TestCase):
 
         rc = 0
         try:
-            argv = [ 'cluster', 'bootstrap', '-f', cortx_conf_url ]
+            argv = ['cluster', 'bootstrap', '-c', cortx_conf_url]
+
+            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
+            self.assertEqual(cmd.process(), 0)
+
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
+
+    def test_cluster_upgrade(self):
+        """ Test Cluster Upgrade """
+
+        rc = 0
+        try:
+            argv = ['upgrade', '-c', cortx_conf_url]
 
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)

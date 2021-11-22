@@ -115,8 +115,8 @@ class ClusterCmd(Cmd):
 
 
 class UpgradeCmd(Cmd):
-    """ Cluster Upgrade Cmd """
 
+    """ Cluster Upgrade Cmd """
     name = 'upgrade'
 
     def __init__(self, args: dict):
@@ -125,13 +125,11 @@ class UpgradeCmd(Cmd):
     @staticmethod
     def add_args(parser: str):
         """ Add Command args for parsing """
-
         parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
         """ Validate upgrade command args """
-
         log_level = self._args.log_level
         if not log_level:
             log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
