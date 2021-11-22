@@ -20,3 +20,6 @@ DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
 DEFAULT_LOG_LEVEL = "INFO"
 SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 RELEASE_INFO_FILE = "/opt/seagate/cortx/RELEASE.INFO"
+VERSION_FILE = "/opt/seagate/cortx/VERSION.INFO"
+RELEASE_INDEX = "release_file"
+VERSION_INDEX = "version_file"

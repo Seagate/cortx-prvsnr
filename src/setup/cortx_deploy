@@ -37,7 +37,8 @@ function show_usage {
 function validate_config {
     local config=$1
     if [ ! -f $config ]; then
-        echo -e "ERROR: Config $config not found"
+        echo -e "ERROR: Config file $config not found, Provide correct config path."
+        exit 1
     fi
 }
 
@@ -50,7 +51,6 @@ function yaml_config {
 DEBUG_FLAG=false
 CONFIG_APPLY=true
 CLUSTER_BOOTSTRAP=true
-FORCE_DEPLOYMENT=false
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
 
@@ -103,39 +103,41 @@ export PATH=$PATH:/opt/seagate/provisioner/bin
 
 # Check system is pre-configured:
 # config apply: check confstore file.
-# cluster bootstrap: read overall_mp_status from state file.
+# cluster bootstrap: check VERSION file is exist and phase and status key from confstore and.
 
+node_id=`cat /etc/machine-id`
+cluster_id=`conf $(yaml_config $CLUSTER_INFO) get "cluster>id"`
+cluster_id=$(echo $cluster_id | tr -d "["\" | tr -d "\"]")
+log $INFO "Starting deployment on node $node_id which is part of cluster $cluster_id."
 
 FILE=$(awk -F:// '{print $2}' <<< $CORTX_CONFSTORE)
 if [ -f "$FILE" ]; then
-    log $INFO "File $FILE exists. System looks to be pre-configured."
+    log $WARNING "$FILE file exists. System looks to be pre-configured."
     CONFIG_APPLY=false
-fi
-local_path=`conf $CORTX_CONFSTORE get 'cortx>common>storage>local'`
-local_path=$(echo $local_path | tr -d "["\" | tr -d "\"]")
-node_id=`cat /etc/machine-id`
-STATE_FILE="$local_path/provisioner/state/status_$node_id"
-if [ -f "$STATE_FILE" ]; then
-    overall_mp_status=`conf json://$STATE_FILE get 'overall_mp_status'`
-    overall_mp_status=$(echo $overall_mp_status | tr -d "["\" | tr -d "\"]")
-    if [ "$overall_mp_status" = "success" ]; then
-        log $INFO "Components mini-provisioners stages are alredy executed."
+
+    version_file=`conf $CORTX_CONFSTORE get "node>$node_id>version"`
+    version_file=$(echo $version_file | tr -d "["\" | tr -d "\"]")
+    phase=`conf $CORTX_CONFSTORE get "node>$node_id>phase"`
+    phase=$(echo $phase | tr -d "["\" | tr -d "\"]")
+    status=`conf $CORTX_CONFSTORE get "node>$node_id>status"`
+    status=$(echo $status | tr -d "["\" | tr -d "\"]")
+    if [[ "$phase" = "deployment" && "$status" = "success" ]] || [ -f "$version_file" ]; then
+        log $WARNING "Components mini-provisioners stages are already executed."
         CLUSTER_BOOTSTRAP=false
     fi
 fi
 
 if [ -z $OVERRIDE ]; then
     if [[ $CONFIG_APPLY = false && $CLUSTER_BOOTSTRAP = false ]]; then
-        log $INFO "System is already configured. exiting from cortx_deploy ..."
+        log $INFO "System is already configured. exiting from cortx_deploy."
         exit 0
     fi
 else
-    log $WARNING "Force option enabled, Overriding existing deployment."
-    FORCE_DEPLOYMENT=true
+    log $WARNING "Force option enabled, Overwriting existing deployment."
 fi
 
 
-if [[ $CONFIG_APPLY = true || $FORCE_DEPLOYMENT = true ]]; then
+if [ $CONFIG_APPLY = true ] || ! [ -z $OVERRIDE ]; then
     # Apply Cluster Config
     log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
     cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
@@ -154,7 +156,7 @@ then
     cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || exit 1
 fi
 
-if [[ $CLUSTER_BOOTSTRAP = true || $FORCE_DEPLOYMENT = true ]]; then
+if [ $CLUSTER_BOOTSTRAP = true ] || ! [ -z $OVERRIDE ]; then
     # Bootstrap Cluster
     log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE'"
     cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE";

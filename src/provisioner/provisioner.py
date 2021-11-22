@@ -178,8 +178,11 @@ class CortxProvisioner:
 
         Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
 
-        CortxProvisioner._load_state_file(cortx_config_store, node_id)
-        CortxProvisioner._add_release_info('pre_update_rpms')
+        CortxProvisioner._load_file(const.RELEASE_INFO_FILE, const.RELEASE_INDEX)
+        # TODO:Uncomment below line once the image info is available in RELEASE.INFO file.
+        #CortxProvisioner._get_image_version(cortx_config_store)
+        CortxProvisioner._update_deployment_status(
+            cortx_config_store, node_id, phase='deployment')
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
@@ -197,67 +200,68 @@ class CortxProvisioner:
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
-                    CortxProvisioner._update_component_status(
-                        comp_name, interface, "fail", "fail")
+                    CortxProvisioner._update_deployment_status(
+                        cortx_config_store, node_id, phase='deployment',
+                        status='error')
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
-                # Update component MP status.
-                CortxProvisioner._update_component_status(
-                    comp_name, interface, "success", "in-progress")
 
-        # Update overall cortx miniprovisioner status from in-progress to success.
-        CortxProvisioner._update_component_status("", "", "", "success")
+                CortxProvisioner._update_deployment_status(
+                    cortx_config_store, node_id, phase='deployment',
+                    status='progress')
+
+        # Once the deployment is successful create VERSION.INFO
+        # file as a backup of RELEASE.INFO file.
+        CortxProvisioner._load_file(const.VERSION_FILE, const.VERSION_INDEX)
+        CortxProvisioner._copy_release_info()
+        CortxProvisioner._update_deployment_status(
+            cortx_config_store, node_id, phase='deployment', status='success',
+            version=const.VERSION_FILE)
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
 
-    @staticmethod
-    def _load_state_file(cortx_config_store, node_id):
-        """ Load state_file """
-        state = 'state'
-        local_path = cortx_config_store.get(
-            'cortx>common>storage>local')
-        dir_path = f'{local_path}/{const.APP_NAME}/state'
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-        state_file = os.path.join(dir_path, f'status_{node_id}')
-        Conf.load(state, f'json://{state_file}')
 
     @staticmethod
-    def _add_release_info(key):
-        """ Add pre-update and post-update release info state file. """
-
-        if not os.path.exists(const.RELEASE_INFO_FILE):
-            Log.error(f"{const.RELEASE_INFO_FILE} not exists.")
-        Conf.load('release_info', f'yaml://{const.RELEASE_INFO_FILE}')
-        rpm_info = Conf.get('release_info', 'COMPONENTS', '')
-        Conf.set('state', key, rpm_info)
-        Conf.save('state')
+    def _load_file(file_name, index):
+        """ Load RELEASE.INFO """
+        Conf.load(index, f'yaml://{file_name}')
 
     @staticmethod
-    def _update_component_status(comp="", interface="", status="",
-        overall_mp_status="", overall_update_status=""):
-        """ Update component level miniprovisioner status in state file.
-            eg: {
-                utils: {
-                    'interface': 'init',
-                    'status': 'success',
-                },
-                s3: {
-                    'interface': 'config',
-                    'status': 'fail',
-                }
-                'overall_mp_status': 'fail',
-                'overall_update_status': '',
-                'pre_update_rpms': []
-            }
-         """
-        if comp:
-            comp_info = {
-                    "interface": interface,
-                    "status": status,
-                }
-            Conf.set('state', comp, comp_info)
-        Conf.set('state', 'overall_mp_status', overall_mp_status)
-        Conf.set('state', 'overall_update_status', overall_update_status)
-        Conf.save('state')
+    def _copy_release_info():
+        """ Create backup of RELEASE.INFO """
+        Conf.copy(const.RELEASE_INDEX, const.VERSION_INDEX)
+
+    @staticmethod
+    def _get_image_version(conf_url):
+        """ Get img name, img version from RELEASE.INFO file
+            and add into the conf_stor.
+
+            e.g:
+            cortx:
+              common:
+                install_image: ghcr.io/seagate/cortx-all
+                install_version: 2.0.0-1172-custom-ci
+        """
+        img_name = Conf.get(const.RELEASE_INDEX, 'IMAGE_NAME', '')
+        img_version = Conf.get(const.RELEASE_INDEX, 'IMAGE_VERSION', '')
+        keys = [('cortx>common>install_image', img_name),
+            ('cortx>common>install_version', img_version)]
+        conf_url.set_kvs(keys)
+
+    @staticmethod
+    def _update_deployment_status(conf_url, node_id, phase, status='default',
+        version='default', release='default'):
+        """ Add phase, status, version, release keys in conf_stor.
+
+            args:
+            conf_url: conf_store file url. eg. yaml:///etc/cortx/cluster.conf
+            node_id: node_id(machine-id)
+            phase: deployment/upgrade
+            status: default/progress/success/error
+            version: default or /opt/seagate/cortx/VERSION.INFO
+            release: default or /opt/seagate/cortx/RELEASE.INFO
+        """
+        keys = [(f'node>{node_id}>phase', phase), (f'node>{node_id}>status', status),
+            (f'node>{node_id}>version', version), (f'node>{node_id}>release', release)]
+        conf_url.set_kvs(keys)
