@@ -17,7 +17,7 @@ function log {
 }
 
 function show_usage {
-    echo -e "usage: $(basename $0) [-f SOLUTION-CONFIG] [-l LOG-LEVEL][-c CORTX-CONFIG-URL] [-s] [-d] [-v]"
+    echo -e "usage: $(basename $0) [-f SOLUTION-CONFIG] [-l LOG-LEVEL][-c CORTX-CONFIG-URL] [-o] [-d] [-v]"
     echo -e "Where:"
     echo -e "..."
     echo -e " SOLUTION-CONFIG : Solution-Config directory containing -\
@@ -28,7 +28,7 @@ function show_usage {
     echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
     echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
     echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
-    echo -e " ENABLE SKIP     : Skip check and forcefully execute config apply and bootstrap cmds."
+    echo -e " ENABLE FORCE     : Override deployment, forcefully execute config apply and bootstrap cmds."
     echo -e " ENABLE DEBUG    : Enable Debugging CORTX Deployment (Default: False)"
     echo -e " VALIDATE CONF   : Validate constore and configmap config."
     exit 1
@@ -50,6 +50,7 @@ function yaml_config {
 DEBUG_FLAG=false
 CONFIG_APPLY=true
 CLUSTER_BOOTSTRAP=true
+FORCE_DEPLOYMENT=false
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
 
@@ -74,8 +75,8 @@ while [ $# -gt 0 ];  do
         shift 1
         CORTX_CONFSTORE=$1
         ;;
-    -s )
-       SKIP_CHECK="-s"
+    -o )
+       OVERRIDE="-o"
        ;;
     -h )
         show_usage
@@ -101,33 +102,40 @@ validate_config $CLUSTER_INFO
 export PATH=$PATH:/opt/seagate/provisioner/bin
 
 # Check system is pre-configured:
-# config apply: check confstore file, if file exsist skip config apply.
-# cluster bootstrap: read overall_mp_status from state file, if success skip cluster bootstrap.
+# config apply: check confstore file.
+# cluster bootstrap: read overall_mp_status from state file.
 
-if [ -z $SKIP_CHECK ]; then
-    FILE=$(awk -F:// '{print $2}' <<< $CORTX_CONFSTORE)
-    if [ -f "$FILE" ]; then
-        log $INFO "$FILE already exists."
-        CONFIG_APPLY=false
-    fi
-    local_path=`conf $CORTX_CONFSTORE get 'cortx>common>storage>local'`
-    local_path=$(echo $local_path | tr -d "["\" | tr -d "\"]")
-    node_id=`cat /etc/machine-id`
-    STATE_FILE="$local_path/state_files/status_$node_id"
-    if [ -f "$STATE_FILE" ]; then
-        overall_mp_status=`conf json://$STATE_FILE get 'overall_mp_status'`
-        overall_mp_status=$(echo $overall_mp_status | tr -d "["\" | tr -d "\"]")
-        if [ "$overall_mp_status" = "success" ]; then
-            CLUSTER_BOOTSTRAP=false
-        fi
-    fi
-    if [[ $CONFIG_APPLY = false && $CLUSTER_BOOTSTRAP = false ]]; then
-        log $INFO "System is already configured."
-        exit 0
+
+FILE=$(awk -F:// '{print $2}' <<< $CORTX_CONFSTORE)
+if [ -f "$FILE" ]; then
+    log $INFO "File $FILE exists. System looks to be pre-configured."
+    CONFIG_APPLY=false
+fi
+local_path=`conf $CORTX_CONFSTORE get 'cortx>common>storage>local'`
+local_path=$(echo $local_path | tr -d "["\" | tr -d "\"]")
+node_id=`cat /etc/machine-id`
+STATE_FILE="$local_path/provisioner/state/status_$node_id"
+if [ -f "$STATE_FILE" ]; then
+    overall_mp_status=`conf json://$STATE_FILE get 'overall_mp_status'`
+    overall_mp_status=$(echo $overall_mp_status | tr -d "["\" | tr -d "\"]")
+    if [ "$overall_mp_status" = "success" ]; then
+        log $INFO "Components mini-provisioners stages are alredy executed."
+        CLUSTER_BOOTSTRAP=false
     fi
 fi
 
-if [ $CONFIG_APPLY = true ]; then
+if [ -z $OVERRIDE ]; then
+    if [[ $CONFIG_APPLY = false && $CLUSTER_BOOTSTRAP = false ]]; then
+        log $INFO "System is already configured. exiting from cortx_deploy ..."
+        exit 0
+    fi
+else
+    log $WARNING "Force option enabled, Overriding existing deployment."
+    FORCE_DEPLOYMENT=true
+fi
+
+
+if [[ $CONFIG_APPLY = true || $FORCE_DEPLOYMENT = true ]]; then
     # Apply Cluster Config
     log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
     cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
@@ -135,8 +143,6 @@ if [ $CONFIG_APPLY = true ]; then
     # Apply Common Config
     log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
     cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
-else
-    log $INFO "Confstore file alreday exist with required config, Skipping config apply..."
 fi
 
 # Validate config
@@ -148,12 +154,10 @@ then
     cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || exit 1
 fi
 
-if [ $CLUSTER_BOOTSTRAP = true ]; then
+if [[ $CLUSTER_BOOTSTRAP = true || $FORCE_DEPLOYMENT = true ]]; then
     # Bootstrap Cluster
     log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE'"
     cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE";
-else
-    log $INFO "System is pre-configured, Skipping cluster bootstrap..."
 fi
 
 # Check if debugging is enabled

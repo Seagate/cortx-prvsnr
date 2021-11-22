@@ -178,8 +178,8 @@ class CortxProvisioner:
 
         Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
 
-        CortxProvisioner.load_state_file(cortx_config_store, node_id)
-        CortxProvisioner.add_release_info('pre_update_rpms')
+        CortxProvisioner._load_state_file(cortx_config_store, node_id)
+        CortxProvisioner._add_release_info('pre_update_rpms')
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
@@ -197,33 +197,34 @@ class CortxProvisioner:
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
-                    CortxProvisioner.update_component_status(
+                    CortxProvisioner._update_component_status(
                         comp_name, interface, "fail", "fail")
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
                 # Update component MP status.
-                CortxProvisioner.update_component_status(
+                CortxProvisioner._update_component_status(
                     comp_name, interface, "success", "in-progress")
 
         # Update overall cortx miniprovisioner status from in-progress to success.
-        CortxProvisioner.update_component_status("", "", "", "success")
+        CortxProvisioner._update_component_status("", "", "", "success")
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
 
     @staticmethod
-    def load_state_file(cortx_config_store, id):
+    def _load_state_file(cortx_config_store, node_id):
         """ Load state_file """
         state = 'state'
-        path = cortx_config_store.get(
-            'cortx>common>storage>local') + '/state_files'
-        if not os.path.exists(path):
-            os.mkdir(path)
-        state_file = os.path.join(path, f'status_{id}')
+        local_path = cortx_config_store.get(
+            'cortx>common>storage>local')
+        dir_path = f'{local_path}/{const.APP_NAME}/state'
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        state_file = os.path.join(dir_path, f'status_{node_id}')
         Conf.load(state, f'json://{state_file}')
 
     @staticmethod
-    def add_release_info(key):
+    def _add_release_info(key):
         """ Add pre-update and post-update release info state file. """
 
         if not os.path.exists(const.RELEASE_INFO_FILE):
@@ -234,7 +235,7 @@ class CortxProvisioner:
         Conf.save('state')
 
     @staticmethod
-    def update_component_status(comp="", interface="", status="",
+    def _update_component_status(comp="", interface="", status="",
         overall_mp_status="", overall_update_status=""):
         """ Update component level miniprovisioner status in state file.
             eg: {
