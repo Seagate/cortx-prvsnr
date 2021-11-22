@@ -89,14 +89,14 @@ class ClusterCmd(Cmd):
     def add_args(parser: str):
         """ Add Command args for parsing """
 
-        parser.add_argument('action', help='bootstrap')
+        parser.add_argument('action', help='bootstrap, upgrade')
         parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
         """ Validate cluster command args """
 
-        if self._args.action not in ['bootstrap']:
+        if self._args.action not in ['bootstrap', 'upgrade']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
         log_level = self._args.log_level
@@ -111,36 +111,8 @@ class ClusterCmd(Cmd):
         self._validate()
         if self._args.action == 'bootstrap':
             CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
-        return 0
-
-
-class UpgradeCmd(Cmd):
-
-    """ Cluster Upgrade Cmd """
-    name = 'upgrade'
-
-    def __init__(self, args: dict):
-        super().__init__(args)
-
-    @staticmethod
-    def add_args(parser: str):
-        """ Add Command args for parsing """
-        parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
-        parser.add_argument('-l', dest='log_level', help='Log level')
-
-    def _validate(self):
-        """ Validate upgrade command args """
-        log_level = self._args.log_level
-        if not log_level:
-            log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
-        if log_level not in const.SUPPORTED_LOG_LEVELS:
-            raise CortxProvisionerError(errno.EINVAL, 'Invalid log level')
-        os.environ['CORTX_PROVISIONER_DEBUG_LEVEL'] = log_level
-
-    def process(self, *args, **kwargs):
-        """ Upgrade Cluster """
-        self._validate()
-        CortxProvisioner.cluster_upgrade(self._args.cortx_conf)
+        if self._args.action == 'upgrade':
+            CortxProvisioner.cluster_upgrade(self._args.cortx_conf)
         return 0
 
 
