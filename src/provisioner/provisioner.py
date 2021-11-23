@@ -49,7 +49,7 @@ class CortxProvisioner:
         if Log.logger is None:
             CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
         Log.info('Applying config %s' % solution_conf_url)
-        Conf.load(CortxProvisioner._solution_index, solution_conf_url)
+        Conf.load(CortxProvisioner._solution_index, solution_conf_url, fail_reload=False)
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
