@@ -11,7 +11,7 @@ function print_header {
     echo "--------------------------------------------------------------------------"
 }
 
-# Delete Storage Service (Headless)
+# Delete Storage-Node Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Storage Service - $NODE_NAME";
@@ -29,13 +29,40 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
 done
 wait;
 
-# Delete Control Service (Headless)
+# Delete Server-Node Service (Headless)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node$NODE_INDEX";
+    print_header "Deleting Server-Node Service - $NODE_NAME";
+    NODE_SVC="$BASEPATH/external-services/headless_server_$NODE_NAME.yaml";
+    kubectl delete -f "$NODE_SVC" --namespace "$NAMESPACE";
+    sleep $INTRDELAY;
+done
+
+# Delete Server Node (POD)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node$NODE_INDEX";
+    print_header "Deleting Server Node - $NODE_NAME";
+    kubectl delete pod server-$NODE_NAME --namespace "$NAMESPACE" &
+    sleep $INTRDELAY;
+done
+wait;
+
+# Delete Control-Node Service (Headless)
 print_header "Deleting Control Service - Cluster";
 kubectl delete -f "$BASEPATH/external-services/headless_control_node.yaml" --namespace "$NAMESPACE";
 
 # Delete Control Node (POD)
 print_header "Deleting Control Node - Cluster";
 kubectl delete pod control-node --namespace "$NAMESPACE";
+sleep $INTRDELAY;
+
+# Delete Ha-Node Service (Headless)
+print_header "Deleting Ha-Node Service - Cluster";
+kubectl delete -f "$BASEPATH/external-services/headless_ha_node.yaml" --namespace "$NAMESPACE";
+
+# Delete HA Node (POD)
+print_header "Deleting HA Node - Cluster";
+kubectl delete pod ha-node --namespace "$NAMESPACE";
 sleep $INTRDELAY;
 
 # Delete Persistent Volume Claims for Block Devices (PVC)

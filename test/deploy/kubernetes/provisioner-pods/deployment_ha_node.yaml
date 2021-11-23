@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ha-node
+  labels:
+    app: ha-node
+    id: 1115f539f4f770e2a3fe9e2e615c32a8
+spec:
+  hostname: ha-node
+  restartPolicy: Never
+  nodeSelector:
+    node-name: node1
+  volumes:
+  - name: node-id
+    downwardAPI:
+      items:
+      - path: "id"
+        fieldRef:
+          fieldPath: metadata.labels['id']
+  - name: solution-config
+    configMap:
+      name: solution-config
+  - name: cortx-secret
+    secret:
+      secretName: cortx-secret
+  - name: shared-node1
+    persistentVolumeClaim:
+      claimName: shared-node1
+  - name: local-node1
+    persistentVolumeClaim:
+      claimName: local-node1
+  containers:
+  - name: cortx-ha-node
+    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    imagePullPolicy: IfNotPresent
+    args:
+    - /bin/sh
+    - -c
+    - set -x;
+      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+    volumeMounts:
+    - name: solution-config
+      mountPath: /etc/cortx/solution
+    - name: node-id
+      mountPath: /etc/cortx/solution/node
+    - name: local-node1
+      mountPath: /etc/cortx
+    - name: shared-node1
+      mountPath: /share
+    - name: cortx-secret
+      mountPath: /etc/cortx/solution/secret

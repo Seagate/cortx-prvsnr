@@ -93,6 +93,22 @@ while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Complet
 done
 printf "\n";
 
+# Create HA Service (Headless)
+print_header "Creating HA Node Service - Cluster";
+kubectl apply -f "$BASEPATH/external-services/headless_ha_node.yaml" --namespace "$NAMESPACE";
+
+# Create HA Node (POD)
+print_header "Creating HA Node - Cluster";
+kubectl apply -f "$BASEPATH/provisioner-pods/deployment_ha_node.yaml" --namespace "$NAMESPACE";
+
+# Wait for HA-POD execution
+printf "\nWaiting for HA Node.";
+while [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" != "Completed" ]; do
+    printf ".";
+    sleep $TIMEDELAY;
+done
+printf "\n";
+
 # Create Storage Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
@@ -111,6 +127,24 @@ for NODE_INDEX in $(seq 1 $MAXNODES); do
     sleep $TIMEDELAY;
 done
 
-echo -e "Monitor Storage/Control Nodes for Completed status...";
+# Create Server-Node Service (Headless)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node$NODE_INDEX";
+    print_header "Creating Storage Service - $NODE_NAME";
+    NODE_SVC="$BASEPATH/external-services/headless_server_$NODE_NAME.yaml";
+    kubectl apply -f "$NODE_SVC" --namespace "$NAMESPACE";
+    sleep $INTRDELAY;
+done
+
+# Create Server Node (POD)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node$NODE_INDEX";
+    print_header "Creating Storage Node - $NODE_NAME";
+    NODE_POD="$BASEPATH/provisioner-pods/deployment_server_$NODE_NAME.yaml";
+    kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
+    sleep $TIMEDELAY;
+done
+
+echo -e "Monitor Storage/Server Nodes for Completed status...";
 kubectl get pods -o wide -n "$NAMESPACE";
 exit 0;
