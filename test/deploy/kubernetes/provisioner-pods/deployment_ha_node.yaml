@@ -37,6 +37,9 @@ spec:
     - /bin/sh
     - -c
     - set -x;
+      mkdir -p /opt/seagate/cortx/ha/bin;
+      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/ha/bin/ha_setup;
+      chmod +x /opt/seagate/cortx/ha/bin/ha_setup;
       /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
