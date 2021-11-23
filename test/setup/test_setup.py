@@ -23,7 +23,7 @@ import unittest
 from cortx.utils.cmd_framework import Cmd
 from cortx.setup import cortx_setup
 
-solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_conf_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
 
 class TestSetup(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestSetup(unittest.TestCase):
 
         rc = 0
         try:
-            argv = ['config', 'apply', '-c', solution_conf_url, '-o', cortx_conf_url]
+            argv = ['config', 'apply', '-f', solution_conf_url, '-c', cortx_conf_url]
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)
 
@@ -61,11 +61,11 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(rc, 0)
 
     def test_cluster_upgrade(self):
-        """ Test Cluster Upgrade """
+        """Test Cluster Upgrade."""
 
         rc = 0
         try:
-            argv = ['upgrade', '-c', cortx_conf_url]
+            argv = ['cluster', 'upgrade', '-c', cortx_conf_url]
 
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)

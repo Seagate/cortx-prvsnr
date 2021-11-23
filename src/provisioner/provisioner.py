@@ -145,7 +145,7 @@ class CortxProvisioner:
 
     @staticmethod
     def _get_node_info(cortx_config_store: ConfigStore):
-        """ To get the node information """
+        """To get the node information."""
         node_id = Conf.machine_id
         if node_id is None:
             raise CortxProvisionerError(errno.EINVAL, "Invalid node_id: %s", \
@@ -168,7 +168,7 @@ class CortxProvisioner:
 
     @staticmethod
     def _provision_components(cortx_config_store: ConfigStore, mp_interfaces: list):
-        """ Invoke Mini Provisioners of cluster components """
+        """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
