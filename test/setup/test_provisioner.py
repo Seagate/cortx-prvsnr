@@ -22,19 +22,21 @@ import traceback
 import unittest
 from cortx.provisioner.provisioner import CortxProvisioner
 
-solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
+
 class TestProvisioner(unittest.TestCase):
-    """Test EventMessage send and receive functionality."""
+    """Test cortx_setup config and cluster functionality."""
 
     def test_config_apply_bootstrap(self):
         """ Test Config Apply """
 
         rc = 0
         try:
+            CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
             CortxProvisioner.config_apply(solution_conf_url, cortx_conf_url)
-
         except Exception as e:
             print('Exception: ', e)
             sys.stderr.write("%s\n" % traceback.format_exc())
@@ -45,13 +47,14 @@ class TestProvisioner(unittest.TestCase):
         rc = 0
         try:
             CortxProvisioner.cluster_bootstrap(cortx_conf_url)
-
+            CortxProvisioner.cluster_upgrade(cortx_conf_url)
         except Exception as e:
             print('Exception: ', e)
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
 
         self.assertEqual(rc, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

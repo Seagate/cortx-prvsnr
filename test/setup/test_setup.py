@@ -20,23 +20,31 @@ import os
 import traceback
 import sys
 import unittest
-from cortx.utils.cmd_framework import Cmd
 from cortx.setup import cortx_setup
+from cortx.provisioner import const
+from cortx.utils.cmd_framework import Cmd
+from cortx.provisioner.log import CortxProvisionerLog, Log
 
-solution_conf_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_cluster_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_conf_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
 
+if Log.logger is None:
+    CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
+
+
 class TestSetup(unittest.TestCase):
-    """Test EventMessage send and receive functionality."""
+    """Test cortx_setup config and cluster functionality."""
 
     def test_config_apply(self):
         """ Test Config Apply """
 
         rc = 0
         try:
-            argv = ['config', 'apply', '-f', solution_conf_url, '-c', cortx_conf_url]
-            cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
-            self.assertEqual(cmd.process(), 0)
+            for solution_url in [solution_cluster_url, solution_conf_url]:
+                argv = ['config', 'apply', '-f', solution_url, '-c', cortx_conf_url]
+                cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
+                self.assertEqual(cmd.process(), 0)
 
         except Exception as e:
             print('Exception: ', e)
