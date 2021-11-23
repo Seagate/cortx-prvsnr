@@ -1,0 +1,83 @@
+#!/bin/bash
+set -e;
+
+# Log Levels:
+DEBUG=1
+INFO=2
+WARNING=3
+ERROR=4
+FATAL=5
+DEFAULT_LOG_LEVEL=${DEFAULT_LOG_LEVEL:-$INFO}
+
+function log {
+    LEVEL=$1; shift
+    LOG_LEVEL=${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}
+    [[ $LEVEL -lt $LOG_LEVEL ]] && return
+
+    echo "log: $*"
+}
+
+function show_usage {
+    echo -e "usage: $(basename $0) [-l LOG-LEVEL][-c CORTX-CONFIG-URL] [-d]"
+    echo -e "Where:"
+    echo -e "..."
+    echo -e " LOG-LEVEL       : Log Level (Default: 2)"
+    echo -e "                   Supported log levels:"
+    echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
+    echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
+    echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
+    echo -e " ENABLE DEBUG    : Enable Debugging CORTX Upgrade (Default: False)"
+    exit 1
+}
+
+# Constants
+DEBUG_FLAG=false
+CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
+
+while [ $# -gt 0 ];  do
+    case $1 in
+    -l )
+        shift 1
+        LOG_LEVEL=$1
+        ;;
+    -d )
+        DEBUG_FLAG=true
+        ;;
+    -c )
+        shift 1
+        CORTX_CONFSTORE=$1
+        ;;
+    -h )
+        show_usage
+        ;;
+    * )
+        echo -e "Invalid argument provided : $1"
+        show_usage
+        exit 1
+        ;;
+    esac
+    shift 1
+done
+
+export PATH=$PATH:/opt/seagate/provisioner/bin
+
+CONFSTOR_FILE=$(awk -F:// '{print $2}' <<< $CORTX_CONFSTORE)
+if [ ! -s "$CONFSTOR_FILE" ]; then
+    log $ERROR "$CORTX_CONFSTORE file not found or file is empty"
+    exit 1
+fi
+
+node_id=`cat /etc/machine-id`
+cluster_id=`conf $CORTX_CONFSTORE get "node>$node_id>cluster_id"`
+cluster_id=$(echo $cluster_id | tr -d "["\" | tr -d "\"]")
+log $INFO "Starting upgrade on node $node_id which is part of cluster $cluster_id."
+
+# Cluster Upgrade
+log $INFO "cortx_setup cluster upgrade -c '$CORTX_CONFSTORE'"
+cortx_setup cluster upgrade -c "$CORTX_CONFSTORE";
+
+# Check if debugging is enabled
+if [ $DEBUG_FLAG = true ]; then
+    log $INFO "cortx_upgrade DEBUG enabled...";
+    sleep infinity;
+fi

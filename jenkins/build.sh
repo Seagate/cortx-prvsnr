@@ -60,6 +60,7 @@ rpm -q rpm-build > /dev/null || {
 echo $VER > "$BASE_DIR"/VERSION
 /bin/chmod +rx "$BASE_DIR"/VERSION
 /bin/chmod +x "$BASE_DIR"/src/setup/cortx_deploy
+/bin/chmod +x "$BASE_DIR"/src/setup/cortx_update
 
 cd $BASE_DIR
 
