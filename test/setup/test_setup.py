@@ -34,7 +34,7 @@ if Log.logger is None:
 
 
 class TestSetup(unittest.TestCase):
-    """Test cortx_setup config and cluster functionality."""
+    """ Test cortx_setup config and cluster functionality """
 
     def test_config_apply(self):
         """ Test Config Apply """
@@ -70,7 +70,6 @@ class TestSetup(unittest.TestCase):
 
     def test_cluster_upgrade(self):
         """Test Cluster Upgrade."""
-
         rc = 0
         try:
             argv = ['cluster', 'upgrade', '-c', cortx_conf_url]
