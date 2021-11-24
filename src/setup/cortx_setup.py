@@ -46,6 +46,8 @@ class ConfigCmd(Cmd):
             help='Solution Config URL')
         parser.add_argument('-c', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
+        parser.add_argument('-o', dest='overwrite', nargs='?', \
+            help='force config')
         parser.add_argument('-v', dest='validations', nargs='?', \
             help='config')
         parser.add_argument('-l', dest='log_level', help='Log level')
@@ -67,7 +69,10 @@ class ConfigCmd(Cmd):
         """ Apply Config """
         self._validate()
         if self._args.action == 'apply':
-            CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
+            force_config = False if self._args.overwrite is None else \
+                self._args.overwrite
+            CortxProvisioner.config_apply(self._args.solution_conf, \
+                self._args.cortx_conf, force_config)
         if self._args.action == 'validate':
             validations = ['all']
             if self._args.validations is not None:

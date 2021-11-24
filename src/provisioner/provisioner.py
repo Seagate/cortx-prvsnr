@@ -38,7 +38,8 @@ class CortxProvisioner:
         pass
 
     @staticmethod
-    def config_apply(solution_conf_url: str, cortx_conf_url: str = None):
+    def config_apply(solution_conf_url: str, cortx_conf_url: str = None, \
+        force_config: bool = False):
         """
         Description:
         Parses input config and store in CORTX config location
@@ -49,21 +50,22 @@ class CortxProvisioner:
         if Log.logger is None:
             CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
         Log.info('Applying config %s' % solution_conf_url)
-        Conf.load(CortxProvisioner._solution_index, solution_conf_url, fail_reload=False)
+        cs_option = {"fail_reload": False} if force_config else {"skip_reload": True}
+        Conf.load(CortxProvisioner._solution_index, solution_conf_url, cs_option)
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_config_store = ConfigStore(cortx_conf_url)
+        cortx_conf = ConfigStore(cortx_conf_url)
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
-            CortxProvisioner.config_apply_cluster(cortx_config_store)
+            CortxProvisioner.config_apply_cluster(cortx_conf)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             # generating cipher key
             cipher_key = None
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
             if cluster_id is None:
-                cluster_id = cortx_config_store.get('cluster>id')
+                cluster_id = cortx_conf.get('cluster>id')
                 if cluster_id is None:
                     raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
             cipher_key = Cipher.gen_key(cluster_id, 'cortx')
@@ -82,17 +84,17 @@ class CortxProvisioner:
                     val = Cipher.encrypt(cipher_key, val)
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
-            CortxProvisioner.config_apply_cortx(cortx_config_store)
+            CortxProvisioner.config_apply_cortx(cortx_conf)
 
     @staticmethod
-    def config_apply_cortx(cortx_config_store):
+    def config_apply_cortx(cortx_conf):
         """ Convert CORTX config into confstore keys """
         cortx_config = Conf.get(CortxProvisioner._solution_index, 'cortx')
         cs = CortxConfig(cortx_config)
-        cs.save(cortx_config_store)
+        cs.save(cortx_conf)
 
     @staticmethod
-    def config_apply_cluster(cortx_config_store):
+    def config_apply_cluster(cortx_conf):
         node_map = {}
         try:
             node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
@@ -112,7 +114,7 @@ class CortxProvisioner:
             cluster_keys = [('cluster>id', cluster_id),
                 ('cluster>name', cluster_name),
                 ('cluster>storage_set_count', len(storage_sets))]
-            cortx_config_store.set_kvs(cluster_keys)
+            cortx_conf.set_kvs(cluster_keys)
 
             nodes = []
             for storage_set in storage_sets:
@@ -135,16 +137,16 @@ class CortxProvisioner:
                     nodes.append(node)
 
             cs = CortxCluster(nodes)
-            cs.save(cortx_config_store)
+            cs.save(cortx_conf)
             cs = CortxStorageSet(storage_sets)
-            cs.save(cortx_config_store)
+            cs.save(cortx_conf)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def _get_node_info(cortx_config_store: ConfigStore):
+    def _get_node_info(cortx_conf: ConfigStore):
         """To get the node information."""
         node_id = Conf.machine_id
         if node_id is None:
@@ -153,36 +155,36 @@ class CortxProvisioner:
 
         # Reinitialize logging with configured log path
         log_path = os.path.join(
-            cortx_config_store.get('cortx>common>storage>log'), const.APP_NAME, node_id)
+            cortx_conf.get('cortx>common>storage>log'), const.APP_NAME, node_id)
         log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
-        if cortx_config_store.get(f'node>{node_id}') is None:
+        if cortx_conf.get(f'node>{node_id}') is None:
             raise CortxProvisionerError(
                 errno.EINVAL, f"Node id '{node_id}' not found in cortx config.")
 
-        node_name = cortx_config_store.get(f'node>{node_id}>name')
+        node_name = cortx_conf.get(f'node>{node_id}>name')
 
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_config_store: ConfigStore, mp_interfaces: list):
+    def _provision_components(cortx_conf: ConfigStore, mp_interfaces: list):
         """Invoke Mini Provisioners of cluster components."""
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
-        components = cortx_config_store.get(f'node>{node_id}>components')
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
+        components = cortx_conf.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
         num_components = len(components)
         for interface in mp_interfaces:
             for comp_idx in range(0, num_components):
-                services = cortx_config_store.get(
+                services = cortx_conf.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
                 comp_name = components[comp_idx]['name']
                 cmd = (
                     f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
-                    f" --config {cortx_config_store._conf_url} --services {service}")
+                    f" --config {cortx_conf._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
@@ -192,7 +194,7 @@ class CortxProvisioner:
                         components[comp_idx]['name'], err)
 
     @staticmethod
-    def cluster_bootstrap(cortx_conf_url: str = None):
+    def cluster_bootstrap(cortx_conf_url: str):
         """
         Description:
         Configures Cluster Components
@@ -201,18 +203,16 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
-        if cortx_conf_url is None:
-            cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_config_store = ConfigStore(cortx_conf_url)
+        cortx_conf = ConfigStore(cortx_conf_url)
 
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
-        CortxProvisioner._provision_components(cortx_config_store, mp_interfaces)
+        CortxProvisioner._provision_components(cortx_conf, mp_interfaces)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
-    def cluster_upgrade(cortx_conf_url: str = None):
+    def cluster_upgrade(cortx_conf_url: str):
         """
         Description:
         Upgrades Cluster Components
@@ -221,14 +221,12 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
-        if cortx_conf_url is None:
-            cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_config_store = ConfigStore(cortx_conf_url)
+        cortx_conf = ConfigStore(cortx_conf_url)
 
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_config_store)
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         Log.info(f"Starting cluster upgrade on {node_id}:{node_name}")
         # TODO: validations
 
         mp_interfaces = ['upgrade']
-        CortxProvisioner._provision_components(cortx_config_store, mp_interfaces)
+        CortxProvisioner._provision_components(cortx_conf, mp_interfaces)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
