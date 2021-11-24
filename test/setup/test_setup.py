@@ -37,7 +37,7 @@ class TestSetup(unittest.TestCase):
 
     """Test cortx_setup config and cluster functionality."""
 
-    def test_config_apply(self):
+    def test_001_config_apply(self):
         """ Test Config Apply """
 
         rc = 0
@@ -53,7 +53,7 @@ class TestSetup(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
 
-    def test_cluster_bootstrap(self):
+    def test_002_cluster_bootstrap(self):
         """ Test Cluster Bootstrap """
 
         rc = 0
