@@ -51,7 +51,7 @@ class CortxProvisioner:
             CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
         Log.info('Applying config %s' % solution_conf_url)
         cs_option = {"fail_reload": False} if force_config else {"skip_reload": True}
-        Conf.load(CortxProvisioner._solution_index, solution_conf_url, cs_option)
+        Conf.load(CortxProvisioner._solution_index, solution_conf_url, **cs_option)
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
