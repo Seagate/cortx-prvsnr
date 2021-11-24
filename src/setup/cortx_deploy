@@ -28,7 +28,7 @@ function show_usage {
     echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
     echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
     echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
-    echo -e " ENABLE FORCE     : Override deployment, forcefully execute config apply and bootstrap cmds."
+    echo -e " ENABLE FORCE     : Force deployment steps if it was executed earlier."
     echo -e " ENABLE DEBUG    : Enable Debugging CORTX Deployment (Default: False)"
     echo -e " VALIDATE CONF   : Validate constore and configmap config."
     exit 1
@@ -47,10 +47,15 @@ function yaml_config {
     echo "yaml://$config"
 }
 
+function conf_get {
+    URL=$1; key=$2
+    val=$(conf $URL get $key)
+    val=$(echo $val | tr -d "["\" | tr -d "\"]")
+    echo $val
+}
+
 # Constants
 DEBUG_FLAG=false
-CONFIG_APPLY=true
-CLUSTER_BOOTSTRAP=true
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
 
@@ -76,7 +81,7 @@ while [ $# -gt 0 ];  do
         CORTX_CONFSTORE=$1
         ;;
     -o )
-       OVERRIDE="-o"
+       FORCE_DEPLOY="-o"
        ;;
     -h )
         show_usage
@@ -101,51 +106,17 @@ validate_config $CLUSTER_INFO
 
 export PATH=$PATH:/opt/seagate/provisioner/bin
 
-# Check system is pre-configured:
-# config apply: check confstore file.
-# cluster bootstrap: check VERSION file is exist and phase and status key from confstore and.
-
 node_id=`cat /etc/machine-id`
-cluster_id=`conf $(yaml_config $CLUSTER_INFO) get "cluster>id"`
-cluster_id=$(echo $cluster_id | tr -d "["\" | tr -d "\"]")
+cluster_id=$(conf_get $(yaml_config $CLUSTER_INFO) "cluster>id")
 log $INFO "Starting deployment on node $node_id which is part of cluster $cluster_id."
 
-FILE=$(awk -F:// '{print $2}' <<< $CORTX_CONFSTORE)
-if [ -f "$FILE" ]; then
-    log $WARNING "$FILE file exists. System looks to be pre-configured."
-    CONFIG_APPLY=false
+# Apply Cluster Config
+log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_DEPLOY"
+cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_DEPLOY;
 
-    version_file=`conf $CORTX_CONFSTORE get "node>$node_id>version"`
-    version_file=$(echo $version_file | tr -d "["\" | tr -d "\"]")
-    phase=`conf $CORTX_CONFSTORE get "node>$node_id>phase"`
-    phase=$(echo $phase | tr -d "["\" | tr -d "\"]")
-    status=`conf $CORTX_CONFSTORE get "node>$node_id>status"`
-    status=$(echo $status | tr -d "["\" | tr -d "\"]")
-    if [[ "$phase" = "deployment" && "$status" = "success" ]] || [ -f "$version_file" ]; then
-        log $WARNING "Components mini-provisioners stages are already executed."
-        CLUSTER_BOOTSTRAP=false
-    fi
-fi
-
-if [ -z $OVERRIDE ]; then
-    if [[ $CONFIG_APPLY = false && $CLUSTER_BOOTSTRAP = false ]]; then
-        log $INFO "System is already configured. exiting from cortx_deploy."
-        exit 0
-    fi
-else
-    log $WARNING "Force option enabled, Overwriting existing deployment."
-fi
-
-
-if [ $CONFIG_APPLY = true ] || ! [ -z $OVERRIDE ]; then
-    # Apply Cluster Config
-    log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
-
-    # Apply Common Config
-    log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
-fi
+# Apply Common Config
+log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_DEPLOY"
+cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_DEPLOY;
 
 # Validate config
 if ! [ -z $VALIDATE_CONF ];
@@ -156,11 +127,9 @@ then
     cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || exit 1
 fi
 
-if [ $CLUSTER_BOOTSTRAP = true ] || ! [ -z $OVERRIDE ]; then
-    # Bootstrap Cluster
-    log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE'"
-    cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE";
-fi
+# Bootstrap Cluster
+log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE' $FORCE_DEPLOY"
+cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $FORCE_DEPLOY;
 
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then

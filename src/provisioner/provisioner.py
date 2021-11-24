@@ -22,6 +22,7 @@ from cortx.provisioner import const
 from cortx.provisioner.log import CortxProvisionerLog, Log
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
+from cortx.utils.conf_store.error import ConfError
 from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster,  CortxStorageSet
 
@@ -38,7 +39,8 @@ class CortxProvisioner:
         pass
 
     @staticmethod
-    def config_apply(solution_conf_url: str, cortx_conf_url: str = None):
+    def config_apply(solution_conf_url: str, cortx_conf_url: str = None,
+        conf_override: bool = False):
         """
         Description:
         Parses input config and store in CORTX config location
@@ -48,12 +50,25 @@ class CortxProvisioner:
         """
         if Log.logger is None:
             CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
-        Log.info('Applying config %s' % solution_conf_url)
-        Conf.load(CortxProvisioner._solution_index, solution_conf_url)
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_config_store = ConfigStore(cortx_conf_url)
+
+        # Check if config is already applied.
+        if cortx_config_store.get('cortx>common>release') and not conf_override:
+            Log.info('CORTX config already applied on this node.')
+            return 0
+
+        # Load same config again if conf_override is True
+        # To load same config pass fail_reload=False.
+        try:
+            fail_reload = False if conf_override else True
+            Log.info('Applying config %s' % solution_conf_url)
+            Conf.load(CortxProvisioner._solution_index, solution_conf_url, fail_reload=fail_reload)
+        except ConfError as e:
+            Log.error(f'Unable to load {solution_conf_url} url, Error:{e}')
+
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.config_apply_cluster(cortx_config_store)
@@ -144,7 +159,7 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def cluster_bootstrap(cortx_conf_url: str = None):
+    def cluster_bootstrap(cortx_conf_url: str = None, override: bool = False):
         """
         Description:
         Configures Cluster Components
@@ -170,6 +185,12 @@ class CortxProvisioner:
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
+        phase = cortx_config_store.get(f'node>{node_id}>provisioning>phase')
+        status = cortx_config_store.get(f'node>{node_id}>provisioning>status')
+        if phase == "deployment" and status == "success" and not override:
+            Log.info('CORTX is already configured on this node.')
+            return 0
+
         if cortx_config_store.get(f'node>{node_id}') is None:
             raise CortxProvisionerError(
                 errno.EINVAL, f"Node id '{node_id}' not found in cortx config.")
@@ -178,11 +199,8 @@ class CortxProvisioner:
 
         Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
 
-        CortxProvisioner._load_file(const.RELEASE_INFO_FILE, const.RELEASE_INDEX)
-        # TODO:Uncomment below line once the image info is available in RELEASE.INFO file.
-        #CortxProvisioner._get_image_version(cortx_config_store)
         CortxProvisioner._update_deployment_status(
-            cortx_config_store, node_id, phase='deployment')
+            cortx_config_store, node_id, 'deployment')
         components = cortx_config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
@@ -201,67 +219,28 @@ class CortxProvisioner:
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
                     CortxProvisioner._update_deployment_status(
-                        cortx_config_store, node_id, phase='deployment',
-                        status='error')
+                        cortx_config_store, node_id, 'deployment', 'error')
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
 
                 CortxProvisioner._update_deployment_status(
-                    cortx_config_store, node_id, phase='deployment',
-                    status='progress')
+                    cortx_config_store, node_id, 'deployment', 'progress')
 
-        # Once the deployment is successful create VERSION.INFO
-        # file as a backup of RELEASE.INFO file.
-        CortxProvisioner._load_file(const.VERSION_FILE, const.VERSION_INDEX)
-        CortxProvisioner._copy_release_info()
         CortxProvisioner._update_deployment_status(
-            cortx_config_store, node_id, phase='deployment', status='success',
-            version=const.VERSION_FILE)
+            cortx_config_store, node_id, 'deployment', 'success')
 
         Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
 
-
     @staticmethod
-    def _load_file(file_name, index):
-        """ Load RELEASE.INFO """
-        Conf.load(index, f'yaml://{file_name}')
-
-    @staticmethod
-    def _copy_release_info():
-        """ Create backup of RELEASE.INFO """
-        Conf.copy(const.RELEASE_INDEX, const.VERSION_INDEX)
-
-    @staticmethod
-    def _get_image_version(conf_url):
-        """ Get img name, img version from RELEASE.INFO file
-            and add into the conf_stor.
-
-            e.g:
-            cortx:
-              common:
-                install_image: ghcr.io/seagate/cortx-all
-                install_version: 2.0.0-1172-custom-ci
-        """
-        img_name = Conf.get(const.RELEASE_INDEX, 'IMAGE_NAME', '')
-        img_version = Conf.get(const.RELEASE_INDEX, 'IMAGE_VERSION', '')
-        keys = [('cortx>common>install_image', img_name),
-            ('cortx>common>install_version', img_version)]
-        conf_url.set_kvs(keys)
-
-    @staticmethod
-    def _update_deployment_status(conf_url, node_id, phase, status='default',
-        version='default', release='default'):
-        """ Add phase, status, version, release keys in conf_stor.
+    def _update_deployment_status(conf_url, node_id, phase, status='default'):
+        """Add phase, status, version, release keys in conf_stor.
 
             args:
-            conf_url: conf_store file url. eg. yaml:///etc/cortx/cluster.conf
+            conf_url: conf_store url. eg. yaml:///etc/cortx/cluster.conf
             node_id: node_id(machine-id)
             phase: deployment/upgrade
-            status: default/progress/success/error
-            version: default or /opt/seagate/cortx/VERSION.INFO
-            release: default or /opt/seagate/cortx/RELEASE.INFO
-        """
-        keys = [(f'node>{node_id}>phase', phase), (f'node>{node_id}>status', status),
-            (f'node>{node_id}>version', version), (f'node>{node_id}>release', release)]
+            status: default/progress/success/error"""
+        key_prefix = f'node>{node_id}>provisioning>'
+        keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         conf_url.set_kvs(keys)

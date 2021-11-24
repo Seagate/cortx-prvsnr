@@ -42,12 +42,14 @@ class ConfigCmd(Cmd):
         """ Add Command args for parsing """
 
         parser.add_argument('action', help='apply, validate')
-        parser.add_argument('-f', dest='solution_conf', \
+        parser.add_argument('-f', dest='solution_conf',
             help='Solution Config URL')
-        parser.add_argument('-c', dest='cortx_conf', nargs='?', \
+        parser.add_argument('-c', dest='cortx_conf', nargs='?',
             help='CORTX Config URL')
-        parser.add_argument('-v', dest='validations', nargs='?', \
-            help='config')
+        parser.add_argument('-v', dest='validations', nargs='?',
+            help='config validations')
+        parser.add_argument('-o', dest='override', action='store_true',
+            help='config override')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
@@ -67,7 +69,9 @@ class ConfigCmd(Cmd):
         """ Apply Config """
         self._validate()
         if self._args.action == 'apply':
-            CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
+            conf_override = True if self._args.override else False
+            CortxProvisioner.config_apply(
+                self._args.solution_conf, self._args.cortx_conf, conf_override)
         if self._args.action == 'validate':
             validations = ['all']
             if self._args.validations is not None:
@@ -92,6 +96,8 @@ class ClusterCmd(Cmd):
         parser.add_argument('action', help='bootstrap')
         parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
+        parser.add_argument('-o', dest='override', action='store_true',
+            help='override deployment')
 
 
     def _validate(self):
@@ -111,7 +117,8 @@ class ClusterCmd(Cmd):
         """ Bootsrap Cluster """
         self._validate()
         if self._args.action == 'bootstrap':
-            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
+            override = True if self._args.override else False
+            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf, override)
         return 0
 
 
