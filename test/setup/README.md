@@ -26,13 +26,13 @@ yum install --nogpgcheck -y cortx-motr cortx-hare cortx-s3server cortx-csm_agent
 ## Testing Manually
 
 Run apply command
-```bash
+```python
 cortx_setup.py config apply -f yaml://`pwd`/config.yaml -c yaml:///tmp/mp.conf
 cortx_setup.py config apply -f yaml://`pwd`/cluster.yaml -c yaml:///tmp/mp.conf
 ```
 
 Run bootstrap command
-```bash
+```python
 cortx_setup.py cluster bootstrap -f yaml:///tmp/mp.conf -c yaml:///tmp/mp.conf
 ```
 
@@ -49,6 +49,6 @@ s3_setup post_install --config yaml:/etc/cortx/cortx.conf --services bg_producer
 
 Run the following command  
 **Running The Tests**
-```bash
+```python
 ./test_provisioner.py
 ```
