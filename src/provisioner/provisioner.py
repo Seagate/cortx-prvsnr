@@ -240,7 +240,7 @@ class CortxProvisioner:
             conf_url: conf_store url. eg. yaml:///etc/cortx/cluster.conf
             node_id: node_id(machine-id)
             phase: deployment/upgrade
-            status: default/progress/success/error"""
+            status: default/progress/success/error."""
         key_prefix = f'node>{node_id}>provisioning>'
         keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         conf_url.set_kvs(keys)

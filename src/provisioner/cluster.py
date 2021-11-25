@@ -17,7 +17,7 @@ import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.provisioner.log import Log
-from cortx.provisioner.manifest import CortxReleaseInfo
+from cortx.provisioner.release import CortxRelease
 
 
 class CortxCluster:
@@ -91,10 +91,10 @@ class CortxCluster:
     def _add_comp_version(components):
         """Add rpm version key for each component."""
         updates_list = []
-        cortx_release_info = CortxReleaseInfo()
-        for comp in components:
-            comp['version'] = cortx_release_info.get_build_no(comp['name'])
-            updates_list.append(comp)
+        cortx_release_info = CortxRelease()
+        for component in components:
+            component['version'] = cortx_release_info.get_build_num(component['name'])
+            updates_list.append(component)
         return updates_list
 
     def save(self, config_store):
@@ -103,8 +103,8 @@ class CortxCluster:
         kvs = []
         for node in self._node_list:
             node_id = node.pop('id')
-            res = CortxCluster._add_comp_version(node['components'])
-            node['components'] = res
+            result = CortxCluster._add_comp_version(node['components'])
+            node['components'] = result
             key_prefix = f'node>{node_id}'
             kvs.extend(self._get_kvs(key_prefix, node))
 

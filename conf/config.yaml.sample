@@ -22,7 +22,7 @@ cortx:
   common:
     release:
       name: CORTX
-      version: 2.0.0-<build-no>
+      version: 2.0.0-1111
     environment_type: K8
     setup_size: small
     service:

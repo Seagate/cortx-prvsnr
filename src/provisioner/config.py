@@ -16,7 +16,7 @@
 import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
-from cortx.provisioner.manifest import CortxReleaseInfo
+from cortx.provisioner.release import CortxRelease
 from cortx.provisioner.log import Log
 
 class CortxConfig:
@@ -63,10 +63,13 @@ class CortxConfig:
             self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
                 'environment_type')
             release = self._cortx_config.get('common').get('release')
-            val = CortxConfig._verify_release_info(release)
-            if val:
-                for k in val.keys():
-                    self._cortx_config['common']['release'][k] = val[k]
+            valid, release = CortxRelease().validate(release)
+            if not valid:
+                for key in release.keys():
+                    Log.warn('Found incorrect value for key '
+                        f'"cortx>common>release>{key}" or "release" key is not'
+                        ' present in configmap.')
+                    self._cortx_config['common']['release'][key] = release[key]
             key_prefix = 'cortx>'
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])
@@ -76,18 +79,3 @@ class CortxConfig:
             raise CortxProvisionerError(
                 errno.EINVAL,
                 f'Error occurred while adding CORTX config information into confstore {e}')
-
-    @staticmethod
-    def _verify_release_info(cm_release=''):
-        """Verify configmap release info with RELEASE.INFO."""
-        res = {}
-        keys = ['name', 'version']
-        cortx_release_info = CortxReleaseInfo()
-        for k in keys:
-            val = cortx_release_info.get_release_info(k.upper())
-            if not cm_release or cm_release[k] != val:
-                Log.warn('Found incorrect value for key '
-                f'"cortx>common>release>{k}" or "release" key is not present'
-                ' in configmap.')
-                res[k] = val
-        return res

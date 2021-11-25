@@ -40,12 +40,19 @@ class Manifest:
                 num_list.append(s)
         # Now num_list contains version and githash number
         # e.g ['2.0.0', '438_b3c80e82.x86_64.rpm']
-        # Remove .noarch.rpm or .x86_64.rpm from version string.
-        num_list[1] = num_list[1].split('.')[0]
+        # Remove .noarch.rpm,.x86_64.rpm, .el7.x86_64, _e17.x86_64 from version string.
+        if '.el7' in num_list[1]:
+            num_list[1]= num_list[1].split(str('.el7'))[0]
+        elif '_el7' in num_list[1]:
+           num_list[1]= num_list[1].split('_el7')[0]
+        elif '.noarch' in num_list[1]:
+            num_list[1]=num_list[1].split('.noarch')[0]
+        elif '.x86_64' in num_list[1]:
+            num_list[1]=num_list[1].split('.x86_64')[0]
         build_id = num_list[0] + '.' + num_list[1]
         return build_id
 
-class CortxReleaseInfo(Manifest):
+class CortxRelease(Manifest):
 
     _release_info_url = f'yaml://{const.RELEASE_INFO_PATH}'
     _release_index = 'release'
@@ -54,14 +61,26 @@ class CortxReleaseInfo(Manifest):
         """Load RELEASE.INFO."""
         Conf.load(self._release_index, self._release_info_url, fail_reload=False)
 
-    def get_release_info(self, key: str):
+    def get_release_version(self, key: str):
         """Get value from RELEASE.INFO for given key."""
         val = Manifest._get_val(self._release_index, key)
         return val
 
-    def get_build_no(self, component):
+    def get_build_num(self, component):
         """Get build_no for given component."""
-        rpms = self.get_release_info('COMPONENTS')
+        rpms = self.get_release_version('COMPONENTS')
         comp_rpm = Manifest._get_elem_from_list(component, rpms)
         build_num = Manifest._get_build_id(comp_rpm)
         return build_num
+
+    def validate(self, cm_release=''):
+        """Validate configmap release info with RELEASE.INFO, Return correct value."""
+        release = {}
+        valid = True
+        keys = ['name', 'version']
+        for key in keys:
+            val = self.get_release_version(key.upper())
+            if not cm_release or cm_release[key] != val:
+                release[key] = val
+                valid = False
+        return valid, release
