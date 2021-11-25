@@ -28,9 +28,10 @@ function show_usage {
     echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
     echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
     echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
-    echo -e " ENABLE FORCE     : Force deployment steps if it was executed earlier."
+    echo -e " OVER-RIDE DEPLOYMENT -\
+                              : Force deployment steps if it was executed earlier."
     echo -e " ENABLE DEBUG    : Enable Debugging CORTX Deployment (Default: False)"
-    echo -e " VALIDATE CONF   : Validate constore and configmap config."
+    echo -e " VALIDATE CONFIG : Validate constore and configmap config."
     exit 1
 }
 

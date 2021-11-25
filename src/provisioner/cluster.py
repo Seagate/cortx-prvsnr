@@ -87,13 +87,13 @@ class CortxCluster:
             kvs.append((prefix, node))
         return kvs
 
-    def _add_comp_version(self, components):
-        """Add rpm version key for each component."""
-        updates_list = []
+    def _add_component_version(self, components):
+        """Add version for each component."""
+        updated_components = []
         for component in components:
-            component['version'] = self._cortx_release.get_build_num(component['name'])
-            updates_list.append(component)
-        return updates_list
+            component['version'] = self._cortx_release.get_version(component['name'])
+            updated_components.append(component)
+        return updated_components
 
     def save(self, config_store):
         """ Saves cluster information onto the conf store """
@@ -101,8 +101,8 @@ class CortxCluster:
         kvs = []
         for node in self._node_list:
             node_id = node.pop('id')
-            result = self._add_comp_version(node['components'])
-            node['components'] = result
+            updated_components = self.add_component_version(node['components'])
+            node['components'] = updated_components
             key_prefix = f'node>{node_id}'
             kvs.extend(self._get_kvs(key_prefix, node))
 

@@ -61,26 +61,26 @@ class CortxRelease(Manifest):
         """Load RELEASE.INFO."""
         Conf.load(self._release_index, self._release_info_url, fail_reload=False)
 
-    def get_release_version(self, key: str):
+    def get_value(self, key: str):
         """Get value from RELEASE.INFO for given key."""
-        val = Manifest._get_val(self._release_index, key)
-        return val
+        value = Manifest._get_val(self._release_index, key)
+        return value
 
-    def get_build_num(self, component):
-        """Get build_no for given component."""
-        rpms = self.get_release_version('COMPONENTS')
+    def get_version(self, component):
+        """Get version for given component."""
+        rpms = self.get_value('COMPONENTS')
         comp_rpm = Manifest._get_elem_from_list(component, rpms)
-        build_num = Manifest._get_build_id(comp_rpm)
-        return build_num
+        version = Manifest._get_build_id(comp_rpm)
+        return version
 
     def validate(self, cm_release=''):
         """Validate configmap release info with RELEASE.INFO, Return correct value."""
-        release = {}
-        valid = True
+        release_info = {}
+        is_valid = True
         keys = ['name', 'version']
         for key in keys:
-            val = self.get_release_version(key.upper())
-            if not cm_release or cm_release[key] != val:
-                release[key] = val
-                valid = False
-        return valid, release
+            value = self.get_value(key.upper())
+            if not cm_release or cm_release[key] != value:
+                release_info[key] = value
+                is_valid = False
+        return is_valid, release_info

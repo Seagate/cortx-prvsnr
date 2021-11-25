@@ -63,13 +63,12 @@ class CortxConfig:
             self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
                 'environment_type')
             release_spec = self._cortx_config.get('common').get('release')
-            valid, release_spec = self._cortx_release.validate(release_spec)
-            if not valid:
-                for key in release_spec.keys():
-                    Log.warn('Found incorrect value for key '
-                        f'"cortx>common>release>{key}" or "release" key is not'
-                        ' present in configmap.')
-                    self._cortx_config['common']['release'][key] = release_spec[key]
+            is_valid, release_info = self._cortx_release.validate(release_spec)
+            if is_valid is False:
+                for key in release_info.keys():
+                    Log.warn(f'Release key {"cortx>common>release>{key}"} is '
+                        'missing or has incorrect value')
+                    self._cortx_config['common']['release'][key] = release_info[key]
             key_prefix = 'cortx>'
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])
