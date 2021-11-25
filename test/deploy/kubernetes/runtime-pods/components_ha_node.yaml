@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ha-node
+    id: 1115f539f4f770e2a3fe9e2e615c32a8
+  name: ha-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ha-node
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: ha-node
+    spec:
+      hostname: ha-node
+      nodeSelector:
+        node-name: node1
+      volumes:
+      - name: solution-config
+        configMap:
+          name: solution-config
+      - name: node-id
+        configMap:
+          name: ha-node-id
+      - name: shared-node1
+        persistentVolumeClaim:
+          claimName: shared-node1
+      - name: local-node1
+        persistentVolumeClaim:
+          claimName: local-node1
+      containers:
+      - name: cortx-ha
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+          name: "port-8081"
+        args:
+        - /bin/sh
+        - -c
+        - set -x;
+          sleep infinity;
+        volumeMounts:
+        - name: solution-config
+          mountPath: /etc/cortx/solution
+        - name: node-id
+          mountPath: /etc/cortx/solution/node
+        - name: shared-node1
+          mountPath: /share
+        - name: local-node1
+          mountPath: /etc/cortx

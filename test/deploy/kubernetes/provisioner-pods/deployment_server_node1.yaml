@@ -29,30 +29,6 @@ spec:
   - name: local-node1
     persistentVolumeClaim:
       claimName: local-node1
-  - name: sdb
-    persistentVolumeClaim:
-      claimName: dev-sdb-node1
-  - name: sdc
-    persistentVolumeClaim:
-      claimName: dev-sdc-node1
-  - name: sdd
-    persistentVolumeClaim:
-      claimName: dev-sdd-node1
-  - name: sde
-    persistentVolumeClaim:
-      claimName: dev-sde-node1
-  - name: sdf
-    persistentVolumeClaim:
-      claimName: dev-sdf-node1
-  - name: sdg
-    persistentVolumeClaim:
-      claimName: dev-sdg-node1
-  - name: sdh
-    persistentVolumeClaim:
-      claimName: dev-sdh-node1
-  - name: sdi
-    persistentVolumeClaim:
-      claimName: dev-sdi-node1
   containers:
   - name: cortx-server
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
@@ -61,6 +37,12 @@ spec:
     - /bin/sh
     - -c
     - set -x;
+      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
+      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/hare/bin/hare_setup;
+      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/s3/bin/s3_setup;
+      chmod +x /opt/seagate/cortx/utils/bin/utils_setup;
+      chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
+      chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
       /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
@@ -73,20 +55,3 @@ spec:
       mountPath: /share
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
-    volumeDevices:
-    - name: sdb
-      devicePath: /dev/sdb
-    - name: sdc
-      devicePath: /dev/sdc
-    - name: sdd
-      devicePath: /dev/sdd
-    - name: sde
-      devicePath: /dev/sde
-    - name: sdf
-      devicePath: /dev/sdf
-    - name: sdg
-      devicePath: /dev/sdg
-    - name: sdh
-      devicePath: /dev/sdh
-    - name: sdi
-      devicePath: /dev/sdi

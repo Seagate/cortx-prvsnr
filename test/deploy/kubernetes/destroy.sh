@@ -11,25 +11,38 @@ function print_header {
     echo "--------------------------------------------------------------------------"
 }
 
-# Delete Storage-Node Service (Headless)
+# Delete Storage Node Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Storage Service - $NODE_NAME";
-    NODE_SVC="$BASEPATH/external-services/headless_storage_$NODE_NAME.yaml";
+    NODE_SVC="$BASEPATH/external-services/headless_data_$NODE_NAME.yaml";
     kubectl delete -f "$NODE_SVC" --namespace "$NAMESPACE";
     sleep $INTRDELAY;
 done
 
-# Delete Storage Node (POD)
+# Delete Server Node Service (Headless)
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    NODE_NAME="node$NODE_INDEX";
+    print_header "Deleting Server-Node Service - $NODE_NAME";
+    NODE_SVC="$BASEPATH/external-services/headless_server_$NODE_NAME.yaml";
+    kubectl delete -f "$NODE_SVC" --namespace "$NAMESPACE";
+    sleep $INTRDELAY;
+done
+
+# Delete Storage/Data Node (POD)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Storage Node - $NODE_NAME";
-    kubectl delete pod storage-$NODE_NAME --namespace "$NAMESPACE" &
+    kubectl delete pod data-$NODE_NAME --namespace "$NAMESPACE" ;
+    kubectl delete deployment data-$NODE_NAME --namespace "$NAMESPACE" ;
+    kubectl delete pod storage-$NODE_NAME --namespace "$NAMESPACE" ;
+    kubectl delete deployment storage-$NODE_NAME --namespace "$NAMESPACE" ;
+
     sleep $INTRDELAY;
 done
 wait;
 
-# Delete Server-Node Service (Headless)
+# Delete Server Node Service (Headless)
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Server-Node Service - $NODE_NAME";
@@ -42,27 +55,30 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Server Node - $NODE_NAME";
-    kubectl delete pod server-$NODE_NAME --namespace "$NAMESPACE" &
+    kubectl delete pod server-$NODE_NAME --namespace "$NAMESPACE" ;
+    kubectl delete deployment server-$NODE_NAME --namespace "$NAMESPACE" ;
     sleep $INTRDELAY;
 done
 wait;
 
-# Delete Control-Node Service (Headless)
+# Delete Control Node Service (Headless)
 print_header "Deleting Control Service - Cluster";
 kubectl delete -f "$BASEPATH/external-services/headless_control_node.yaml" --namespace "$NAMESPACE";
 
 # Delete Control Node (POD)
 print_header "Deleting Control Node - Cluster";
 kubectl delete pod control-node --namespace "$NAMESPACE";
+kubectl delete deployment control-node --namespace "$NAMESPACE";
 sleep $INTRDELAY;
 
-# Delete Ha-Node Service (Headless)
-print_header "Deleting Ha-Node Service - Cluster";
+# Delete Ha Node Service (Headless)
+print_header "Deleting Ha Node Service - Cluster";
 kubectl delete -f "$BASEPATH/external-services/headless_ha_node.yaml" --namespace "$NAMESPACE";
 
 # Delete HA Node (POD)
 print_header "Deleting HA Node - Cluster";
 kubectl delete pod ha-node --namespace "$NAMESPACE";
+kubectl delete deployment ha-node --namespace "$NAMESPACE";
 sleep $INTRDELAY;
 
 # Delete Persistent Volume Claims for Block Devices (PVC)
@@ -117,6 +133,17 @@ kubectl delete -f "$BASEPATH/solution-config/secrets.yaml" --namespace "$NAMESPA
 
 # Delete Config Map
 kubectl delete configmap solution-config --namespace "$NAMESPACE";
+kubectl delete configmap control-node-id --namespace "$NAMESPACE";
+kubectl delete configmap ha-node-id --namespace "$NAMESPACE";
+for NODE_INDEX in $(seq 1 $MAXNODES); do
+    DATA_NODE="data-node$NODE_INDEX-id";
+    SERVER_NODE="server-node$NODE_INDEX-id"
+    STORAGE_NODE="storage-node$NODE_INDEX-id"
+    kubectl delete configmap $DATA_NODE --namespace "$NAMESPACE";
+    kubectl delete configmap $SERVER_NODE --namespace "$NAMESPACE";
+    kubectl delete configmap $STORAGE_NODE --namespace "$NAMESPACE";
+    sleep $INTRDELAY;
+done
 
 # Delete non-default namespace
 if [[ "$NAMESPACE" != "default" ]]; then

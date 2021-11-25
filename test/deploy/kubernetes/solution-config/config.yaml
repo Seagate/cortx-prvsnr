@@ -77,4 +77,3 @@ cortx:
     agent:
       endpoints:
       - https://csm.seagate.com:8081
-

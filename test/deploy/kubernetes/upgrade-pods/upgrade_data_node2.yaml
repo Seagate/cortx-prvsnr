@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: storage-node1
+  name: data-node2
   labels:
-    app: storage-node1
-    id: aaa120a9e051d103c164f605615c32a4
+    app: data-node2
+    id: bbb340f79047df9bb52fa460615c32a5
 spec:
-  hostname: storage-node1
+  hostname: data-node2
   restartPolicy: Never
   nodeSelector:
-    node-name: node1
+    node-name: node2
   volumes:
   - name: node-id
     downwardAPI:
@@ -23,39 +23,39 @@ spec:
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: shared-node1
+  - name: shared-node2
     persistentVolumeClaim:
-      claimName: shared-node1
-  - name: local-node1
+      claimName: shared-node2
+  - name: local-node2
     persistentVolumeClaim:
-      claimName: local-node1
+      claimName: local-node2
   - name: sdb
     persistentVolumeClaim:
-      claimName: dev-sdb-node1
+      claimName: dev-sdb-node2
   - name: sdc
     persistentVolumeClaim:
-      claimName: dev-sdc-node1
+      claimName: dev-sdc-node2
   - name: sdd
     persistentVolumeClaim:
-      claimName: dev-sdd-node1
+      claimName: dev-sdd-node2
   - name: sde
     persistentVolumeClaim:
-      claimName: dev-sde-node1
+      claimName: dev-sde-node2
   - name: sdf
     persistentVolumeClaim:
-      claimName: dev-sdf-node1
+      claimName: dev-sdf-node2
   - name: sdg
     persistentVolumeClaim:
-      claimName: dev-sdg-node1
+      claimName: dev-sdg-node2
   - name: sdh
     persistentVolumeClaim:
-      claimName: dev-sdh-node1
+      claimName: dev-sdh-node2
   - name: sdi
     persistentVolumeClaim:
-      claimName: dev-sdi-node1
+      claimName: dev-sdi-node2
   containers:
   - name: cortx-data
-    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    image: ghcr.io/seagate/cortx-all:version1
     imagePullPolicy: IfNotPresent
     args:
     - /bin/sh
@@ -69,18 +69,18 @@ spec:
       chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
       chmod +x /opt/seagate/cortx/motr/bin/motr_setup;
       chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
-      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+      cortx_setup cluster upgrade -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
     - name: node-id
       mountPath: /etc/cortx/solution/node
-    - name: local-node1
+    - name: local-node2
       mountPath: /etc/cortx
-    - name: shared-node1
-      mountPath: /share
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
+    - name: shared-node2
+      mountPath: /share
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb
