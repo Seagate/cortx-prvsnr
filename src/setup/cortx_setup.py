@@ -47,7 +47,7 @@ class ConfigCmd(Cmd):
         parser.add_argument('-c', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
         parser.add_argument('-o', dest='overwrite', nargs='?', \
-            help='force config')
+            help='Force and Overwrite config')
         parser.add_argument('-v', dest='validations', nargs='?', \
             help='config')
         parser.add_argument('-l', dest='log_level', help='Log level')
