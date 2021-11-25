@@ -10,7 +10,9 @@ cortx:
         - ldap://openldap-svc.default.svc.cluster.local:389
         - ssl://openldap-svc.default.svc.cluster.local:636
       servers:
-        - openldap-svc.default.svc.cluster.local
+        - openldap-0.openldap-svc.default.svc.cluster.local
+        - openldap-1.openldap-svc.default.svc.cluster.local
+        - openldap-2.openldap-svc.default.svc.cluster.local
       admin: admin
       secret: openldap_admin_secret
       base_dn: dc=seagate,dc=com
@@ -30,11 +32,11 @@ cortx:
       secret: common_admin_secret
     storage:
       shared: /share
-      log: /share/var/log/cortx/
       local: /etc/cortx
+      log: /etc/cortx/log
       config: /etc/cortx
     security:
-      ssl_certificate: /opt/seagate/cortx/s3/install/haproxy/ssl/s3.seagate.com.pem
+      ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
       device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
@@ -53,6 +55,7 @@ cortx:
       - http://cortx-io-svc:28049
     service_instances: 2
     io_max_units: 8
+    max_start_timeout: 240
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
@@ -60,13 +63,6 @@ cortx:
     interface_type: tcp
     interface_family: inet
     transport_type: libfab
-    ios:
-      endpoints:
-      - motr://data1-node1.cortx-cluster.com:3232
-  hare:
-    hax:
-      endpoints:
-      - tcp://hax.seagate.com:28000
   csm:
     auth_admin: authadmin
     auth_secret: csm_auth_admin_secret
@@ -75,5 +71,4 @@ cortx:
     email_address: cortx@seagate.com
     agent:
       endpoints:
-      - https://csm.seagate.com:8081
-
+      - https://cortx-io-svc:8081

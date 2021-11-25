@@ -65,10 +65,10 @@ class CortxProvisioner:
         # Load same config again if force_override is True
         # To load same config pass fail_reload=False.
         try:
-            fail_reload = False if force_override else True
+            cs_option = {"fail_reload": False} if force_override else {"skip_reload": True}
             Log.info('Applying config %s' % solution_config_url)
             Conf.load(CortxProvisioner._solution_index, solution_config_url,
-                fail_reload=fail_reload)
+                **cs_option)
         except ConfError as e:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
 
@@ -162,23 +162,11 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def cluster_bootstrap(config_store_url: str = None, force_override: bool = False):
-        """
-        Description:
-        Configures Cluster Components
-        1. Reads Cortx Config and obtain cluster components
-        2. Invoke Mini Provisioners of cluster components
-        Paramaters:
-        [IN] CORTX Config URL
-        """
-
-        if config_store_url is None:
-            config_store_url = CortxProvisioner._config_store_url
-        config_store = ConfigStore(config_store_url)
-
+    def _get_node_info(config_store: ConfigStore):
+        """To get the node information."""
         node_id = Conf.machine_id
         if node_id is None:
-            raise CortxProvisionerError(errno.EINVAL, 'Invalid node_id: %s', \
+            raise CortxProvisionerError(errno.EINVAL, "Invalid node_id: %s", \
                 node_id)
 
         # Reinitialize logging with configured log path
@@ -188,35 +176,31 @@ class CortxProvisioner:
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
-        phase = config_store.get(f'node>{node_id}>provisioning>phase')
-        status = config_store.get(f'node>{node_id}>provisioning>status')
-        if phase == "deployment" and status == "success" and force_override is False:
-            Log.info('CORTX is already configured on this node.')
-            return 0
-
         if config_store.get(f'node>{node_id}') is None:
             raise CortxProvisionerError(
                 errno.EINVAL, f"Node id '{node_id}' not found in cortx config.")
 
         node_name = config_store.get(f'node>{node_id}>name')
 
-        Log.info(f'Starting cluster bootstrap on {node_id}:{node_name}')
+        return node_id, node_name
 
-        CortxProvisioner._update_provisioning_info(
-            config_store, node_id, 'deployment')
+    @staticmethod
+    def _provision_components(config_store: ConfigStore, mp_interfaces: list):
+        """Invoke Mini Provisioners of cluster components."""
+        node_id, node_name = CortxProvisioner._get_node_info(config_store)
         components = config_store.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
         num_components = len(components)
-        mp_interfaces = ['post_install', 'prepare', 'config', 'init']
         for interface in mp_interfaces:
             for comp_idx in range(0, num_components):
                 services = config_store.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
                 comp_name = components[comp_idx]['name']
-                cmd = (f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
-                       f" --config {config_store_url} --services {service}")
+                cmd = (
+                    f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
+                    f" --config {config_store._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
@@ -226,14 +210,6 @@ class CortxProvisioner:
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
-
-                CortxProvisioner._update_provisioning_info(
-                    config_store, node_id, 'deployment', 'progress')
-
-        CortxProvisioner._update_provisioning_info(
-            config_store, node_id, 'deployment', 'success')
-
-        Log.info(f'Finished cluster bootstrap on {node_id}:{node_name}')
 
     @staticmethod
     def _update_provisioning_info(config_store, node_id, phase, status='default'):
@@ -248,3 +224,40 @@ class CortxProvisioner:
         keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         config_store.set_kvs(keys)
 
+    @staticmethod
+    def cluster_bootstrap(config_store_url: str):
+        """
+        Description:
+        Configures Cluster Components
+        1. Reads Cortx Config and obtain cluster components
+        2. Invoke Mini Provisioners of cluster components
+        Paramaters:
+        [IN] CORTX Config URL
+        """
+        config_store = ConfigStore(config_store_url)
+
+        node_id, node_name = CortxProvisioner._get_node_info(config_store)
+        Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
+        mp_interfaces = ['post_install', 'prepare', 'config', 'init']
+        CortxProvisioner._provision_components(config_store, mp_interfaces)
+        Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
+
+    @staticmethod
+    def cluster_upgrade(config_store_url: str):
+        """
+        Description:
+        Upgrades Cluster Components
+        1. Reads Cortx Config and obtain cluster components
+        2. Invoke upgrade phase of cluster components
+        Paramaters:
+        [IN] CORTX Config URL
+        """
+        config_store = ConfigStore(config_store_url)
+
+        node_id, node_name = CortxProvisioner._get_node_info(config_store)
+        Log.info(f"Starting cluster upgrade on {node_id}:{node_name}")
+        # TODO: validations
+
+        mp_interfaces = ['upgrade']
+        CortxProvisioner._provision_components(config_store, mp_interfaces)
+        Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")

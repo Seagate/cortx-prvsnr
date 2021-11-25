@@ -20,21 +20,46 @@ import os
 import traceback
 import sys
 import unittest
-from cortx.utils.cmd_framework import Cmd
 from cortx.setup import cortx_setup
+from cortx.provisioner import const
+from cortx.utils.cmd_framework import Cmd
+from cortx.provisioner.log import CortxProvisionerLog, Log
 
-solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_cluster_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
+solution_conf_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
 
-class TestSetup(unittest.TestCase):
-    """Test EventMessage send and receive functionality."""
+if Log.logger is None:
+    CortxProvisionerLog.initialize(const.SERVICE_NAME, const.TMP_LOG_PATH)
 
-    def test_config_apply(self):
+
+class TestSetup(unittest.TestCase):
+
+    """Test cortx_setup config and cluster functionality."""
+
+    def test_001_config_apply(self):
         """ Test Config Apply """
 
         rc = 0
         try:
-            argv = [ 'config', 'apply', '-f', solution_conf_url, '-o', cortx_conf_url ]
+            for solution_url in [solution_cluster_url, solution_conf_url]:
+                argv = ['config', 'apply', '-f', solution_url, '-c', cortx_conf_url, '-o', 'True']
+                cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
+                self.assertEqual(cmd.process(), 0)
+
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
+
+    def test_002_cluster_bootstrap(self):
+        """ Test Cluster Bootstrap """
+
+        rc = 0
+        try:
+            argv = ['cluster', 'bootstrap', '-c', cortx_conf_url]
+
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)
 
@@ -44,12 +69,11 @@ class TestSetup(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
 
-    def test_cluster_bootstrap(self):
-        """ Test Cluster Bootstrap """
-
+    def test_cluster_upgrade(self):
+        """Test Cluster Upgrade."""
         rc = 0
         try:
-            argv = [ 'cluster', 'bootstrap', '-f', cortx_conf_url ]
+            argv = ['cluster', 'upgrade', '-c', cortx_conf_url]
 
             cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
             self.assertEqual(cmd.process(), 0)

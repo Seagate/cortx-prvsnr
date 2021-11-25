@@ -31,26 +31,26 @@ class Manifest:
         return matched_string[0]
 
     @staticmethod
-    def _get_build_id(rpm_name):
-        """Get build-id from rpm-name."""
-        build_id = ''
-        num_list = []
+    def _get_build_version(rpm_name):
+        """Get version from rpm-name."""
+        version = ''
+        temp_list = []
         for s in rpm_name.split('-'):
             if s[0].isdigit():
-                num_list.append(s)
+                t_list.append(s)
         # Now num_list contains version and githash number
         # e.g ['2.0.0', '438_b3c80e82.x86_64.rpm']
         # Remove .noarch.rpm,.x86_64.rpm, .el7.x86_64, _e17.x86_64 from version string.
-        if '.el7' in num_list[1]:
-            num_list[1]= num_list[1].split(str('.el7'))[0]
-        elif '_el7' in num_list[1]:
-           num_list[1]= num_list[1].split('_el7')[0]
-        elif '.noarch' in num_list[1]:
-            num_list[1]=num_list[1].split('.noarch')[0]
-        elif '.x86_64' in num_list[1]:
-            num_list[1]=num_list[1].split('.x86_64')[0]
-        build_id = num_list[0] + '.' + num_list[1]
-        return build_id
+        if '.el7' in temp_list[1]:
+            temp_list[1] = temp_list[1].split(str('.el7'))[0]
+        elif '_el7' in temp_list[1]:
+           temp_list[1] = temp_list[1].split('_el7')[0]
+        elif '.noarch' in temp_list[1]:
+            temp_list[1] = temp_list[1].split('.noarch')[0]
+        elif '.x86_64' in temp_list[1]:
+            temp_list[1] = temp_list[1].split('.x86_64')[0]
+        version = temp_list[0] + '.' + temp_list[1]
+        return version
 
 class CortxRelease(Manifest):
 
@@ -69,8 +69,8 @@ class CortxRelease(Manifest):
     def get_version(self, component):
         """Get version for given component."""
         rpms = self.get_value('COMPONENTS')
-        comp_rpm = Manifest._get_elem_from_list(component, rpms)
-        version = Manifest._get_build_id(comp_rpm)
+        component_rpm = Manifest._get_elem_from_list(component, rpms)
+        version = Manifest._get_build_version(component_rpm)
         return version
 
     def validate(self, cm_release=''):
