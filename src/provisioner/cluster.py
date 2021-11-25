@@ -17,13 +17,12 @@ import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.provisioner.log import Log
-from cortx.provisioner.release import CortxRelease
 
 
 class CortxCluster:
     """ Represents CORTX Cluster """
 
-    def __init__(self, node_list: list = []):
+    def __init__(self, node_list: list = [], cortx_release=''):
         """
         Creates cluster from the list of nodes.
         Each node in the is is a dict and contains following attributes
@@ -49,6 +48,7 @@ class CortxCluster:
             - /dev/<device 2>
         """
         self._node_list = node_list
+        self._cortx_release = cortx_release
         for node in node_list:
             self._validate(node)
 
@@ -87,13 +87,11 @@ class CortxCluster:
             kvs.append((prefix, node))
         return kvs
 
-    @staticmethod
-    def _add_comp_version(components):
+    def _add_comp_version(self, components):
         """Add rpm version key for each component."""
         updates_list = []
-        cortx_release_info = CortxRelease()
         for component in components:
-            component['version'] = cortx_release_info.get_build_num(component['name'])
+            component['version'] = self._cortx_release.get_build_num(component['name'])
             updates_list.append(component)
         return updates_list
 
@@ -103,7 +101,7 @@ class CortxCluster:
         kvs = []
         for node in self._node_list:
             node_id = node.pop('id')
-            result = CortxCluster._add_comp_version(node['components'])
+            result = self._add_comp_version(node['components'])
             node['components'] = result
             key_prefix = f'node>{node_id}'
             kvs.extend(self._get_kvs(key_prefix, node))

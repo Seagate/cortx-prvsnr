@@ -25,6 +25,7 @@ from cortx.provisioner.config_store import ConfigStore
 from cortx.utils.conf_store.error import ConfError
 from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster,  CortxStorageSet
+from cortx.provisioner.release import CortxRelease
 
 
 class CortxProvisioner:
@@ -60,6 +61,7 @@ class CortxProvisioner:
             Log.info('CORTX config already applied on this node.')
             return 0
 
+        cortx_release = CortxRelease()
         # Load same config again if conf_override is True
         # To load same config pass fail_reload=False.
         try:
@@ -71,7 +73,7 @@ class CortxProvisioner:
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
-            CortxProvisioner.config_apply_cluster(cortx_config_store)
+            CortxProvisioner.config_apply_cluster(cortx_config_store, cortx_release)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             # generating cipher key
@@ -97,17 +99,17 @@ class CortxProvisioner:
                     val = Cipher.encrypt(cipher_key, val)
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
-            CortxProvisioner.config_apply_cortx(cortx_config_store)
+            CortxProvisioner.config_apply_cortx(cortx_config_store, cortx_release)
 
     @staticmethod
-    def config_apply_cortx(cortx_config_store):
+    def config_apply_cortx(cortx_config_store, cortx_release):
         """ Convert CORTX config into confstore keys """
         cortx_config = Conf.get(CortxProvisioner._solution_index, 'cortx')
-        cs = CortxConfig(cortx_config)
+        cs = CortxConfig(cortx_config, cortx_release)
         cs.save(cortx_config_store)
 
     @staticmethod
-    def config_apply_cluster(cortx_config_store):
+    def config_apply_cluster(cortx_config_store, cortx_release):
         node_map = {}
         try:
             node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
@@ -149,7 +151,7 @@ class CortxProvisioner:
                     node['cluster_id'] = cluster_id
                     nodes.append(node)
 
-            cs = CortxCluster(nodes)
+            cs = CortxCluster(nodes, cortx_release)
             cs.save(cortx_config_store)
             cs = CortxStorageSet(storage_sets)
             cs.save(cortx_config_store)

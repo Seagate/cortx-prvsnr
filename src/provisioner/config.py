@@ -16,15 +16,15 @@
 import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
-from cortx.provisioner.release import CortxRelease
 from cortx.provisioner.log import Log
 
 class CortxConfig:
     """ CORTX Configuration """
 
-    def __init__(self, cortx_config: list = []):
+    def __init__(self, cortx_config: list = [], cortx_release=''):
         """ Create CORTX config """
 
+        self._cortx_release = cortx_release
         self._cortx_config = cortx_config
         CortxConfig._validate(self._cortx_config)
 
@@ -62,14 +62,14 @@ class CortxConfig:
             # Update configmap keys as per confstore keys.
             self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
                 'environment_type')
-            release = self._cortx_config.get('common').get('release')
-            valid, release = CortxRelease().validate(release)
+            release_spec = self._cortx_config.get('common').get('release')
+            valid, release_spec = self._cortx_release.validate(release_spec)
             if not valid:
-                for key in release.keys():
+                for key in release_spec.keys():
                     Log.warn('Found incorrect value for key '
                         f'"cortx>common>release>{key}" or "release" key is not'
                         ' present in configmap.')
-                    self._cortx_config['common']['release'][key] = release[key]
+                    self._cortx_config['common']['release'][key] = release_spec[key]
             key_prefix = 'cortx>'
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])
