@@ -2,69 +2,71 @@ cortx:
   external:
     kafka:
       endpoints:
-        - kafka-server1.cortx-cluster.com
-        - kafka-server2.cortx-cluster.com
-      user: admin
-      secret: kafka-secret
+        - tcp://kafka.default.svc.cluster.local:9092
+      admin: admin
+      secret: kafka_admin_secret
     openldap:
       endpoints:
-        - oldap-server1.cortx-cluster.com
+        - ldap://openldap-svc.default.svc.cluster.local:389
+        - ssl://openldap-svc.default.svc.cluster.local:636
       servers:
-        - oldap-server1.cortx-cluster.com
-        - oldap-server2.cortx-cluster.com
-        - oldap-server3.cortx-cluster.com
+        - openldap-0.openldap-svc.default.svc.cluster.local
+        - openldap-1.openldap-svc.default.svc.cluster.local
+        - openldap-2.openldap-svc.default.svc.cluster.local
       admin: admin
-      secret: openldap-secret
+      secret: openldap_admin_secret
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - consul-server1.cortx-cluster.com
+        - tcp://consul-server.default.svc.cluster.local:8301
       admin: admin
-      secret: consul-secret
+      secret: consul_admin_secret
   common:
     product_release: LC
     environment_type: K8
+    setup_size: small
     service:
       admin: admin
-      secret: common-secret
+      secret: common_admin_secret
     storage:
-      shared: /share/var/data/cortx
-      log: /share/var/log/cortx
-      misc: /var/data/cortx
+      shared: /share
+      local: /etc/cortx
+      log: /etc/cortx/log
       config: /etc/cortx
+    security:
+      ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
+      domain_certificate: /etc/cortx/solution/ssl/stx.pem
+      device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
     message_bus_backend: kafka
   s3:
     iam:
       endpoints:
-      - https://s3-iam.seagate.com:9443
+      - https://cortx-io-svc:9443
+      - http://cortx-io-svc:9080
     data:
       endpoints:
-      - http://s3.seagate.com:80
-      - https://s3.seagate.com:443
+      - http://cortx-io-svc:80
+      - https://cortx-io-svc:443
     internal:
       endpoints:
-      - http://s3.seagate.com:28049
-    service_instances: 11
-    io_max_units: 32
+      - http://cortx-io-svc:28049
+    service_instances: 2
+    io_max_units: 8
+    max_start_timeout: 240
+    auth_admin: sgiamadmin
+    auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 2
+    client_instances: 0
     interface_type: tcp
     interface_family: inet
     transport_type: libfab
-    ios:
-      endpoints:
-      - motr://motr-data1.cortx-cluster.com:3232
-  hare:
-    ports:
-      endpoints:
-      - tcp://hax.seagate.com:28000
   csm:
-    auth_admin: admin
-    auth_secret: auth-secret
+    auth_admin: authadmin
+    auth_secret: csm_auth_admin_secret
     mgmt_admin: cortxadmin
-    mgmt_secret: mgmt-secret
+    mgmt_secret: csm_mgmt_admin_secret
     email_address: cortx@seagate.com
     agent:
       endpoints:
-      - https://csm.seagate.com:8081
+      - https://cortx-io-svc:8081

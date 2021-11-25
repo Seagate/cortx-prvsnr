@@ -46,6 +46,8 @@ class ConfigCmd(Cmd):
             help='Solution Config URL')
         parser.add_argument('-c', dest='cortx_conf', nargs='?', \
             help='CORTX Config URL')
+        parser.add_argument('-o', dest='overwrite', nargs='?', \
+            help='Force and Overwrite config')
         parser.add_argument('-v', dest='validations', nargs='?', \
             help='config')
         parser.add_argument('-l', dest='log_level', help='Log level')
@@ -67,7 +69,10 @@ class ConfigCmd(Cmd):
         """ Apply Config """
         self._validate()
         if self._args.action == 'apply':
-            CortxProvisioner.config_apply(self._args.solution_conf, self._args.cortx_conf)
+            force_config = False if self._args.overwrite is None else \
+                self._args.overwrite
+            CortxProvisioner.config_apply(self._args.solution_conf, \
+                self._args.cortx_conf, force_config)
         if self._args.action == 'validate':
             validations = ['all']
             if self._args.validations is not None:
@@ -89,15 +94,14 @@ class ClusterCmd(Cmd):
     def add_args(parser: str):
         """ Add Command args for parsing """
 
-        parser.add_argument('action', help='bootstrap')
+        parser.add_argument('action', help='bootstrap, upgrade')
         parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
-
 
     def _validate(self):
         """ Validate cluster command args """
 
-        if self._args.action not in ['bootstrap']:
+        if self._args.action not in ['bootstrap', 'upgrade']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
         log_level = self._args.log_level
@@ -112,6 +116,8 @@ class ClusterCmd(Cmd):
         self._validate()
         if self._args.action == 'bootstrap':
             CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
+        if self._args.action == 'upgrade':
+            CortxProvisioner.cluster_upgrade(self._args.cortx_conf)
         return 0
 
 
