@@ -37,7 +37,7 @@ class TestProvisioner(unittest.TestCase):
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
-            CortxProvisioner.config_apply(solution_conf_url, cortx_conf_url, force_config=True)
+            CortxProvisioner.config_apply(solution_conf_url, cortx_conf_url, force_override=True)
         except Exception as e:
             print('Exception: ', e)
             sys.stderr.write("%s\n" % traceback.format_exc())

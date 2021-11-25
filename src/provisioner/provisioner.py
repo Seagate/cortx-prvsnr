@@ -63,7 +63,6 @@ class CortxProvisioner:
 
         cortx_release = CortxRelease()
         # Load same config again if force_override is True
-        # To load same config pass fail_reload=False.
         try:
             cs_option = {"fail_reload": False} if force_override else {"skip_reload": True}
             Log.info('Applying config %s' % solution_config_url)
@@ -187,6 +186,7 @@ class CortxProvisioner:
     @staticmethod
     def _provision_components(config_store: ConfigStore, mp_interfaces: list):
         """Invoke Mini Provisioners of cluster components."""
+        phase_name = const.PROVISIONING_STAGES.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(config_store)
         components = config_store.get(f'node>{node_id}>components')
         if components is None:
@@ -198,6 +198,8 @@ class CortxProvisioner:
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
                 comp_name = components[comp_idx]['name']
+                CortxProvisioner._update_provisioning_info(
+                        config_store, node_id, phase_name, const.PROVISIONING_STATUS.PROGRESS.value)
                 cmd = (
                     f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
                     f" --config {config_store._conf_url} --services {service}")
@@ -206,26 +208,13 @@ class CortxProvisioner:
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
                     CortxProvisioner._update_provisioning_info(
-                        config_store, node_id, 'deployment', 'error')
+                        config_store, node_id, phase_name, const.PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
 
     @staticmethod
-    def _update_provisioning_info(config_store, node_id, phase, status='default'):
-        """Add phase, status, version, release keys in conf_stor.
-
-            args:
-            config_store: config store url. eg. yaml:///etc/cortx/cluster.conf
-            node_id: machine-id
-            phase: deployment/upgrade
-            status: default/progress/success/error."""
-        key_prefix = f'node>{node_id}>provisioning>'
-        keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
-        config_store.set_kvs(keys)
-
-    @staticmethod
-    def cluster_bootstrap(config_store_url: str):
+    def cluster_bootstrap(config_store_url: str, force_override: bool = False):
         """
         Description:
         Configures Cluster Components
@@ -235,11 +224,23 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         config_store = ConfigStore(config_store_url)
-
+        phase_name = const.PROVISIONING_STAGES.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(config_store)
+        is_valid = CortxProvisioner._validate_provisioning(
+            config_store, node_id, phase_name)
+        if is_valid is False:
+            if force_override is False:
+                Log.warn('Validation check failed.')
+                return 0
+            else:
+                Log.info('Validation check failed, Forcefully overriding deployment.')
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
+        CortxProvisioner._update_provisioning_info(
+            config_store, node_id, phase_name)
         mp_interfaces = ['post_install', 'prepare', 'config', 'init']
         CortxProvisioner._provision_components(config_store, mp_interfaces)
+        CortxProvisioner._update_provisioning_info(
+            config_store, node_id, phase_name, const.PROVISIONING_STATUS.SUCCESS.value)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
@@ -261,3 +262,36 @@ class CortxProvisioner:
         mp_interfaces = ['upgrade']
         CortxProvisioner._provision_components(config_store, mp_interfaces)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
+
+    @staticmethod
+    def _update_provisioning_info(config_store, node_id, phase,
+        status=const.PROVISIONING_STATUS.DEFAULT.value):
+        """Add phase, status, version, release keys in confstore.
+
+            args:
+            config_store: config store url. eg. yaml:///etc/cortx/cluster.conf
+            node_id: machine-id
+            phase: deployment/upgrade
+            status: default/progress/success/error."""
+        key_prefix = f'node>{node_id}>provisioning>'
+        keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
+        config_store.set_kvs(keys)
+
+    @staticmethod
+    def _validate_provisioning(config_store, node_id, apply_phase):
+        """Validate provisioning."""
+        recent_phase = config_store.get(f'node>{node_id}>provisioning>phase')
+        recent_status = config_store.get(f'node>{node_id}>provisioning>status')
+        if apply_phase == recent_phase:
+            if recent_status == const.PROVISIONING_STATUS.PROGRESS.value:
+                Log.info(f'Currently {recent_phase} is in progress, '
+                    f'{apply_phase} is not possible.')
+                return False
+            elif (recent_status in [const.PROVISIONING_STATUS.DEFAULT.value,
+                const.PROVISIONING_STATUS.ERROR.value]):
+                Log.info(f'Currently {recent_phase} is in {recent_status} state,'
+                    f' Starting {apply_phase}.')
+                return True
+            elif recent_status == const.PROVISIONING_STATUS.SUCCESS.value:
+                Log.info(f'{apply_phase} phase is already configured on this node.')
+                return False

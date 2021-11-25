@@ -101,7 +101,7 @@ class CortxCluster:
         kvs = []
         for node in self._node_list:
             node_id = node.pop('id')
-            updated_components = self.add_component_version(node['components'])
+            updated_components = self._add_component_version(node['components'])
             node['components'] = updated_components
             key_prefix = f'node>{node_id}'
             kvs.extend(self._get_kvs(key_prefix, node))

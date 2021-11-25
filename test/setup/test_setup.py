@@ -43,7 +43,7 @@ class TestSetup(unittest.TestCase):
         rc = 0
         try:
             for solution_url in [solution_cluster_url, solution_conf_url]:
-                argv = ['config', 'apply', '-f', solution_url, '-c', cortx_conf_url, '-o', 'True']
+                argv = ['config', 'apply', '-f', solution_url, '-c', cortx_conf_url, '-o']
                 cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
                 self.assertEqual(cmd.process(), 0)
 

@@ -35,9 +35,9 @@ class Manifest:
         """Get version from rpm-name."""
         version = ''
         temp_list = []
-        for s in rpm_name.split('-'):
-            if s[0].isdigit():
-                t_list.append(s)
+        for element in rpm_name.split('-'):
+            if element[0].isdigit():
+                temp_list.append(element)
         # Now num_list contains version and githash number
         # e.g ['2.0.0', '438_b3c80e82.x86_64.rpm']
         # Remove .noarch.rpm,.x86_64.rpm, .el7.x86_64, _e17.x86_64 from version string.

@@ -49,10 +49,11 @@ cluster:
       dix: 1+0+0
     nodes:
     - name: pod-1
-      id: 49ee99ab6743423e90bde838766f1870
+      id: 97085a8ab7cf42669c94963929864a70
       hostname: pod-1.colo.seagate.com
       type: control_node
     - name: pod-2
       id: 8efd697708a8f7e428d3fd520c180795
       hostname: pod-2.colo.seagate.com
       type: storage_node
+

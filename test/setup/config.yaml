@@ -72,3 +72,4 @@ cortx:
     agent:
       endpoints:
       - https://cortx-io-svc:8081
+
