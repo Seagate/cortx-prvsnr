@@ -21,7 +21,7 @@ from cortx.provisioner.log import Log
 class CortxConfig:
     """ CORTX Configuration """
 
-    def __init__(self, cortx_config: list = [], cortx_release=''):
+    def __init__(self, cortx_config: list = [], cortx_release=None):
         """ Create CORTX config """
 
         self._cortx_release = cortx_release
