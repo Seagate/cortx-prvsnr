@@ -86,7 +86,7 @@ class CortxProvisioner:
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
-            CortxProvisioner.solution_cluster_apply(cortx_conf, cortx_release)
+            CortxProvisioner.apply_cluster_config(cortx_conf, cortx_release)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             # generating cipher key
@@ -112,17 +112,17 @@ class CortxProvisioner:
                     val = Cipher.encrypt(cipher_key, val)
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
-            CortxProvisioner.solution_config_apply(cortx_conf, cortx_release)
+            CortxProvisioner.apply_cortx_config(cortx_conf, cortx_release)
 
     @staticmethod
-    def solution_config_apply(cortx_conf, cortx_release):
+    def apply_cortx_config(cortx_conf, cortx_release):
         """ Convert CORTX config into confstore keys """
         config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
         cortx_config = CortxConfig(config_info, cortx_release)
         cortx_config.save(cortx_conf)
 
     @staticmethod
-    def solution_cluster_apply(cortx_conf, cortx_release):
+    def apply_cluster_config(cortx_conf, cortx_release):
         node_map = {}
         try:
             node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
