@@ -26,7 +26,7 @@ from cortx.utils.cmd_framework import Cmd
 from cortx.provisioner.log import CortxProvisionerLog, Log
 
 solution_cluster_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
-solution_conf_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
+solution_config_url = "yaml:///" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
 
 if Log.logger is None:
@@ -42,8 +42,8 @@ class TestSetup(unittest.TestCase):
 
         rc = 0
         try:
-            for solution_url in [solution_cluster_url, solution_conf_url]:
-                argv = ['config', 'apply', '-f', solution_url, '-c', cortx_conf_url, '-o', 'True']
+            for solution_conf_url in [solution_cluster_url, solution_config_url]:
+                argv = ['config', 'apply', '-f', solution_conf_url, '-c', cortx_conf_url, '-o']
                 cmd = Cmd.get_command(sys.modules['cortx.setup.cortx_setup'], 'test_setup', argv)
                 self.assertEqual(cmd.process(), 0)
 

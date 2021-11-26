@@ -17,7 +17,7 @@ function log {
 }
 
 function show_usage {
-    echo -e "usage: $(basename $0) [-f SOLUTION-CONFIG] [-l LOG-LEVEL][-c CORTX-CONFIG-URL] [-m] [-d]"
+    echo -e "usage: $(basename $0) [-f SOLUTION-CONFIG] [-l LOG-LEVEL][-c CORTX-CONFIG-URL] [-o] [-d] [-v]"
     echo -e "Where:"
     echo -e "..."
     echo -e " SOLUTION-CONFIG : Solution-Config directory containing -\
@@ -28,21 +28,30 @@ function show_usage {
     echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
     echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
     echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
-    echo -e " ENABLE MOCK     : Enable Mocking CORTX Deployment (Default: False)"
+    echo -e " FORCE OVER-RIDE : Force provisioning even after CORTX configuration."
     echo -e " ENABLE DEBUG    : Enable Debugging CORTX Deployment (Default: False)"
+    echo -e " VALIDATE CONFIG : Validate constore and configmap config."
     exit 1
 }
 
 function validate_config {
     local config=$1
     if [ ! -f $config ]; then
-        echo -e "ERROR: Config $config not found"
+        echo -e "ERROR: Config file $config not found, Provide correct config path."
+        exit 1
     fi
 }
 
 function yaml_config {
     local config=$1
     echo "yaml://$config"
+}
+
+function conf_get {
+    URL=$1; key=$2
+    val=$(conf $URL get $key)
+    val=$(echo $val | tr -d "["\" | tr -d "\"]")
+    echo $val
 }
 
 # Constants
@@ -71,6 +80,9 @@ while [ $# -gt 0 ];  do
         shift 1
         CORTX_CONFSTORE=$1
         ;;
+    -o )
+       FORCE_PROVISIONING="-o"
+       ;;
     -h )
         show_usage
         ;;
@@ -94,13 +106,17 @@ validate_config $CLUSTER_INFO
 
 export PATH=$PATH:/opt/seagate/provisioner/bin
 
+node_id=`cat /etc/machine-id`
+cluster_id=$(conf_get $(yaml_config $CLUSTER_INFO) "cluster>id")
+log $INFO "Starting provisioning on node $node_id which is part of cluster $cluster_id."
+
 # Apply Cluster Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
-cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE";
+log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
 
 # Apply Common Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
-cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE";
+log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
 
 # Validate config
 if ! [ -z $VALIDATE_CONF ];
@@ -112,8 +128,8 @@ then
 fi
 
 # Bootstrap Cluster
-log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE'"
-cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE";
+log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
 
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then

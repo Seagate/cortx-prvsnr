@@ -42,14 +42,14 @@ class ConfigCmd(Cmd):
         """ Add Command args for parsing """
 
         parser.add_argument('action', help='apply, validate')
-        parser.add_argument('-f', dest='solution_conf', \
+        parser.add_argument('-f', dest='solution_conf',
             help='Solution Config URL')
-        parser.add_argument('-c', dest='cortx_conf', nargs='?', \
+        parser.add_argument('-c', dest='cortx_conf', nargs='?',
             help='CORTX Config URL')
-        parser.add_argument('-o', dest='overwrite', nargs='?', \
-            help='Force and Overwrite config')
-        parser.add_argument('-v', dest='validations', nargs='?', \
-            help='config')
+        parser.add_argument('-v', dest='validations', nargs='?',
+            help='config validations')
+        parser.add_argument('-o', dest='override', action='store_true',
+            help='Force and override config')
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
@@ -69,10 +69,9 @@ class ConfigCmd(Cmd):
         """ Apply Config """
         self._validate()
         if self._args.action == 'apply':
-            force_config = False if self._args.overwrite is None else \
-                self._args.overwrite
-            CortxProvisioner.config_apply(self._args.solution_conf, \
-                self._args.cortx_conf, force_config)
+            force_override = True if self._args.override else False
+            CortxProvisioner.config_apply(
+                self._args.solution_conf, self._args.cortx_conf, force_override)
         if self._args.action == 'validate':
             validations = ['all']
             if self._args.validations is not None:
@@ -97,6 +96,8 @@ class ClusterCmd(Cmd):
         parser.add_argument('action', help='bootstrap, upgrade')
         parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
+        parser.add_argument('-o', dest='override', action='store_true',
+            help='Override deployment')
 
     def _validate(self):
         """ Validate cluster command args """
@@ -114,10 +115,11 @@ class ClusterCmd(Cmd):
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
         self._validate()
+        force_override = True if self._args.override else False
         if self._args.action == 'bootstrap':
-            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf)
+            CortxProvisioner.cluster_bootstrap(self._args.cortx_conf, force_override)
         if self._args.action == 'upgrade':
-            CortxProvisioner.cluster_upgrade(self._args.cortx_conf)
+            CortxProvisioner.cluster_upgrade(self._args.cortx_conf, force_override)
         return 0
 
 

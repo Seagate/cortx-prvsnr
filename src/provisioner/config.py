@@ -16,13 +16,15 @@
 import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
+from cortx.provisioner.log import Log
 
 class CortxConfig:
     """ CORTX Configuration """
 
-    def __init__(self, cortx_config: list = []):
+    def __init__(self, cortx_config: list = [], cortx_release = None):
         """ Create CORTX config """
 
+        self._cortx_release = cortx_release
         self._cortx_config = cortx_config
         CortxConfig._validate(self._cortx_config)
 
@@ -52,7 +54,7 @@ class CortxConfig:
                             errno.EINVAL,
                             f'{str(e)} is unspecified for external in cortx_config.')
 
-    def save(self, config_store):
+    def save(self, cortx_conf):
         """ Save cortx-config into confstore """
 
         kvs = []
@@ -60,11 +62,18 @@ class CortxConfig:
             # Update configmap keys as per confstore keys.
             self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
                 'environment_type')
+            release_spec = self._cortx_config.get('common').get('release')
+            is_valid, release_info = self._cortx_release.validate(release_spec)
+            if is_valid is False:
+                for key in release_info.keys():
+                    Log.warn(f'Release key {"cortx>common>release>{key}"} is '
+                        'missing or has incorrect value')
+                    self._cortx_config['common']['release'][key] = release_info[key]
             key_prefix = 'cortx>'
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])
                 kvs.append(kv)
-            config_store.set_kvs(kvs)
+            cortx_conf.set_kvs(kvs)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
