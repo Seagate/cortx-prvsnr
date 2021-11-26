@@ -95,7 +95,7 @@ class CortxCluster:
             updated_components.append(component)
         return updated_components
 
-    def save(self, config_store):
+    def save(self, cortx_conf):
         """ Saves cluster information onto the conf store """
 
         kvs = []
@@ -106,7 +106,7 @@ class CortxCluster:
             key_prefix = f'node>{node_id}'
             kvs.extend(self._get_kvs(key_prefix, node))
 
-        config_store.set_kvs(kvs)
+        cortx_conf.set_kvs(kvs)
 
 
 class CortxStorageSet:
@@ -136,7 +136,7 @@ class CortxStorageSet:
                     errno.EINVAL,
                     f"'{k}' property is unspecified for storage_set {s_set_name}.")
 
-    def save(self, config_store):
+    def save(self, cortx_conf):
         """ Converts storage_set confstore keys
         and add into conf_store.
         constore representation for storage_set key:
@@ -175,7 +175,7 @@ class CortxStorageSet:
             key_prefix = 'cluster>storage_set'
             kvs.extend(CortxCluster()._get_kvs(key_prefix, storage_sets))
 
-            config_store.set_kvs(kvs)
+            cortx_conf.set_kvs(kvs)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,

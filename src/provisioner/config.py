@@ -54,7 +54,7 @@ class CortxConfig:
                             errno.EINVAL,
                             f'{str(e)} is unspecified for external in cortx_config.')
 
-    def save(self, config_store):
+    def save(self, cortx_conf):
         """ Save cortx-config into confstore """
 
         kvs = []
@@ -73,7 +73,7 @@ class CortxConfig:
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])
                 kvs.append(kv)
-            config_store.set_kvs(kvs)
+            cortx_conf.set_kvs(kvs)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,

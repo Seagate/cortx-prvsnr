@@ -115,11 +115,11 @@ class ClusterCmd(Cmd):
     def process(self, *args, **kwargs):
         """ Bootsrap Cluster """
         self._validate()
+        force_override = True if self._args.override else False
         if self._args.action == 'bootstrap':
-            force_override = True if self._args.override else False
             CortxProvisioner.cluster_bootstrap(self._args.cortx_conf, force_override)
         if self._args.action == 'upgrade':
-            CortxProvisioner.cluster_upgrade(self._args.cortx_conf)
+            CortxProvisioner.cluster_upgrade(self._args.cortx_conf, force_override)
         return 0
 
 
