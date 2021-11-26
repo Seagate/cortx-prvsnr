@@ -15,6 +15,7 @@
 
 import errno
 import os
+from enum import Enum
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
@@ -26,6 +27,18 @@ from cortx.utils.conf_store.error import ConfError
 from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster,  CortxStorageSet
 from cortx.provisioner.release import CortxRelease
+
+
+class PROVISIONING_STAGES(Enum):
+    DEPLOYMENT = "deployment"
+    UPGRADE = "upgrade"
+
+
+class PROVISIONING_STATUS(Enum):
+    DEFAULT = "default"
+    ERROR = "error"
+    PROGRESS = "progress"
+    SUCCESS = "success"
 
 
 class CortxProvisioner:
@@ -198,7 +211,7 @@ class CortxProvisioner:
                 service = 'all' if services is None else ','.join(services)
                 comp_name = components[comp_idx]['name']
                 CortxProvisioner._update_provisioning_info(
-                        config_store, node_id, phase_name, const.PROVISIONING_STATUS.PROGRESS.value)
+                        config_store, node_id, phase_name, PROVISIONING_STATUS.PROGRESS.value)
                 cmd = (
                     f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
                     f" --config {config_store._conf_url} --services {service}")
@@ -207,12 +220,12 @@ class CortxProvisioner:
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
                     CortxProvisioner._update_provisioning_info(
-                        config_store, node_id, phase_name, const.PROVISIONING_STATUS.ERROR.value)
+                        config_store, node_id, phase_name, PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
                 CortxProvisioner._update_provisioning_info(
-                    config_store, node_id, phase_name, const.PROVISIONING_STATUS.SUCCESS.value)
+                    config_store, node_id, phase_name, PROVISIONING_STATUS.SUCCESS.value)
 
     @staticmethod
     def cluster_bootstrap(config_store_url: str, force_override: bool = False):
@@ -225,9 +238,9 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         config_store = ConfigStore(config_store_url)
-        phase_name = const.PROVISIONING_STAGES.DEPLOYMENT.value
+        phase_name = PROVISIONING_STAGES.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(config_store)
-        is_valid = CortxProvisioner._validate_provisioning(
+        is_valid = CortxProvisioner._validate_provisioning_status(
             config_store, node_id, phase_name)
         if is_valid is False:
             if force_override is False:
@@ -253,9 +266,9 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         config_store = ConfigStore(config_store_url)
-        phase_name = const.PROVISIONING_STAGES.UPGRADE.value
+        phase_name = PROVISIONING_STAGES.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(config_store)
-        is_valid = CortxProvisioner._validate_provisioning(
+        is_valid = CortxProvisioner._validate_provisioning_status(
             config_store, node_id, phase_name)
         if is_valid is False:
             Log.info('Validation check failed, Aborting cluster upgrade.')
@@ -269,7 +282,7 @@ class CortxProvisioner:
 
     @staticmethod
     def _update_provisioning_info(config_store, node_id, phase,
-        status=const.PROVISIONING_STATUS.DEFAULT.value):
+        status=PROVISIONING_STATUS.DEFAULT.value):
         """
         Description
         Add phase, status, version, release keys in confstore.
@@ -283,35 +296,35 @@ class CortxProvisioner:
         config_store.set_kvs(keys)
 
     @staticmethod
-    def _validate_provisioning(config_store, node_id, apply_phase):
+    def _validate_provisioning_status(config_store, node_id, apply_phase):
         """Validate provisioning."""
         recent_phase = config_store.get(f'node>{node_id}>provisioning>phase')
         recent_status = config_store.get(f'node>{node_id}>provisioning>status')
         if apply_phase == recent_phase:
-            if recent_status == const.PROVISIONING_STATUS.PROGRESS.value:
+            if recent_status == PROVISIONING_STATUS.PROGRESS.value:
                 Log.info(f'Currently {recent_phase} is in progress, '
                     f'{apply_phase} is not possible.')
                 return False
-            elif (recent_status in [const.PROVISIONING_STATUS.DEFAULT.value,
-                const.PROVISIONING_STATUS.ERROR.value]):
+            elif (recent_status in [PROVISIONING_STATUS.DEFAULT.value,
+                PROVISIONING_STATUS.ERROR.value]):
                 Log.info(f'{recent_phase} is in {recent_status} state,'
                     f' {apply_phase} is possible.')
                 return True
-            elif recent_status == const.PROVISIONING_STATUS.SUCCESS.value:
-                if apply_phase == const.PROVISIONING_STAGES.DEPLOYMENT.value:
+            elif recent_status == PROVISIONING_STATUS.SUCCESS.value:
+                if apply_phase == PROVISIONING_STAGES.DEPLOYMENT.value:
                     Log.info(f'{apply_phase} phase is already configured on this node.')
                     return False
-                elif apply_phase == const.PROVISIONING_STAGES.UPGRADE.value:
+                elif apply_phase == PROVISIONING_STAGES.UPGRADE.value:
                     Log.info(f'Previous upgrade {apply_phase} is success.')
                     return True
         else:
-            if (apply_phase == const.PROVISIONING_STAGES.UPGRADE.value and
-                recent_phase == const.PROVISIONING_STAGES.DEPLOYMENT.value
-                and recent_status != const.PROVISIONING_STATUS.SUCCESS.value):
+            if (apply_phase == PROVISIONING_STAGES.UPGRADE.value and
+                recent_phase == PROVISIONING_STAGES.DEPLOYMENT.value
+                and recent_status != PROVISIONING_STATUS.SUCCESS.value):
                 Log.info(f'{recent_phase} is in {recent_status} state,'
                     f' {apply_phase} is not possible.')
                 return False
-            elif recent_status in [const.PROVISIONING_STATUS.PROGRESS.value]:
+            elif recent_status in [PROVISIONING_STATUS.PROGRESS.value]:
                 Log.info(f'Currently {recent_phase} is in progress, '
                     f'{apply_phase} is not possible.')
                 return False

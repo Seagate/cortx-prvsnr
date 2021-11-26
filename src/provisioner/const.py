@@ -13,8 +13,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from enum import Enum
-
 SERVICE_NAME = "cortx_setup"
 APP_NAME = "provisioner"
 TMP_LOG_PATH = "/tmp/%s" % APP_NAME
@@ -22,13 +20,3 @@ DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
 DEFAULT_LOG_LEVEL = "INFO"
 SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 RELEASE_INFO_PATH = "/opt/seagate/cortx/RELEASE.INFO"
-
-class PROVISIONING_STAGES(Enum):
-    DEPLOYMENT = "deployment"
-    UPGRADE = "upgrade"
-
-class PROVISIONING_STATUS(Enum):
-    DEFAULT = "default"
-    ERROR = "error"
-    PROGRESS = "progress"
-    SUCCESS = "success"

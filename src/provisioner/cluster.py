@@ -22,7 +22,7 @@ from cortx.provisioner.log import Log
 class CortxCluster:
     """ Represents CORTX Cluster """
 
-    def __init__(self, node_list: list = [], cortx_release=None):
+    def __init__(self, node_list: list = [], cortx_release = None):
         """
         Creates cluster from the list of nodes.
         Each node in the is is a dict and contains following attributes

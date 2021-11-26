@@ -15,6 +15,8 @@
 
 from cortx.utils.conf_store import Conf
 from cortx.provisioner import const
+from cortx.provisioner.log import Log
+
 
 class Manifest:
 
@@ -27,29 +29,36 @@ class Manifest:
     @staticmethod
     def _get_elem_from_list(sub_str, search_list):
         """Get elements from list which contain given sub_str."""
-        matched_string = [x for x in search_list if sub_str in x]
-        return matched_string[0]
+        matched_string = ''
+        try:
+            matched_string = [x for x in search_list if sub_str in x][0]
+        except IndexError:
+            Log.error(f'Key not found for key {sub_str} in {search_list}.')
+        return matched_string
 
     @staticmethod
     def _get_build_version(rpm_name):
         """Get version from rpm-name."""
         version = ''
         temp_list = []
-        for element in rpm_name.split('-'):
-            if element[0].isdigit():
-                temp_list.append(element)
-        # Now num_list contains version and githash number
-        # e.g ['2.0.0', '438_b3c80e82.x86_64.rpm']
-        # Remove .noarch.rpm,.x86_64.rpm, .el7.x86_64, _e17.x86_64 from version string.
-        if '.el7' in temp_list[1]:
-            temp_list[1] = temp_list[1].split(str('.el7'))[0]
-        elif '_el7' in temp_list[1]:
-           temp_list[1] = temp_list[1].split('_el7')[0]
-        elif '.noarch' in temp_list[1]:
-            temp_list[1] = temp_list[1].split('.noarch')[0]
-        elif '.x86_64' in temp_list[1]:
-            temp_list[1] = temp_list[1].split('.x86_64')[0]
-        version = temp_list[0] + '.' + temp_list[1]
+        try:
+            for element in rpm_name.split('-'):
+                if element[0].isdigit():
+                    temp_list.append(element)
+            # Now num_list contains version and githash number
+            # e.g ['2.0.0', '438_b3c80e82.x86_64.rpm']
+            # Remove .noarch.rpm,.x86_64.rpm, .el7.x86_64, _e17.x86_64 from version string.
+            if '.el7' in temp_list[1]:
+                temp_list[1] = temp_list[1].split(str('.el7'))[0]
+            elif '_el7' in temp_list[1]:
+                temp_list[1] = temp_list[1].split('_el7')[0]
+            elif '.noarch' in temp_list[1]:
+                temp_list[1] = temp_list[1].split('.noarch')[0]
+            elif '.x86_64' in temp_list[1]:
+                temp_list[1] = temp_list[1].split('.x86_64')[0]
+            version = temp_list[0] + '.' + temp_list[1]
+        except IndexError as e:
+            Log.error(f'Exception occurred {e}.')
         return version
 
 class CortxRelease(Manifest):
