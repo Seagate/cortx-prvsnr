@@ -197,21 +197,21 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_conf: ConfigStore, mp_interfaces: list, phase_name: str):
+    def _provision_components(cortx_conf: ConfigStore, mini_prov_interfaces: list, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         components = cortx_conf.get(f'node>{node_id}>components')
         if components is None:
             Log.warn(f"No component specified for {node_name} in CORTX config")
         num_components = len(components)
-        for interface in mp_interfaces:
+        for interface in mini_prov_interfaces:
             for comp_idx in range(0, num_components):
                 services = cortx_conf.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
                 comp_name = components[comp_idx]['name']
                 CortxProvisioner._update_provisioning_status(
-                        cortx_conf, node_id, phase_name, PROVISIONING_STATUS.PROGRESS.value)
+                        cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.PROGRESS.value)
                 cmd = (
                     f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
                     f" --config {cortx_conf._conf_url} --services {service}")
@@ -220,12 +220,12 @@ class CortxProvisioner:
                 _, err, rc = cmd_proc.run()
                 if rc != 0 or err.decode('utf-8') != '':
                     CortxProvisioner._update_provisioning_status(
-                        cortx_conf, node_id, phase_name, PROVISIONING_STATUS.ERROR.value)
+                        cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
                 CortxProvisioner._update_provisioning_status(
-                    cortx_conf, node_id, phase_name, PROVISIONING_STATUS.SUCCESS.value)
+                    cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -238,10 +238,10 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = ConfigStore(cortx_conf_url)
-        phase_name = PROVISIONING_STAGES.DEPLOYMENT.value
+        apply_phase = PROVISIONING_STAGES.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
-            cortx_conf, node_id, phase_name)
+            cortx_conf, node_id, apply_phase)
         if is_valid is False:
             if force_override is False:
                 Log.error('Validation check failed, Aborting cluster bootstarp.')
@@ -250,9 +250,9 @@ class CortxProvisioner:
                 Log.info('Validation check failed, Forcefully overriding deployment.')
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
-            cortx_conf, node_id, phase_name)
-        mp_interfaces = ['post_install', 'prepare', 'config', 'init']
-        CortxProvisioner._provision_components(cortx_conf, mp_interfaces, phase_name)
+            cortx_conf, node_id, apply_phase)
+        mini_prov_interfaces = ['post_install', 'prepare', 'config', 'init']
+        CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
@@ -266,10 +266,10 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = ConfigStore(cortx_conf_url)
-        phase_name = PROVISIONING_STAGES.UPGRADE.value
+        apply_phase = PROVISIONING_STAGES.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
-            cortx_conf, node_id, phase_name)
+            cortx_conf, node_id, apply_phase)
         if is_valid is False:
             if force_override is False:
                 Log.warn('Validation check failed, Aborting cluster upgrade.')
@@ -280,8 +280,8 @@ class CortxProvisioner:
         Log.info(f"Starting cluster upgrade on {node_id}:{node_name}")
         # TODO: validations
 
-        mp_interfaces = ['upgrade']
-        CortxProvisioner._provision_components(cortx_conf, mp_interfaces, phase_name)
+        mini_prov_interfaces = ['upgrade']
+        CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod

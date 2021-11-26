@@ -28,8 +28,7 @@ function show_usage {
     echo -e "                   DEBUG=1, INFO=2, WARNING=3, ERROR=4, FATAL=5"
     echo -e " CORTX-CONFIG-URL: URL of CORTX Configuration"
     echo -e "                   (Default is yaml:///etc/cortx/cluster.conf)"
-    echo -e " OVER-RIDE DEPLOYMENT -\
-                              : Force deployment steps if it was executed earlier."
+    echo -e " FORCE OVER-RIDE : Force provisioning even after CORTX configuration."
     echo -e " ENABLE DEBUG    : Enable Debugging CORTX Deployment (Default: False)"
     echo -e " VALIDATE CONFIG : Validate constore and configmap config."
     exit 1
@@ -82,7 +81,7 @@ while [ $# -gt 0 ];  do
         CORTX_CONFSTORE=$1
         ;;
     -o )
-       FORCE_DEPLOY="-o"
+       FORCE_PROVISIONING="-o"
        ;;
     -h )
         show_usage
@@ -109,15 +108,15 @@ export PATH=$PATH:/opt/seagate/provisioner/bin
 
 node_id=`cat /etc/machine-id`
 cluster_id=$(conf_get $(yaml_config $CLUSTER_INFO) "cluster>id")
-log $INFO "Starting deployment on node $node_id which is part of cluster $cluster_id."
+log $INFO "Starting provisioning on node $node_id which is part of cluster $cluster_id."
 
 # Apply Cluster Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_DEPLOY"
-cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_DEPLOY;
+log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
 
 # Apply Common Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_DEPLOY"
-cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_DEPLOY;
+log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
 
 # Validate config
 if ! [ -z $VALIDATE_CONF ];
@@ -129,8 +128,8 @@ then
 fi
 
 # Bootstrap Cluster
-log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE' $FORCE_DEPLOY"
-cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $FORCE_DEPLOY;
+log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
 
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then
