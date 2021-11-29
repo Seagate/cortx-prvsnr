@@ -47,6 +47,7 @@ class CortxProvisioner:
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
+    cortx_release = CortxRelease()
 
     @staticmethod
     def init():
@@ -74,7 +75,6 @@ class CortxProvisioner:
             Log.info('CORTX config already applied on this node.')
             return 0
 
-        cortx_release = CortxRelease()
         # Load same config again if force_override is True
         try:
             cs_option = {"fail_reload": False} if force_override else {"skip_reload": True}
@@ -86,7 +86,7 @@ class CortxProvisioner:
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
-            CortxProvisioner.apply_cluster_config(cortx_conf, cortx_release)
+            CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             # generating cipher key
@@ -112,7 +112,7 @@ class CortxProvisioner:
                     val = Cipher.encrypt(cipher_key, val)
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
-            CortxProvisioner.apply_cortx_config(cortx_conf, cortx_release)
+            CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
@@ -209,11 +209,11 @@ class CortxProvisioner:
                 services = cortx_conf.get(
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
-                comp_name = components[comp_idx]['name']
+                component_name = components[comp_idx]['name']
                 CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.PROGRESS.value)
                 cmd = (
-                    f"/opt/seagate/cortx/{comp_name}/bin/{comp_name}_setup {interface}"
+                    f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface}"
                     f" --config {cortx_conf._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
@@ -224,8 +224,16 @@ class CortxProvisioner:
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         components[comp_idx]['name'], err)
-                CortxProvisioner._update_provisioning_status(
-                    cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
+                # Update version for each component if upgrade successful.
+                if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
+                    component_version = CortxProvisioner.cortx_release.get_version(component_name)
+                    cortx_conf.set(
+                        f'node>{node_id}>components{[comp_idx]}>version',
+                        component_version)
+        CortxProvisioner._update_provisioning_status(
+            cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
+
+
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -282,6 +290,9 @@ class CortxProvisioner:
 
         mini_prov_interfaces = ['upgrade']
         CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
+        # Update CORTX version, once the upgrade is successful
+        version = CortxProvisioner.cortx_release.get_value('VERSION')
+        cortx_conf.set('cortx>common>release>version', version)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
@@ -298,6 +309,7 @@ class CortxProvisioner:
         key_prefix = f'node>{node_id}>provisioning>'
         keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         cortx_conf.set_kvs(keys)
+
 
     @staticmethod
     def _validate_provisioning_status(cortx_conf, node_id, apply_phase):
