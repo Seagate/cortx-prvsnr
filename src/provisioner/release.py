@@ -56,7 +56,7 @@ class Manifest:
                 temp_list[1] = temp_list[1].split('.noarch')[0]
             elif '.x86_64' in temp_list[1]:
                 temp_list[1] = temp_list[1].split('.x86_64')[0]
-            version = temp_list[0] + '.' + temp_list[1]
+            version = temp_list[0] + '-' + temp_list[1]
         except IndexError as e:
             Log.error(f'Exception occurred {e}.')
         return version
