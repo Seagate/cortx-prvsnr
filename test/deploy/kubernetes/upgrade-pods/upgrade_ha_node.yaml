@@ -39,6 +39,8 @@ spec:
     - set -x;
       mkdir -p /opt/seagate/cortx/ha/bin;
       echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/ha/bin/ha_setup;
+      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
+      chmod +x /opt/seagate/cortx/utils/bin/utils_setup;
       chmod +x /opt/seagate/cortx/ha/bin/ha_setup;
       cortx_setup cluster upgrade -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
