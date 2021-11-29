@@ -1,0 +1,68 @@
+cluster:
+  name: cortx-cluster
+  id: 1117ec45379e36d9fa089a3d615c32a3
+  node_types:
+    - name: storage_node
+      components:
+      - name: utils
+      - name: motr
+        services:
+        - io
+      - name: hare
+      - name: s3
+        services:
+        - io
+        - auth
+        - bg_consumer
+      storage:
+        - name: cvg-01
+          type: ios
+          devices:
+            metadata:
+            - /dev/sdb
+            data:
+            - /dev/sdc
+            - /dev/sdd
+        - name: cvg-02
+          type: ios
+          devices:
+            metadata:
+            - /dev/sdf
+            data:
+            - /dev/sdg
+            - /dev/sdh
+    - name: control_node
+      components:
+      - name: utils
+      - name: motr
+        services:
+        - fsm
+      - name: s3
+        services:
+        - bg_producer
+        - openldap
+      - name: csm
+        services:
+        - agent
+  storage_sets:
+    - name: storage-set-1
+      durability:
+        sns: 1+0+0
+        dix: 1+0+0
+      nodes:
+        - name: control-node
+          id: 9995f539f4f770e2a3fe9e2e615c32a8
+          hostname: control-node
+          type: control_node
+        - name: storage-node1
+          id: aaa120a9e051d103c164f605615c32a4
+          hostname: storage-node1
+          type: storage_node
+        - name: storage-node2
+          id: bbb340f79047df9bb52fa460615c32a5
+          hostname: storage-node2
+          type: storage_node
+        - name: storage-node3
+          id: ccc8700fe6797ed532e311b0615c32a7
+          hostname: storage-node3
+          type: storage_node

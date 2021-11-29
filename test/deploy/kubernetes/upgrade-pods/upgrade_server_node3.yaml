@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: control-node
+  name: server-node3
   labels:
-    app: control-node
-    id: 9995f539f4f770e2a3fe9e2e615c32a8
+    app: server-node3
+    id: fff8700fe6797ed532e311b0615c32a7
 spec:
-  hostname: control-node
+  hostname: server-node3
   restartPolicy: Never
   nodeSelector:
-    node-name: node1
+    node-name: node3
   volumes:
   - name: node-id
     downwardAPI:
@@ -23,38 +23,35 @@ spec:
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: shared-node1
+  - name: shared-node3
     persistentVolumeClaim:
-      claimName: shared-node1
-  - name: local-node1
+      claimName: shared-node3
+  - name: local-node3
     persistentVolumeClaim:
-      claimName: local-node1
+      claimName: local-node3
   containers:
-  - name: cortx-control-node
-    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+  - name: cortx-server
+    image: ghcr.io/seagate/cortx-all:version1
     imagePullPolicy: IfNotPresent
     args:
     - /bin/sh
     - -c
     - set -x;
-      mkdir -p /opt/seagate/cortx/csm/bin;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/csm/bin/csm_setup;
       echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/motr/bin/motr_setup;
+      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/hare/bin/hare_setup;
       echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/s3/bin/s3_setup;
-      chmod +x /opt/seagate/cortx/csm/bin/csm_setup;
       chmod +x /opt/seagate/cortx/utils/bin/utils_setup;
-      chmod +x /opt/seagate/cortx/motr/bin/motr_setup;
+      chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
       chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
-      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+      cortx_setup cluster upgrade -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
     - name: node-id
       mountPath: /etc/cortx/solution/node
-    - name: local-node1
+    - name: local-node3
       mountPath: /etc/cortx
-    - name: shared-node1
-      mountPath: /share
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
+    - name: shared-node3
+      mountPath: /share

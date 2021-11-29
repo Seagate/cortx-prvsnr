@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-node3
+  namespace: default 
+spec:
+  selector:
+    app: server-node3
+  clusterIP: None

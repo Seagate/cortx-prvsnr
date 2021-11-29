@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: storage-node2
+  name: data-node2
   labels:
-    app: storage-node1
+    app: data-node2
     id: bbb340f79047df9bb52fa460615c32a5
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: storage-node2
+      app: data-node2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,9 +19,9 @@ spec:
   template:
     metadata:
       labels:
-        app: storage-node2
+        app: data-node2
     spec:
-      hostname: storage-node2
+      hostname: data-node2
       nodeSelector:
         node-name: node2
       volumes:
@@ -30,7 +30,7 @@ spec:
           name: solution-config
       - name: node-id
         configMap:
-          name: storage-node2-id
+          name: data-node2-id
       - name: shared-node2
         persistentVolumeClaim:
           claimName: shared-node2
@@ -168,104 +168,3 @@ spec:
           devicePath: /dev/sdh
         - name: sdi
           devicePath: /dev/sdi
-      - name: cortx-s31
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3server --index 1 -c yaml:///etc/cortx/cluster.conf;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node2
-          mountPath: /share
-        - name: local-node2
-          mountPath: /etc/cortx
-      - name: cortx-s32
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3server --index 2 -c yaml:///etc/cortx/cluster.conf;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node2
-          mountPath: /share
-        - name: local-node2
-          mountPath: /etc/cortx
-      - name: cortx-s3auth
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3authserver -c yaml:///etc/cortx/cluster.conf;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node2
-          mountPath: /share
-        - name: local-node2
-          mountPath: /etc/cortx
-      - name: cortx-s3haproxy
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service haproxy -c yaml:///etc/cortx/cluster.conf;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node2
-          mountPath: /share
-        - name: local-node2
-          mountPath: /etc/cortx
-        ports:
-        - containerPort: 80
-          name: "port-80"
-        - containerPort: 443
-          name: "port-443"
-        - containerPort: 9080
-          name: "port-9080"
-        - containerPort: 9443
-          name: "port-9443"
-        - containerPort: 28049
-          name: "port-28049"
-      - name: cortx-s3bgc
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3bgconsumer -c yaml:///etc/cortx/cluster.conf;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node2
-          mountPath: /share
-        - name: local-node2
-          mountPath: /etc/cortx
