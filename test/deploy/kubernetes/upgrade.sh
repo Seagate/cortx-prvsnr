@@ -57,7 +57,7 @@ while IFS= read -r line; do
             printf "${PASSED}PASSED${NC}\n"
         fi
     fi
-done <<< "$(kubectl get pods --namespace=$namespace | grep 'data\|control\|server-node\|ha\|storage')"
+done <<< "$(kubectl get pods --namespace=$namespace | grep 'data-node.-*.\|control-node-.*\|server-node.-.*\|ha-node-.*\|storage-node.-.*')"
 
 # Update Image in Upgrade PODs
 print_header "Updating image using Upgrade Pods - Cluster";
