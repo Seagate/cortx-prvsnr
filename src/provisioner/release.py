@@ -27,7 +27,7 @@ class Manifest:
         return val
 
     @staticmethod
-    def _get_elem_from_list(sub_str, search_list):
+    def _get_elem_from_list(sub_str: str, search_list: list):
         """Get elements from list which contain given sub_str."""
         matched_string = ''
         try:
@@ -37,7 +37,7 @@ class Manifest:
         return matched_string
 
     @staticmethod
-    def _get_build_version(rpm_name):
+    def _get_build_version(rpm_name: str):
         """Get version from rpm-name."""
         version = ''
         temp_list = []
@@ -75,21 +75,21 @@ class CortxRelease(Manifest):
         value = Manifest._get_val(self._release_index, key)
         return value
 
-    def get_version(self, component):
+    def get_version(self, component: str):
         """Get version for given component."""
         rpms = self.get_value('COMPONENTS')
         component_rpm = Manifest._get_elem_from_list(component, rpms)
         version = Manifest._get_build_version(component_rpm)
         return version
 
-    def validate(self, cm_release=''):
+    def validate(self, cm_release: dict = {}):
         """Validate configmap release info with RELEASE.INFO, Return correct value."""
         release_info = {}
         is_valid = True
         keys = ['name', 'version']
         for key in keys:
             value = self.get_value(key.upper())
-            if not cm_release or cm_release[key] != value:
+            if not cm_release or cm_release.get(key) != value:
                 release_info[key] = value
                 is_valid = False
         return is_valid, release_info

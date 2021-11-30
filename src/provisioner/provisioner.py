@@ -296,8 +296,8 @@ class CortxProvisioner:
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
-    def _update_provisioning_status(cortx_conf, node_id, phase,
-        status=PROVISIONING_STATUS.DEFAULT.value):
+    def _update_provisioning_status(cortx_conf: ConfigStore, node_id: str,
+        phase: str, status: str = PROVISIONING_STATUS.DEFAULT.value):
         """
         Description
         Add phase, status, version, release keys in confstore.
@@ -312,7 +312,7 @@ class CortxProvisioner:
 
 
     @staticmethod
-    def _validate_provisioning_status(cortx_conf, node_id, apply_phase):
+    def _validate_provisioning_status(cortx_conf: ConfigStore, node_id: str, apply_phase: str):
         """Validate provisioning."""
         ret_code = 0
         recent_phase = cortx_conf.get(f'node>{node_id}>provisioning>phase')
