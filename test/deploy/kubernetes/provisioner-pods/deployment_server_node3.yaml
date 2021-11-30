@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: storage-node2
+  name: server-node3
   labels:
-    app: storage-node2
-    id: bbb340f79047df9bb52fa460615c32a5
+    app: server-node3
+    id: fff8700fe6797ed532e311b0615c32a7
 spec:
-  hostname: storage-node2
+  hostname: server-node3
   restartPolicy: Never
   nodeSelector:
-    node-name: node2
+    node-name: node3
   volumes:
   - name: node-id
     downwardAPI:
@@ -23,36 +23,12 @@ spec:
   - name: cortx-secret
     secret:
       secretName: cortx-secret
-  - name: shared-node2
+  - name: shared-node3
     persistentVolumeClaim:
-      claimName: shared-node2
-  - name: local-node2
+      claimName: shared-node3
+  - name: local-node3
     persistentVolumeClaim:
-      claimName: local-node2
-  - name: sdb
-    persistentVolumeClaim:
-      claimName: dev-sdb-node2
-  - name: sdc
-    persistentVolumeClaim:
-      claimName: dev-sdc-node2
-  - name: sdd
-    persistentVolumeClaim:
-      claimName: dev-sdd-node2
-  - name: sde
-    persistentVolumeClaim:
-      claimName: dev-sde-node2
-  - name: sdf
-    persistentVolumeClaim:
-      claimName: dev-sdf-node2
-  - name: sdg
-    persistentVolumeClaim:
-      claimName: dev-sdg-node2
-  - name: sdh
-    persistentVolumeClaim:
-      claimName: dev-sdh-node2
-  - name: sdi
-    persistentVolumeClaim:
-      claimName: dev-sdi-node2
+      claimName: local-node3
   containers:
   - name: cortx-data
     image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
@@ -63,11 +39,9 @@ spec:
     - set -x;
       echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
       echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/hare/bin/hare_setup;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/motr/bin/motr_setup;
       echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/s3/bin/s3_setup;
       chmod +x /opt/seagate/cortx/utils/bin/utils_setup;
       chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
-      chmod +x /opt/seagate/cortx/motr/bin/motr_setup;
       chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
       /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
@@ -75,26 +49,9 @@ spec:
       mountPath: /etc/cortx/solution
     - name: node-id
       mountPath: /etc/cortx/solution/node
-    - name: local-node2
+    - name: local-node3
       mountPath: /etc/cortx
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
-    - name: shared-node2
+    - name: shared-node3
       mountPath: /share
-    volumeDevices:
-    - name: sdb
-      devicePath: /dev/sdb
-    - name: sdc
-      devicePath: /dev/sdc
-    - name: sdd
-      devicePath: /dev/sdd
-    - name: sde
-      devicePath: /dev/sde
-    - name: sdf
-      devicePath: /dev/sdf
-    - name: sdg
-      devicePath: /dev/sdg
-    - name: sdh
-      devicePath: /dev/sdh
-    - name: sdi
-      devicePath: /dev/sdi

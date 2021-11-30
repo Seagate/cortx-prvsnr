@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: storage-node1
+  name: server-node1
   labels:
-    app: storage-node1
-    id: aaa120a9e051d103c164f605615c32a4
+    app: server-node1
+    id: ddd120a9e051d103c164f605615c32a4
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: storage-node1
+      app: server-node1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,9 +19,9 @@ spec:
   template:
     metadata:
       labels:
-        app: storage-node1
+        app: server-node1
     spec:
-      hostname: storage-node1
+      hostname: server-node1
       nodeSelector:
         node-name: node1
       volumes:
@@ -30,37 +30,13 @@ spec:
           name: solution-config
       - name: node-id
         configMap:
-          name: storage-node1-id
+          name: server-node1-id
       - name: shared-node1
         persistentVolumeClaim:
           claimName: shared-node1
       - name: local-node1
         persistentVolumeClaim:
           claimName: local-node1
-      - name: sdb
-        persistentVolumeClaim:
-          claimName: dev-sdb-node1
-      - name: sdc
-        persistentVolumeClaim:
-          claimName: dev-sdc-node1
-      - name: sdd
-        persistentVolumeClaim:
-          claimName: dev-sdd-node1
-      - name: sde
-        persistentVolumeClaim:
-          claimName: dev-sde-node1
-      - name: sdf
-        persistentVolumeClaim:
-          claimName: dev-sdf-node1
-      - name: sdg
-        persistentVolumeClaim:
-          claimName: dev-sdg-node1
-      - name: sdh
-        persistentVolumeClaim:
-          claimName: dev-sdh-node1
-      - name: sdi
-        persistentVolumeClaim:
-          claimName: dev-sdi-node1
       containers:
       - name: cortx-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
@@ -80,94 +56,6 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-confd
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/motr/bin/motr_setup start --config yaml:///etc/cortx/cluster.conf --services confd;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node1
-          mountPath: /share
-        - name: local-node1
-          mountPath: /etc/cortx
-      - name: cortx-ios1
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/motr/bin/motr_setup start --config yaml:///etc/cortx/cluster.conf --services ioservice --idx 1;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node      
-        - name: shared-node1
-          mountPath: /share
-        - name: local-node1
-          mountPath: /etc/cortx
-        volumeDevices:
-        - name: sdb
-          devicePath: /dev/sdb
-        - name: sdc
-          devicePath: /dev/sdc
-        - name: sdd
-          devicePath: /dev/sdd
-        - name: sde
-          devicePath: /dev/sde
-        - name: sdf
-          devicePath: /dev/sdf
-        - name: sdg
-          devicePath: /dev/sdg
-        - name: sdh
-          devicePath: /dev/sdh
-        - name: sdi
-          devicePath: /dev/sdi
-      - name: cortx-ios2
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        args:
-        - /bin/sh
-        - -c
-        - set -x;
-          /opt/seagate/cortx/motr/bin/motr_setup start --config yaml:///etc/cortx/cluster.conf --services ioservice --idx 2;
-          sleep infinity;
-        volumeMounts:
-        - name: solution-config
-          mountPath: /etc/cortx/solution
-        - name: node-id
-          mountPath: /etc/cortx/solution/node
-        - name: shared-node1
-          mountPath: /share
-        - name: local-node1
-          mountPath: /etc/cortx
-        volumeDevices:
-        - name: sdb
-          devicePath: /dev/sdb
-        - name: sdc
-          devicePath: /dev/sdc
-        - name: sdd
-          devicePath: /dev/sdd
-        - name: sde
-          devicePath: /dev/sde
-        - name: sdf
-          devicePath: /dev/sdf
-        - name: sdg
-          devicePath: /dev/sdg
-        - name: sdh
-          devicePath: /dev/sdh
-        - name: sdi
-          devicePath: /dev/sdi
       - name: cortx-s31
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent

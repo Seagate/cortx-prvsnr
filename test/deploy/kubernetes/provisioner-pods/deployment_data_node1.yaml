@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: storage-node1
+  name: data-node1
   labels:
-    app: storage-node1
+    app: data-node1
     id: aaa120a9e051d103c164f605615c32a4
 spec:
-  hostname: storage-node1
+  hostname: data-node1
   restartPolicy: Never
   nodeSelector:
     node-name: node1

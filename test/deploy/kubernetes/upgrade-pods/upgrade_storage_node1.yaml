@@ -55,7 +55,7 @@ spec:
       claimName: dev-sdi-node1
   containers:
   - name: cortx-data
-    image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+    image: ghcr.io/seagate/cortx-all:version1
     imagePullPolicy: IfNotPresent
     args:
     - /bin/sh
@@ -69,7 +69,7 @@ spec:
       chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
       chmod +x /opt/seagate/cortx/motr/bin/motr_setup;
       chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
-      /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+      cortx_setup cluster upgrade -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
       mountPath: /etc/cortx/solution
@@ -77,10 +77,10 @@ spec:
       mountPath: /etc/cortx/solution/node
     - name: local-node1
       mountPath: /etc/cortx
-    - name: shared-node1
-      mountPath: /share
     - name: cortx-secret
       mountPath: /etc/cortx/solution/secret
+    - name: shared-node1
+      mountPath: /share
     volumeDevices:
     - name: sdb
       devicePath: /dev/sdb
