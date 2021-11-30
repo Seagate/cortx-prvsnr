@@ -8,6 +8,8 @@ PASSED='\033[0;32m'       #GREEN
 INFO='\033[0;36m'        #CYAN
 NC='\033[0m'              #NO COLOUR
 REDEFPODS=false
+CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
+CONFSTOR_FILE=$(awk -F:// '{print $2}' <<< $CORTX_CONFSTORE)
 function show_usage {
     echo -e "usage: $(basename $0) [-i UPGRADE-IMAGE]"
     echo -e "Where:"
@@ -42,6 +44,36 @@ while [ $# -gt 0 ];  do
 done
 
 [ -z $UPGRADE_IMAGE ] && echo -e "ERROR: Missing Upgrade Image tag. Please Provide Image TAG for Upgrade" && show_usage
+
+# Checking if the Pod Phase and Status is ready for upgrade
+# Ready Scenario:
+# 1.TODO:Upgrade build version should be greater than the current build version on the pod
+# 2.Pod Phase should be either deployment & success or upgrade & none or upgrade & success
+print_header "Validating Pod status pre-upgrade";
+printf "${INFO}| Pre Upgrade Validation |${NC}\n"
+while IFS= read -r line; do
+    IFS=" " read -r -a status <<< "$line"
+    printf "Pod ${status[0]}:\n"
+    kubectl exec  ${status[0]} --namespace=$namespace -- bash -c "cat /etc/machine-id | tail -n1" > machine_id.txt 2> /dev/null
+    kubectl exec  ${status[0]} --namespace=$namespace -- bash -c "cat $CONFSTOR_FILE" > confstore.yaml 2> /dev/null
+    ID=$(jq -R < ./machine_id.txt)
+    PHASE=$(yq -r .node.$ID.provisioning.phase confstore.yaml)
+    STATUS=$(yq -r .node.$ID.provisioning.status confstore.yaml)
+    if [[ $PHASE == "deployment" && $STATUS == "success" ]]; then
+        printf "${PASSED}Upgrade can be performed${NC}\n"
+        printf "${PASSED}POD: ${status[0]} PHASE: $PHASE STATUS: $STATUS${NC}\n"
+    elif [[ $PHASE == "upgrade" && ( $STATUS == "success" || $STATUS == "none" ) ]]; then
+        printf "${PASSED}Upgrade can be performed${NC}\n"
+        printf "${PASSED}POD: ${status[0]} PHASE: $PHASE STATUS: $STATUS${NC}\n"
+    else
+        printf "${FAILED}Upgrade can not be performed, one or more of the pod(s) phase and status is not as expected${NC}\n"
+        printf "${FAILED}POD: ${status[0]} PHASE: $PHASE STATUS: $STATUS${NC}\n"
+        exit 1
+    fi
+    rm -f confstore.yaml
+    rm -f machine_id.txt
+    printf "\n\n"
+done <<< "$(kubectl get pods --namespace=$namespace | grep 'data-node.-.*\|control-node-.*\|server-node.-.*\|ha-node*-.*\|storage-node.-.*')"
 
 # Validate if All Pods are running
 printf "${INFO}| Checking Pods Status |${NC}\n"
