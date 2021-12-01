@@ -149,7 +149,18 @@ class CortxProvisioner:
                 for node in storage_set['nodes']:
                     node_type = node['type']
                     node = dict(node_map[node_type], **node)
-                    if node['type'] == 'storage_node':
+                    # If 'storage' key is present in node list,
+                    # restructure its value as below:
+                    # cvg:
+                    # - devices:
+                    #     data:
+                    #     - /dev/sdd
+                    #     - /dev/sde
+                    #     metadata:
+                    #     - /dev/sdc
+                    # name: cvg-01
+                    # type: ios
+                    if node.get('storage'):
                         cvg_list = node.pop('storage')
                         for cvg in cvg_list:
                             metadata_device = cvg['devices']['metadata']
