@@ -146,7 +146,7 @@ log $INFO "Starting provisioning on node $node_id which is part of cluster $clus
 # Check current image version
 installed_version=$(sed -e 's/[][]//g' -e 's/"//g' <<< $(conf_get $CORTX_CONFSTORE "cortx>common>release>version"))
 # if current version is not available in confstore
-[[ $installed_version -ne "[null]" ]] && current_version=$(awk -F. '{print $4}' <<< $ installed_version)
+[[ $installed_version != "[null]" ]] && current_version=$(awk -F- '{print $2}' <<< $installed_version)
 
 release_version=$(sed -e 's/[][]//g' -e 's/"//g' <<< $(conf_get $RELEASE_INFO "VERSION"))
 # Below can be used when subversioning is considered.
@@ -155,14 +155,14 @@ image_version=$(awk -F- '{print $2}' <<<  $release_version)
 
 [[ $current_version -eq $image_version && -z $FORCE_PROVISIONING ]] &&
     log $DEBUG "current_version ($installed_version) = image_version ($release_version)" &&
-    return 0
+    exit 0
 [[ $current_version -gt $image_version ]] &&
     log $ERROR "Invalid image. current_version ($installed_version) > image_version ($release_version)" &&
-    return 1
+    exit 1
 
 action="deploy"
 
-[[ $current_version -lt $image_version ]] && action="upgrade"
+[[ ! -z $current_version ]] && [[ $current_version -lt $image_version ]] && action="upgrade"
 
 case $action in
     deploy)
