@@ -61,14 +61,6 @@ spec:
     - /bin/sh
     - -c
     - set -x;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/hare/bin/hare_setup;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/motr/bin/motr_setup;
-      echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/s3/bin/s3_setup;
-      chmod +x /opt/seagate/cortx/utils/bin/utils_setup;
-      chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
-      chmod +x /opt/seagate/cortx/motr/bin/motr_setup;
-      chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
       /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
     volumeMounts:
     - name: solution-config
