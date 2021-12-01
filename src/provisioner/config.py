@@ -65,10 +65,15 @@ class CortxConfig:
             release_spec = self._cortx_config.get('common').get('release')
             is_valid, release_info = self._cortx_release.validate(release_spec)
             if is_valid is False:
-                for key in release_info.keys():
-                    Log.warn(f'Release key {"cortx>common>release>{key}"} is '
-                        'missing or has incorrect value')
-                    self._cortx_config['common']['release'][key] = release_info[key]
+                if not release_spec:
+                    Log.warn('Release key "cortx>common>release" is '
+                            f'missing, adding {release_info} in confstore.')
+                    self._cortx_config['common']['release'] = release_info
+                else:
+                    for key in release_info.keys():
+                        Log.warn(f'Release key "cortx>common>release>{key}" is '
+                            'missing or has incorrect value')
+                        self._cortx_config['common']['release'][key] =  release_info[key]
             key_prefix = 'cortx>'
             for attr in self._cortx_config.keys():
                 kv = (key_prefix + attr, self._cortx_config[attr])
