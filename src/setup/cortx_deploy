@@ -34,11 +34,11 @@ function show_usage {
     exit 1
 }
 
-function validate_config {
+function validate_config_file {
     local config=$1
     if [ ! -f $config ]; then
         echo -e "ERROR: Config file $config not found, Provide correct config path."
-        exit 1
+        return 1
     fi
 }
 
@@ -54,10 +54,43 @@ function conf_get {
     echo $val
 }
 
+function apply_cluster_config {
+    log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+    cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+}
+
+function apply_common_config {
+    log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+    cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+}
+
+function deploy {
+    # Bootstrap Cluster
+    log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+    cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+}
+
+function upgrade {
+    # Upgrade cluster
+    log $INFO "cortx_setup cluster upgrade -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+    cortx_setup cluster upgrade -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+}
+
+function validate_config {
+    # Validate config
+    log $INFO "cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
+    cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" || return 1
+    log $INFO "cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
+    cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || return 1
+}
+
 # Constants
 DEBUG_FLAG=false
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
+RELEASE_INFO="yaml:///opt/seagate/cortx/RELEASE.INFO"
+
+action="" # upgrade|deploy|downgrade|replace|recover|etc.
 
 while [ $# -gt 0 ];  do
     case $1 in
@@ -100,9 +133,9 @@ done
 
 # path for solution-config cluster.yaml and config.yaml files
 CONFIG_INFO="$SOLUTION_CONFIG/config.yaml"
-validate_config $CONFIG_INFO
+validate_config_file $CONFIG_INFO
 CLUSTER_INFO="$SOLUTION_CONFIG/cluster.yaml"
-validate_config $CLUSTER_INFO
+validate_config_file $CLUSTER_INFO
 
 export PATH=$PATH:/opt/seagate/provisioner/bin
 
@@ -110,27 +143,43 @@ node_id=`cat /etc/machine-id`
 cluster_id=$(conf_get $(yaml_config $CLUSTER_INFO) "cluster>id")
 log $INFO "Starting provisioning on node $node_id which is part of cluster $cluster_id."
 
-# Apply Cluster Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
-cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+# Check current image version
+installed_version=$(sed -e 's/[][]//g' -e 's/"//g' <<< $(conf_get $CORTX_CONFSTORE "cortx>common>release>version"))
+# if current version is not available in confstore
+[[ $installed_version -ne "[null]" ]] && current_version=$(awk -F. '{print $4}' <<< $ installed_version)
 
-# Apply Common Config
-log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
-cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+release_version=$(sed -e 's/[][]//g' -e 's/"//g' <<< $(conf_get $RELEASE_INFO "VERSION"))
+# Below can be used when subversioning is considered.
+#update_prim_version=$(awk -F- '{print $1}' <<<  $release_version )
+image_version=$(awk -F- '{print $2}' <<<  $release_version)
 
-# Validate config
-if ! [ -z $VALIDATE_CONF ];
-then
-    log $INFO "cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" || exit 1
-    log $INFO "cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || exit 1
-fi
+[[ $current_version -eq $image_version && -z $FORCE_PROVISIONING ]] &&
+    log $DEBUG "current_version ($installed_version) = image_version ($release_version)" &&
+    return 0
+[[ $current_version -gt $image_version ]] &&
+    log $ERROR "Invalid image. current_version ($installed_version) > image_version ($release_version)" &&
+    return 1
 
-# Bootstrap Cluster
-log $INFO "cortx_setup cluster bootstrap -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
-cortx_setup cluster bootstrap -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+action="deploy"
 
+[[ $current_version -lt $image_version ]] && action="upgrade"
+
+case $action in
+    deploy)
+        apply_cluster_config
+        apply_common_config
+        [ ! -z $VALIDATE_CONF ] && validate_config
+        # Deploy cortx
+        deploy
+        ;;
+    upgrade)
+        # Upgrade cortx
+        upgrade
+        ;;
+    *)
+        log $ERROR "Internal error. Could not determine version. Invalid image. current_version is ($installed_version) and image_version is ($release_version)"
+        ;;
+esac
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then
     log $INFO "cortx_setup DEBUG enabled...";
