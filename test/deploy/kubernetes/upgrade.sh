@@ -8,6 +8,17 @@ PASSED='\033[0;32m'       #GREEN
 INFO='\033[0;36m'        #CYAN
 NC='\033[0m'              #NO COLOUR
 REDEFPODS=false
+UPGRADEPIDFILE=/var/run/upgrade.sh.pid
+
+#check if file exits with pid in it. Throw error if PID is present
+if [ -s "$UPGRADEPIDFILE" ]; then
+   echo "Upgrade is already being performed on the cluster."
+   exit 1
+fi
+
+# Create a file with current PID to indicate that process is running.
+echo $$ > "$UPGRADEPIDFILE"
+
 function show_usage {
     echo -e "usage: $(basename $0) [-i UPGRADE-IMAGE]"
     echo -e "Where:"
@@ -244,3 +255,6 @@ fi
 
 # Wait for deletion of Upgrade nodes
 wait;
+
+# Ensure PID file is removed after upgrade is performed.
+trap "rm -f -- '$UPGRADEPIDFILE'"
