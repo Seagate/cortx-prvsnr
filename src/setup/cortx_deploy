@@ -145,17 +145,17 @@ cluster_id=$(conf_get $(yaml_config $CLUSTER_INFO) "cluster>id")
 log $INFO "Starting provisioning on node $node_id which is part of cluster $cluster_id."
 
 # Check current image version
-installed_version=$(sed -e 's/[][]//g' -e 's/"//g' <<< $(conf_get $CORTX_CONFSTORE "cortx>common>release>version"))
+installed_version=$(conf_get $CORTX_CONFSTORE "node>$node_id>provisioning>version")
 # if current version is not available in confstore
-[[ $installed_version != "[null]" ]] && current_version=$(awk -F- '{print $2}' <<< $installed_version)
+[[ $installed_version != "null" ]] && current_version=$(awk -F- '{print $2}' <<< $installed_version)
 
-release_version=$(sed -e 's/[][]//g' -e 's/"//g' <<< $(conf_get $RELEASE_INFO "VERSION"))
+release_version=$(conf_get $RELEASE_INFO "VERSION")
 # Below can be used when subversioning is considered.
 #update_prim_version=$(awk -F- '{print $1}' <<<  $release_version )
 image_version=$(awk -F- '{print $2}' <<<  $release_version)
 
 [[ $current_version -eq $image_version && -z $FORCE_PROVISIONING ]] &&
-    log $DEBUG "current_version ($installed_version) = image_version ($release_version)" &&
+    log $INFO "current_version ($installed_version) = image_version ($release_version)" &&
     exit 0
 [[ $current_version -gt $image_version ]] &&
     log $ERROR "Invalid image. current_version ($installed_version) > image_version ($release_version)" &&
