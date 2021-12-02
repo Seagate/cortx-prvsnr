@@ -348,46 +348,45 @@ class CortxProvisioner:
         ret_code = 0
         recent_phase = cortx_conf.get(f'node>{node_id}>provisioning>phase')
         recent_status = cortx_conf.get(f'node>{node_id}>provisioning>status')
+        msg = 'Recent phase for this node is %s and recent status is %s. '
+        # {apply_phase: {recent_phase: {recent_status: [boolean_result,rc]}}}
+        validations_checks = {
+            PROVISIONING_STAGES.DEPLOYMENT.value: {
+                PROVISIONING_STAGES.DEPLOYMENT.value: {
+                    PROVISIONING_STATUS.DEFAULT.value: [True, 0],
+                    PROVISIONING_STATUS.ERROR.value: [True, 0],
+                    PROVISIONING_STATUS.PROGRESS.value: [True, 0],
+                    PROVISIONING_STATUS.SUCCESS.value: [False, 0]
+                },
+                PROVISIONING_STAGES.UPGRADE.value: {
+                    PROVISIONING_STATUS.DEFAULT.value: [True, 0],
+                    PROVISIONING_STATUS.ERROR.value: [True, 0],
+                    PROVISIONING_STATUS.PROGRESS.value: [True, 0],
+                    PROVISIONING_STATUS.SUCCESS.value: [True, 0]
+                }},
+            PROVISIONING_STAGES.UPGRADE.value: {
+                PROVISIONING_STAGES.DEPLOYMENT.value: {
+                    PROVISIONING_STATUS.DEFAULT.value: [False, 0],
+                    PROVISIONING_STATUS.ERROR.value: [False, 0],
+                    PROVISIONING_STATUS.PROGRESS.value: [False, 1],
+                    PROVISIONING_STATUS.SUCCESS.value: [True, 0]
+                },
+                PROVISIONING_STAGES.UPGRADE.value: {
+                    PROVISIONING_STATUS.DEFAULT.value: [True, 0],
+                    PROVISIONING_STATUS.ERROR.value: [True, 0],
+                    PROVISIONING_STATUS.PROGRESS.value: [True, 0],
+                    PROVISIONING_STATUS.SUCCESS.value: [True, 0]
+                }
+            }}
         if recent_phase is None and recent_status is None:
-            Log.info(f'Recent phase is {recent_phase} and '
-                    f'recent status is {recent_status}.'
-                    f'Performing {apply_phase} on this node.')
+            Log.info(msg %(recent_phase, recent_status))
+            Log.info('Performing %s on this node.' % apply_phase)
             return True, ret_code
-        elif apply_phase == recent_phase:
-            # If both phases are same:
-            # If status=[progress/error/default], Upgrade & Deployment is possible.
-            # If status=success -> Upgrade is possible if img version is higher.
-            # and Deployment only with override option.
-            if recent_status != PROVISIONING_STATUS.SUCCESS.value:
-                Log.info(f'Recent phase is {recent_phase} and '
-                    f'recent status is {recent_status}.'
-                    f'Performing {apply_phase} on this node.')
-                return True, ret_code
-            else:
-                if apply_phase == PROVISIONING_STAGES.DEPLOYMENT.value:
-                    Log.info(f'{apply_phase} phase is already configured on this node.')
-                    return False, ret_code
-                elif apply_phase == PROVISIONING_STAGES.UPGRADE.value:
-                    Log.info(f'Previous {recent_phase} status is {recent_status}.'
-                        f' {apply_phase} is possible.')
-                    return True, ret_code
+        validate_result = validations_checks.get(apply_phase).get(recent_phase).get(recent_status)
+        rc = validate_result[1]
+        if rc != 0:
+            Log.error(msg % (recent_phase, recent_status))
+            Log.error('%s is not possible on this node.' % apply_phase)
         else:
-            # Upgrade is possible only if deployment is success.
-            # Deployment is not possible after upgrade.
-            if (apply_phase == PROVISIONING_STAGES.UPGRADE.value and
-                recent_phase == PROVISIONING_STAGES.DEPLOYMENT.value
-                and recent_status in [PROVISIONING_STATUS.SUCCESS.value,
-                PROVISIONING_STATUS.PROGRESS.value]):
-                Log.info(f'Recent phase is {recent_phase} and '
-                    f'recent status is {recent_status}, {apply_phase} is possible.')
-                return True, ret_code
-            else:
-                Log.error(f'Recent phase is {recent_phase} and '
-                    f'recent status is {recent_status}, {apply_phase} is not possible.')
-                ret_code = 1
-                return False, ret_code
-        Log.info(f'Recent phase for this node is {recent_phase} and recent '
-            f'status is {recent_status}, {apply_phase} is possible.')
-        Log.info(f'Performing {apply_phase} on this node.')
-
-        return True, ret_code
+            Log.info(msg % (recent_phase, recent_status))
+        return validate_result[0], rc
