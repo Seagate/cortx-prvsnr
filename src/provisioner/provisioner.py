@@ -272,6 +272,7 @@ class CortxProvisioner:
             cortx_conf, node_id, apply_phase)
         mini_prov_interfaces = ['post_install', 'prepare', 'config', 'init']
         CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
+        CortxProvisioner._add_version_info(cortx_conf, node_id)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
@@ -302,8 +303,7 @@ class CortxProvisioner:
         mini_prov_interfaces = ['upgrade']
         CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
         # Update CORTX version, once the upgrade is successful
-        version = CortxProvisioner.cortx_release.get_value('VERSION')
-        cortx_conf.set('cortx>common>release>version', version)
+        CortxProvisioner._add_version_info(cortx_conf, node_id)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
@@ -321,6 +321,13 @@ class CortxProvisioner:
         keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         cortx_conf.set_kvs(keys)
 
+
+    @staticmethod
+    def _add_version_info(cortx_conf: ConfigStore, node_id):
+        """Add version in confstore."""
+        version = CortxProvisioner.cortx_release.get_value('VERSION')
+        cortx_conf.set('cortx>common>release>version', version)
+        cortx_conf.set(f'node>{node_id}>provisioning>version', version)
 
     @staticmethod
     def _validate_provisioning_status(cortx_conf: ConfigStore, node_id: str, apply_phase: str):
