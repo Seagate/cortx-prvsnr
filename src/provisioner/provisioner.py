@@ -221,6 +221,13 @@ class CortxProvisioner:
                     f'node>{node_id}>components[{comp_idx}]>services')
                 service = 'all' if services is None else ','.join(services)
                 component_name = components[comp_idx]['name']
+                if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
+                    version = components[comp_idx]['version']
+                    # Skip update for component if it is already updated.
+                    is_updated = CortxProvisioner._is_component_updated(component_name, version)
+                    if is_updated is True:
+                        Log.info(f'{component_name} is already updated with {version} version.')
+                        continue
                 CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.PROGRESS.value)
                 cmd = (
@@ -298,7 +305,8 @@ class CortxProvisioner:
                 Log.info('Validation check failed, Forcefully overriding upgrade.')
 
         Log.info(f"Starting cluster upgrade on {node_id}:{node_name}")
-        # TODO: validations
+        CortxProvisioner._update_provisioning_status(
+            cortx_conf, node_id, apply_phase)
 
         mini_prov_interfaces = ['upgrade']
         CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
@@ -321,6 +329,11 @@ class CortxProvisioner:
         keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         cortx_conf.set_kvs(keys)
 
+    @staticmethod
+    def _is_component_updated(component_name: str, component_version: str):
+        """Verify component version with RELEASE.INFO."""
+        release_version = CortxProvisioner.cortx_release.get_version(component_name)
+        return True if release_version == component_version else False
 
     @staticmethod
     def _add_version_info(cortx_conf: ConfigStore, node_id):
@@ -335,37 +348,46 @@ class CortxProvisioner:
         ret_code = 0
         recent_phase = cortx_conf.get(f'node>{node_id}>provisioning>phase')
         recent_status = cortx_conf.get(f'node>{node_id}>provisioning>status')
-        if apply_phase == recent_phase:
-            if recent_status == PROVISIONING_STATUS.PROGRESS.value:
-                Log.info(f'Currently {recent_phase} is in progress, '
-                    f'{apply_phase} is not possible.')
-                return False, ret_code
-            elif (recent_status in [PROVISIONING_STATUS.DEFAULT.value,
-                PROVISIONING_STATUS.ERROR.value]):
-                Log.info(f'{recent_phase} is in {recent_status} state,'
-                    f' {apply_phase} is possible.')
+        if recent_phase is None and recent_status is None:
+            Log.info(f'Recent phase is {recent_phase} and '
+                    f'recent status is {recent_status}.'
+                    f'Performing {apply_phase} on this node.')
+            return True, ret_code
+        elif apply_phase == recent_phase:
+            # If both phases are same:
+            # If status=[progress/error/default], Upgrade & Deployment is possible.
+            # If status=success -> Upgrade is possible if img version is higher.
+            # and Deployment only with override option.
+            if recent_status != PROVISIONING_STATUS.SUCCESS.value:
+                Log.info(f'Recent phase is {recent_phase} and '
+                    f'recent status is {recent_status}.'
+                    f'Performing {apply_phase} on this node.')
                 return True, ret_code
-            elif recent_status == PROVISIONING_STATUS.SUCCESS.value:
+            else:
                 if apply_phase == PROVISIONING_STAGES.DEPLOYMENT.value:
                     Log.info(f'{apply_phase} phase is already configured on this node.')
                     return False, ret_code
                 elif apply_phase == PROVISIONING_STAGES.UPGRADE.value:
-                    Log.info(f'Previous upgrade {apply_phase} is success.')
+                    Log.info(f'Previous {recent_phase} status is {recent_status}.'
+                        f' {apply_phase} is possible.')
                     return True, ret_code
         else:
+            # Upgrade is possible only if deployment is success.
+            # Deployment is not possible after upgrade.
             if (apply_phase == PROVISIONING_STAGES.UPGRADE.value and
                 recent_phase == PROVISIONING_STAGES.DEPLOYMENT.value
-                and recent_status != PROVISIONING_STATUS.SUCCESS.value):
-                Log.info(f'{recent_phase} is in {recent_status} state,'
-                    f' {apply_phase} is not possible.')
-                return False, ret_code
-            elif recent_status in [PROVISIONING_STATUS.PROGRESS.value]:
-                Log.error(f'Currently {recent_phase} is in progress, '
-                    f'{apply_phase} is not possible.')
+                and recent_status in [PROVISIONING_STATUS.SUCCESS.value,
+                PROVISIONING_STATUS.PROGRESS.value]):
+                Log.info(f'Recent phase is {recent_phase} and '
+                    f'recent status is {recent_status}, {apply_phase} is possible.')
+                return True, ret_code
+            else:
+                Log.error(f'Recent phase is {recent_phase} and '
+                    f'recent status is {recent_status}, {apply_phase} is not possible.')
                 ret_code = 1
                 return False, ret_code
-        Log.info(f'Recent phase for this node is {recent_phase} and status'
-            f' {recent_status}')
+        Log.info(f'Recent phase for this node is {recent_phase} and recent '
+            f'status is {recent_status}, {apply_phase} is possible.')
         Log.info(f'Performing {apply_phase} on this node.')
 
         return True, ret_code
