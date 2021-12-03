@@ -270,7 +270,8 @@ class CortxProvisioner:
             cortx_conf, node_id, apply_phase)
         if is_valid is False:
             if force_override is False:
-                Log.error('Validation check failed, Aborting cluster bootstarp.')
+                Log.warn('Validation check failed, Aborting cluster bootstarp'
+                    f' with return code {ret_code}')
                 return ret_code
             else:
                 Log.info('Validation check failed, Forcefully overriding deployment.')
@@ -299,7 +300,8 @@ class CortxProvisioner:
             cortx_conf, node_id, apply_phase)
         if is_valid is False:
             if force_override is False:
-                Log.warn('Validation check failed, Aborting cluster upgrade.')
+                Log.warn('Validation check failed, Aborting upgrade with '
+                    f'return code {ret_code}.')
                 return ret_code
             else:
                 Log.info('Validation check failed, Forcefully overriding upgrade.')
@@ -366,8 +368,8 @@ class CortxProvisioner:
                 }},
             PROVISIONING_STAGES.UPGRADE.value: {
                 PROVISIONING_STAGES.DEPLOYMENT.value: {
-                    PROVISIONING_STATUS.DEFAULT.value: [False, 0],
-                    PROVISIONING_STATUS.ERROR.value: [False, 0],
+                    PROVISIONING_STATUS.DEFAULT.value: [False, 1],
+                    PROVISIONING_STATUS.ERROR.value: [False, 1],
                     PROVISIONING_STATUS.PROGRESS.value: [False, 1],
                     PROVISIONING_STATUS.SUCCESS.value: [True, 0]
                 },
@@ -383,10 +385,16 @@ class CortxProvisioner:
             Log.info('Performing %s on this node.' % apply_phase)
             return True, ret_code
         validate_result = validations_checks.get(apply_phase).get(recent_phase).get(recent_status)
-        rc = validate_result[1]
-        if rc != 0:
-            Log.error(msg % (recent_phase, recent_status))
-            Log.error('%s is not possible on this node.' % apply_phase)
-        else:
-            Log.info(msg % (recent_phase, recent_status))
-        return validate_result[0], rc
+        if isinstance(validate_result, list):
+            if validate_result[1] != 0:
+                Log.error(msg % (recent_phase, recent_status) +
+                    '%s is not possible on this node.' % apply_phase)
+                if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
+                    # Reset status.
+                    recent_status = cortx_conf.set(
+                        f'node>{node_id}>provisioning>status',
+                        PROVISIONING_STATUS.DEFAULT.value)
+            else:
+                Log.info(msg % (recent_phase, recent_status))
+            return validate_result[0], validate_result[1]
+        return True, ret_code
