@@ -257,4 +257,4 @@ fi
 wait;
 
 # Ensure PID file is removed after upgrade is performed.
-trap "rm -f -- '$UPGRADEPIDFILE'"
+rm -f $UPGRADEPIDFILE
