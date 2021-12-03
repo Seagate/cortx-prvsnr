@@ -236,7 +236,7 @@ class CortxProvisioner:
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
-                if rc != 0 or err.decode('utf-8') != '':
+                if rc != 0:
                     CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
