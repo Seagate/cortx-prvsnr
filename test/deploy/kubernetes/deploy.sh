@@ -143,7 +143,7 @@ done
 # Create Control Node Service (Headless)
 print_header "Creating Cotrol Service - Cluster";
 kubectl apply -f "$BASEPATH/external-services/headless_control_node.yaml" --namespace "$NAMESPACE";
-
+kubectl apply -f "$BASEPATH/external-services/message_service.yaml" --namespace "$NAMESPACE";
 # Create Control Node (POD)
 print_header "Creating Cotrol Node - Cluster";
 kubectl apply -f "$BASEPATH/provisioner-pods/deployment_control_node.yaml" --namespace "$NAMESPACE";
