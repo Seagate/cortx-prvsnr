@@ -87,6 +87,8 @@ fi
 # Create Control RunTime Node (POD)
 print_header "Creating Cotrol RunTime Node - Cluster";
 kubectl apply -f "$BASEPATH/runtime-pods/components_control_node.yaml" --namespace "$NAMESPACE";
+sleep $TIMEDELAY;
+kubectl apply -f "$BASEPATH/external-services/message_service.yaml" --namespace "$NAMESPACE";
 
 if [ $REDEFPODS = true ]; then
     # Create Data RunTime Node (POD)
