@@ -240,7 +240,7 @@ else
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         print_header "Creating Storage Node - $NODE_NAME";
-        NODE_POD="$BASEPATH/runtime-pods/component_storage_$NODE_NAME.yaml";
+        NODE_POD="$BASEPATH/runtime-pods/components_storage_$NODE_NAME.yaml";
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
