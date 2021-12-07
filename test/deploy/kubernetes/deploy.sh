@@ -180,11 +180,11 @@ if [ $REDEFPODS = true ]; then
 
     # Create HA Node (POD)
     print_header "Creating HA Node - Cluster";
-    kubectl apply -f "$BASEPATH/provisioner-pods/deployment_ha_node.yaml" --namespace "$NAMESPACE";
+    kubectl apply -f "$BASEPATH/runtime-pods/components_ha_node.yaml" --namespace "$NAMESPACE";
 
     # Wait for HA Node (POD) execution
     printf "\nWaiting for HA Node.";
-    while [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" != "Completed" ]; do
+    while [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" != "Running" ]; do
         printf ".";
         sleep $TIMEDELAY;
     done
@@ -203,7 +203,7 @@ if [ $REDEFPODS = true ]; then
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         print_header "Creating Data Node - $NODE_NAME";
-        NODE_POD="$BASEPATH/provisioner-pods/deployment_data_$NODE_NAME.yaml";
+        NODE_POD="$BASEPATH/runtime-pods/components_data_$NODE_NAME.yaml";
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
@@ -221,7 +221,7 @@ if [ $REDEFPODS = true ]; then
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         print_header "Creating Server Node - $NODE_NAME";
-        NODE_POD="$BASEPATH/provisioner-pods/deployment_server_$NODE_NAME.yaml";
+        NODE_POD="$BASEPATH/runtime-pods/components_server_$NODE_NAME.yaml";
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
