@@ -206,7 +206,7 @@ class CortxProvisioner:
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
-        if cortx_conf.get(f'node>{node_id}') is None:
+        if cortx_conf.get(f'node>{node_id}>name') is None:
             raise CortxProvisionerError(
                 errno.EINVAL, f"Node id '{node_id}' not found in cortx config.")
 
@@ -218,18 +218,22 @@ class CortxProvisioner:
     def _provision_components(cortx_conf: ConfigStore, mini_prov_interfaces: list, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
-        components = cortx_conf.get(f'node>{node_id}>components')
-        if components is None:
-            Log.warn(f"No component specified for {node_name} in CORTX config")
-        num_components = len(components)
         for interface in mini_prov_interfaces:
-            for comp_idx in range(0, num_components):
-                services = cortx_conf.get(
-                    f'node>{node_id}>components[{comp_idx}]>services')
-                service = 'all' if services is None else ','.join(services)
-                component_name = components[comp_idx]['name']
+            component_idx = 0
+            while cortx_conf.get(f'node>{node_id}>components[{component_idx}]>name') is not None:
+                service_idx = 0
+                services = []
+                component_name = cortx_conf.get(
+                    f'node>{node_id}>components[{component_idx}]>name')
+                while (cortx_conf.get(
+                    f'node>{node_id}>components[{component_idx}]>services[{service_idx}]') is not None):
+                    services.append(cortx_conf.get(
+                        f'node>{node_id}>components[{component_idx}]>services[{service_idx}]'))
+                    service_idx = service_idx + 1
+                service = 'all' if service_idx == 0 else ','.join(services)
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
-                    version = components[comp_idx]['version']
+                    version = cortx_conf.get(
+                        f'node>{node_id}>components[{component_idx}]>version')
                     # Skip update for component if it is already updated.
                     is_updated = CortxProvisioner._is_component_updated(component_name, version)
                     if is_updated is True:
@@ -248,13 +252,14 @@ class CortxProvisioner:
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
-                        components[comp_idx]['name'], err)
+                        component_name, err)
                 # Update version for each component if upgrade successful.
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
                     component_version = CortxProvisioner.cortx_release.get_version(component_name)
                     cortx_conf.set(
-                        f'node>{node_id}>components{[comp_idx]}>version',
+                        f'node>{node_id}>components[{component_idx}]>version',
                         component_version)
+                component_idx = component_idx + 1
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
 
