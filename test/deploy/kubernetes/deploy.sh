@@ -44,28 +44,20 @@ done
 # Update Image in All PODs
 print_header "Updating Image in All Pods - Cluster";
 sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/runtime-pods/components_control_node.yaml
-sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/provisioner-pods/deployment_control_node.yaml
 if [ $REDEFPODS = true ]; then
     sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/runtime-pods/components_ha_node.yaml
-    sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/provisioner-pods/deployment_ha_node.yaml
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         DATA_RUNTIME_POD="$BASEPATH/runtime-pods/components_data_$NODE_NAME.yaml";
         SERVER_RUNTIME_POD="$BASEPATH/runtime-pods/components_server_$NODE_NAME.yaml";
-        DATA_DEPLOYMENT_POD="$BASEPATH/provisioner-pods/deployment_data_$NODE_NAME.yaml";
-        SERVER_DEPLOYMENT_POD="$BASEPATH/provisioner-pods/deployment_server_$NODE_NAME.yaml";
         sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $DATA_RUNTIME_POD;
         sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $SERVER_RUNTIME_POD;
-        sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $DATA_DEPLOYMENT_POD;
-        sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $SERVER_DEPLOYMENT_POD;
     done
 else
     for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     STORAGE_RUNTIME_POD="$BASEPATH/runtime-pods/components_storage_$NODE_NAME.yaml";
-    STORAGE_DEPLOYMENT_POD="$BASEPATH/provisioner-pods/deployment_storage_$NODE_NAME.yaml";
     sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $STORAGE_RUNTIME_POD;
-    sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $STORAGE_DEPLOYMENT_POD;
     done
 fi
 
@@ -189,7 +181,7 @@ if [ $REDEFPODS = true ]; then
         sleep $TIMEDELAY;
     done
     printf "\n";
-    
+
     # Create Data-Node Service (Headless)
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
