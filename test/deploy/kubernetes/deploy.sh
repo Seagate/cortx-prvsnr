@@ -107,6 +107,8 @@ else
     kubectl create configmap storage-node3-id --from-literal=id=ccc8700fe6797ed532e311b0615c32a7 --namespace "$NAMESPACE";
 fi
 
+# Create Config Map For Node config
+kubectl create configmap node-config -f "$BASEPATH"/runtime-pods/components_node_config --namespace $NAMESPACE;
 
 # Create Secrets
 kubectl apply -f "$BASEPATH"/solution-config/secrets.yaml --namespace $NAMESPACE;

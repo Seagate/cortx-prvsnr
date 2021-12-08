@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-config
+data:
+  entrypoint.sh: |-
+    #!/bin/sh
+    DESIRED_MAX_MAP_COUNT=30000000
+    OBSERVED_MAX_MAP_COUNT=$(sysctl --values vm.max_map_count)
+
+    printf "%s\t%s\n" "Desired  'vm.max_map_count'" "${DESIRED_MAX_MAP_COUNT}"
+    printf "%s\t%s\n" "Observed 'vm.max_map_count'" "${OBSERVED_MAX_MAP_COUNT}"
+    if [[ "$OBSERVED_MAX_MAP_COUNT" -lt "$DESIRED_MAX_MAP_COUNT" ]]
+    then
+        printf "[WARNING] Detected kernel parameter 'vm.max_map_count' setting (%s) is lower than the desired setting for optimal system performance (%s).\n" "${OBSERVED_MAX_MAP_COUNT}" "${DESIRED_MAX_MAP_COUNT}"
+        printf "Setting 'vm.max_map_count' via 'sysctl' command.\n"
+        sysctl -w vm.max_map_count=$DESIRED_MAX_MAP_COUNT >> /etc/sysctl.d/k8s.conf
+        sleep 60
+    fi
