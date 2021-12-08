@@ -11,9 +11,10 @@ cluster:
       - name: hare
       - name: s3
         services:
-        - s3server, haproxy
+        - s3server
+        - haproxy
         - authserver
-        - s3bgworker
+        - bgworker
       storage:
         - name: cvg-01
           type: ios
@@ -39,8 +40,7 @@ cluster:
         - fsm
       - name: s3
         services:
-        - s3bgschedular
-        - openldap
+        - bgscheduler
       - name: csm
         services:
         - agent
