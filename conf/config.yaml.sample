@@ -17,6 +17,7 @@ cortx:
     consul:
       endpoints:
         - tcp://consul-server.default.svc.cluster.local:8301
+        - http://consul-server.default.svc.cluster.local:8500
       admin: admin
       secret: consul_admin_secret
   common:
