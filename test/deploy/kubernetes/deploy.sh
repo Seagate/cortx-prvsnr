@@ -22,6 +22,31 @@ function show_usage {
     exit 1
 }
 
+function wait_for_pod_to_be_ready(){
+    while true; do
+        count=0
+        while IFS= read -r line; do
+            IFS=" " read -r -a pod_status <<< "$line"
+            IFS="/" read -r -a ready_status <<< "${pod_status[1]}"
+            if [[ "${pod_status[2]}" != "Running" || "${ready_status[0]}" != "${ready_status[1]}" ]]; then
+                if [[ "${pod_status[2]}" == "Error" ]]; then
+                    printf "\n'${pod_status[0]}' pod deployment did not complete. Exit early.\n"
+                    exit 1
+                fi
+                break
+            fi
+            count=$((count+1))
+        done <<< "$(kubectl get pods --namespace=$namespace | grep  $1)"
+
+        if [[ $MAXNODES -eq $count ]]; then
+            break
+        else
+            printf "."
+        fi
+        sleep 1s
+    done
+}
+
 while [ $# -gt 0 ];  do
     case $1 in
     -i )
@@ -199,6 +224,9 @@ if [ $REDEFPODS = true ]; then
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
+    printf "\nWaiting for Data pod to be ready."
+    wait_for_pod_to_be_ready 'data-node.-.*'
+    printf "\n\n"
 
     # Create Server Node Service (Headless)
     for NODE_INDEX in $(seq 1 $MAXNODES); do
@@ -217,6 +245,9 @@ if [ $REDEFPODS = true ]; then
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
+    printf "\nWaiting for Server pod to be ready."
+    wait_for_pod_to_be_ready 'server-node.-.*'
+    printf "\n\n"
 
 else
     # Create Storage Node Service (Headless)
@@ -236,6 +267,9 @@ else
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
+    printf "\nWaiting for Storage pod to be ready."
+    wait_for_pod_to_be_ready 'storage-node.-.*'
+    printf "\n\n"
 fi
 
 echo -e "Monitor All Nodes for Completed status";
