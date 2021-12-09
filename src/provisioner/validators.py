@@ -22,6 +22,7 @@ import inspect
 from cortx.utils.conf_store import Conf
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.config_store import ConfigStore
+from cortx.utils.cortx import Const
 
 
 class Validator:
@@ -72,7 +73,7 @@ class ConfigValidator(Validator):
         if Conf.get(ConfigValidator._solution_index, 'cluster') is not None:
             ConfigValidator()._check_storage_sets()
             ConfigValidator()._check_number_of_nodes()
-
+            ConfigValidator()._validate_components()
         if Conf.get(ConfigValidator._solution_index, 'cortx') is not None:
             ConfigValidator()._check_external_services()
 
@@ -90,37 +91,35 @@ class ConfigValidator(Validator):
         cls.solution_conf_url = solution_conf_url
         cls.cortx_conf_url = cortx_conf_url
         Conf.load(cls._solution_index, cls.solution_conf_url)
-        cls.cortx_config_store = ConfigStore(cls.cortx_conf_url)
+        cls.cortx_conf = ConfigStore(cls.cortx_conf_url)
 
     def _check_storage_sets(self):
         """ Check no of storage_sets present in conf_store
-            and solution_config is same. """
+            and cluster config is same. """
 
-        input_storage_sets = self._get_value_from_solution_config(
+        cluster_config_storage_sets = self._get_config(
             ConfigValidator._key_storage_set_sc)
-        output_storage_sets = self._get_value_from_conf_store(
+        confstore_storage_sets = self._get_value_from_conf_store(
             ConfigValidator._key_storage_set_cs)
 
-        if len(input_storage_sets) != len(output_storage_sets):
+        if len(cluster_config_storage_sets) != len(confstore_storage_sets):
             raise CortxProvisionerError(errno.EINVAL,
                 'No of storage_sets define in conf_store is not same as '
-                f'solution_config. Storage_sets in {self.solution_conf_url} '
-                f'is {len(input_storage_sets)} and in {self.cortx_conf_url} '
-                f'is {len(output_storage_sets)}')
+                f'cluster config. Storage_sets in {self.solution_conf_url} '
+                f'is {len(cluster_config_storage_sets)} and in {self.cortx_conf_url} '
+                f'is {len(confstore_storage_sets)}')
 
         return 0
 
     def _check_number_of_nodes(self):
         """ Check no. of nodes present in conf_store
-            and solution config is same. """
+            and cluster config is same. """
 
-        input_storage_sets = self._get_value_from_solution_config(
-            ConfigValidator._key_storage_set_sc)
-        # Get nodes in each storage_set from solution_conf.
-        storage_set_in_sol_conf = {}
-        for storage_set in input_storage_sets:
+        # Get nodes in each storage_set from cluster config.
+        cluster_config_storage_sets = {}
+        for storage_set in self._get_config(ConfigValidator._key_storage_set_sc):
             storage_set_name = storage_set['name']
-            storage_set_in_sol_conf[storage_set_name] = storage_set['nodes']
+            cluster_config_storage_sets[storage_set_name] = storage_set['nodes']
 
         # Get nodes in each storage_set from Conf_store.
         storage_set_in_conf_store = {}
@@ -133,13 +132,13 @@ class ConfigValidator(Validator):
             storage_set_in_conf_store[storage_set_id].append(node_info)
 
         # validate nodes define for each storage_set in conf_store,
-        # is same as nodes define in solution_config
+        # is same as nodes define in cluster config
         for key in storage_set_in_conf_store.keys():
             cs_nodes = storage_set_in_conf_store[key]
-            sc_nodes = storage_set_in_sol_conf[key]
+            sc_nodes = cluster_config_storage_sets[key]
             if len(cs_nodes) != len(sc_nodes):
                 raise CortxProvisionerError(errno.EINVAL,
-                    'No of nodes define in conf_store is not same as solution_config.'
+                    'No of nodes define in conf_store is not same as cluster config.'
                     f' Nodes in {self.solution_conf_url} is {len(sc_nodes)} and '
                     f'in {self.cortx_conf_url} is {len(cs_nodes)}')
 
@@ -148,29 +147,60 @@ class ConfigValidator(Validator):
     def _check_external_services(self):
         """" Validate no of external services in cortx config """
 
-        sol_conf_ext_services = self._get_value_from_solution_config(
+        cortx_config_ext_services = self._get_config(
             ConfigValidator._key_ext_service)
         conf_stor_ext_services = self._get_value_from_conf_store(
             ConfigValidator._key_ext_service)
 
-        if len(conf_stor_ext_services) != len(sol_conf_ext_services):
+        if len(conf_stor_ext_services) != len(cortx_config_ext_services):
             raise CortxProvisionerError(errno.EINVAL,
                 'External services define in conf_store is not same as '
-                f'solution_config. External services in {self.solution_conf_url}'
-                f' is {len(sol_conf_ext_services)} and in {self.cortx_conf_url}'
+                f'cortx config. External services in {self.solution_conf_url}'
+                f' is {len(cortx_config_ext_services)} and in {self.cortx_conf_url}'
                 f' is {len(conf_stor_ext_services)}')
 
         # Check endpoints
         for service in conf_stor_ext_services.keys():
             if (conf_stor_ext_services[service]['endpoints'] !=
-                    sol_conf_ext_services[service]['endpoints']):
+                    cortx_config_ext_services[service]['endpoints']):
                 raise CortxProvisionerError(errno.EINVAL,
                     f'{service} endpoints define in conf_store is not same as '
-                    'solution_config.')
+                    'cortx config.')
         return 0
 
-    def _get_value_from_solution_config(self, key):
-        """ Read config value for key from solution_config """
+    def _validate_components(self):
+        """Verify components defined in cluster.yaml is supported in constant file."""
+        node_types = self._get_config('cluster>node_types')
+        for node_type in node_types:
+            components_list = node_type['components']
+            for component in components_list:
+                # check component_name exist in Utils Const cls.
+                component_name = component['name']
+                if component_name not in Const._value2member_map_:
+                    raise CortxProvisionerError(errno.EINVAL,
+                        f'{component_name} is not present in constant file.')
+                if component.get('services') is not None:
+                    services = component.get('services')
+                    self._validate_services(services, component_name)
+
+    def _validate_services(self, services, component_name):
+        """Verify services defined in cluster.yaml is supported in constant file."""
+        for service in services:
+            # check if service name is define in utils const.py file.
+            if service not in Const._value2member_map_:
+                raise CortxProvisionerError(errno.EINVAL,
+                    f'{service} is not present in constant file.')
+            # Verify service_name is define for the specific component.
+            # Get all keys from constant file which has same 'service_name'.
+            constant_service_keys = [
+                key for key, enum_ele in Const.__members__.items() if enum_ele.value == service]
+            if not any(component_name.upper() in key for key in constant_service_keys):
+                raise CortxProvisionerError(errno.EINVAL,
+                    f'{service} is not defined for {component_name} in constant file.')
+        return 0
+
+    def _get_config(self, key):
+        """Read config value for key from cortx or cluster config."""
 
         config_value = Conf.get(
             ConfigValidator._solution_index, key)
@@ -184,7 +214,7 @@ class ConfigValidator(Validator):
     def _get_value_from_conf_store(self, key):
         """ Read config value from conf_store """
 
-        config_value = self.cortx_config_store.get(key)
+        config_value = self.cortx_conf.get(key)
         if config_value is None:
             raise CortxProvisionerError(
                 errno.EINVAL,
