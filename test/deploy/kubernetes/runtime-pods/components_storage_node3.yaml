@@ -34,10 +34,6 @@ spec:
       - name: cortx-secret
         secret:
           secretName: cortx-secret
-      - name: node-config
-        configMap:
-          defaultMode: 0700
-          name: node-config
       - name: shared-node3
         persistentVolumeClaim:
           claimName: shared-node3
@@ -105,17 +101,6 @@ spec:
           devicePath: /dev/sdh
         - name: sdi
           devicePath: /dev/sdi
-      - name: node-config
-        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
-        imagePullPolicy: IfNotPresent
-        command:
-          - /nodeconfig/entrypoint.sh
-        volumeMounts:
-        - name: node-config
-          mountPath: /nodeconfig
-          readOnly: true
-        securityContext:
-          privileged: true
       containers:
       - name: cortx-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
