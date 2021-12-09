@@ -44,28 +44,20 @@ done
 # Update Image in All PODs
 print_header "Updating Image in All Pods - Cluster";
 sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/runtime-pods/components_control_node.yaml
-sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/provisioner-pods/deployment_control_node.yaml
 if [ $REDEFPODS = true ]; then
     sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/runtime-pods/components_ha_node.yaml
-    sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $BASEPATH/provisioner-pods/deployment_ha_node.yaml
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         DATA_RUNTIME_POD="$BASEPATH/runtime-pods/components_data_$NODE_NAME.yaml";
         SERVER_RUNTIME_POD="$BASEPATH/runtime-pods/components_server_$NODE_NAME.yaml";
-        DATA_DEPLOYMENT_POD="$BASEPATH/provisioner-pods/deployment_data_$NODE_NAME.yaml";
-        SERVER_DEPLOYMENT_POD="$BASEPATH/provisioner-pods/deployment_server_$NODE_NAME.yaml";
         sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $DATA_RUNTIME_POD;
         sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $SERVER_RUNTIME_POD;
-        sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $DATA_DEPLOYMENT_POD;
-        sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $SERVER_DEPLOYMENT_POD;
     done
 else
     for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     STORAGE_RUNTIME_POD="$BASEPATH/runtime-pods/components_storage_$NODE_NAME.yaml";
-    STORAGE_DEPLOYMENT_POD="$BASEPATH/provisioner-pods/deployment_storage_$NODE_NAME.yaml";
     sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $STORAGE_RUNTIME_POD;
-    sed -i -e 's!^\(\s*image:\)[^"]*!\1 '$DEPLOY_IMAGE'!' $STORAGE_DEPLOYMENT_POD;
     done
 fi
 
@@ -98,6 +90,23 @@ kubectl create configmap solution-config \
     --from-file="$BASEPATH"/solution-config/cluster.yaml \
     --from-file="$BASEPATH"/solution-config/config.yaml \
     --namespace "$NAMESPACE";
+
+# Create Config Map For Machine-id
+kubectl create configmap control-node-id --from-literal=id=9995f539f4f770e2a3fe9e2e615c32a8 --namespace "$NAMESPACE";
+if [ $REDEFPODS = true ]; then
+    kubectl create configmap ha-node-id --from-literal=id=1115f539f4f770e2a3fe9e2e615c32a8 --namespace "$NAMESPACE";
+    kubectl create configmap server-node1-id --from-literal=id=ddd120a9e051d103c164f605615c32a4 --namespace "$NAMESPACE";
+    kubectl create configmap server-node2-id --from-literal=id=eee340f79047df9bb52fa460615c32a5 --namespace "$NAMESPACE";
+    kubectl create configmap server-node3-id --from-literal=id=fff8700fe6797ed532e311b0615c32a7 --namespace "$NAMESPACE";
+    kubectl create configmap data-node1-id --from-literal=id=aaa120a9e051d103c164f605615c32a4 --namespace "$NAMESPACE";
+    kubectl create configmap data-node2-id --from-literal=id=bbb340f79047df9bb52fa460615c32a5 --namespace "$NAMESPACE";
+    kubectl create configmap data-node3-id --from-literal=id=ccc8700fe6797ed532e311b0615c32a7 --namespace "$NAMESPACE";
+else
+    kubectl create configmap storage-node1-id --from-literal=id=aaa120a9e051d103c164f605615c32a4 --namespace "$NAMESPACE";
+    kubectl create configmap storage-node2-id --from-literal=id=bbb340f79047df9bb52fa460615c32a5 --namespace "$NAMESPACE";
+    kubectl create configmap storage-node3-id --from-literal=id=ccc8700fe6797ed532e311b0615c32a7 --namespace "$NAMESPACE";
+fi
+
 
 # Create Secrets
 kubectl apply -f "$BASEPATH"/solution-config/secrets.yaml --namespace $NAMESPACE;
@@ -146,11 +155,11 @@ kubectl apply -f "$BASEPATH/external-services/headless_control_node.yaml" --name
 
 # Create Control Node (POD)
 print_header "Creating Cotrol Node - Cluster";
-kubectl apply -f "$BASEPATH/provisioner-pods/deployment_control_node.yaml" --namespace "$NAMESPACE";
+kubectl apply -f "$BASEPATH/runtime-pods/components_control_node.yaml" --namespace "$NAMESPACE";
 
 # Wait for Control-Node (POD) execution
 printf "\nWaiting for Control Node.";
-while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Completed" ]; do
+while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Running" ]; do
     printf ".";
     sleep $TIMEDELAY;
 done
@@ -163,16 +172,16 @@ if [ $REDEFPODS = true ]; then
 
     # Create HA Node (POD)
     print_header "Creating HA Node - Cluster";
-    kubectl apply -f "$BASEPATH/provisioner-pods/deployment_ha_node.yaml" --namespace "$NAMESPACE";
+    kubectl apply -f "$BASEPATH/runtime-pods/components_ha_node.yaml" --namespace "$NAMESPACE";
 
     # Wait for HA Node (POD) execution
     printf "\nWaiting for HA Node.";
-    while [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" != "Completed" ]; do
+    while [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" != "Running" ]; do
         printf ".";
         sleep $TIMEDELAY;
     done
     printf "\n";
-    
+
     # Create Data-Node Service (Headless)
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
@@ -186,7 +195,7 @@ if [ $REDEFPODS = true ]; then
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         print_header "Creating Data Node - $NODE_NAME";
-        NODE_POD="$BASEPATH/provisioner-pods/deployment_data_$NODE_NAME.yaml";
+        NODE_POD="$BASEPATH/runtime-pods/components_data_$NODE_NAME.yaml";
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
@@ -204,7 +213,7 @@ if [ $REDEFPODS = true ]; then
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         print_header "Creating Server Node - $NODE_NAME";
-        NODE_POD="$BASEPATH/provisioner-pods/deployment_server_$NODE_NAME.yaml";
+        NODE_POD="$BASEPATH/runtime-pods/components_server_$NODE_NAME.yaml";
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done
@@ -223,7 +232,7 @@ else
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         NODE_NAME="node$NODE_INDEX";
         print_header "Creating Storage Node - $NODE_NAME";
-        NODE_POD="$BASEPATH/provisioner-pods/deployment_storage_$NODE_NAME.yaml";
+        NODE_POD="$BASEPATH/runtime-pods/components_storage_$NODE_NAME.yaml";
         kubectl apply -f "$NODE_POD" --namespace "$NAMESPACE";
         sleep $TIMEDELAY;
     done

@@ -31,12 +31,38 @@ spec:
       - name: node-id
         configMap:
           name: ha-node-id
+      - name: cortx-secret
+        secret:
+          secretName: cortx-secret
       - name: shared-node1
         persistentVolumeClaim:
           claimName: shared-node1
       - name: local-node1
         persistentVolumeClaim:
           claimName: local-node1
+      initContainers:
+      - name: cortx-ha-node
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - set -x;
+          mkdir -p /opt/seagate/cortx/ha/bin;
+          echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/ha/bin/ha_setup;
+          chmod +x /opt/seagate/cortx/ha/bin/ha_setup;
+          /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+        volumeMounts:
+        - name: solution-config
+          mountPath: /etc/cortx/solution
+        - name: node-id
+          mountPath: /etc/cortx/solution/node
+        - name: local-node1
+          mountPath: /etc/cortx
+        - name: shared-node1
+          mountPath: /share
+        - name: cortx-secret
+          mountPath: /etc/cortx/solution/secret
       containers:
       - name: cortx-ha
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
