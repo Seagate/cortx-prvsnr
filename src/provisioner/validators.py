@@ -193,7 +193,7 @@ class ConfigValidator(Validator):
             # Verify service_name is define for the specific component.
             # Get all keys from constant file which has same 'service_name'.
             constant_service_keys = [
-                key for key, enum_ele in Const.__members__.items() if enum_ele.value == service]
+                key for key, enum_ele in Const.__members__.items() if enum_ele.value.lower() == service.lower()]
             if not any(component_name.upper() in key for key in constant_service_keys):
                 raise CortxProvisionerError(errno.EINVAL,
                     f'{service} is not defined for {component_name} in constant file.')
