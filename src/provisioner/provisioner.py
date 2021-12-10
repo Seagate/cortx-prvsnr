@@ -86,7 +86,7 @@ class CortxProvisioner:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
 
         # Secrets path from config file
-        if cortx_conf.get('cortx>common>storage>local'): 
+        if cortx_conf.get('cortx>common>storage>local'):
             CortxProvisioner.secrets_path =cortx_conf.get('cortx>common>storage>local')+'/solution/secret'
 
         # source code for encrypting and storing secret key
