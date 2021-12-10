@@ -70,8 +70,9 @@ class CortxProvisioner:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
         cortx_conf = ConfigStore(cortx_conf_url)
 
-        # Check if config is already applied.
-        if cortx_conf.get('cortx>common>release') and force_override is False:
+        # Check if config is already applied on node.
+        node_id = Conf.machine_id
+        if cortx_conf.get(f'node>{node_id}>provisioning>version') and force_override is False:
             Log.info('CORTX config already applied on this node.')
             return 0
 
