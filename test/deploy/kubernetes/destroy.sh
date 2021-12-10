@@ -33,9 +33,7 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Storage Node - $NODE_NAME";
-    kubectl delete pod data-$NODE_NAME --namespace "$NAMESPACE" ;
     kubectl delete deployment data-$NODE_NAME --namespace "$NAMESPACE" ;
-    kubectl delete pod storage-$NODE_NAME --namespace "$NAMESPACE" ;
     kubectl delete deployment storage-$NODE_NAME --namespace "$NAMESPACE" ;
 
     sleep $INTRDELAY;
@@ -55,7 +53,6 @@ done
 for NODE_INDEX in $(seq 1 $MAXNODES); do
     NODE_NAME="node$NODE_INDEX";
     print_header "Deleting Server Node - $NODE_NAME";
-    kubectl delete pod server-$NODE_NAME --namespace "$NAMESPACE" ;
     kubectl delete deployment server-$NODE_NAME --namespace "$NAMESPACE" ;
     sleep $INTRDELAY;
 done
@@ -67,7 +64,6 @@ kubectl delete -f "$BASEPATH/external-services/headless_control_node.yaml" --nam
 
 # Delete Control Node (POD)
 print_header "Deleting Control Node - Cluster";
-kubectl delete pod control-node --namespace "$NAMESPACE";
 kubectl delete deployment control-node --namespace "$NAMESPACE";
 sleep $INTRDELAY;
 
@@ -77,7 +73,6 @@ kubectl delete -f "$BASEPATH/external-services/headless_ha_node.yaml" --namespac
 
 # Delete HA Node (POD)
 print_header "Deleting HA Node - Cluster";
-kubectl delete pod ha-node --namespace "$NAMESPACE";
 kubectl delete deployment ha-node --namespace "$NAMESPACE";
 sleep $INTRDELAY;
 
