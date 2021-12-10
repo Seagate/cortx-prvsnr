@@ -196,12 +196,12 @@ class ConfigValidator(Validator):
                 key for key, enum_ele in Const.__members__.items() if enum_ele.value.lower() == service.lower()]
             if not any(component_name.upper() in key for key in constant_service_keys):
                 raise CortxProvisionerError(errno.EINVAL,
-                    f'{service} is not defined for {component_name} in constant file.')
+                    f'"{service}" service defined in "{self.solution_conf_url}" for '
+                    '"{component_name}", is not supported in constant file.')
         return 0
 
     def _get_config(self, key):
         """Read config value for key from cortx or cluster config."""
-
         config_value = Conf.get(
             ConfigValidator._solution_index, key)
         if config_value is None:
