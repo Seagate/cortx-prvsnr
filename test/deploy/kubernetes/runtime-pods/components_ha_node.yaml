@@ -41,7 +41,7 @@ spec:
         persistentVolumeClaim:
           claimName: local-node1
       initContainers:
-      - name: cortx-ha-node
+      - name: cortx-setup
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:

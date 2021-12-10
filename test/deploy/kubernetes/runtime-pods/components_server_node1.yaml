@@ -41,7 +41,7 @@ spec:
         persistentVolumeClaim:
           claimName: local-node1
       initContainers:
-      - name: cortx-server
+      - name: cortx-setup
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -67,7 +67,7 @@ spec:
         - name: cortx-secret
           mountPath: /etc/cortx/solution/secret
       containers:
-      - name: cortx-hax
+      - name: cortx-motr-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -121,7 +121,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-s3auth
+      - name: cortx-s3-auth-server
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -139,7 +139,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-s3haproxy
+      - name: cortx-s3-haproxy
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:

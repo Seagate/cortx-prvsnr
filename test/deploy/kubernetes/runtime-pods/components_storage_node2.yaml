@@ -65,7 +65,7 @@ spec:
         persistentVolumeClaim:
           claimName: dev-sdi-node2
       initContainers:
-      - name: cortx-data
+      - name: cortx-setup
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -102,7 +102,7 @@ spec:
         - name: sdi
           devicePath: /dev/sdi
       containers:
-      - name: cortx-hax
+      - name: cortx-motr-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -120,7 +120,7 @@ spec:
           mountPath: /share
         - name: local-node2
           mountPath: /etc/cortx
-      - name: cortx-confd
+      - name: cortx-motr-confd
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -244,7 +244,7 @@ spec:
           mountPath: /share
         - name: local-node2
           mountPath: /etc/cortx
-      - name: cortx-s3auth
+      - name: cortx-s3-auth-server
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -262,7 +262,7 @@ spec:
           mountPath: /share
         - name: local-node2
           mountPath: /etc/cortx
-      - name: cortx-s3haproxy
+      - name: cortx-s3-haproxy
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -291,7 +291,7 @@ spec:
           name: "port-9443"
         - containerPort: 28049
           name: "port-28049"
-      - name: cortx-s3bgc
+      - name: cortx-s3-bg-consumer
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:

@@ -65,7 +65,7 @@ spec:
         persistentVolumeClaim:
           claimName: dev-sdi-node3
       initContainers:
-      - name: cortx-data
+      - name: cortx-setup
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -111,7 +111,7 @@ spec:
           devicePath: /dev/sdi
 
       containers:
-      - name: cortx-hax
+      - name: cortx-motr-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -129,7 +129,7 @@ spec:
           mountPath: /share
         - name: local-node3
           mountPath: /etc/cortx
-      - name: cortx-confd
+      - name: cortx-motr-confd
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:

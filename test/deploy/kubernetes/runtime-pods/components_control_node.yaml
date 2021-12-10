@@ -42,7 +42,7 @@ spec:
           secretName: cortx-secret
 
       initContainers:
-      - name: cortx-control-node
+      - name: cortx-setup
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -81,7 +81,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: csm-agent
+      - name: cortx-csm-agent
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         ports:
@@ -102,7 +102,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: s3-bg-producer
+      - name: cortx-bg-producer
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
