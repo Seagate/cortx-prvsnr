@@ -85,6 +85,10 @@ class CortxProvisioner:
         except ConfError as e:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
 
+        # Secrets path from config file
+        if cortx_conf.get('cortx>common>storage>local'): 
+            CortxProvisioner.secrets_path =cortx_conf.get('cortx>common>storage>local')+'/solution/secret'
+
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
