@@ -31,14 +31,14 @@ Run reimage.sh script to install helm, pull 3rd party as well as cortx-all docke
 
 Deploy Provisioner Deployment POD **(Run Only on Master Node)**  
 
-Run deploy.sh script to create cortx-deployment and Launch 1 cortx-provisioner deployment container on each POD. Once the script is executed, 3 Storage deployment POD’s will be running on 3 Nodes and 1 Control Pod will be running on master node. Each POD will have provisioner container which will execute cortx_setup config apply and cluster bootstrap commands.  
+Run deploy.sh script to create cortx-deployment and Launch 1 cortx-provisioner deployment container on each POD. Once the script is executed, 3 Storage deployment POD’s will be running on 3 Nodes and 1 Control Pod will be running on master node. Each POD will have 1 init provisioner container which will execute cortx_setup config apply and cluster bootstrap commands.  
 ```bash
 Note: Before running the deploy.sh script, In test/deploy/kubernetes/solution-config/cluster.yaml 
 Make changes according to the number of nodes in the cluster.yaml and config.yaml. 
 
-1. Below deploy.sh script will deploy provisioner container in 3-node Kubernetes cluster.
+1. Below deploy.sh script will deploy cortx-deployment in 3-node Kubernetes cluster.
 
-2. If More than 3-nodes deployment is to be done then create storage pod files under test/deploy/kubernetes/provisioner-pods for each node. 
+2. If More than 3-nodes deployment is to be done then create storage pod files under test/deploy/kubernetes/runtime-pods for each node. 
 
 3. Also, create respective PV and PVC files inside test/deploy/kubernetes/persistent-volumes and test/deploy/kubernetes/volume-claims folder. 
 
@@ -46,16 +46,6 @@ Make changes according to the number of nodes in the cluster.yaml and config.yam
 ```
 ```bash
 ./deploy.sh
-```
-<br>
-
-Deploy Component Service POD's **(Run Only on Master Node)** 
-
-```bash
-Note: test/deploy/kubernetes/runtime-pods has component service pod files supporting for 3-node deployment. For more than 3-node deployment Add storage pod files with respect to a number of nodes.
-```
-```bash
-./service.sh
 ```
 <br>
 
