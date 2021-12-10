@@ -185,6 +185,10 @@ kubectl apply -f "$BASEPATH/runtime-pods/components_control_node.yaml" --namespa
 # Wait for Control-Node (POD) execution
 printf "\nWaiting for Control Node.";
 while [ "$(kubectl get pods | grep control-node | awk '{print $3}')" != "Running" ]; do
+    if [ "$(kubectl get pods | grep control-node | awk '{print $3}')" == "Error" ]; then
+        printf "\n' control-node pod deployment did not complete. Exit early.\n"
+        exit 1
+    fi
     printf ".";
     sleep $TIMEDELAY;
 done
@@ -202,6 +206,10 @@ if [ $REDEFPODS = true ]; then
     # Wait for HA Node (POD) execution
     printf "\nWaiting for HA Node.";
     while [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" != "Running" ]; do
+        if [ "$(kubectl get pods | grep ha-node | awk '{print $3}')" == "Error" ]; then
+            printf "\n ha-node pod deployment did not complete. Exit early.\n"
+            exit 1
+        fi
         printf ".";
         sleep $TIMEDELAY;
     done

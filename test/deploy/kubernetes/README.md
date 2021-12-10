@@ -45,14 +45,19 @@ Make changes according to the number of nodes in the cluster.yaml and config.yam
 4. And create headless service files inside test/deploy/kubernetes/external-services folder for each storage pod.
 ```
 ```bash
-./deploy.sh
+./deploy.sh -i <image-tag>
 ```
 <br>
+
+```bash
+Note: For Redefined PODs structure (Data, Server, Control and HA)
+./deploy.sh -i <image-tag> -r
+```
 
 Validate Services Startup **(On Master node)**  
 ```bash
 # Go inside any storage pod on the cluster
-kubectl exec -it storage-node1 -- /bin/bash
+kubectl exec -it <storage-pod-name> -c cortx-motr-hax -- /bin/bash
 
 # Check servies status
 [root@storage-node/]# hctl status
