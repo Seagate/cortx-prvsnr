@@ -79,7 +79,7 @@ kubectl logs <pod-name>
 ```
 ## Upgrade CORTX POD's **(On Master Node)
  Run Upgrade script present at test/deploy/kubernetes/upgrade.sh with -i (Upgrade Image) argument by providing CORTX-ALL Image B for Upgrade as follows
- ```
+ ```bash
  cd /root/cortx-prvsnr/test/deploy/kubernetes
 ./upgrade.sh -i <Image-tag>
 ```
