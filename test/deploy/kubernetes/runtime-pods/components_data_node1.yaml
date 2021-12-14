@@ -28,6 +28,9 @@ spec:
       - name: solution-config
         configMap:
           name: solution-config
+      - name: cortx-secret
+        secret:
+          secretName: cortx-secret
       - name: node-id
         configMap:
           name: data-node1-id
@@ -61,8 +64,53 @@ spec:
       - name: sdi
         persistentVolumeClaim:
           claimName: dev-sdi-node1
+      initContainers:
+      - name: cortx-setup
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - set -x;
+          echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
+          echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/hare/bin/hare_setup;
+          echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/motr/bin/motr_setup;
+          echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/s3/bin/s3_setup;
+          chmod +x /opt/seagate/cortx/utils/bin/utils_setup;
+          chmod +x /opt/seagate/cortx/hare/bin/hare_setup;
+          chmod +x /opt/seagate/cortx/motr/bin/motr_setup;
+          chmod +x /opt/seagate/cortx/s3/bin/s3_setup;
+          /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+        volumeMounts:
+        - name: solution-config
+          mountPath: /etc/cortx/solution
+        - name: node-id
+          mountPath: /etc/cortx/solution/node
+        - name: local-node1
+          mountPath: /etc/cortx
+        - name: shared-node1
+          mountPath: /share
+        - name: cortx-secret
+          mountPath: /etc/cortx/solution/secret
+        volumeDevices:
+        - name: sdb
+          devicePath: /dev/sdb
+        - name: sdc
+          devicePath: /dev/sdc
+        - name: sdd
+          devicePath: /dev/sdd
+        - name: sde
+          devicePath: /dev/sde
+        - name: sdf
+          devicePath: /dev/sdf
+        - name: sdg
+          devicePath: /dev/sdg
+        - name: sdh
+          devicePath: /dev/sdh
+        - name: sdi
+          devicePath: /dev/sdi
       containers:
-      - name: cortx-hax
+      - name: cortx-motr-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -80,7 +128,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-confd
+      - name: cortx-motr-confd
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:

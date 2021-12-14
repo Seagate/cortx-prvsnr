@@ -31,6 +31,9 @@ spec:
       - name: node-id
         configMap:
           name: storage-node1-id
+      - name: cortx-secret
+        secret:
+          secretName: cortx-secret
       - name: shared-node1
         persistentVolumeClaim:
           claimName: shared-node1
@@ -61,8 +64,45 @@ spec:
       - name: sdi
         persistentVolumeClaim:
           claimName: dev-sdi-node1
+      initContainers:
+      - name: cortx-setup
+        image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - set -x;
+          /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c yaml:///etc/cortx/cluster.conf;
+        volumeMounts:
+        - name: solution-config
+          mountPath: /etc/cortx/solution
+        - name: node-id
+          mountPath: /etc/cortx/solution/node
+        - name: local-node1
+          mountPath: /etc/cortx
+        - name: shared-node1
+          mountPath: /share
+        - name: cortx-secret
+          mountPath: /etc/cortx/solution/secret
+        volumeDevices:
+        - name: sdb
+          devicePath: /dev/sdb
+        - name: sdc
+          devicePath: /dev/sdc
+        - name: sdd
+          devicePath: /dev/sdd
+        - name: sde
+          devicePath: /dev/sde
+        - name: sdf
+          devicePath: /dev/sdf
+        - name: sdg
+          devicePath: /dev/sdg
+        - name: sdh
+          devicePath: /dev/sdh
+        - name: sdi
+          devicePath: /dev/sdi
       containers:
-      - name: cortx-hax
+      - name: cortx-motr-hax
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -80,7 +120,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-confd
+      - name: cortx-motr-confd
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -111,7 +151,7 @@ spec:
         - name: solution-config
           mountPath: /etc/cortx/solution
         - name: node-id
-          mountPath: /etc/cortx/solution/node      
+          mountPath: /etc/cortx/solution/node
         - name: shared-node1
           mountPath: /share
         - name: local-node1
@@ -204,7 +244,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-s3auth
+      - name: cortx-s3-auth-server
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -222,7 +262,7 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-s3haproxy
+      - name: cortx-s3-haproxy
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
@@ -251,7 +291,7 @@ spec:
           name: "port-9443"
         - containerPort: 28049
           name: "port-28049"
-      - name: cortx-s3bgc
+      - name: cortx-s3-bg-consumer
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
