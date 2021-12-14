@@ -47,7 +47,9 @@ class CortxProvisioner:
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
+    _rel_secret_path = "/solution/secret"
     cortx_release = CortxRelease()
+    
 
     @staticmethod
     def init():
@@ -84,6 +86,10 @@ class CortxProvisioner:
                 **cs_option)
         except ConfError as e:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
+
+        # Secrets path from config file
+        if cortx_conf.get('cortx>common>storage>local'):
+            CortxProvisioner.secrets_path = cortx_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
