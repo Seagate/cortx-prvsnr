@@ -147,12 +147,12 @@ class ConfigValidator(Validator):
                     endpoints_in_confstore.append(self._get_value_from_conf_store(
                         f'{ConfigValidator._key_ext_service}>{service}>endpoints[{counter}]'))
                     counter = counter + 1
-            # Check endpoints
-            if (endpoints_in_confstore != common_config_ext_services[
-                service]['endpoints']):
-                raise CortxProvisionerError(errno.EINVAL,
-                    f'{service} endpoints define in {self.cortx_conf_url} and '
-                    f'{self.solution_conf_url} is not equal.')
+                # Check endpoints
+                if (endpoints_in_confstore != common_config_ext_services[
+                    service]['endpoints']):
+                    raise CortxProvisionerError(errno.EINVAL,
+                        f'{service} endpoints define in {self.cortx_conf_url} and '
+                        f'{self.solution_conf_url} is not equal.')
 
         return 0
 
