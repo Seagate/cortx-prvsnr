@@ -251,7 +251,7 @@ spec:
         - /bin/sh
         - -c
         - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3authserver -c yaml:///etc/cortx/cluster.conf;
+          /opt/seagate/cortx/s3/bin/s3_start --service authserver -c yaml:///etc/cortx/cluster.conf;
           sleep infinity;
         volumeMounts:
         - name: solution-config
@@ -291,14 +291,14 @@ spec:
           name: "port-9443"
         - containerPort: 28049
           name: "port-28049"
-      - name: cortx-s3-bg-consumer
+      - name: cortx-s3-bgworker
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
         - /bin/sh
         - -c
         - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3bgconsumer -c yaml:///etc/cortx/cluster.conf;
+          /opt/seagate/cortx/s3/bin/s3_start --service bgworker -c yaml:///etc/cortx/cluster.conf;
           sleep infinity;
         volumeMounts:
         - name: solution-config
