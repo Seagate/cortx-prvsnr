@@ -77,3 +77,20 @@ kubectl logs <pod-name>
 ```bash
 ./destroy.sh
 ```
+## Upgrade CORTX POD's **(On Master Node)
+ Run Upgrade script present at test/deploy/kubernetes/upgrade.sh with -i (Upgrade Image) argument by providing CORTX-ALL Image B for Upgrade as follows
+ ```bash
+ cd /root/cortx-prvsnr/test/deploy/kubernetes
+./upgrade.sh -i <Image-tag>
+```
+<br>
+
+Validate Services Startup **(On Master node)**  
+```bash
+# Go inside any storage pod on the cluster
+kubectl exec -it <storage-pod-name> -c cortx-motr-hax -- /bin/bash
+
+# Check servies status
+[root@storage-node/]# hctl status
+```
+<br>
