@@ -54,31 +54,23 @@ class CortxConfig:
                             errno.EINVAL,
                             f'{str(e)} is unspecified for external in cortx_config.')
 
-    def save(self, cortx_conf):
+    def save(self, cortx_conf, cortx_config_index):
         """ Save cortx-config into confstore """
 
-        kvs = []
         try:
-            # Update configmap keys as per confstore keys.
-            self._cortx_config['common']['setup_type'] = self._cortx_config['common'].pop(
-                'environment_type')
+            cortx_conf.copy(cortx_config_index)
+            # Check for release key.
             release_spec = self._cortx_config.get('common').get('release')
             is_valid, release_info = self._cortx_release.validate(release_spec)
             if is_valid is False:
-                if not release_spec:
-                    Log.warn('Release key "cortx>common>release" is '
-                            f'missing, adding {release_info} in confstore.')
-                    self._cortx_config['common']['release'] = release_info
-                else:
-                    for key in release_info.keys():
-                        Log.warn(f'Release key "cortx>common>release>{key}" is '
-                            'missing or has incorrect value')
-                        self._cortx_config['common']['release'][key] =  release_info[key]
-            key_prefix = 'cortx>'
-            for attr in self._cortx_config.keys():
-                kv = (key_prefix + attr, self._cortx_config[attr])
-                kvs.append(kv)
-            cortx_conf.set_kvs(kvs)
+                for key in release_info.keys():
+                    release_key_path = f'cortx>common>release>{key}'
+                    Log.warn(f'Release key {release_key_path} is missing or has '
+                        'incorrect value.')
+                    Log.info(f'Adding key "{release_key_path}" '
+                        f'and value "{release_info[key]}" in confstore.')
+                    cortx_conf.set(release_key_path, release_info[key])
+
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,

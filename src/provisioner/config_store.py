@@ -13,7 +13,10 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+import errno
 from cortx.utils.conf_store import Conf
+from cortx.utils.conf_store.error import ConfError
+from cortx.provisioner.error import CortxProvisionerError
 
 class ConfigStore:
     """ CORTX Config Store """
@@ -29,47 +32,41 @@ class ConfigStore:
         """
         Parameters:
         kvs - List of KV tuple, e.g. [('k1','v1'),('k2','v2')]
+        Where, k1, k2 - is full key path till the leaf key.
         """
-        for key, val in kvs.copy():
+
+        for key, val in kvs:
             try:
                 Conf.set(self._conf_idx, key, val)
-                kvs.remove((key, val))
-            except AssertionError:
-                # For consul(confstore backend),
-                # value should be string type.
-                key_value_list = self._parse_key_values(kvs)
-                for key, val in key_value_list:
-                    Conf.set(self._conf_idx, key, val)
+            except (AssertionError, ConfError) as e:
+                raise CortxProvisionerError(errno.EINVAL,
+                    f'Error occurred while adding key {key} and value {val}'
+                    f' in confstore. {e}')
         Conf.save(self._conf_idx)
 
     def set(self, key: str, val: str):
-        """  """
-        Conf.set(self._conf_idx, key, val)
-        Conf.save(self._conf_idx)
+        """Save key-value in CORTX confstore."""
+        try:
+            Conf.set(self._conf_idx, key, val)
+            Conf.save(self._conf_idx)
+        except (AssertionError, ConfError) as e:
+            raise CortxProvisionerError(errno.EINVAL,
+                f'Error occurred while adding key {key} and value {val}'
+                f' in confstore. {e}')
+
+    def copy(self, src_index: str):
+        """Copy src_index config into CORTX confstore file."""
+        try:
+            Conf.copy(src_index, self._conf_idx)
+        except (AssertionError, ConfError) as e:
+            raise CortxProvisionerError(errno.EINVAL,
+                f'Error occurred while copying config into confstore. {e}')
+
+    def search(self, parent_key, search_key, value):
+        """Search for given key under parent key in CORTX confstore."""
+        return Conf.search(self._conf_idx, parent_key, search_key, value)
 
     def get(self, key: str) -> str:
         """ Returns value for the given key """
 
         return Conf.get(self._conf_idx, key)
-
-    def _get_kvs(self, prefix, conf_value):
-        """Convert list,dict,int value into string type value.."""
-        kvs = []
-        if isinstance(conf_value, dict):
-            for attr, val in conf_value.items():
-                kvs.extend(self._get_kvs(f'{prefix}>{attr}', val))
-        elif isinstance(conf_value, list):
-            for i, list_attr in enumerate(conf_value):
-                kvs.extend(self._get_kvs(f'{prefix}[{i}]', list_attr))
-        elif isinstance(conf_value, int):
-            kvs.append((prefix, str(conf_value)))
-        elif isinstance(conf_value, str):
-            kvs.append((prefix, conf_value))
-        return kvs
-
-    def _parse_key_values(self, kvs):
-        """Return list containing key-values pair in string format."""
-        parsed_key_value = []
-        for key, val in kvs:
-            parsed_key_value.extend(self._get_kvs(key, val))
-        return parsed_key_value
