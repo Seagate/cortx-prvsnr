@@ -185,7 +185,7 @@ class CortxProvisioner:
 
         if cortx_conf.get(f'node>{node_id}>name') is None:
             raise CortxProvisionerError(
-                errno.EINVAL, f"Node id '{node_id}' not found in cortx config.")
+                errno.EINVAL, f'Node name not found in cortx config for node {node_id}.')
 
         node_name = cortx_conf.get(f'node>{node_id}>name')
 
