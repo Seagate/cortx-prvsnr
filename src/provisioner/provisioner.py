@@ -195,13 +195,14 @@ class CortxProvisioner:
     def _provision_components(cortx_conf: ConfigStore, mini_prov_interfaces: list, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
+        num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
         for interface in mini_prov_interfaces:
-            component_idx = 0
-            while cortx_conf.get(f'node>{node_id}>components[{component_idx}]>name') is not None:
+            for comp_idx in range(0, num_components):
+                key_prefix = f'node>{node_id}>components[{comp_idx}]'
+                component_name = cortx_conf.get(f'{key_prefix}>name')
+                # Get services.
                 service_idx = 0
                 services = []
-                key_prefix = f'node>{node_id}>components[{component_idx}]'
-                component_name = cortx_conf.get(f'{key_prefix}>name')
                 while (cortx_conf.get(f'{key_prefix}>services[{service_idx}]') is not None):
                     services.append(cortx_conf.get(f'{key_prefix}>services[{service_idx}]'))
                     service_idx = service_idx + 1
@@ -212,7 +213,6 @@ class CortxProvisioner:
                     is_updated = CortxProvisioner._is_component_updated(component_name, version)
                     if is_updated is True:
                         Log.info(f'{component_name} is already updated with {version} version.')
-                        component_idx = component_idx + 1
                         continue
                 CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.PROGRESS.value)
@@ -232,7 +232,6 @@ class CortxProvisioner:
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
                     component_version = CortxProvisioner.cortx_release.get_version(component_name)
                     cortx_conf.set(f'{key_prefix}>version', component_version)
-                component_idx = component_idx + 1
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
 

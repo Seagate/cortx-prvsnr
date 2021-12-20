@@ -87,37 +87,33 @@ class CortxCluster:
             kvs.append((prefix, node))
         return kvs
 
-    def _get_component_version(self, component_name):
-        """Return component version."""
-        version = self._cortx_release.get_version(component_name)
-        return version
-
-    def _get_component_key_value_list(self, component_list: list, node_id: str):
+    def _get_component_kv_list(self, comp_list: list, node_id: str):
         """Return list of confstore keys-values for components."""
-        # Create confstore keys, from component_list i.e. config from config.yaml.
-        component_key_value_list = []
-        for index, component in enumerate(component_list):
+        # Create confstore keys, from given component list(config from config.yaml).
+        comp_kv_list = []
+        comp_kv_list.append((f'node>{node_id}>num_components', len(comp_list)))
+        for index, component in enumerate(comp_list):
             key_prefix = f'node>{node_id}>components[{index}]'
-            component_name = component['name']
-            version = self._get_component_version(component_name)
-            component_key_value_list.extend((
-                (f'{key_prefix}>name', component_name),
+            comp_name = component['name']
+            version = self._cortx_release.get_version(comp_name)
+            comp_kv_list.extend((
+                (f'{key_prefix}>name', comp_name),
                 (f'{key_prefix}>version', version)))
 
             service_list = component.get('services')
             if service_list:
                 for index, service in enumerate(service_list):
-                    component_key_value_list.append((
-                        f'{key_prefix}>services[{index}]', service))
+                    comp_kv_list.append((f'{key_prefix}>services[{index}]', service))
 
-        return component_key_value_list
+        return comp_kv_list
 
-    def _get_cvg_key_value_list(self, cvg_list: dict, node_id: str):
+    def _get_storage_kv_list(self, storage_spec: dict, node_id: str):
         """"Return list of confstore keys-values for cvg."""
-        # Create confstore keys,from cvg_list i.e. config from config.yaml.
-        cvg_key_value_list = []
+        # Create confstore keys,from storage_spec(config from config.yaml).
+        cvg_kv_list = []
         key_prefix = f'node>{node_id}>storage'
-        for index, cvg in enumerate(cvg_list):
+        cvg_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
+        for index, cvg in enumerate(storage_spec):
             for key, val in cvg.items():
                 if key == 'devices':
                     metadata_device = cvg[key]['metadata']
@@ -129,11 +125,10 @@ class CortxCluster:
                     # node>{machine-id}>storage>cvg[N]>devices>metadata[N]'
                     # node>{machine-id}>storage>cvg[N]>devices>log',(Optional)
                     # node>{machine-id}>storage>cvg[N]>devices>data0' (Optional)
-                    cvg_key_value_list.extend(self._get_kvs(f'{key_prefix}>cvg[{index}]>{key}', val))
+                    cvg_kv_list.extend(self._get_kvs(f'{key_prefix}>cvg[{index}]>{key}', val))
                 else:
-                    cvg_key_value_list.append((f'{key_prefix}>cvg[{index}]>{key}', val))
-        cvg_key_value_list.append((f'{key_prefix}>cvg_count', len(cvg_list)))
-        return cvg_key_value_list
+                    cvg_kv_list.append((f'{key_prefix}>cvg[{index}]>{key}', val))
+        return cvg_kv_list
 
     def save(self, cortx_conf):
         """ Saves cluster information onto the conf store """
@@ -152,10 +147,10 @@ class CortxCluster:
                     (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
                 component_list = node['components']
-                kvs.extend(self._get_component_key_value_list(component_list, node_id))
-                cvg_list = node.get('storage')
-                if cvg_list:
-                    kvs.extend(self._get_cvg_key_value_list(cvg_list, node_id))
+                kvs.extend(self._get_component_kv_list(component_list, node_id))
+                storage_spec = node.get('storage')
+                if storage_spec:
+                    kvs.extend(self._get_storage_kv_list(storage_spec, node_id))
             cortx_conf.set_kvs(kvs)
         except (KeyError, IndexError) as e:
             raise CortxProvisionerError(

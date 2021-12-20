@@ -96,17 +96,18 @@ class ConfigValidator(Validator):
 
     def _check_storage_sets(self):
         """Validate storage_sets present in cortx_conf."""
-        # Get nodes in each storage_set from cluster.yaml.
         cluster_config_storage_sets = self._get_config(
             ConfigValidator._key_storage_set_sc)
-        storage_set_counter = 0
-        while self.cortx_conf.get(
-            f'cluster>storage_set[{storage_set_counter}]>name') is not None:
-            storage_set_counter = storage_set_counter + 1
-        if len(cluster_config_storage_sets) != storage_set_counter:
+
+        storage_set_counter = int(
+            self._get_value_from_conf_store('cluster>storage_set_count'))
+        cortx_conf_storage_sets = []
+        for storage_set_idx in range(0, storage_set_counter):
+            cortx_conf_storage_sets.append(f'cluster>storage_set[{storage_set_idx}]>name')
+        if len(cluster_config_storage_sets) != len(cortx_conf_storage_sets):
             Log.debug(f'Number of storage_sets define in {self.solution_conf_url} is '
                 f'{len(cluster_config_storage_sets)} and in {self.cortx_conf_url} '
-                f'is {storage_set_counter}')
+                f'is {len(cortx_conf_storage_sets)}')
             raise CortxProvisionerError(errno.EINVAL,
                 f'Number of storage_sets define in {self.cortx_conf_url} '
                 f'and {self.solution_conf_url} is not equal.')
@@ -132,15 +133,15 @@ class ConfigValidator(Validator):
         return 0
 
     def _check_external_services(self):
-        """"Validate external services and its endpoints in cortx config"""
+        """Validate external services and its endpoints in cortx config."""
         # Get external services from config.yaml
-        common_config_ext_services = self._get_config(ConfigValidator._key_ext_service)
-        for service in common_config_ext_services.keys():
-            common_config_endpoints = common_config_ext_services[service]['endpoints']
+        config_ext_services = self._get_config(ConfigValidator._key_ext_service)
+        for service in config_ext_services.keys():
+            config_service_endpoints = config_ext_services[service]['endpoints']
             key_prefix = f'{ConfigValidator._key_ext_service}>{service}'
             if self._get_value_from_conf_store(f'{key_prefix}>admin') is not None:
                 # Verify endpoints define in config.yaml is present in confstore.
-                for endpoint in common_config_endpoints:
+                for endpoint in config_service_endpoints:
                     endpoint_in_confstore = self.cortx_conf.search(
                         f'{key_prefix}>{service}', 'endpoints', endpoint)
                     if endpoint_in_confstore:
