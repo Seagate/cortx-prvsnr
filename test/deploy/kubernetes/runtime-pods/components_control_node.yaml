@@ -102,14 +102,14 @@ spec:
           mountPath: /share
         - name: local-node1
           mountPath: /etc/cortx
-      - name: cortx-bg-producer
+      - name: cortx-bg-scheduler
         image: ghcr.io/seagate/cortx-all:2.0.0-latest-custom-ci
         imagePullPolicy: IfNotPresent
         args:
         - /bin/sh
         - -c
         - set -x;
-          /opt/seagate/cortx/s3/bin/s3_start --service s3bgproducer -c yaml:///etc/cortx/cluster.conf;
+          /opt/seagate/cortx/s3/bin/s3_start --service bgscheduler -c yaml:///etc/cortx/cluster.conf;
           while true; do sleep 30; echo "Hello Kubernetes"; done;
         volumeMounts:
         - name: solution-config

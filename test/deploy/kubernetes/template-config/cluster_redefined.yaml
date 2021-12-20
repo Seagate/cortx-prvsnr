@@ -31,10 +31,11 @@ cluster:
         - name: utils
         - name: hare
         - name: s3
-          services:
-            - io
-            - auth
-            - bg_consumer
+        services:
+          - s3server
+          - haproxy
+          - authserver
+          - bgworker
     - name: control_node
       components:
         - name: utils
@@ -43,8 +44,7 @@ cluster:
             - fsm
         - name: s3
           services:
-            - bg_producer
-            - openldap
+            - bgscheduler
         - name: csm
           services:
             - agent
