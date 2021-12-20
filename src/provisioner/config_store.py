@@ -70,3 +70,7 @@ class ConfigStore:
         """ Returns value for the given key """
 
         return Conf.get(self._conf_idx, key)
+
+    def delete(self, key: str):
+        """Delete key from CORTX confstore."""
+        Conf.delete(self._conf_idx, key)

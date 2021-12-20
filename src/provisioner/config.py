@@ -21,15 +21,15 @@ from cortx.provisioner.log import Log
 class CortxConfig:
     """ CORTX Configuration """
 
-    def __init__(self, cortx_config: list = [], cortx_release = None):
+    def __init__(self, cortx_solution_config: list = [], cortx_release = None):
         """ Create CORTX config """
 
         self._cortx_release = cortx_release
-        self._cortx_config = cortx_config
-        CortxConfig._validate(self._cortx_config)
+        self._cortx_solution_config = cortx_solution_config
+        CortxConfig._validate(self._cortx_solution_config)
 
     @staticmethod
-    def _validate(cortx_conf: dict):
+    def _validate(cortx_solution_config: dict):
         """
         validates a give node to have required properties
         Raises exception if there is any entry missing
@@ -38,7 +38,7 @@ class CortxConfig:
             'external', 'common']
 
         for k in required_keys_for_cortx_conf:
-            if cortx_conf.get(k) is None:
+            if cortx_solution_config.get(k) is None:
                 raise VError(
                     errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
 
@@ -46,7 +46,7 @@ class CortxConfig:
                 required_external_keys = ['kafka', 'openldap', 'consul']
                 for e_key in required_external_keys:
                     try:
-                        if cortx_conf[k][e_key]['endpoints'] is None:
+                        if cortx_solution_config[k][e_key]['endpoints'] is None:
                             raise VError(errno.EINVAL,
                                 f"'Endpoint for {e_key}' is unspecified in cortx_config.")
                     except KeyError as e:
@@ -54,13 +54,18 @@ class CortxConfig:
                             errno.EINVAL,
                             f'{str(e)} is unspecified for external in cortx_config.')
 
-    def save(self, cortx_conf, cortx_config_index):
+    def save(self, cortx_conf, cortx_solution_config):
         """ Save cortx-config into confstore """
 
         try:
-            cortx_conf.copy(cortx_config_index)
+            cortx_conf.copy(cortx_solution_config)
+            # Change environment_type to setup_type
+            # TODO: remove this code once setup_type key id deleted.
+            cortx_conf.set(
+                'cortx>common>setup_type', cortx_conf.get('cortx>common>environment_type'))
+            cortx_conf.delete('cortx>common>environment_type')
             # Check for release key.
-            release_spec = self._cortx_config.get('common').get('release')
+            release_spec = self._cortx_solution_config.get('common').get('release')
             is_valid, release_info = self._cortx_release.validate(release_spec)
             if is_valid is False:
                 for key in release_info.keys():

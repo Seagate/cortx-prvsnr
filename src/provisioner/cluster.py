@@ -87,48 +87,44 @@ class CortxCluster:
             kvs.append((prefix, node))
         return kvs
 
-    def _get_component_kv_list(self, comp_list: list, node_id: str):
-        """Return list of confstore keys-values for components."""
+    def _get_component_kv_list(self, component_list: list, node_id: str):
+        """Return list of confstore key-values for components."""
         # Create confstore keys, from given component list(config from config.yaml).
-        comp_kv_list = []
-        comp_kv_list.append((f'node>{node_id}>num_components', len(comp_list)))
-        for index, component in enumerate(comp_list):
+        component_kv_list = []
+        component_kv_list.append((f'node>{node_id}>num_components', len(component_list)))
+        for index, component in enumerate(component_list):
             key_prefix = f'node>{node_id}>components[{index}]'
-            comp_name = component['name']
-            version = self._cortx_release.get_version(comp_name)
-            comp_kv_list.extend((
-                (f'{key_prefix}>name', comp_name),
-                (f'{key_prefix}>version', version)))
+            component_name = component['name']
+            release_version = self._cortx_release.get_version(component_name)
+            component_kv_list.extend((
+                (f'{key_prefix}>name', component_name),
+                (f'{key_prefix}>version', release_version)))
 
             service_list = component.get('services')
             if service_list:
                 for index, service in enumerate(service_list):
-                    comp_kv_list.append((f'{key_prefix}>services[{index}]', service))
+                    component_kv_list.append((f'{key_prefix}>services[{index}]', service))
 
-        return comp_kv_list
+        return component_kv_list
 
     def _get_storage_kv_list(self, storage_spec: dict, node_id: str):
-        """"Return list of confstore keys-values for cvg."""
+        """"Return list of confstore key-values for storage."""
         # Create confstore keys,from storage_spec(config from config.yaml).
-        cvg_kv_list = []
+        storage_kv_list = []
         key_prefix = f'node>{node_id}>storage'
-        cvg_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
-        for index, cvg in enumerate(storage_spec):
-            for key, val in cvg.items():
+        storage_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
+        for index, group in enumerate(storage_spec):
+            for key, val in group.items():
                 if key == 'devices':
-                    metadata_device = cvg[key]['metadata']
+                    metadata_device = group[key]['metadata']
                     # Convert metadata value to list.
                     if isinstance(metadata_device, str):
-                        cvg[key]['metadata'] = metadata_device.split(',')
+                        group[key]['metadata'] = metadata_device.split(',')
                 if not isinstance(val, str):
-                    # form keys 'node>{machine -id}>storage>cvg[N]>devices>data[N],
-                    # node>{machine-id}>storage>cvg[N]>devices>metadata[N]'
-                    # node>{machine-id}>storage>cvg[N]>devices>log',(Optional)
-                    # node>{machine-id}>storage>cvg[N]>devices>data0' (Optional)
-                    cvg_kv_list.extend(self._get_kvs(f'{key_prefix}>cvg[{index}]>{key}', val))
+                    storage_kv_list.extend(self._get_kvs(f'{key_prefix}>cvg[{index}]>{key}', val))
                 else:
-                    cvg_kv_list.append((f'{key_prefix}>cvg[{index}]>{key}', val))
-        return cvg_kv_list
+                    storage_kv_list.append((f'{key_prefix}>cvg[{index}]>{key}', val))
+        return storage_kv_list
 
     def save(self, cortx_conf):
         """ Saves cluster information onto the conf store """
@@ -204,8 +200,6 @@ class CortxStorageSet:
         kvs = []
         try:
             for index, storage_set in enumerate(self._storage_sets):
-                # Read node ids from cluster.yaml and
-                # set 'cluster>storage_set[N]>nodes[N]' key in confstore.
                 key_prefix = f'cluster>storage_set[{index}]'
                 kvs.append((f'{key_prefix}>name', storage_set['name']))
                 nodes = storage_set['nodes']

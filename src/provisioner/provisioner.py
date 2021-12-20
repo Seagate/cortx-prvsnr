@@ -124,8 +124,8 @@ class CortxProvisioner:
     def apply_cortx_config(cortx_conf, cortx_release):
         """ Convert CORTX config into confstore keys """
         config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
-        cortx_config = CortxConfig(config_info, cortx_release)
-        cortx_config.save(cortx_conf, CortxProvisioner._solution_index)
+        cortx_solution_config = CortxConfig(config_info, cortx_release)
+        cortx_solution_config.save(cortx_conf, CortxProvisioner._solution_index)
 
     @staticmethod
     def apply_cluster_config(cortx_conf, cortx_release):
@@ -159,10 +159,10 @@ class CortxProvisioner:
                     node['cluster_id'] = cluster_id
                     nodes.append(node)
 
-            cluster_nodes = CortxCluster(nodes, cortx_release)
-            cluster_nodes.save(cortx_conf)
-            cluster_storagesets = CortxStorageSet(storage_sets)
-            cluster_storagesets.save(cortx_conf)
+            solution_config_nodes = CortxCluster(nodes, cortx_release)
+            solution_config_nodes.save(cortx_conf)
+            solution_config_storagesets = CortxStorageSet(storage_sets)
+            solution_config_storagesets.save(cortx_conf)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
