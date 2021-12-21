@@ -22,7 +22,7 @@ pyinotify==0.9.6
 python-consul==1.1.0
 python-crontab==2.5.1
 python-daemon==2.2.4
-PyYAML==5.1.2
+PyYAML==5.4.1
 requests==2.25.1
 schematics==2.1.0
 secure==0.2.1
