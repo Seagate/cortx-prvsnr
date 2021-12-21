@@ -31,11 +31,11 @@ cluster:
         - name: utils
         - name: hare
         - name: s3
-        services:
-          - s3server
-          - haproxy
-          - authserver
-          - bgworker
+          services:
+            - s3server
+            - haproxy
+            - authserver
+            - bgworker
     - name: control_node
       components:
         - name: utils
