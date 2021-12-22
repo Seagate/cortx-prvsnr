@@ -199,6 +199,15 @@ if [ $REDEFPODS = true ]; then
     print_header "Creating HA Node Service - Cluster";
     kubectl apply -f "$BASEPATH/external-services/headless_ha_node.yaml" --namespace "$NAMESPACE";
 
+    # Create HA Node Cluster services and service account
+    print_header "Creating Cluster Role and Custer Role binding service - Cluster";
+    kubectl create -f "$BASEPATH/external-services/cluster_role.yaml" --namespace "$NAMESPACE";
+    kubectl create -f "$BASEPATH/external-services/cluster_role_binding.yaml" --namespace "$NAMESPACE";
+
+    # Create Service Account (HA Node)
+    print_header "Creating Service account for HA";
+    kubectl create -f "$BASEPATH/external-services/service_account.yaml" --namespace "$NAMESPACE";
+
     # Create HA Node (POD)
     print_header "Creating HA Node - Cluster";
     kubectl apply -f "$BASEPATH/runtime-pods/components_ha_node.yaml" --namespace "$NAMESPACE";

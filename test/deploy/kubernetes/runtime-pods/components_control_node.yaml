@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   labels:
     app: control-node
-    id: 9995f539f4f770e2a3fe9e2e615c32a8
   name: control-node
 spec:
   replicas: 1
@@ -20,6 +19,7 @@ spec:
     metadata:
       labels:
         app: control-node
+        cortx.io/machine-id: 9995f539f4f770e2a3fe9e2e615c32a8
     spec:
       hostname: control-node
       nodeSelector:

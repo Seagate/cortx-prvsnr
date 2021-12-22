@@ -4,7 +4,6 @@ metadata:
   name: storage-node1
   labels:
     app: storage-node1
-    id: aaa120a9e051d103c164f605615c32a4
 spec:
   replicas: 1
   selector:
@@ -20,6 +19,7 @@ spec:
     metadata:
       labels:
         app: storage-node1
+        cortx.io/machine-id: aaa120a9e051d103c164f605615c32a4
     spec:
       hostname: storage-node1
       nodeSelector:

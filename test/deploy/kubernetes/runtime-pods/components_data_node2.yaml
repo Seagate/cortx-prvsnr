@@ -4,7 +4,6 @@ metadata:
   name: data-node2
   labels:
     app: data-node2
-    id: bbb340f79047df9bb52fa460615c32a5
 spec:
   replicas: 1
   selector:
@@ -20,6 +19,7 @@ spec:
     metadata:
       labels:
         app: data-node2
+        cortx.io/machine-id: bbb340f79047df9bb52fa460615c32a5
     spec:
       hostname: data-node2
       nodeSelector:

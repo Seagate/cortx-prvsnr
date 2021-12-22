@@ -1,0 +1,12 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: node-list
+subjects:
+- kind: ServiceAccount
+  name: ha-monitor
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: node-list
+  apiGroup: rbac.authorization.k8s.io
