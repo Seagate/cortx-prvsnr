@@ -16,8 +16,8 @@ cortx:
       base_dn: dc=seagate,dc=com
     consul:
       endpoints:
-        - tcp://consul-server.default.svc.cluster.local:8301
         - http://consul-server.default.svc.cluster.local:8500
+        - tcp://consul-server.default.svc.cluster.local:8301
       admin: admin
       secret: consul_admin_secret
   common:

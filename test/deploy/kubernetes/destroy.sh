@@ -70,6 +70,9 @@ sleep $INTRDELAY;
 # Delete Ha Node Service (Headless)
 print_header "Deleting Ha Node Service - Cluster";
 kubectl delete -f "$BASEPATH/external-services/headless_ha_node.yaml" --namespace "$NAMESPACE";
+kubectl delete -f "$BASEPATH/external-services/cluster_role.yaml" --namespace "$NAMESPACE";
+kubectl delete -f "$BASEPATH/external-services/cluster_role_binding.yaml" --namespace "$NAMESPACE";
+kubectl delete -f "$BASEPATH/external-services/service_account.yaml" --namespace "$NAMESPACE";
 
 # Delete HA Node (POD)
 print_header "Deleting HA Node - Cluster";

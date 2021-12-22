@@ -3,8 +3,7 @@ kind: Deployment
 metadata:
   name: storage-node2
   labels:
-    app: storage-node1
-    id: bbb340f79047df9bb52fa460615c32a5
+    app: storage-node2
 spec:
   replicas: 1
   selector:
@@ -20,6 +19,7 @@ spec:
     metadata:
       labels:
         app: storage-node2
+        cortx.io/machine-id: bbb340f79047df9bb52fa460615c32a5
     spec:
       hostname: storage-node2
       nodeSelector:
