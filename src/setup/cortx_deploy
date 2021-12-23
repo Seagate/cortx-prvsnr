@@ -154,7 +154,9 @@ release_version=$(conf_get $RELEASE_INFO "VERSION")
 #update_prim_version=$(awk -F- '{print $1}' <<<  $release_version )
 image_version=$(awk -F- '{print $2}' <<<  $release_version)
 
-[[ $current_version -eq $image_version && -z $FORCE_PROVISIONING ]] &&
+#  [[ $image_version != '0' ]] Is a temprory patch for community deployment for build number 0 condition and 
+#   needs to be removed as part of [EOS-27087]
+[[ $current_version -eq $image_version && -z $FORCE_PROVISIONING ]] && [[ $image_version != '0' ]] &&
     log $INFO "current_version ($installed_version) = image_version ($release_version)" &&
     exit 0
 [[ $current_version -gt $image_version ]] &&

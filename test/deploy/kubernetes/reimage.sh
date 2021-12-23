@@ -1,7 +1,7 @@
 #!/bin/bash
 # Defaults
 IMAGE_NAME="ghcr.io/seagate/cortx-all"
-CUSTOM_TAG="2.0.0-latest-custom-ci"
+CUSTOM_TAG=
 LOCAL_PATH="/var/cortx"
 SHARE_PATH="/share"
 CONFIG_PATH="/etc/cortx"
@@ -46,9 +46,11 @@ chmod 700 get_helm.sh;
 print_header "Increasing virtual memory limit";
 sysctl -w vm.max_map_count=30000000;
 
-# Download latest new image
-echo -e "Pulling New Image: $IMAGE_NAME:$CUSTOM_TAG";
-docker pull $IMAGE_NAME:$CUSTOM_TAG;
+if [ -n "$CUSTOM_TAG" ]; then
+    # Download latest new image
+    echo -e "Pulling New Image: $IMAGE_NAME:$CUSTOM_TAG";
+    docker pull $IMAGE_NAME:$CUSTOM_TAG;
+fi
 
 # Pull 3rd party Docker images
 print_header "Updating 3rdParty Image: symas-openldap";
