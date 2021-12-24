@@ -49,7 +49,6 @@ class CortxProvisioner:
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
     cortx_release = CortxRelease()
-    
 
     @staticmethod
     def init():
@@ -125,8 +124,8 @@ class CortxProvisioner:
     def apply_cortx_config(cortx_conf, cortx_release):
         """ Convert CORTX config into confstore keys """
         config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
-        cortx_config = CortxConfig(config_info, cortx_release)
-        cortx_config.save(cortx_conf)
+        cortx_solution_config = CortxConfig(config_info, cortx_release)
+        cortx_solution_config.save(cortx_conf, CortxProvisioner._solution_index)
 
     @staticmethod
     def apply_cluster_config(cortx_conf, cortx_release):
@@ -156,36 +155,14 @@ class CortxProvisioner:
                 for node in storage_set['nodes']:
                     node_type = node['type']
                     node = dict(node_map[node_type], **node)
-                    # If 'storage' key is present in node list,
-                    # restructure its value as below:
-                    # cvg:
-                    # - devices:
-                    #     data:
-                    #     - /dev/sdd
-                    #     - /dev/sde
-                    #     metadata:
-                    #     - /dev/sdc
-                    # name: cvg-01
-                    # type: ios
-                    if node.get('storage'):
-                        cvg_list = node.pop('storage')
-                        for cvg in cvg_list:
-                            metadata_device = cvg['devices']['metadata']
-                            # Convert metadata value to list.
-                            if isinstance(metadata_device, str):
-                                cvg['devices']['metadata'] = metadata_device.split(',')
-                        node['storage'] = {
-                            'cvg_count': len(cvg_list),
-                            'cvg': cvg_list
-                        }
                     node['storage_set'] = storage_set['name']
                     node['cluster_id'] = cluster_id
                     nodes.append(node)
 
-            cluster_nodes = CortxCluster(nodes, cortx_release)
-            cluster_nodes.save(cortx_conf)
-            cluster_storagesets = CortxStorageSet(storage_sets)
-            cluster_storagesets.save(cortx_conf)
+            solution_config_nodes = CortxCluster(nodes, cortx_release)
+            solution_config_nodes.save(cortx_conf)
+            solution_config_storagesets = CortxStorageSet(storage_sets)
+            solution_config_storagesets.save(cortx_conf)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
@@ -206,9 +183,9 @@ class CortxProvisioner:
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
-        if cortx_conf.get(f'node>{node_id}') is None:
+        if cortx_conf.get(f'node>{node_id}>name') is None:
             raise CortxProvisionerError(
-                errno.EINVAL, f"Node id '{node_id}' not found in cortx config.")
+                errno.EINVAL, f'Node name not found in cortx config for node {node_id}.')
 
         node_name = cortx_conf.get(f'node>{node_id}>name')
 
@@ -218,18 +195,20 @@ class CortxProvisioner:
     def _provision_components(cortx_conf: ConfigStore, mini_prov_interfaces: list, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
-        components = cortx_conf.get(f'node>{node_id}>components')
-        if components is None:
-            Log.warn(f"No component specified for {node_name} in CORTX config")
-        num_components = len(components)
+        num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
         for interface in mini_prov_interfaces:
             for comp_idx in range(0, num_components):
-                services = cortx_conf.get(
-                    f'node>{node_id}>components[{comp_idx}]>services')
-                service = 'all' if services is None else ','.join(services)
-                component_name = components[comp_idx]['name']
+                key_prefix = f'node>{node_id}>components[{comp_idx}]'
+                component_name = cortx_conf.get(f'{key_prefix}>name')
+                # Get services.
+                service_idx = 0
+                services = []
+                while (cortx_conf.get(f'{key_prefix}>services[{service_idx}]') is not None):
+                    services.append(cortx_conf.get(f'{key_prefix}>services[{service_idx}]'))
+                    service_idx = service_idx + 1
+                service = 'all' if service_idx == 0 else ','.join(services)
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
-                    version = components[comp_idx]['version']
+                    version = cortx_conf.get(f'{key_prefix}>version')
                     # Skip update for component if it is already updated.
                     is_updated = CortxProvisioner._is_component_updated(component_name, version)
                     if is_updated is True:
@@ -248,17 +227,13 @@ class CortxProvisioner:
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
-                        components[comp_idx]['name'], err)
+                        component_name, err)
                 # Update version for each component if upgrade successful.
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
                     component_version = CortxProvisioner.cortx_release.get_version(component_name)
-                    cortx_conf.set(
-                        f'node>{node_id}>components{[comp_idx]}>version',
-                        component_version)
+                    cortx_conf.set(f'{key_prefix}>version', component_version)
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
-
-
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
