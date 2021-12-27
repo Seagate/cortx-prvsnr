@@ -58,17 +58,46 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 0
     interface_type: tcp
     interface_family: inet
     transport_type: libfab
     ios:
       endpoints:
-      - motr://data1-node1.cortx-cluster.com:3232
+      - inet:tcp:data-node1@28002
+      - inet:tcp:data-node1@28003
+      - inet:tcp:data-node2@28002
+      - inet:tcp:data-node2@28003
+      - inet:tcp:data-node3@28002
+      - inet:tcp:data-node3@28003
+    confd:
+      endpoints:
+      - inet:tcp:data-node1@28004
+      - inet:tcp:data-node2@28004
+      - inet:tcp:data-node2@28004
+    s3_instances: 1 # cortx s3 servers
+    s3:
+      endpoints:
+      - inet:tcp:server-node1@28002
+      - inet:tcp:server-node1@28003
+      - inet:tcp:server-node2@28002
+      - inet:tcp:server-node2@28003
+      - inet:tcp:server-node3@28002
+      - inet:tcp:server-node3@28003
+    client_instances: 1 # cortx clients, Optional
+    client:
+      endpoints:
+      - inet:tcp:data-node1@28005
+      - inet:tcp:data-node2@28005
+      - inet:tcp:data-node3@28005
   hare:
     hax:
       endpoints:
-      - tcp://hax.seagate.com:28000
+      - inet:tcp:data-node1@28001
+      - inet:tcp:data-node2@28001
+      - inet:tcp:data-node3@28001
+      - inet:tcp:server-node1@28001
+      - inet:tcp:server-node2@28001
+      - inet:tcp:server-node3@28001
   csm:
     auth_admin: authadmin
     auth_secret: csm_auth_admin_secret
