@@ -59,10 +59,7 @@ class CortxConfig:
         """ Save cortx-config into confstore """
 
         try:
-            cortx_solution_config_keys = []
-            for key in Conf.get_keys(cortx_solution_config):
-                if key.startswith('cortx'):
-                    cortx_solution_config_keys.append(key)
+            cortx_solution_config_keys = filter(lambda x: x.startswith('cortx'), Conf.get_keys(cortx_solution_config))
             cortx_conf.copy(cortx_solution_config, cortx_solution_config_keys)
 
             # Change environment_type to setup_type

@@ -50,8 +50,9 @@ function conf_get {
 function apply_config {
     for file in "$SOLUTION_CONFIG"/*
     do
-        if [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" ]]  || [[ "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]]
+        if [ -f "$file" ]
         then
+            [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]] &&
             log $INFO "cortx_setup config apply -f $(yaml_config $file) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
             cortx_setup config apply -f $(yaml_config $file) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
         fi
@@ -74,8 +75,9 @@ function validate_config {
     for file in "$SOLUTION_CONFIG"/*
     do
         # Validate config
-        if [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" ]]  || [[ "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]]
+        if [ -f "$file" ]
         then
+            [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]] &&
             log $INFO "cortx_setup config validate -f $(yaml_config $file) -c '$CORTX_CONFSTORE'"
             cortx_setup config validate -f $(yaml_config $file) -c "$CORTX_CONFSTORE" || return 1
         fi
