@@ -19,6 +19,7 @@ from enum import Enum
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf
 from cortx.utils.security.cipher import Cipher
+from cortx.utils.schema.release import Release
 from cortx.provisioner import const
 from cortx.provisioner.log import CortxProvisionerLog, Log
 from cortx.provisioner.error import CortxProvisionerError
@@ -26,7 +27,6 @@ from cortx.provisioner.config_store import ConfigStore
 from cortx.utils.conf_store.error import ConfError
 from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster,  CortxStorageSet
-from cortx.provisioner.release import CortxRelease
 
 
 class PROVISIONING_STAGES(Enum):
@@ -48,7 +48,7 @@ class CortxProvisioner:
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
-    cortx_release = CortxRelease()
+    cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
     def init():
@@ -230,10 +230,8 @@ class CortxProvisioner:
                         component_name, err)
                 # Update version for each component if upgrade successful.
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
-                    component_version = CortxProvisioner.cortx_release.get_version(component_name)
+                    component_version = CortxProvisioner.cortx_release.get_component_version(component_name)
                     cortx_conf.set(f'{key_prefix}>version', component_version)
-        CortxProvisioner._update_provisioning_status(
-            cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -263,6 +261,8 @@ class CortxProvisioner:
         mini_prov_interfaces = ['post_install', 'prepare', 'config', 'init']
         CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
         CortxProvisioner._add_version_info(cortx_conf, node_id)
+        CortxProvisioner._update_provisioning_status(
+            cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
@@ -296,6 +296,8 @@ class CortxProvisioner:
         CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
         # Update CORTX version, once the upgrade is successful
         CortxProvisioner._add_version_info(cortx_conf, node_id)
+        CortxProvisioner._update_provisioning_status(
+            cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
@@ -314,15 +316,21 @@ class CortxProvisioner:
         cortx_conf.set_kvs(keys)
 
     @staticmethod
-    def _is_component_updated(component_name: str, component_version: str):
-        """Verify component version with RELEASE.INFO."""
-        release_version = CortxProvisioner.cortx_release.get_version(component_name)
-        return True if release_version == component_version else False
+    def _is_component_updated(component_name: str, deploy_version: str):
+        """Check deployed and release component version."""
+        is_updated = True
+        comp_release_version = CortxProvisioner.cortx_release.get_component_version(
+            component_name)
+        ret_code = CortxProvisioner.cortx_release.version_check(
+            deploy_version, comp_release_version)
+        if ret_code == -1:
+            is_updated = False
+        return is_updated
 
     @staticmethod
     def _add_version_info(cortx_conf: ConfigStore, node_id):
         """Add version in confstore."""
-        version = CortxProvisioner.cortx_release.get_value('VERSION')
+        version = CortxProvisioner.cortx_release.get_release_version()
         cortx_conf.set('cortx>common>release>version', version)
         cortx_conf.set(f'node>{node_id}>provisioning>version', version)
 
