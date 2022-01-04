@@ -50,9 +50,9 @@ function conf_get {
 function apply_config {
     for file in "$SOLUTION_CONFIG"/*
     do
-        if [ -f "$file" ]
+        [ -f "$file" ] &&
+        if [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]]
         then
-            [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]] &&
             log $INFO "cortx_setup config apply -f $(yaml_config $file) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
             cortx_setup config apply -f $(yaml_config $file) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
         fi
@@ -75,13 +75,39 @@ function validate_config {
     for file in "$SOLUTION_CONFIG"/*
     do
         # Validate config
-        if [ -f "$file" ]
+        [ -f "$file" ] &&
+        if [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]]
         then
-            [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]] &&
             log $INFO "cortx_setup config validate -f $(yaml_config $file) -c '$CORTX_CONFSTORE'"
             cortx_setup config validate -f $(yaml_config $file) -c "$CORTX_CONFSTORE" || return 1
         fi
     done
+}
+
+function compare {
+    # Returns
+    # -1 if $1 < v2
+    # 0 if $1 == $2
+    # 1 if $1 > $2
+    deploy_ver_spec=${1%-[0-9]*}
+    release_ver_spec=${2%-[0-9]*}
+
+    deploy_ver=${deploy_ver_spec%.[0-9]}
+    release_ver=${release_ver_spec%.[0-9]}
+    [[ $deploy_ver < $release_ver ]] && echo "-1" && return
+    [[ $deploy_ver > $release_ver ]] && echo "1" && return
+
+    deploy_ver=${deploy_ver_spec#[0-9].[0-9].}
+    release_ver=${release_ver_spec#[0-9].[0-9].}
+    [[ $deploy_ver -lt $release_ver ]] && echo "-1" && return
+    [[ $deploy_ver -gt $release_ver ]] && echo "1" && return
+
+    deploy_build=${1#[0-9.]*-}
+    release_build=${2#[0-9.]*-}
+    [[ $deploy_build -lt $release_build ]] && echo "-1" && return
+    [[ $deploy_build -gt $release_build ]] && echo "1" && return
+
+    echo "0"
 }
 
 # Constants
@@ -144,14 +170,15 @@ if [ $installed_version == "null" ]
 then
     action="deploy"
 else
-    [[ $installed_version == $release_version && -z $FORCE_PROVISIONING ]] &&
+    ret_code=$(compare $installed_version $release_version)
+    [[ "$ret_code" == "0" && -z $FORCE_PROVISIONING ]] &&
         log $INFO "installed_version ($installed_version) = release_version ($release_version)" &&
         exit 0
-    [[ $installed_version > $release_version ]] &&
+    [[ "$ret_code" == "1" ]] &&
         log $ERROR "Invalid image. installed_version ($installed_version) > release_version ($release_version)" &&
         exit 1
 
-    [[ ! -z $installed_version ]] && [[ $installed_version < $release_version ]] && action="upgrade"
+    [[ ! -z $installed_version ]] && [[ "$ret_code" == "-1" ]] && action="upgrade"
 fi
 
 case $action in
