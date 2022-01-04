@@ -35,14 +35,6 @@ function show_usage {
     exit 1
 }
 
-function validate_config_file {
-    local config=$1
-    if [ ! -f $config ]; then
-        echo -e "ERROR: Config file $config not found, Provide correct config path."
-        return 1
-    fi
-}
-
 function yaml_config {
     local config=$1
     echo "yaml://$config"
@@ -55,14 +47,16 @@ function conf_get {
     echo $val
 }
 
-function apply_cluster_config {
-    log $INFO "cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
-    cortx_setup config apply -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
-}
-
-function apply_common_config {
-    log $INFO "cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
-    cortx_setup config apply -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+function apply_config {
+    for file in "$SOLUTION_CONFIG"/*
+    do
+        if [ -f "$file" ]
+        then
+            [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]] &&
+            log $INFO "cortx_setup config apply -f $(yaml_config $file) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+            cortx_setup config apply -f $(yaml_config $file) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+        fi
+    done
 }
 
 function deploy {
@@ -78,11 +72,16 @@ function upgrade {
 }
 
 function validate_config {
-    # Validate config
-    log $INFO "cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config validate -f $(yaml_config $CLUSTER_INFO) -c "$CORTX_CONFSTORE" || return 1
-    log $INFO "cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c '$CORTX_CONFSTORE'"
-    cortx_setup config validate -f $(yaml_config $CONFIG_INFO) -c "$CORTX_CONFSTORE" || return 1
+    for file in "$SOLUTION_CONFIG"/*
+    do
+        # Validate config
+        if [ -f "$file" ]
+        then
+            [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]] &&
+            log $INFO "cortx_setup config validate -f $(yaml_config $file) -c '$CORTX_CONFSTORE'"
+            cortx_setup config validate -f $(yaml_config $file) -c "$CORTX_CONFSTORE" || return 1
+        fi
+    done
 }
 
 # Constants
@@ -132,17 +131,10 @@ while [ $# -gt 0 ];  do
     shift 1
 done
 
-# path for solution-config cluster.yaml and config.yaml files
-CONFIG_INFO="$SOLUTION_CONFIG/config.yaml"
-validate_config_file $CONFIG_INFO
-CLUSTER_INFO="$SOLUTION_CONFIG/cluster.yaml"
-validate_config_file $CLUSTER_INFO
-
 export PATH=$PATH:/opt/seagate/provisioner/bin
 
 node_id=`cat /etc/machine-id`
-cluster_id=$(conf_get $(yaml_config $CLUSTER_INFO) "cluster>id")
-log $INFO "Starting provisioning on node $node_id which is part of cluster $cluster_id."
+log $INFO "Starting provisioning on node $node_id."
 
 # Check current image version
 installed_version=$(conf_get $CORTX_CONFSTORE "node>$node_id>provisioning>version")
@@ -169,8 +161,7 @@ action="deploy"
 
 case $action in
     deploy)
-        apply_cluster_config
-        apply_common_config
+        apply_config
         [ ! -z $VALIDATE_CONF ] && validate_config
         # Deploy cortx
         deploy
