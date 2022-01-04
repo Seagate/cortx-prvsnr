@@ -230,7 +230,8 @@ class CortxProvisioner:
                         component_name, err)
                 # Update version for each component if upgrade successful.
                 if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
-                    component_version = CortxProvisioner.cortx_release.get_component_version(component_name)
+                    component_version = CortxProvisioner.cortx_release.get_component_version(
+                        component_name)
                     cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod

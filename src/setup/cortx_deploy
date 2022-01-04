@@ -35,7 +35,7 @@ function show_usage {
     exit 1
 }
 
-function yaml_config {
+function make_url {
     local config=$1
     echo "yaml://$config"
 }
@@ -50,11 +50,11 @@ function conf_get {
 function apply_config {
     for file in "$SOLUTION_CONFIG"/*
     do
-        [ -f "$file" ] &&
-        if [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]]
+        [[ ! -f "$file" ]] && return
+        if [[ "$(conf_get $(make_url $file) 'cluster')" != "null" || "$(conf_get $(make_url $file) 'cortx')" != "null" ]]
         then
-            log $INFO "cortx_setup config apply -f $(yaml_config $file) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
-            cortx_setup config apply -f $(yaml_config $file) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
+            log $INFO "cortx_setup config apply -f $(make_url $file) -c '$CORTX_CONFSTORE' $FORCE_PROVISIONING"
+            cortx_setup config apply -f $(make_url $file) -c "$CORTX_CONFSTORE" $FORCE_PROVISIONING;
         fi
     done
 }
@@ -75,11 +75,11 @@ function validate_config {
     for file in "$SOLUTION_CONFIG"/*
     do
         # Validate config
-        [ -f "$file" ] &&
-        if [[ "$(conf_get $(yaml_config $file) 'cluster')" != "null" || "$(conf_get $(yaml_config $file) 'cortx')" != "null" ]]
+        [[ ! -f "$file" ]] && return
+        if [[ "$(conf_get $(make_url $file) 'cluster')" != "null" || "$(conf_get $(make_url $file) 'cortx')" != "null" ]]
         then
-            log $INFO "cortx_setup config validate -f $(yaml_config $file) -c '$CORTX_CONFSTORE'"
-            cortx_setup config validate -f $(yaml_config $file) -c "$CORTX_CONFSTORE" || return 1
+            log $INFO "cortx_setup config validate -f $(make_url $file) -c '$CORTX_CONFSTORE'"
+            cortx_setup config validate -f $(make_url $file) -c "$CORTX_CONFSTORE" || return 1
         fi
     done
 }
