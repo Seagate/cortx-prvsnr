@@ -54,10 +54,10 @@ class ConfigStore:
                 f'Error occurred while adding key {key} and value {val}'
                 f' in confstore. {e}')
 
-    def copy(self, src_index: str):
+    def copy(self, src_index: str, key_list: list):
         """Copy src_index config into CORTX confstore file."""
         try:
-            Conf.copy(src_index, self._conf_idx)
+            Conf.copy(src_index, self._conf_idx, key_list)
         except (AssertionError, ConfError) as e:
             raise CortxProvisionerError(errno.EINVAL,
                 f'Error occurred while copying config into confstore. {e}')

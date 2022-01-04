@@ -16,6 +16,7 @@
 import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
+from cortx.utils.conf_store import Conf
 from cortx.provisioner.log import Log
 
 class CortxConfig:
@@ -58,9 +59,11 @@ class CortxConfig:
         """ Save cortx-config into confstore """
 
         try:
-            cortx_conf.copy(cortx_solution_config)
+            cortx_solution_config_keys = filter(lambda x: x.startswith('cortx'), Conf.get_keys(cortx_solution_config))
+            cortx_conf.copy(cortx_solution_config, cortx_solution_config_keys)
+
             # Change environment_type to setup_type
-            # TODO: remove this code once setup_type key id deleted.
+            # TODO: remove this code once setup_type key is deleted.
             cortx_conf.set(
                 'cortx>common>setup_type', cortx_conf.get('cortx>common>environment_type'))
             cortx_conf.delete('cortx>common>environment_type')
