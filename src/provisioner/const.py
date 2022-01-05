@@ -19,4 +19,4 @@ TMP_LOG_PATH = "/tmp/%s" % APP_NAME
 DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
 DEFAULT_LOG_LEVEL = "INFO"
 SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-RELEASE_INFO_PATH = "/opt/seagate/cortx/RELEASE.INFO"
+RELEASE_INFO_URL = "yaml:///opt/seagate/cortx/RELEASE.INFO"
