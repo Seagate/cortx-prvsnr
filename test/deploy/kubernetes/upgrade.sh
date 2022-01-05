@@ -115,7 +115,7 @@ while IFS= read -r line; do
             printf "${PASSED}PASSED${NC}\n"
         fi
     fi
-done <<< "$(kubectl get pods --namespace=$namespace | grep 'data-node.-*.\|control-node-.*\|server-node.-.*\|ha-node-.*\|storage-node.-.*')"
+done <<< "$(kubectl get pods --namespace="$namespace" | grep 'data-node.-*.\|control-node-.*\|server-node.-.*\|ha-node-.*\|storage-node.-.*')"
 
 
 printf "########################################################\n"
@@ -172,24 +172,24 @@ else
 fi
 
 # Set new Image for Control POD
-kubectl set image deployment control-node cortx-setup=$UPGRADE_IMAGE cortx-fsm-motr=$UPGRADE_IMAGE cortx-csm-agent=$UPGRADE_IMAGE cortx-bg-scheduler=$UPGRADE_IMAGE  cortx-message-server=$UPGRADE_IMAGE
+kubectl set image deployment control-node cortx-setup="$UPGRADE_IMAGE" cortx-fsm-motr="$UPGRADE_IMAGE" cortx-csm-agent="$UPGRADE_IMAGE" cortx-bg-scheduler="$UPGRADE_IMAGE"  cortx-message-server="$UPGRADE_IMAGE"
 
 if [ $REDEFPODS = true ]; then
     # Set new Image for HA POD
-    kubectl set image deployment ha-node cortx-setup=$UPGRADE_IMAGE cortx-ha-fault-tolerance=$UPGRADE_IMAGE cortx-ha-health-monitor=$UPGRADE_IMAGE cortx-ha-k8s-monitor=$UPGRADE_IMAGE;
+    kubectl set image deployment ha-node cortx-setup="$UPGRADE_IMAGE" cortx-ha-fault-tolerance="$UPGRADE_IMAGE" cortx-ha-health-monitor="$UPGRADE_IMAGE" cortx-ha-k8s-monitor="$UPGRADE_IMAGE";
 
     # Set new Image for Data POD and Server POD
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         DATA_NODE="data-node$NODE_INDEX"
         SERVER_NODE="server-node$NODE_INDEX"
-        kubectl set image deployment $DATA_NODE cortx-setup=$UPGRADE_IMAGE cortx-motr-hax=$UPGRADE_IMAGE cortx-motr-confd=$UPGRADE_IMAGE cortx-ios1=$UPGRADE_IMAGE cortx-ios2=$UPGRADE_IMAGE;
-        kubectl set image deployment $SERVER_NODE cortx-setup=$UPGRADE_IMAGE cortx-motr-hax=$UPGRADE_IMAGE cortx-s31=$UPGRADE_IMAGE  cortx-s32=$UPGRADE_IMAGE cortx-s3-auth-server=$UPGRADE_IMAGE  cortx-s3-haproxy=$UPGRADE_IMAGE cortx-s3-bgworker=$UPGRADE_IMAGE;
+        kubectl set image deployment "$DATA_NODE" cortx-setup="$UPGRADE_IMAGE" cortx-motr-hax="$UPGRADE_IMAGE" cortx-motr-confd="$UPGRADE_IMAGE" cortx-ios1="$UPGRADE_IMAGE" cortx-ios2="$UPGRADE_IMAGE";
+        kubectl set image deployment "$SERVER_NODE" cortx-setup="$UPGRADE_IMAGE" cortx-motr-hax="$UPGRADE_IMAGE" cortx-s31="$UPGRADE_IMAGE"  cortx-s32="$UPGRADE_IMAGE" cortx-s3-auth-server="$UPGRADE_IMAGE"  cortx-s3-haproxy="$UPGRADE_IMAGE" cortx-s3-bgworker="$UPGRADE_IMAGE";
     done
 
 else
     for NODE_INDEX in $(seq 1 $MAXNODES); do
         STORAGE_NODE="storage-node$NODE_INDEX"
-        kubectl set image deployment $STORAGE_NODE cortx-setup=$UPGRADE_IMAGE cortx-motr-hax=$UPGRADE_IMAGE cortx-motr-confd=$UPGRADE_IMAGE cortx-ios1=$UPGRADE_IMAGE cortx-ios2=$UPGRADE_IMAGE cortx-s31=$UPGRADE_IMAGE  cortx-s32=$UPGRADE_IMAGE cortx-s3-auth-server=$UPGRADE_IMAGE  cortx-s3-haproxy=$UPGRADE_IMAGE cortx-s3-bgworker=$UPGRADE_IMAGE;
+        kubectl set image deployment "$STORAGE_NODE" cortx-setup="$UPGRADE_IMAGE" cortx-motr-hax="$UPGRADE_IMAGE" cortx-motr-confd="$UPGRADE_IMAGE" cortx-ios1="$UPGRADE_IMAGE" cortx-ios2="$UPGRADE_IMAGE" cortx-s31="$UPGRADE_IMAGE"  cortx-s32="$UPGRADE_IMAGE" cortx-s3-auth-server="$UPGRADE_IMAGE"  cortx-s3-haproxy="$UPGRADE_IMAGE" cortx-s3-bgworker="$UPGRADE_IMAGE";
     done
 fi
 
