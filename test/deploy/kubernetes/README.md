@@ -83,7 +83,11 @@ kubectl logs <pod-name>
  cd /root/cortx-prvsnr/test/deploy/kubernetes
 ./upgrade.sh -i <Image-tag>
 ```
-<br>
+
+```bash
+Note: For Redefined PODs structure (Data, Server, Control and HA)
+./upgrade.sh -i <image-tag> -r
+```
 
 Validate Services Startup **(On Master node)**  
 ```bash
