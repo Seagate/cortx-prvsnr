@@ -85,6 +85,11 @@ kubectl logs <pod-name>
 ```
 <br>
 
+```bash
+Note: For Redefined PODs structure (Data, Server, Control and HA)
+./upgrade.sh -i <image-tag> -r
+```
+
 Validate Services Startup **(On Master node)**  
 ```bash
 # Go inside any storage pod on the cluster
