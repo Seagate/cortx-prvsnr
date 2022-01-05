@@ -66,7 +66,7 @@ cortx:
       endpoints:
       - tcp://data-node1:21001      # This is a starting endpoint and total number of ios
                                     # endpoints will be equal to number of CVG's in this pod.
-                                    # 21002 + <number of cvg's in the pod>
+                                    # 21001 + <number of cvg's in the pod>
       - tcp://data-node2:21001
       - tcp://data-node3:21001
     confd:
