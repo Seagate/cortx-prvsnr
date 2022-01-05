@@ -64,37 +64,45 @@ cortx:
     transport_type: libfab
     ios:
       endpoints:
-      - tcp://data-node1:28002
-      - tcp://data-node1:28003
-      - tcp://data-node2:28002
-      - tcp://data-node2:28003
-      - tcp://data-node3:28002
-      - tcp://data-node3:28003
+      - tcp://data-node1:21001      # This is a starting endpoint and total number of ios
+                                    # endpoints will be equal to number of CVG's in this pod.
+                                    # 21002 + <number of cvg's in the pod>
+      - tcp://data-node2:21001
+      - tcp://data-node3:21001
     confd:
       endpoints:
-      - tcp://data-node1:28004
-      - tcp://data-node2:28004
-      - tcp://data-node3:28004
-    s3_instances: 1 # cortx s3 servers
+      - tcp://data-node1:22002
+      - tcp://data-node2:22002
+      - tcp://data-node3:22002
     s3:
       endpoints:
-      - tcp://server-node1:28002
-      - tcp://server-node2:28002
-      - tcp://server-node3:28002
+      - tcp://server-node1:21001    # This is a starting endpoint and total number of s3
+                                    # endpoints will be equal to number of s3 instances in this pod.
+                                    # 21001 + <common>s3>service_instances>
+      - tcp://server-node2:21001
+      - tcp://server-node3:21001
     client:
+      num_instances: 0
       endpoints:
-      - tcp://data-node1:28005
-      - tcp://data-node2:28005
-      - tcp://data-node3:28005
+      - tcp://cclient-node1:21001
+      - tcp://cclient-node2:21001
+      - tcp://cclient-node3:21001
   hare:
     hax:
       endpoints:
-      - tcp://data-node1:28001
-      - tcp://data-node2:28001
-      - tcp://data-node3:28001
-      - tcp://server-node1:28001
-      - tcp://server-node2:28001
-      - tcp://server-node3:28001
+      - tcp://data-node1:22001
+      - tcp://data-node2:22001
+      - tcp://data-node3:22001
+      - tcp://server-node1:22001
+      - tcp://server-node2:22001
+      - tcp://server-node3:22001
+      - tcp://cclient-node1:22001
+      - tcp://cclient-node2:22001
+      - tcp://cclient-node3:22001
+      - https://data-node1:22003    # Hax http server
+      - https://data-node2:22003
+      - https://data-node3:22003
+      - https://motr-hax-svc:22003  # Cluster IP service for Hax http requests
   csm:
     auth_admin: authadmin
     auth_secret: csm_auth_admin_secret
