@@ -79,17 +79,13 @@ cortx:
     s3:
       endpoints:
       - tcp://server-node1:28002
-      - tcp://server-node1:28003
       - tcp://server-node2:28002
-      - tcp://server-node2:28003
       - tcp://server-node3:28002
-      - tcp://server-node3:28003
     client:
       endpoints:
       - tcp://data-node1:28005
       - tcp://data-node2:28005
       - tcp://data-node3:28005
-
   hare:
     hax:
       endpoints:
