@@ -60,8 +60,8 @@ cortx:
   motr:
     client_instances: 0
     interface_type: tcp
-    interface_family: inet
-    transport_type: libfab
+    interface_family: inet          # Optional: inet (default) | inet6
+    transport_type: libfab          # libfab | lnet (libfab==inet)
     ios:
       endpoints:
       - tcp://data-node1:21001      # This is a starting endpoint and total number of ios
