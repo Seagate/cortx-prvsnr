@@ -87,6 +87,9 @@ while [ $# -gt 0 ];  do
         shift 1
         UPGRADE_IMAGE=$1
         ;;
+    -r )
+        REDEFPODS=true
+        ;;
     * )
         echo -e "Invalid argument provided : $1"
         show_usage
@@ -112,7 +115,7 @@ while IFS= read -r line; do
             printf "${PASSED}PASSED${NC}\n"
         fi
     fi
-done <<< "$(kubectl get pods --namespace=$namespace | grep 'control-node-.*\|storage-node.-.*')"
+done <<< "$(kubectl get pods --namespace="$namespace" | grep 'data-node.-*.\|control-node-.*\|server-node.-.*\|ha-node-.*\|storage-node.-.*')"
 
 
 printf "########################################################\n"
@@ -125,23 +128,70 @@ printf "\n\n"
 printf "CORTX Control pod has been shutdown"
 printf "\n\n"
 
+if [ $REDEFPODS = true ]; then
+    printf "########################################################\n"
+    printf "# Shutdown CORTX HA Node                                   \n"
+    printf "########################################################\n"
 
-printf "########################################################\n"
-printf "# Shutdown CORTX Storage                                   \n"
-printf "########################################################\n"
+    shutdown_pods 'HA POD' 'ha-node' 'ha-node.-*'
 
-shutdown_pods 'Storage POD' 'storage-node' 'storage-node.-.*'
+    printf "\n\n"
+    printf "All CORTX HA pods have been shutdown"
+    printf "\n\n"
 
-printf "\n\n"
-printf "All CORTX Storage pods have been shutdown"
-printf "\n\n"
+    printf "########################################################\n"
+    printf "# Shutdown CORTX Data Node                                   \n"
+    printf "########################################################\n"
 
-# Set new Image for All PODs
-kubectl set image deployment control-node cortx-setup=$UPGRADE_IMAGE cortx-fsm-motr=$UPGRADE_IMAGE cortx-csm-agent=$UPGRADE_IMAGE cortx-bg-producer=$UPGRADE_IMAGE  cortx-message-server=$UPGRADE_IMAGE
-for NODE_INDEX in $(seq 1 $MAXNODES); do
-    STORAGE_NODE="storage-node$NODE_INDEX"
-    kubectl set image deployment $STORAGE_NODE cortx-setup=$UPGRADE_IMAGE cortx-motr-hax=$UPGRADE_IMAGE cortx-motr-confd=$UPGRADE_IMAGE cortx-ios1=$UPGRADE_IMAGE cortx-ios2=$UPGRADE_IMAGE cortx-s31=$UPGRADE_IMAGE  cortx-s32=$UPGRADE_IMAGE cortx-s3-auth-server=$UPGRADE_IMAGE  cortx-s3-haproxy=$UPGRADE_IMAGE cortx-s3-bg-consumer=$UPGRADE_IMAGE;
-done
+    shutdown_pods 'Data POD' 'data-node' 'data-node.-.*'
+
+    printf "\n\n"
+    printf "All CORTX Data pods have been shutdown"
+    printf "\n\n"
+
+    printf "########################################################\n"
+    printf "# Shutdown CORTX Server Node                                   \n"
+    printf "########################################################\n"
+
+    shutdown_pods 'Server POD' 'server-node' 'server-node.-.*'
+
+    printf "\n\n"
+    printf "All CORTX Server pods have been shutdown"
+    printf "\n\n"
+
+else
+    printf "########################################################\n"
+    printf "# Shutdown CORTX Storage                                   \n"
+    printf "########################################################\n"
+
+    shutdown_pods 'Storage POD' 'storage-node' 'storage-node.-.*'
+
+    printf "\n\n"
+    printf "All CORTX Storage pods have been shutdown"
+    printf "\n\n"
+fi
+
+# Set new Image for Control POD
+kubectl set image deployment control-node cortx-setup="$UPGRADE_IMAGE" cortx-fsm-motr="$UPGRADE_IMAGE" cortx-csm-agent="$UPGRADE_IMAGE" cortx-bg-scheduler="$UPGRADE_IMAGE"  cortx-message-server="$UPGRADE_IMAGE"
+
+if [ $REDEFPODS = true ]; then
+    # Set new Image for HA POD
+    kubectl set image deployment ha-node cortx-setup="$UPGRADE_IMAGE" cortx-ha-fault-tolerance="$UPGRADE_IMAGE" cortx-ha-health-monitor="$UPGRADE_IMAGE" cortx-ha-k8s-monitor="$UPGRADE_IMAGE";
+
+    # Set new Image for Data POD and Server POD
+    for NODE_INDEX in $(seq 1 $MAXNODES); do
+        DATA_NODE="data-node$NODE_INDEX"
+        SERVER_NODE="server-node$NODE_INDEX"
+        kubectl set image deployment "$DATA_NODE" cortx-setup="$UPGRADE_IMAGE" cortx-motr-hax="$UPGRADE_IMAGE" cortx-motr-confd="$UPGRADE_IMAGE" cortx-ios1="$UPGRADE_IMAGE" cortx-ios2="$UPGRADE_IMAGE";
+        kubectl set image deployment "$SERVER_NODE" cortx-setup="$UPGRADE_IMAGE" cortx-motr-hax="$UPGRADE_IMAGE" cortx-s31="$UPGRADE_IMAGE"  cortx-s32="$UPGRADE_IMAGE" cortx-s3-auth-server="$UPGRADE_IMAGE"  cortx-s3-haproxy="$UPGRADE_IMAGE" cortx-s3-bgworker="$UPGRADE_IMAGE";
+    done
+
+else
+    for NODE_INDEX in $(seq 1 $MAXNODES); do
+        STORAGE_NODE="storage-node$NODE_INDEX"
+        kubectl set image deployment "$STORAGE_NODE" cortx-setup="$UPGRADE_IMAGE" cortx-motr-hax="$UPGRADE_IMAGE" cortx-motr-confd="$UPGRADE_IMAGE" cortx-ios1="$UPGRADE_IMAGE" cortx-ios2="$UPGRADE_IMAGE" cortx-s31="$UPGRADE_IMAGE"  cortx-s32="$UPGRADE_IMAGE" cortx-s3-auth-server="$UPGRADE_IMAGE"  cortx-s3-haproxy="$UPGRADE_IMAGE" cortx-s3-bgworker="$UPGRADE_IMAGE";
+    done
+fi
 
 printf "########################################################\n"
 printf "# Start CORTX Control                                   \n"
@@ -153,15 +203,50 @@ printf "\n\n"
 printf "All CORTX Control pods have been started"
 printf "\n\n"
 
-printf "########################################################\n"
-printf "# Start CORTX Storage                                   \n"
-printf "########################################################\n"
+if [ $REDEFPODS = true ]; then
+    printf "########################################################\n"
+    printf "# Start CORTX HA Node                                   \n"
+    printf "########################################################\n"
 
-start_pods 'Storage POD' 'storage-node' 'storage-node.-.*'
+    start_pods 'HA POD' 'ha-node' 'ha-node.-*'
 
-printf "\n\n"
-printf "All CORTX Storage pods have been started"
-printf "\n\n"
+    printf "\n\n"
+    printf "All CORTX HA pods have been started"
+    printf "\n\n"
+
+    printf "########################################################\n"
+    printf "# Start CORTX Data Node                                   \n"
+    printf "########################################################\n"
+
+    start_pods 'Data POD' 'data-node' 'data-node.-.*'
+
+    printf "\n\n"
+    printf "All CORTX Data pods have been started"
+    printf "\n\n"
+
+    printf "########################################################\n"
+    printf "# Start CORTX Server Node                                   \n"
+    printf "########################################################\n"
+
+    start_pods 'Server POD' 'server-node' 'server-node.-.*'
+
+    printf "\n\n"
+    printf "All CORTX Server pods have been started"
+    printf "\n\n"
+
+else
+    printf "########################################################\n"
+    printf "# Start CORTX Storage                                   \n"
+    printf "########################################################\n"
+
+    start_pods 'Storage POD' 'storage-node' 'storage-node.-.*'
+
+    printf "\n\n"
+    printf "All CORTX Storage pods have been started"
+    printf "\n\n"
+fi
+
+
 
 # Ensure PID file is removed after upgrade is performed.
 rm -f $UPGRADEPIDFILE

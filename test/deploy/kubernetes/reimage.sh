@@ -82,4 +82,6 @@ rm -rf $CONFIG_PATH/*;
 # Delete share
 print_header "Cleaning Share: $SHARE_PATH";
 rm -rf $SHARE_PATH/*;
+rm -rf /var/run/upgrade.sh.pid;
+
 exit 0;
