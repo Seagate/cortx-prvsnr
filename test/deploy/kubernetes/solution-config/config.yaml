@@ -58,8 +58,8 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 0
-    interface_type: tcp
+    client_instances: 0             # To be deleted
+    interface_type: tcp             # To be deleted
     interface_family: inet          # Optional: inet (default) | inet6
     transport_type: libfab          # libfab | lnet (libfab==inet)
     ios:
