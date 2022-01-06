@@ -58,17 +58,51 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 0
-    interface_type: tcp
-    interface_family: inet
-    transport_type: libfab
+    client_instances: 0              # To be deleted
+    interface_type: tcp              # To be deleted
+    interface_family: inet           # Optional: inet (default) | inet6
+    transport_type: libfab           # libfab | lnet (libfab==inet)
     ios:
       endpoints:
-      - motr://data1-node1.cortx-cluster.com:3232
+      - tcp://data-node1:21001      # This is a starting endpoint and total number of ios
+                                    # endpoints will be equal to number of CVG's in this pod.
+                                    # 21001 + <number of cvg's in the pod>
+      - tcp://data-node2:21001
+      - tcp://data-node3:21001
+    confd:
+      endpoints:
+      - tcp://data-node1:22002
+      - tcp://data-node2:22002
+      - tcp://data-node3:22002
+    s3:
+      endpoints:
+      - tcp://server-node1:21001    # This is a starting endpoint and total number of s3
+                                    # endpoints will be equal to number of s3 instances in this pod.
+                                    # 21001 + <common>s3>service_instances>
+      - tcp://server-node2:21001
+      - tcp://server-node3:21001
+    client:
+      num_instances: 0
+      endpoints:
+      - tcp://cclient-node1:21001
+      - tcp://cclient-node2:21001
+      - tcp://cclient-node3:21001
   hare:
     hax:
       endpoints:
-      - tcp://hax.seagate.com:28000
+      - tcp://data-node1:22001
+      - tcp://data-node2:22001
+      - tcp://data-node3:22001
+      - tcp://server-node1:22001
+      - tcp://server-node2:22001
+      - tcp://server-node3:22001
+      - tcp://cclient-node1:22001
+      - tcp://cclient-node2:22001
+      - tcp://cclient-node3:22001
+      - https://data-node1:22003    # Hax http server
+      - https://data-node2:22003
+      - https://data-node3:22003
+      - https://motr-hax-svc:22003  # Cluster IP service for Hax http requests
   csm:
     auth_admin: authadmin
     auth_secret: csm_auth_admin_secret
