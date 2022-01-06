@@ -2,6 +2,11 @@ cluster:
   name: cortx-cluster
   id: 0007ec45379e36d9fa089a3d615c32a3
   node_types:
+    - name: client_node        # Optional
+      components:
+    - name: cclient
+      services:
+      - cclient_service      # cclient_setup --services=cclient_service
     - name: data_node
       components:
         - name: utils
