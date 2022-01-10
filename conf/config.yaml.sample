@@ -64,16 +64,16 @@ cortx:
     transport_type: libfab                     # libfab | lnet (libfab==inet)
     ios:
       endpoints:
-      - tcp://data-node1:21001                 # This is a starting endpoint and total num of ios
+      - tcp://data1-node1:21001                # This is a starting endpoint and total num of ios
                                                # endpoints will be equal to num of CVG's in this pod.
                                                # 21001 + <number of cvg's in the pod>
-      - tcp://data-node2:21001
-      - tcp://data-node3:21001
+      - tcp://data1-node2:21001
+      - tcp://data1-node3:21001
     confd:
       endpoints:
-      - tcp://data-node1:22002
-      - tcp://data-node2:22002
-      - tcp://data-node3:22002
+      - tcp://data1-node1:22002
+      - tcp://data1-node2:22002
+      - tcp://data1-node3:22002
     client:                                    # Motr Client Settings
       type: s3                                 # "s3"|"cclient" (Motr Clients)
                                                # For cclient, this will be set to "cclient"
