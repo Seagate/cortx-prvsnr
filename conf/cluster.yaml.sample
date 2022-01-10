@@ -4,10 +4,11 @@ cluster:
   node_types:
   - name: client_node        # Optional
     components:
-    - name: cclient
+    - name: motr
       services:
-      - cclient_service      # cclient_setup --services=cclient_service
-  - name: data_node
+      - cclient_service      # motr_setup --services=cclient_service
+    - name: hare
+  - name: data_node/1        # For multiple pods per node, there will another type "data_node/2"
     components:
     - name: utils
     - name: motr
@@ -74,17 +75,17 @@ cluster:
     - name: data-node1
       id: aaa120a9e051d103c164f605615c32a4
       hostname: data-node1
-      type: data_node
+      type: data_node/1
       node_group: data-node-1              # Node group can be physical host name or node label
     - name: data-node2
       id: bbb340f79047df9bb52fa460615c32a5
       hostname: data-node2
-      type: data_node
+      type: data_node/1
       node_group: data-node-2              # Node group can be physical host name or node label
     - name: data-node3
       id: ccc8700fe6797ed532e311b0615c32a7
       hostname: data-node3
-      type: data_node
+      type: data_node/1
       node_group: data-node-3              # Node group can be physical host name or node label
     - name: server-node1
       id: ddd120a9e051d103c164f605615c32a4
