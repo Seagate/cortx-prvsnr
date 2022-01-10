@@ -58,15 +58,15 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
   motr:
-    client_instances: 0              # To be deleted
-    interface_type: tcp              # To be deleted
-    interface_family: inet           # Optional: inet (default) | inet6
-    transport_type: libfab           # libfab | lnet (libfab==inet)
+    client_instances: 0                        # To be removed [part of client]
+    interface_type: tcp                        # To be removed [part of URL]
+    interface_family: inet                     # Optional: inet (default) | inet6
+    transport_type: libfab                     # libfab | lnet (libfab==inet)
     ios:
       endpoints:
-      - tcp://data-node1:21001      # This is a starting endpoint and total number of ios
-                                    # endpoints will be equal to number of CVG's in this pod.
-                                    # 21001 + <number of cvg's in the pod>
+      - tcp://data-node1:21001                 # This is a starting endpoint and total num of ios
+                                               # endpoints will be equal to num of CVG's in this pod.
+                                               # 21001 + <number of cvg's in the pod>
       - tcp://data-node2:21001
       - tcp://data-node3:21001
     confd:
@@ -74,35 +74,40 @@ cortx:
       - tcp://data-node1:22002
       - tcp://data-node2:22002
       - tcp://data-node3:22002
-    s3:
+    client:                                    # Motr Client Settings
+      type: s3                                 # "s3"|"cclient" (Motr Clients)
+                                               # For cclient, this will be set to "cclient"
+      num_instances: 0                         # Client instances per node (pod)
+                                               # For s3 this should be same as value for key
+                                               # "s3>service_instances"
       endpoints:
-      - tcp://server-node1:21001    # This is a starting endpoint and total number of s3
-                                    # endpoints will be equal to number of s3 instances in this pod.
-                                    # 21001 + <common>s3>service_instances>
-      - tcp://server-node2:21001
-      - tcp://server-node3:21001
-    client:
-      num_instances: 0
-      endpoints:
-      - tcp://cclient-node1:21001
-      - tcp://cclient-node2:21001
-      - tcp://cclient-node3:21001
+      - tcp://server-node1:21001               # Format: <protocol>://<hostname_ip>:21001
+      - tcp://server-node2:21001               # This is for client>type == "s3"
+      - tcp://server-node3:21001               # This is a starting endpoint and num of s3
+                                               # endpoints will be equal to num of s3 instances
+                                               # in this pod. Port range would be
+                                               # 21001 - 21001+"motr>client>num_instances"
+                                               # For client>type == "cclient", it would be:
+                                               # tcp://cclient1-node1.cortx.com:21001
+                                               # tcp://cclient2-node1.cortx.com:21001
   hare:
     hax:
       endpoints:
-      - tcp://data-node1:22001
-      - tcp://data-node2:22001
-      - tcp://data-node3:22001
-      - tcp://server-node1:22001
-      - tcp://server-node2:22001
-      - tcp://server-node3:22001
-      - tcp://cclient-node1:22001
-      - tcp://cclient-node2:22001
-      - tcp://cclient-node3:22001
-      - https://data-node1:22003    # Hax http server
-      - https://data-node2:22003
-      - https://data-node3:22003
-      - https://motr-hax-svc:22003  # Cluster IP service for Hax http requests
+      - tcp://data1-node1:22001                 # For motr and Hax communication
+      - tcp://data1-node2:22001                 # For motr and Hax communication
+      - tcp://data1-node3:22001                 # For motr and Hax communication
+      - tcp://server-node1:22001                # if s3 client is configured
+      - tcp://server-node2:22001                # if s3 client is configured
+      - tcp://server-node3:22001                # if s3 client is configured
+      - tcp://cclient-node1:22001               # Only if cclient client is configured
+      - tcp://cclient-node2:22001               # Only if cclient client is configured
+      - tcp://cclient-node3:22001               # Only if cclient client is configured
+      - https://data1-node1:22003               # Hax http server
+      - https://data1-node2:22003               # Hax http server
+      - https://data1-node3:22003               # Hax http server
+      control:                                  # Control Interface for CSM
+        endpoints:
+        - https://motr-hax-svc:22003            # Cluster IP service for Hax http requests
   csm:
     auth_admin: authadmin
     auth_secret: csm_auth_admin_secret

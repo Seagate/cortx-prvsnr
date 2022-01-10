@@ -4,9 +4,10 @@ cluster:
   node_types:
   - name: client_node        # Optional
     components:
-    - name: cclient
+    - name: motr
       services:
-      - cclient_service      # cclient_setup --services=cclient_service
+      - cclient_service      # motr_setup --services=cclient_service
+    - name: hare
   - name: data_node
     components:
     - name: utils
