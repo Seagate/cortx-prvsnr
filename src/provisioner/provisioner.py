@@ -88,7 +88,7 @@ class CortxProvisioner:
 
         # Secrets path from config file
         if cortx_conf.get('cortx>common>storage>local'):
-            CortxProvisioner.secrets_path = cortx_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
+            CortxProvisioner._secrets_path = cortx_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
