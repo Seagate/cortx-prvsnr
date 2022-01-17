@@ -1,13 +1,13 @@
 aiohttp==3.6.1
 argparse==1.4.0
-boto3==1.10.27
+boto3==1.10.37
 configparser==4.0.2
 confluent-kafka==1.5.0
 cryptography==2.8
 dataclasses==0.7
 dict2xml==1.6.1
-elasticsearch==7.12.0
-elasticsearch-dsl==7.3.0
+elasticsearch==7.16.3
+elasticsearch-dsl==7.4.0
 Flask==1.1.1
 jsonschema==3.2.0
 marshmallow==3.2.1
@@ -23,7 +23,7 @@ python-consul==1.1.0
 python-crontab==2.5.1
 python-daemon==2.2.4
 PyYAML==5.4.1
-requests==2.25.1
+requests==2.27.1
 schematics==2.1.0
 secure==0.2.1
 statsd==3.2.2
