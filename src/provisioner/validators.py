@@ -19,10 +19,9 @@ import sys
 import errno
 import inspect
 
-from cortx.utils.conf_store import Conf
+from cortx.utils.conf_store import Conf, MappedConf
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.provisioner.log import Log
-from cortx.provisioner.config_store import ConfigStore
 from cortx.utils.cortx import Const
 
 
@@ -92,7 +91,7 @@ class ConfigValidator(Validator):
         cls.solution_conf_url = solution_conf_url
         cls.cortx_conf_url = cortx_conf_url
         Conf.load(cls._solution_index, cls.solution_conf_url)
-        cls.cortx_conf = ConfigStore(cls.cortx_conf_url)
+        cls.cortx_conf = MappedConf(cls.cortx_conf_url)
 
     def _check_storage_sets(self):
         """Validate storage_sets present in cortx_conf."""

@@ -17,16 +17,15 @@ import errno
 import os
 from enum import Enum
 from cortx.utils.process import SimpleProcess
-from cortx.utils.conf_store import Conf
+from cortx.utils.conf_store import Conf, MappedConf
 from cortx.utils.security.cipher import Cipher
 from cortx.utils.schema.release import Release
 from cortx.provisioner import const
 from cortx.provisioner.log import CortxProvisionerLog, Log
 from cortx.provisioner.error import CortxProvisionerError
-from cortx.provisioner.config_store import ConfigStore
 from cortx.utils.conf_store.error import ConfError
 from cortx.provisioner.config import CortxConfig
-from cortx.provisioner.cluster import CortxCluster,  CortxStorageSet
+from cortx.provisioner.cluster import CortxCluster, CortxStorageSet
 
 
 class PROVISIONING_STAGES(Enum):
@@ -69,7 +68,7 @@ class CortxProvisioner:
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_conf = ConfigStore(cortx_conf_url)
+        cortx_conf = MappedConf(cortx_conf_url)
 
         # Check if config is already applied on node.
         node_id = Conf.machine_id
@@ -169,7 +168,7 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def _get_node_info(cortx_conf: ConfigStore):
+    def _get_node_info(cortx_conf: MappedConf):
         """To get the node information."""
         node_id = Conf.machine_id
         if node_id is None:
@@ -192,7 +191,7 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_conf: ConfigStore, mini_prov_interfaces: list, apply_phase: str):
+    def _provision_components(cortx_conf: MappedConf, mini_prov_interfaces: list, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
@@ -244,7 +243,7 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
-        cortx_conf = ConfigStore(cortx_conf_url)
+        cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = PROVISIONING_STAGES.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
@@ -276,7 +275,7 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
-        cortx_conf = ConfigStore(cortx_conf_url)
+        cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = PROVISIONING_STAGES.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
@@ -302,7 +301,7 @@ class CortxProvisioner:
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
-    def _update_provisioning_status(cortx_conf: ConfigStore, node_id: str,
+    def _update_provisioning_status(cortx_conf: MappedConf, node_id: str,
         phase: str, status: str = PROVISIONING_STATUS.DEFAULT.value):
         """
         Description
@@ -329,14 +328,14 @@ class CortxProvisioner:
         return is_updated
 
     @staticmethod
-    def _add_version_info(cortx_conf: ConfigStore, node_id):
+    def _add_version_info(cortx_conf: MappedConf, node_id):
         """Add version in confstore."""
         version = CortxProvisioner.cortx_release.get_release_version()
         cortx_conf.set('cortx>common>release>version', version)
         cortx_conf.set(f'node>{node_id}>provisioning>version', version)
 
     @staticmethod
-    def _validate_provisioning_status(cortx_conf: ConfigStore, node_id: str, apply_phase: str):
+    def _validate_provisioning_status(cortx_conf: MappedConf, node_id: str, apply_phase: str):
         """Validate provisioning."""
         ret_code = 0
         recent_phase = cortx_conf.get(f'node>{node_id}>provisioning>phase')
