@@ -8,27 +8,13 @@ cortx:
       admin: admin
       endpoints:
       - http://consul-server.cortx-cluster.com:80
-      secret: !!binary |
-        MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
+      secret: MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
       admin: admin
       endpoints:
       - kafka-server1.cortx-cluster.com
       - kafka-server2.cortx-cluster.com
-      secret: !!binary |
-        TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
-    openldap:
-      admin: admin
-      base_dn: dc=seagate,dc=com
-      endpoints:
-      - ldap://oldap-server.cortx-cluster.com:389
-      - ssl://oldap-server.cortx-cluster.com:636
-      secret: !!binary |
-        cFh1dkw1ZlJ2THR4Rmp1ZnA5Mkt4NndhbGZhWkg0dXdqT0I4bGtxZ3c9PQ==
-      servers:
-      - oldap-server1.cortx-cluster.com
-      - oldap-server2.cortx-cluster.com
-      - oldap-server3.cortx-cluster.com
+      secret: TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
       
   common:
     product_release: LC              # TBD: To be removed
@@ -38,8 +24,7 @@ cortx:
       ssl_certificate: /opt/seagate/cortx/s3/install/haproxy/ssl/s3.seagate.com.pem
     service:
       admin: admin
-      secret: !!binary |
-        Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
+      secret: Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
     setup_size: small                # TBD: To be removed and derived from limits
     setup_type: K8                   # To be removed
@@ -53,39 +38,30 @@ cortx:
     agent:
       endpoints:
       - https://csm.seagate.com:8081
-    auth_admin: admin
-    auth_secret: !!binary |
-      UTdTaDl0TzVLMWZsQUp6SnVKeTZaYlNtUUFscld1WjU4UHNSek1aUGc9PQ==
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
-    mgmt_secret: !!binary |
-      UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
+    mgmt_secret: UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
       
   s3:
     auth_admin: admin
-    auth_secret: !!binary |
-      TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
+    auth_secret: TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
     data:
       endpoints:
       - http://s3.seagate.com:80
       - https://s3.seagate.com:443
     iam:
-      endpoints:
+      endpoints:                     # To be removed
       - https://iam.seagate.com:9443
     internal:
       endpoints:
       - http://s3.seagate.com:28049
     io_max_units: 8
-    service_instances: 2
-    limits:   
-      num_services: 2                     
+    service_instances: 2             # To be removed
+    num_services: 2
+    limits:
     - service: rgw_s3
       mem: 1Gi-2Gi
       cpu: <Min>-<Max>
-    - service: rgw_admin
-      mem: 1Gi-2Gi
-      cpu: <Min>-<Max>
-
   hare:
     control:
       endpoints:
@@ -122,26 +98,22 @@ cortx:
       
     limits:                        # NOTE: This section is different from solution config
       num_services: 1
-    - name: ios
-      mem: 1Gi-2Gi
-      cpu: <Min>-<Max>
-        
-    clients:                       # Motr Client Settings     
+      services:
+      - name: ios
+        mem: 1Gi-2Gi
+        cpu: <Min>-<Max>
+
     num_clients: 2                 # Number of Clients
+    clients: 2                     # Motr Client Settings 
     - name: rgw_s3                 # rgw_s3|s3|cclient (Motr Clients)
       num_instances: 1             # Client instances per node (pod)
       endpoints:
       - tcp://server1-node1:21001  # Format: <protocol>://<hostname_ip>:21001 
       - tcp://server1-node2:21001  # Num endpoints will be same as num of client instances
-                                   # Port range would be 21001 - 21001+num_instances
-    - name: rgw_admin             
-      num_instances: 1           
-      endpoints:
-      - tcp://server1-node1:21001  
-      - tcp://server1-node2:21001  
+                                   # Port range would be 21001 - 21001+num_instances 
       
-    - name: cclient             
-      num_instances: 0             # Optional client. Only for Dev.         
+    - name: motr_client             
+      num_instances: 0             # Optional client. Only for Dev.
       endpoints:
       - tcp://server1-node1:21001  
       - tcp://server1-node2:21001    
@@ -203,13 +175,7 @@ node:
     - name: utils
       version: 2.0.0-33
     - name: motr
-      services:
-      - fsm
       version: 2.0.0-33
-    - name: s3
-      services:
-      - bgscheduler
-      version: 2.0.0-54
     - name: csm
       services:
       - agent
@@ -267,13 +233,6 @@ node:
       version: 2.0.0-33
     - name: hare
       version: 2.0.0-47
-    - name: s3
-      services:
-      - s3server
-      - haproxy
-      - authserver
-      - bgworker
-      version: 2.0.0-54
     hostname: server-node1
     name: server-node1
     num_components: 3
