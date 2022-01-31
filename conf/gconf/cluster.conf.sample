@@ -43,6 +43,7 @@ cortx:
     mgmt_secret: UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
       
   s3:
+    auth_server: auth_server
     auth_admin: admin
     auth_secret: TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
     data:
