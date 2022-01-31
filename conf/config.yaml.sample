@@ -30,8 +30,7 @@ cortx:
       admin: admin
       secret: common_admin_secret
     storage:
-      shared: /share
-      log: /share/var/log/cortx/
+      log: /var/log/cortx/
       local: /etc/cortx
       config: /etc/cortx
     security:
