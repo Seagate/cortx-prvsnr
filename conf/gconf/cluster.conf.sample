@@ -41,10 +41,29 @@ cortx:
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
     mgmt_secret: UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
-      
-  s3:
-    auth_server: auth_server
-    auth_admin: admin
+    limits:
+      num_services: 1
+      services:
+      - name: agent
+        memory:
+          min: 128Mi
+          max: 256Mi
+        cpu:
+          min: 250m
+          max: 500m
+  ha:
+    limits:         
+      services:        
+      - name: ha
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m  
+  rgw:
+    auth_user: auth_user            # auth admin user name
+    auth_admin: auth_access_key     # auth admin user access key
     auth_secret: TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
     data:
       endpoints:
@@ -53,16 +72,19 @@ cortx:
     iam:
       endpoints:                     # To be removed
       - https://iam.seagate.com:9443
-    internal:
-      endpoints:
-      - http://s3.seagate.com:28049
     io_max_units: 8
     service_instances: 2             # To be removed
-    num_services: 2
+    num_limits: 1
     limits:
-    - service: rgw_s3
-      mem: 1Gi-2Gi
-      cpu: <Min>-<Max>
+      num_services: 1
+      services:
+      - name: rgw_s3
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 1000m
   hare:
     control:
       endpoints:
@@ -72,9 +94,14 @@ cortx:
       - tcp://hax.seagate.com:28000
     limits:
       num_services: 1
-    - name: hax
-      mem: 1Gi-2Gi
-      cpu: <Min>-<Max>
+      services:
+      - name: hax
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
       
   motr:
     client_instances: 1            # To be removed
@@ -98,11 +125,22 @@ cortx:
       - tcp://data1-node3:22002    
       
     limits:                        # NOTE: This section is different from solution config
-      num_services: 1
+      num_services: 2
       services:
       - name: ios
-        mem: 1Gi-2Gi
-        cpu: <Min>-<Max>
+        memory:
+          min: 1Gi
+          max: 2Gi
+        cpu:
+          min: 250m
+          max: 1000m
+      - name: confd
+          memory:
+          min: 128Mi
+          max: 512Mi
+        cpu:
+          min: 250m
+          max: 500m
 
     num_clients: 2                 # Number of Clients
     clients: 2                     # Motr Client Settings 
@@ -150,6 +188,8 @@ cluster:
 node:
   1115f539f4f770e2a3fe9e2e615c32a8:
     type: ha_node
+    hostname: ha-node
+    name: ha-node
     cluster_id: 0007ec45379e36d9fa089a3d615c32a3
     components:
     num_components: 2
@@ -157,8 +197,6 @@ node:
       version: 2.0.0-33
     - name: ha
       version: 2.0.0-47
-    hostname: ha-node
-    name: ha-node
 
     provisioning:
       phase: deployment
@@ -251,8 +289,6 @@ node:
       version: 2.0.0-33
     - name: hare
       version: 2.0.0-47
-    - name: rgw_s3
-      version: 2.0.0-47
-    - name: rgw_admin
+    - name: rgw
       version: 2.0.0-47
     storage_set: storage-set-1
