@@ -80,7 +80,7 @@ cortx:
     limits:
       num_services: 1
       services:
-      - name: rgw_s3
+      - name: rgw
         memory:
           min: 128Mi
           max: 1Gi
@@ -146,7 +146,7 @@ cortx:
 
     num_clients: 2                 # Number of Clients
     clients: 2                     # Motr Client Settings 
-    - name: rgw_s3                 # rgw_s3|s3|cclient (Motr Clients)
+    - name: rgw                    # rgw|s3|cclient (Motr Clients)
       num_instances: 1             # Client instances per node (pod)
       endpoints:
       - tcp://server1-node1:21001  # Format: <protocol>://<hostname_ip>:21001 
