@@ -31,8 +31,7 @@ cortx:
     storage:
       config: /etc/cortx
       local: /etc/cortx
-      log: /share/var/log/cortx/
-      shared: /share                 # To be removed
+      log: /var/log/cortx/
       
   csm:
     agent:
@@ -72,6 +71,9 @@ cortx:
     iam:
       endpoints:                     # To be removed
       - https://iam.seagate.com:9443
+    internal:
+      endpoints:
+      - http://s3.seagate.com:28049
     io_max_units: 8
     service_instances: 2             # To be removed
     num_limits: 1
