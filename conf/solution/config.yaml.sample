@@ -40,7 +40,7 @@ cortx:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
     message_bus_backend: kafka
-  s3:
+  rgw:
     iam:
       endpoints:
       - https://cortx-io-svc:9443
@@ -75,7 +75,7 @@ cortx:
       - tcp://data1-node2:22002
       - tcp://data1-node3:22002
     client:                                    # Motr Client Settings
-      type: s3                                 # "s3"|"cclient" (Motr Clients)
+      type: rgw                                 # rgw|"s3"|"cclient" (Motr Clients)
                                                # For cclient, this will be set to "cclient"
       num_instances: 0                         # Client instances per node (pod)
                                                # For s3 this should be same as value for key
