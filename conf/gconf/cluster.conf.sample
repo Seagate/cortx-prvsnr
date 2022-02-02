@@ -62,7 +62,7 @@ cortx:
     auth_user: auth_user            # auth admin user name
     auth_admin: auth_access_key     # auth admin user access key
     auth_secret: TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
-    data:
+    s3:
       endpoints:
       - http://s3.seagate.com:80
       - https://s3.seagate.com:443
