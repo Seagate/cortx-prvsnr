@@ -17,7 +17,6 @@ cortx:
       secret: TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
       
   common:
-    product_release: LC              # TBD: To be removed
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -27,7 +26,6 @@ cortx:
       secret: Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
     setup_size: small                # TBD: To be removed and derived from limits
-    setup_type: K8                   # To be removed
     storage:
       config: /etc/cortx
       local: /etc/cortx
@@ -68,14 +66,7 @@ cortx:
       endpoints:
       - http://s3.seagate.com:80
       - https://s3.seagate.com:443
-    iam:
-      endpoints:                     # To be removed
-      - https://iam.seagate.com:9443
-    internal:
-      endpoints:
-      - http://s3.seagate.com:28049
     io_max_units: 8
-    service_instances: 2             # To be removed
     num_limits: 1
     limits:
       num_services: 1
