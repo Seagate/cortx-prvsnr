@@ -43,8 +43,8 @@ cortx:
       services:
       - name: rgw
         memory:
-          min: 128Mi
-          max: 1Gi
+          min: 300Mi
+          max: 2Gi
         cpu:
           min: 250m
           max: 1000m
