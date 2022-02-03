@@ -50,14 +50,29 @@ cortx:
           max: 500m
   ha:
     limits:         
-      services:        
-      - name: ha
+      num_services: 3
+      services:
+      - name: fault_tolerance
         memory:
           min: 128Mi
           max: 1Gi
         cpu:
           min: 250m
-          max: 500m  
+          max: 500m
+      - name: health_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: k8s_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
   rgw:
     auth_user: auth_user            # auth admin user name
     auth_admin: auth_access_key     # auth admin user access key
