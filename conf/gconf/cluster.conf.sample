@@ -1,0 +1,292 @@
+# This is CORTX GConf (Config Store) which serves as input 
+# to all the CORTX Services
+# Location: /etc/cortx/cluster.conf 
+
+cortx:
+  external:
+    consul:
+      admin: admin
+      endpoints:
+      - http://consul-server.cortx-cluster.com:80
+      secret: MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
+    kafka:
+      admin: admin
+      endpoints:
+      - kafka-server1.cortx-cluster.com
+      - kafka-server2.cortx-cluster.com
+      secret: TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
+  common:
+    security:
+      device_certificate: /etc/cortx/solution/ssl/stx.pem
+      domain_certificate: /etc/cortx/solution/ssl/stx.pem
+      ssl_certificate: /opt/seagate/cortx/s3/install/haproxy/ssl/s3.seagate.com.pem
+    service:
+      admin: admin
+      secret: Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
+        MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
+    setup_size: small                # TBD: To be removed and derived from limits
+    storage:
+      config: /etc/cortx
+      local: /etc/cortx
+      log: /var/log/cortx/
+  csm:
+    agent:
+      endpoints:
+      - https://csm.seagate.com:8081
+    email_address: cortx@seagate.com # Optional 
+    mgmt_admin: cortxadmin
+    mgmt_secret: UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
+    limits:
+      num_services: 1
+      services:
+      - name: agent
+        memory:
+          min: 128Mi
+          max: 256Mi
+        cpu:
+          min: 250m
+          max: 500m
+  ha:
+    limits:         
+      num_services: 3
+      services:
+      - name: fault_tolerance
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: health_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: k8s_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+  rgw:
+    auth_user: auth_user            # auth admin user name
+    auth_admin: auth_access_key     # auth admin user access key
+    auth_secret: TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
+    s3:
+      endpoints:
+      - http://s3.cortx.seagate.com:80
+      - https://s3.cortx.seagate.com:443
+    io_max_units: 8
+    num_limits: 1
+    limits:
+      num_services: 1
+      services:
+      - name: rgw
+        memory:
+          min: 300Mi
+          max: 2Gi
+        cpu:
+          min: 250m
+          max: 1000m
+  hare:
+    control:
+      endpoints:
+      - https://motr-hax-svc:22003
+    hax:
+      endpoints:
+      - tcp://hax.seagate.com:28000
+    limits:
+      num_services: 1
+      services:
+      - name: hax
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+  motr:
+    client_instances: 1            # To be removed
+    interface_type: tcp            # To be removed (This is now part of URL)
+    interface_family: inet         # Optional: inet (default) | inet6
+    transport_type: libfab         # libfab | lnet (libfab==inet)
+    ios:
+      endpoints:
+      - tcp://data1-node1:21001    # Format: <protocol>://<hostname_ip>:<port>
+                                   # N endpoints one for each Pod, first mentioned here
+                                   # N == Number of CVGs in the Pod
+                                   # Ports: 21001 - (21001+Number of CVGs)
+      - tcp://data2-node1:21001    # Same thing for the second pod
+      - tcp://data1-node2:21001    # of for Pods on the other nodes
+    confd:
+      endpoints:
+      - tcp://data1-node1:22002    # Format: <protocol>://<hostname_ip>:22002
+      - tcp://data1-node2:22002       
+      - tcp://data1-node3:22002    
+    limits:                        # NOTE: This section is different from solution config
+      num_services: 2
+      services:
+      - name: ios
+        memory:
+          min: 1Gi
+          max: 2Gi
+        cpu:
+          min: 250m
+          max: 1000m
+      - name: confd
+          memory:
+          min: 128Mi
+          max: 512Mi
+        cpu:
+          min: 250m
+          max: 500m
+    num_clients: 2                 # Number of Clients
+    clients: 2                     # Motr Client Settings 
+    - name: rgw                    # rgw|s3|cclient (Motr Clients)
+      num_instances: 1             # Client instances per node (pod)
+      endpoints:
+      - tcp://server1-node1:21001  # Format: <protocol>://<hostname_ip>:21001 
+      - tcp://server1-node2:21001  # Num endpoints will be same as num of client instances
+                                   # Port range would be 21001 - 21001+num_instances 
+    - name: motr_client             
+      num_instances: 0             # Optional client. Only for Dev.
+      endpoints:
+      - tcp://server1-node1:21001
+      - tcp://server1-node2:21001
+  utils:
+    message_bus_backend: kafka
+
+cluster:
+  id: 0007ec45379e36d9fa089a3d615c32a3
+  name: cortx-cluster
+  storage_set_count: 1
+  storage_set:
+  - name: storage-set-1
+    durability:
+      dix:
+        data: '1'
+        parity: '0'
+        spare: '0'
+      sns:
+        data: '1'
+        parity: '0'
+        spare: '0'
+    nodes:
+    - 9995f539f4f770e2a3fe9e2e615c32a8
+    - 1115f539f4f770e2a3fe9e2e615c32a8
+    - aaa120a9e051d103c164f605615c32a4
+    - bbb340f79047df9bb52fa460615c32a5
+    - ccc8700fe6797ed532e311b0615c32a7
+    - ddd120a9e051d103c164f605615c32a4
+    - eee340f79047df9bb52fa460615c32a5
+    - fff8700fe6797ed532e311b0615c32a7
+node:
+  1115f539f4f770e2a3fe9e2e615c32a8:
+    type: ha_node
+    hostname: ha-node
+    name: ha-node
+    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
+    components:
+    num_components: 2
+    - name: utils
+      version: 2.0.0-33
+    - name: ha
+      version: 2.0.0-47
+
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-576
+    storage_set: storage-set-1
+
+  9995f539f4f770e2a3fe9e2e615c32a8:
+    type: control_node
+    hostname: control-node
+    name: control-node
+    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
+    num_components: 4
+    components:
+    - name: utils
+      version: 2.0.0-33
+    - name: motr
+      version: 2.0.0-33
+    - name: csm
+      services:
+      - agent
+      version: 2.0.0-21
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-576
+    storage_set: storage-set-1
+
+  aaa120a9e051d103c164f605615c32a4:
+    type: data_node
+    hostname: data-node1
+    name: data-node1
+    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
+    num_components: 3
+    components:
+    - name: utils
+      version: 2.0.0-33
+    - name: motr
+      services:
+      - io
+      version: 2.0.0-33
+    - name: hare
+      version: 2.0.0-47
+    storage:
+      cvg:
+      - devices:
+          data:
+          - /dev/sdc
+          - /dev/sdd
+          metadata:
+          - /dev/sdb
+        name: cvg-01
+        type: ios
+      - devices:
+          data:
+          - /dev/sdf
+          - /dev/sdg
+          metadata:
+          - /dev/sde
+        name: cvg-02
+        type: ios
+      cvg_count: 2
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-576
+    storage_set: storage-set-1
+
+  ddd120a9e051d103c164f605615c32a4:
+    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
+    components:
+    - name: utils
+      version: 2.0.0-33
+    - name: hare
+      version: 2.0.0-47
+    hostname: server-node1
+    name: server-node1
+    num_components: 3
+    storage_set: storage-set-1
+    type: server_node
+    
+  eee340f79047df9bb52fa460615c32a5:
+    type: server_node
+    hostname: server-node2
+    name: server-node2
+    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
+    num_components: 3
+    components:
+    - name: utils
+      version: 2.0.0-33
+    - name: hare
+      version: 2.0.0-47
+    - name: rgw
+      version: 2.0.0-47
+    storage_set: storage-set-1

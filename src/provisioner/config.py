@@ -44,7 +44,7 @@ class CortxConfig:
                     errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
 
             if k == 'external':
-                required_external_keys = ['kafka', 'openldap', 'consul']
+                required_external_keys = ['kafka', 'consul']
                 for e_key in required_external_keys:
                     try:
                         if cortx_solution_config[k][e_key]['endpoints'] is None:
