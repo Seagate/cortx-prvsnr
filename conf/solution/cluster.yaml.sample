@@ -7,7 +7,7 @@ cluster:
     - name: utils
     - name: motr
       services:
-      - cclient_service      # motr_setup --services=cclient_service
+      - motr_client          # motr_setup --services=motr_client
     - name: hare
   - name: data_node/1        # For multiple pods per node, there will another type "data_node/2"
     components:
