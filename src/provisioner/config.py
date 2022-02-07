@@ -18,6 +18,7 @@ from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.utils.conf_store import Conf
 from cortx.provisioner.log import Log
+from cortx.provisioner import const
 
 class CortxConfig:
     """ CORTX Configuration """
@@ -44,7 +45,7 @@ class CortxConfig:
                     errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
 
             if k == 'external':
-                required_external_keys = ['kafka', 'consul']
+                required_external_keys = const.REQUIRED_EXTERNAL_SW
                 for e_key in required_external_keys:
                     try:
                         if cortx_solution_config[k][e_key]['endpoints'] is None:

@@ -112,7 +112,6 @@ class CortxCluster:
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
         key_prefix = f'node>{node_id}>storage'
-        storage_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
         for index, group in enumerate(storage_spec):
             for key, val in group.items():
                 if key == 'devices':
