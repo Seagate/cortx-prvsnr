@@ -118,6 +118,8 @@ class CortxProvisioner:
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
             CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
+            # Adding array count key in conf
+            cortx_conf.add_num_keys()
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
@@ -143,7 +145,7 @@ class CortxProvisioner:
 
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
-
+            # TODO: Need to remove storgae_set_count key
             cluster_keys = [('cluster>id', cluster_id),
                 ('cluster>name', cluster_name),
                 ('cluster>storage_set_count', len(storage_sets))]
