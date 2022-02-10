@@ -33,13 +33,13 @@ class PROVISIONING_STAGES(Enum):
     DEPLOYMENT = "deployment"
     UPGRADE = "upgrade"
 
-class MINIPROVISIONING_STAGES(Enum):
+class DEPLOYMENTINTERFACES(Enum):
     POST_INSTALL= "post_install"
     PREAPRE= "prepare"
     CONFIG= "config"
     INIT= "init"
 
-class UPGRADEPROVISIONING_STAGES(Enum):
+class UPGRADEINTERFACES(Enum):
     UPGRADE = "upgrade"
 
 class PROVISIONING_STATUS(Enum):
@@ -200,11 +200,11 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_conf: MappedConf, MINIPROVISIONING_STAGES: enum, apply_phase: str):
+    def _provision_components(cortx_conf: MappedConf, INTERFACES: enum, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
-        for interface in MINIPROVISIONING_STAGES:
+        for interface in INTERFACES:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
                 component_name = cortx_conf.get(f'{key_prefix}>name')
@@ -268,7 +268,7 @@ class CortxProvisioner:
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
-        CortxProvisioner._provision_components(cortx_conf, MINIPROVISIONING_STAGES, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, DEPLOYMENTINTERFACES, apply_phase)
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
@@ -301,7 +301,7 @@ class CortxProvisioner:
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
 
-        CortxProvisioner._provision_components(cortx_conf, UPGRADEPROVISIONING_STAGES, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, UPGRADEINTERFACES, apply_phase)
         # Update CORTX version, once the upgrade is successful
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
