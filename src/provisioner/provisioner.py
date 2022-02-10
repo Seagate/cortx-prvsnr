@@ -227,10 +227,11 @@ class CortxProvisioner:
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface,
                         component_name, err)
-                # Update version for each component if Provisioning successful.
-                component_version = CortxProvisioner.cortx_release.get_component_version(
-                    component_name)
-                cortx_conf.set(f'{key_prefix}>version', component_version)
+                if interface == 'init' :
+                    # Update version for each component if Provisioning successful.
+                    component_version = CortxProvisioner.cortx_release.get_component_version(
+                        component_name)
+                    cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
