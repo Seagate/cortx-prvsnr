@@ -13,7 +13,6 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-import enum
 import errno
 import os
 from enum import Enum
@@ -29,20 +28,20 @@ from cortx.provisioner.config import CortxConfig
 from cortx.provisioner.cluster import CortxCluster, CortxStorageSet
 
 
-class PROVISIONING_STAGES(Enum):
+class ProvisionerStages(Enum):
     DEPLOYMENT = "deployment"
     UPGRADE = "upgrade"
 
-class DEPLOYMENT_INTERFACES(Enum):
+class DeploymentInterfaces(Enum):
     POST_INSTALL= "post_install"
     PREAPRE= "prepare"
     CONFIG= "config"
     INIT= "init"
 
-class UPGRADE_INTERFACES(Enum):
+class UpgradeInterfaces(Enum):
     UPGRADE = "upgrade"
 
-class PROVISIONING_STATUS(Enum):
+class ProvisionerStatus(Enum):
     DEFAULT = "default"
     ERROR = "error"
     PROGRESS = "progress"
@@ -200,11 +199,11 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_conf: MappedConf, INTERFACES: enum, apply_phase: str):
+    def _provision_components(cortx_conf: MappedConf, interfaces: Enum, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
-        for interface in INTERFACES:
+        for interface in interfaces:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
                 component_name = cortx_conf.get(f'{key_prefix}>name')
@@ -215,7 +214,7 @@ class CortxProvisioner:
                     services.append(cortx_conf.get(f'{key_prefix}>services[{service_idx}]'))
                     service_idx = service_idx + 1
                 service = 'all' if service_idx == 0 else ','.join(services)
-                if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
+                if apply_phase == ProvisionerStages.UPGRADE.value:
                     version = cortx_conf.get(f'{key_prefix}>version')
                     # Skip update for component if it is already updated.
                     is_updated = CortxProvisioner._is_component_updated(component_name, version)
@@ -223,7 +222,7 @@ class CortxProvisioner:
                         Log.info(f'{component_name} is already updated with {version} version.')
                         continue
                 CortxProvisioner._update_provisioning_status(
-                        cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.PROGRESS.value)
+                        cortx_conf, node_id, apply_phase, ProvisionerStatus.PROGRESS.value)
                 cmd = (
                     f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
                     f" --config {cortx_conf._conf_url} --services {service}")
@@ -232,16 +231,15 @@ class CortxProvisioner:
                 _, err, rc = cmd_proc.run()
                 if rc != 0:
                     CortxProvisioner._update_provisioning_status(
-                        cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.ERROR.value)
+                        cortx_conf, node_id, apply_phase, ProvisionerStatus.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface.value,
                         component_name, err)
-                
-                if interface.value == DEPLOYMENT_INTERFACES.INIT.value or interface.value == UPGRADE_INTERFACES.UPGRADE.value :
-                    # Update version for each component if Provisioning successful.
-                    component_version = CortxProvisioner.cortx_release.get_component_version(
-                        component_name)
-                    cortx_conf.set(f'{key_prefix}>version', component_version)
+
+                # Update version for each component if Provisioning successful.
+                component_version = CortxProvisioner.cortx_release.get_component_version(
+                    component_name)
+                cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -254,7 +252,7 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = MappedConf(cortx_conf_url)
-        apply_phase = PROVISIONING_STAGES.DEPLOYMENT.value
+        apply_phase = ProvisionerStages.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
             cortx_conf, node_id, apply_phase)
@@ -268,10 +266,10 @@ class CortxProvisioner:
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
-        CortxProvisioner._provision_components(cortx_conf, DEPLOYMENT_INTERFACES, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, DeploymentInterfaces, apply_phase)
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
-            cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
+            cortx_conf, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
@@ -285,7 +283,7 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = MappedConf(cortx_conf_url)
-        apply_phase = PROVISIONING_STAGES.UPGRADE.value
+        apply_phase = ProvisionerStages.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
             cortx_conf, node_id, apply_phase)
@@ -301,16 +299,16 @@ class CortxProvisioner:
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
 
-        CortxProvisioner._provision_components(cortx_conf, UPGRADE_INTERFACES, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, UpgradeInterfaces, apply_phase)
         # Update CORTX version, once the upgrade is successful
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
-            cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
+            cortx_conf, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
     def _update_provisioning_status(cortx_conf: MappedConf, node_id: str,
-        phase: str, status: str = PROVISIONING_STATUS.DEFAULT.value):
+        phase: str, status: str = ProvisionerStatus.DEFAULT.value):
         """
         Description
         Add phase, status, version, release keys in confstore.
@@ -352,31 +350,31 @@ class CortxProvisioner:
                 f'recent status is {recent_status}. '
         # {apply_phase: {recent_phase: {recent_status: [boolean_result,rc]}}}
         validations_checks = {
-            PROVISIONING_STAGES.DEPLOYMENT.value: {
-                PROVISIONING_STAGES.DEPLOYMENT.value: {
-                    PROVISIONING_STATUS.DEFAULT.value: [True, 0],
-                    PROVISIONING_STATUS.ERROR.value: [True, 0],
-                    PROVISIONING_STATUS.PROGRESS.value: [True, 0],
-                    PROVISIONING_STATUS.SUCCESS.value: [False, 0]
+            ProvisionerStages.DEPLOYMENT.value: {
+                ProvisionerStages.DEPLOYMENT.value: {
+                    ProvisionerStatus.DEFAULT.value: [True, 0],
+                    ProvisionerStatus.ERROR.value: [True, 0],
+                    ProvisionerStatus.PROGRESS.value: [True, 0],
+                    ProvisionerStatus.SUCCESS.value: [False, 0]
                 },
-                PROVISIONING_STAGES.UPGRADE.value: {
-                    PROVISIONING_STATUS.DEFAULT.value: [True, 0],
-                    PROVISIONING_STATUS.ERROR.value: [True, 0],
-                    PROVISIONING_STATUS.PROGRESS.value: [True, 0],
-                    PROVISIONING_STATUS.SUCCESS.value: [True, 0]
+                ProvisionerStages.UPGRADE.value: {
+                    ProvisionerStatus.DEFAULT.value: [True, 0],
+                    ProvisionerStatus.ERROR.value: [True, 0],
+                    ProvisionerStatus.PROGRESS.value: [True, 0],
+                    ProvisionerStatus.SUCCESS.value: [True, 0]
                 }},
-            PROVISIONING_STAGES.UPGRADE.value: {
-                PROVISIONING_STAGES.DEPLOYMENT.value: {
-                    PROVISIONING_STATUS.DEFAULT.value: [False, 1],
-                    PROVISIONING_STATUS.ERROR.value: [False, 1],
-                    PROVISIONING_STATUS.PROGRESS.value: [False, 1],
-                    PROVISIONING_STATUS.SUCCESS.value: [True, 0]
+            ProvisionerStages.UPGRADE.value: {
+                ProvisionerStages.DEPLOYMENT.value: {
+                    ProvisionerStatus.DEFAULT.value: [False, 1],
+                    ProvisionerStatus.ERROR.value: [False, 1],
+                    ProvisionerStatus.PROGRESS.value: [False, 1],
+                    ProvisionerStatus.SUCCESS.value: [True, 0]
                 },
-                PROVISIONING_STAGES.UPGRADE.value: {
-                    PROVISIONING_STATUS.DEFAULT.value: [True, 0],
-                    PROVISIONING_STATUS.ERROR.value: [True, 0],
-                    PROVISIONING_STATUS.PROGRESS.value: [True, 0],
-                    PROVISIONING_STATUS.SUCCESS.value: [True, 0]
+                ProvisionerStages.UPGRADE.value: {
+                    ProvisionerStatus.DEFAULT.value: [True, 0],
+                    ProvisionerStatus.ERROR.value: [True, 0],
+                    ProvisionerStatus.PROGRESS.value: [True, 0],
+                    ProvisionerStatus.SUCCESS.value: [True, 0]
                 }
             }}
         if recent_phase is None and recent_status is None:
@@ -393,10 +391,10 @@ class CortxProvisioner:
         validate_result = validations_checks.get(apply_phase).get(recent_phase).get(recent_status)
         if validate_result[1] != 0:
             Log.error(msg + f'{apply_phase} is not possible on this node.')
-            if apply_phase == PROVISIONING_STAGES.UPGRADE.value:
+            if apply_phase == ProvisionerStages.UPGRADE.value:
                 # Reset status.
                 recent_status = cortx_conf.set(f'node>{node_id}>provisioning>status',
-                    PROVISIONING_STATUS.DEFAULT.value)
+                    ProvisionerStatus.DEFAULT.value)
         else:
             Log.info(msg)
         return validate_result[0], validate_result[1]
