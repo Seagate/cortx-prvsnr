@@ -95,10 +95,8 @@ class CortxCluster:
         for index, component in enumerate(component_list):
             key_prefix = f'node>{node_id}>components[{index}]'
             component_name = component['name']
-            component_version = self._cortx_release.get_component_version(component_name)
-            component_kv_list.extend((
-                (f'{key_prefix}>name', component_name),
-                (f'{key_prefix}>version', component_version)))
+            component_kv_list.append((
+                (f'{key_prefix}>name', component_name)))
 
             service_list = component.get('services')
             if service_list:
