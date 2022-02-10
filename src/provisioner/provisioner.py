@@ -13,6 +13,7 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+import enum
 import errno
 import os
 from enum import Enum
@@ -32,6 +33,14 @@ class PROVISIONING_STAGES(Enum):
     DEPLOYMENT = "deployment"
     UPGRADE = "upgrade"
 
+class MINIPROVISIONING_STAGES(Enum):
+    POST_INSTALL= "post_install"
+    PREAPRE= "prepare"
+    CONFIG= "config"
+    INIT= "init"
+
+class UPGRADEPROVISIONING_STAGES(Enum):
+    UPGRADE = "upgrade"
 
 class PROVISIONING_STATUS(Enum):
     DEFAULT = "default"
@@ -191,11 +200,11 @@ class CortxProvisioner:
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_conf: MappedConf, mini_prov_interfaces: list, apply_phase: str):
+    def _provision_components(cortx_conf: MappedConf, MINIPROVISIONING_STAGES: enum, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
-        for interface in mini_prov_interfaces:
+        for interface in MINIPROVISIONING_STAGES:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
                 component_name = cortx_conf.get(f'{key_prefix}>name')
@@ -216,7 +225,7 @@ class CortxProvisioner:
                 CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.PROGRESS.value)
                 cmd = (
-                    f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface}"
+                    f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
                     f" --config {cortx_conf._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
@@ -225,12 +234,14 @@ class CortxProvisioner:
                     CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.ERROR.value)
                     raise CortxProvisionerError(
-                        rc, "%s phase of %s, failed. %s", interface,
+                        rc, "%s phase of %s, failed. %s", interface.value,
                         component_name, err)
-                # Update version for each component if Provisioning successful.
-                component_version = CortxProvisioner.cortx_release.get_component_version(
-                    component_name)
-                cortx_conf.set(f'{key_prefix}>version', component_version)
+                
+                if interface.value == MINIPROVISIONING_STAGES.INIT.value:
+                    # Update version for each component if Provisioning successful.
+                    component_version = CortxProvisioner.cortx_release.get_component_version(
+                        component_name)
+                    cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -257,8 +268,7 @@ class CortxProvisioner:
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
-        mini_prov_interfaces = ['post_install', 'prepare', 'config', 'init']
-        CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, MINIPROVISIONING_STAGES, apply_phase)
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
@@ -291,8 +301,7 @@ class CortxProvisioner:
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
 
-        mini_prov_interfaces = ['upgrade']
-        CortxProvisioner._provision_components(cortx_conf, mini_prov_interfaces, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, UPGRADEPROVISIONING_STAGES, apply_phase)
         # Update CORTX version, once the upgrade is successful
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
