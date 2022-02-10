@@ -237,7 +237,7 @@ class CortxProvisioner:
                         rc, "%s phase of %s, failed. %s", interface.value,
                         component_name, err)
                 
-                if interface.value == DEPLOYMENT_INTERFACES.INIT.value or interface.value == UPGRADE_INTERFACES.UPGRADE.VALUE :
+                if interface.value == DEPLOYMENT_INTERFACES.INIT.value or interface.value == UPGRADE_INTERFACES.UPGRADE.value :
                     # Update version for each component if Provisioning successful.
                     component_version = CortxProvisioner.cortx_release.get_component_version(
                         component_name)
