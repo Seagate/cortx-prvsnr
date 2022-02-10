@@ -33,13 +33,13 @@ class PROVISIONING_STAGES(Enum):
     DEPLOYMENT = "deployment"
     UPGRADE = "upgrade"
 
-class DEPLOYMENTINTERFACES(Enum):
+class DEPLOYMENT_STAGES(Enum):
     POST_INSTALL= "post_install"
     PREAPRE= "prepare"
     CONFIG= "config"
     INIT= "init"
 
-class UPGRADEINTERFACES(Enum):
+class UPGRADE_STAGES(Enum):
     UPGRADE = "upgrade"
 
 class PROVISIONING_STATUS(Enum):
@@ -268,7 +268,7 @@ class CortxProvisioner:
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
-        CortxProvisioner._provision_components(cortx_conf, DEPLOYMENTINTERFACES, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, DEPLOYMENT_STAGES, apply_phase)
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase, PROVISIONING_STATUS.SUCCESS.value)
@@ -301,7 +301,7 @@ class CortxProvisioner:
         CortxProvisioner._update_provisioning_status(
             cortx_conf, node_id, apply_phase)
 
-        CortxProvisioner._provision_components(cortx_conf, UPGRADEINTERFACES, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, UPGRADE_STAGES, apply_phase)
         # Update CORTX version, once the upgrade is successful
         CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
