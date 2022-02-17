@@ -18,21 +18,21 @@ cortx:
       - kafka-server2.cortx-cluster.com
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
-    openldap:                                                 # deleted
-      admin: admin                                            # deleted
-      base_dn: dc=seagate,dc=com                              # deleted
+    openldap:                                                 # deprecated
+      admin: admin                                            # deprecated
+      base_dn: dc=seagate,dc=com                              # deprecated
       num_endpoints: 2
-      endpoints:                                              # deleted
+      endpoints:                                              # deprecated
       - ldap://oldap-server.cortx-cluster.com:389 
       - ssl://oldap-server.cortx-cluster.com:636
-      secret: !!binary |                                      # deleted
+      secret: !!binary |                                      # deprecated
         cFh1dkw1ZlJ2THR4Rmp1ZnA5Mkt4NndhbGZhWkg0dXdqT0I4bGtxZ3c9PQ==
-      servers:                                                # deleted
+      servers:                                                # deprecated
       - oldap-server1.cortx-cluster.com
       - oldap-server2.cortx-cluster.com
       - oldap-server3.cortx-cluster.com
   common:
-    product_release: LC                             # deleted
+    product_release: LC                             # deprecated
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -43,20 +43,20 @@ cortx:
         Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
     setup_size: small                               # To be removed and derived from limits
-    setup_type: K8                                  # deleted
+    setup_type: K8                                  # deprecated
     storage:
       config: /etc/cortx
       local: /etc/cortx
       log: /var/log/cortx/
-      shared: /share                                # deleted
+      shared: /share                                # deprecated
   utils:
     message_bus_backend: kafka
   csm:
     agent:
       endpoints:
       - https://csm.seagate.com:8081
-    auth_admin: admin                               # deleted
-    auth_secret: !!binary |                         # deleted
+    auth_admin: admin                               # deprecated
+    auth_secret: !!binary |                         # deprecated
       UTdTaDl0TzVLMWZsQUp6SnVKeTZaYlNtUUFscld1WjU4UHNSek1aUGc9PQ==
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
@@ -119,7 +119,7 @@ cortx:
     auth_user: user_name                        # (new) IAM user name 
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
-    service_instances: 2                        # deleted
+    service_instances: 2                        # deprecated
     limits:                  
       num_services: 1
       services:
@@ -266,6 +266,12 @@ node:
     components:
     - name: utils
       version: 2.0.0-33
+    - name: motr
+      services:
+      - fsm
+    - name: s3
+      services:
+      - bgscheduler
     - name: csm
       services:
       - agent
@@ -287,6 +293,11 @@ node:
     - name: hare
       version: 2.0.0-47
     - name: s3
+      services:
+      - s3server
+      - haproxy
+      - authserver
+      - bgworker
       version: 2.0.0-47
     storage_set: storage-set-1
   aaa120a9e051d103c164f605615c32a4:
