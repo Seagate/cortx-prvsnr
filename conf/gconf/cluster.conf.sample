@@ -103,7 +103,7 @@ cortx:
       - http://server1-node1.com:22000
     
   s3:
-    iam:
+    iam:                                        # To be removed
       endpoints:
       - https://cortx-io-svc:9443
       - http://cortx-io-svc:9080
@@ -111,11 +111,12 @@ cortx:
       endpoints:
       - http://cortx-io-svc:80
       - https://cortx-io-svc:443
-    internal:
+    internal:                                   # To be removed
       endpoints:
       - http://cortx-io-svc:28049
     io_max_units: 8
     max_start_timeout: 240
+    auth_user: user_name                        # (new) IAM user name 
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
     service_instances: 2                        # deleted

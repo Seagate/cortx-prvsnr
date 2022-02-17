@@ -5,7 +5,7 @@ cortx:
         - tcp://kafka.default.svc.cluster.local:9092
       admin: admin
       secret: kafka_admin_secret
-    openldap:
+    openldap:                               # To be removed
       endpoints:
         - ldap://openldap-svc.default.svc.cluster.local:389
         - ssl://openldap-svc.default.svc.cluster.local:636
@@ -24,16 +24,16 @@ cortx:
     release:
       name: CORTX
       version: 2.0.0-1111
-    environment_type: K8
+    environment_type: K8                    # To be removed
     setup_size: small
     service:
       admin: admin
       secret: common_admin_secret
     storage:
-      shared: /share
-      log: /share/var/log/cortx/
+      log: /var/log/cortx/
       local: /etc/cortx
       config: /etc/cortx
+      shared: /share
     security:
       ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -41,22 +41,31 @@ cortx:
   utils:
     message_bus_backend: kafka
   s3:
-    iam:
+    iam:                                       # To be removed
       endpoints:
       - https://cortx-io-svc:9443
       - http://cortx-io-svc:9080
     data:
       endpoints:
-      - http://cortx-io-svc:80
-      - https://cortx-io-svc:443
-    internal:
+      - http://s3.cortx.seagate.com:80
+      - https://s3.cortx.seagate.com:443
+    internal:                                  # To be removed
       endpoints:
       - http://cortx-io-svc:28049
-    service_instances: 2
     io_max_units: 8
     max_start_timeout: 240
+    auth_user: user_name                       # (new) IAM user name 
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
+    limits:
+      services:
+      - name: s3
+        memory:
+          min: 300Mi
+          max: 2Gi
+        cpu:
+          min: 250m
+          max: 1000m
   motr:
     client_instances: 0                        # To be removed [part of client]
     interface_type: tcp                        # To be removed [part of URL]
@@ -74,46 +83,98 @@ cortx:
       - tcp://data1-node1:22002
       - tcp://data1-node2:22002
       - tcp://data1-node3:22002
-    client:                                    # Motr Client Settings
-      type: s3                                 # "s3"|"cclient" (Motr Clients)
-                                               # For cclient, this will be set to "cclient"
-      num_instances: 0                         # Client instances per node (pod)
-                                               # For s3 this should be same as value for key
-                                               # "s3>service_instances"
+    clients:                                   # Motr Client Settings 
+    - name: s3                                # s3|s3|cclient (Motr Clients)
+      num_instances: 1                         # Client instances per node (pod)
+      endpoints:             
+      - tcp://server1-node1:21001              # Format: <protocol>://<hostname_ip>:21001 
+      - tcp://server1-node2:21001              # Num endpoints will be same as num of client instances
+                                               # Port range would be 21001 - 21001+num_instances 
+    - name: motr_client                         
+      num_instances: 0                         # Optional client. Only for Dev.
       endpoints:
-      - tcp://server-node1:21001               # Format: <protocol>://<hostname_ip>:21001
-      - tcp://server-node2:21001               # This is for client>type == "s3"
-      - tcp://server-node3:21001               # This is a starting endpoint and num of s3
-                                               # endpoints will be equal to num of s3 instances
-                                               # in this pod. Port range would be
-                                               # 21001 - 21001+"motr>client>num_instances"
-                                               # For client>type == "cclient", it would be:
-                                               # tcp://cclient1-node1.cortx.com:21001
-                                               # tcp://cclient2-node1.cortx.com:21001
+      - tcp://server1-node1:21001  
+      - tcp://server1-node2:21001    
+    limits:
+      services:
+      - name: ios
+        memory:
+          min: 1Gi                    # Needs to compute this dynamically 
+                                      # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
+                                      # where K= Num CVGs, N=Num Containers
+          max: 0                      # max = 1.1 * min. For now set to 0.
+        cpu:
+          min: 1000m                  # 1000m * N where N = Num of "ios" Containers
+          max: 1500m                  # 1500m * N where N = Num of "ios" Containers
+      - name: confd
+        memory:
+          min: 128Mi
+          max: 512Mi
+        cpu:
+          min: 250m
+          max: 500m
   hare:
     hax:
       endpoints:
+      - https://motr-hax-svc:22003              # Control endpoint
       - tcp://data1-node1:22001                 # For motr and Hax communication
       - tcp://data1-node2:22001                 # For motr and Hax communication
       - tcp://data1-node3:22001                 # For motr and Hax communication
       - tcp://server-node1:22001                # if s3 client is configured
       - tcp://server-node2:22001                # if s3 client is configured
       - tcp://server-node3:22001                # if s3 client is configured
-      - tcp://cclient-node1:22001               # Only if cclient client is configured
-      - tcp://cclient-node2:22001               # Only if cclient client is configured
-      - tcp://cclient-node3:22001               # Only if cclient client is configured
-      - https://data1-node1:22003               # Hax http server
-      - https://data1-node2:22003               # Hax http server
-      - https://data1-node3:22003               # Hax http server
-      control:                                  # Control Interface for CSM
-        endpoints:
-        - https://motr-hax-svc:22003            # Cluster IP service for Hax http requests
+      - tcp://client-node1:22001                # Only if motr_client is configured
+      - tcp://client-node2:22001                # Only if motr_client is configured
+      - tcp://client-node3:22001                # Only if motr_client is configured
+    control:                                  # Control Interface for CSM
+      endpoints:
+      - https://motr-hax-svc:22003            # Cluster IP service for Hax http requests
+    limits:
+      services:
+      - name: hax
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
   csm:
-    auth_admin: authadmin
-    auth_secret: csm_auth_admin_secret
     mgmt_admin: cortxadmin
     mgmt_secret: csm_mgmt_admin_secret
     email_address: cortx@seagate.com
     agent:
       endpoints:
       - https://csm.seagate.com:8081
+    limits:  
+      services:
+      - name: agent
+        memory:
+          min: 128Mi
+          max: 256Mi
+        cpu:
+          min: 250m
+          max: 500m
+  ha:
+    limits:
+      services:
+      - name: fault_tolerance
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: health_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: k8s_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
