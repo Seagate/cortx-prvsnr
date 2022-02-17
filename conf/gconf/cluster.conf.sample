@@ -102,30 +102,27 @@ cortx:
       endpoints:
       - http://server1-node1.com:22000
     
-  rgw:
-    auth_user: user_name                        # (new) IAM user name 
-    auth_admin: access_key
-    auth_secret: !!binary |
-      TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
-    s3:
-      num_endpoints: 2
+  s3:
+    iam:
       endpoints:
-      - http://s3.seagate.com:80
-      - https://s3.seagate.com:443
-    iam:                                        # deleted
-      num_endpoints: 1
+      - https://cortx-io-svc:9443
+      - http://cortx-io-svc:9080
+    data:
       endpoints:
-      - https://iam.seagate.com:9443
-    internal:                                   # deleted
-      num_endpoints: 1
+      - http://cortx-io-svc:80
+      - https://cortx-io-svc:443
+    internal:
       endpoints:
-      - http://node1-svc:28049
+      - http://cortx-io-svc:28049
     io_max_units: 8
+    max_start_timeout: 240
+    auth_admin: sgiamadmin
+    auth_secret: s3_auth_admin_secret
     service_instances: 2                        # deleted
     limits:                  
       num_services: 1
       services:
-      - name: rgw
+      - name: s3
         memory:
           min: 128Mi
           max: 2Gi
@@ -204,13 +201,13 @@ cortx:
           max: 500m
     num_clients: 2
     clients:                          # Motr Client Settings                 
-      - name: rgw                     # rgw|s3|motr_client (Motr Clients)
+      - name: s3                     # s3|s3|motr_client (Motr Clients)
         num_instances: 1              # Client instances per node (pod)
         endpoints:
         - tcp://server1-node1:21001   # Format: <protocol>://<hostname_ip>:21001 
         - tcp://server2-node1:21001   # Num endpoints will be same as num of client instances
                                       # Port range would be 21001 - 21001+num_instances
-                                      # Same endpoint will be used for RGW admin CLI
+                                      # Same endpoint will be used for s3 admin CLI
       - name: motr_client             
         num_instances: 0              # Optional client. Only for Dev.         
         endpoints:
@@ -288,7 +285,7 @@ node:
       version: 2.0.0-33
     - name: hare
       version: 2.0.0-47
-    - name: rgw
+    - name: s3
       version: 2.0.0-47
     storage_set: storage-set-1
   aaa120a9e051d103c164f605615c32a4:
