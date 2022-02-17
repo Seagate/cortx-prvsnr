@@ -5,7 +5,7 @@ cortx:
         - tcp://kafka.default.svc.cluster.local:9092
       admin: admin
       secret: kafka_admin_secret
-    openldap:                               # To be removed
+    openldap:                               # deprecated
       endpoints:
         - ldap://openldap-svc.default.svc.cluster.local:389
         - ssl://openldap-svc.default.svc.cluster.local:636
@@ -24,7 +24,7 @@ cortx:
     release:
       name: CORTX
       version: 2.0.0-1111
-    environment_type: K8                    # To be removed
+    environment_type: K8                    # deprecated
     setup_size: small
     service:
       admin: admin
@@ -40,7 +40,7 @@ cortx:
   utils:
     message_bus_backend: kafka
   s3:
-    iam:                                       # To be removed
+    iam:                                       # deprecated
       endpoints:
       - https://cortx-io-svc:9443
       - http://cortx-io-svc:9080
@@ -48,7 +48,7 @@ cortx:
       endpoints:
       - http://s3.cortx.seagate.com:80
       - https://s3.cortx.seagate.com:443
-    internal:                                  # To be removed
+    internal:                                  # deprecated
       endpoints:
       - http://cortx-io-svc:28049
     io_max_units: 8
@@ -66,8 +66,8 @@ cortx:
           min: 250m
           max: 1000m
   motr:
-    client_instances: 0                        # To be removed [part of client]
-    interface_type: tcp                        # To be removed [part of URL]
+    client_instances: 0                        # deprecated [part of client]
+    interface_type: tcp                        # deprecated [part of URL]
     interface_family: inet                     # Optional: inet (default) | inet6
     transport_type: libfab                     # libfab | lnet (libfab==inet)
     ios:

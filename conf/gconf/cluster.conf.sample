@@ -119,7 +119,7 @@ cortx:
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
     service_instances: 2                                       # deprecated
-    limits:                  
+    limits:
       num_services: 1
       services:
       - name: s3
