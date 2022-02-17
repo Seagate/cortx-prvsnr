@@ -33,7 +33,6 @@ cortx:
       log: /var/log/cortx/
       local: /etc/cortx
       config: /etc/cortx
-      shared: /share
     security:
       ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
