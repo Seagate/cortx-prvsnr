@@ -203,6 +203,7 @@ cortx:
           min: 250m
           max: 500m
     num_clients: 2
+<<<<<<< HEAD
     clients:                                                   # Motr Client Settings
       - name: s3                                               # deprecated s3|s3|motr_client (Motr Clients)
         num_instances: 1                                       # Client instances per node (pod)
@@ -212,7 +213,7 @@ cortx:
                                                                # Port range would be 21001 - 21001+num_instances
                                                                # Same endpoint will be used for s3 admin CLI
       - name: motr_client
-        num_instances: 0                                       # Optional client. Only for Dev.         
+        num_instances: 0                                       # Optional client. Only for Dev.
         endpoints:
         - tcp://client-node1:21201
         - tcp://client-node2:21201
@@ -294,12 +295,16 @@ node:
       version: 2.0.0-33
     - name: hare
       version: 2.0.0-47
+<<<<<<< HEAD
     - name: s3                                                 # deprecated
       services:
       - s3server
       - haproxy
       - authserver
       - bgworker
+=======
+    - name: s3
+>>>>>>> keeping s3 related keys for now
       version: 2.0.0-47
     storage_set: storage-set-1
   aaa120a9e051d103c164f605615c32a4:
