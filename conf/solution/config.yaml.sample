@@ -56,6 +56,7 @@ cortx:
     auth_user: user_name                       # (new) IAM user name 
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
+    service_instances: 2                       # deprecated
     limits:
       services:
       - name: s3
