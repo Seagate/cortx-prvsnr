@@ -42,7 +42,7 @@ cortx:
       secret: !!binary |
         Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
-    setup_size: small                               # To be removed and derived from limits
+    setup_size: small                               # deprecated (derived from limits)
     setup_type: K8                                  # deprecated
     storage:
       config: /etc/cortx
@@ -103,7 +103,7 @@ cortx:
       - http://server1-node1.com:22000
     
   s3:
-    iam:                                        # To be removed
+    iam:                                        # deprecated
       endpoints:
       - https://cortx-io-svc:9443
       - http://cortx-io-svc:9080
@@ -111,7 +111,7 @@ cortx:
       endpoints:
       - http://cortx-io-svc:80
       - https://cortx-io-svc:443
-    internal:                                   # To be removed
+    internal:                                   # deprecated
       endpoints:
       - http://cortx-io-svc:28049
     io_max_units: 8
@@ -144,10 +144,13 @@ cortx:
       - tcp://client-node1:22001               # Only if motr_client is configured
       - tcp://client-node2:22001               # Only if motr_client is configured
       - tcp://client-node3:22001               # Only if motr_client is configured
-    control:                                    # To be removed (Moved to hax>endpoints)
+      - https://data1-node1:22003               # Hax http server for CSM
+      - https://data1-node2:22003               # Hax http server for CSM
+      - https://data1-node3:22003               # Hax http server for CSM
+    control:                                    # deprecated (Moved to hax>endpoints)
       num_endpoints: 1
-      endpoints:                                # To be removed (Moved to hax>endpoints)
-      - https://motr-hax-svc:22003              # To be removed (Moved to hax>endpoints)
+      endpoints:                                # deprecated (Moved to hax>endpoints)
+      - https://motr-hax-svc:22003              # deprecated (Moved to hax>endpoints)
     limits:
       num_services: 1
       services:
@@ -159,8 +162,8 @@ cortx:
           min: 250m
           max: 500m
   motr:
-    client_instances: 1                         # To be removed
-    interface_type: tcp                         # To be removed (This is now part of URL)
+    client_instances: 1                         # deprecated
+    interface_type: tcp                         # deprecated (This is now part of URL)
     interface_family: inet                      # Optional: inet (default) | inet6
     transport_type: libfab                      # libfab | lnet (libfab==inet)
     md_size: 10                                 # % MD size w.r.t. total capacity
@@ -210,7 +213,7 @@ cortx:
                                       # Port range would be 21001 - 21001+num_instances
                                       # Same endpoint will be used for s3 admin CLI
       - name: motr_client             
-        num_instances: 0              # Optional client. Only for Dev.         
+        num_instances: 0              # Optional client. Only for Dev.
         endpoints:
         - tcp://client-node1:21201
         - tcp://client-node2:21201

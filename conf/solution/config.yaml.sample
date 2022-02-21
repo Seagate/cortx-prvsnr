@@ -71,6 +71,7 @@ cortx:
     interface_type: tcp                        # deprecated [part of URL]
     interface_family: inet                     # Optional: inet (default) | inet6
     transport_type: libfab                     # libfab | lnet (libfab==inet)
+    md_size: 10                                 # % MD size w.r.t. total capacity
     ios:
       endpoints:
       - tcp://data1-node1:21001                # This is a starting endpoint and total num of ios
@@ -126,9 +127,12 @@ cortx:
       - tcp://client-node1:22001                # Only if motr_client is configured
       - tcp://client-node2:22001                # Only if motr_client is configured
       - tcp://client-node3:22001                # Only if motr_client is configured
-    control:                                  # Control Interface for CSM
+      - https://data1-node1:22003               # Hax http server for CSM
+      - https://data1-node2:22003               # Hax http server for CSM
+      - https://data1-node3:22003               # Hax http server for CSM
+    control:                                    # Control Interface for CSM
       endpoints:
-      - https://motr-hax-svc:22003            # Cluster IP service for Hax http requests
+      - https://motr-hax-svc:22003              # Cluster IP service for Hax http requests
     limits:
       services:
       - name: hax
