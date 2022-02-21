@@ -206,7 +206,6 @@ cortx:
     clients:                                                   # Motr Client Settings
       - name: s3                                               # deprecated s3|s3|motr_client (Motr Clients)
         num_instances: 1                                       # Client instances per node (pod)
-        endpoints:
         - tcp://server1-node1:21001                            # Format: <protocol>://<hostname_ip>:21001 
         - tcp://server2-node1:21001                            # Num endpoints will be same as num of client instances
                                                                # Port range would be 21001 - 21001+num_instances
@@ -216,7 +215,6 @@ cortx:
         endpoints:
         - tcp://client-node1:21201
         - tcp://client-node2:21201
-
 cluster:
   id: 0007ec45379e36d9fa089a3d615c32a3
   name: cortx-cluster
