@@ -5,7 +5,7 @@ cortx:
         - tcp://kafka.default.svc.cluster.local:9092
       admin: admin
       secret: kafka_admin_secret
-    openldap:                               # deprecated
+    openldap:                                                  # deprecated
       endpoints:
         - ldap://openldap-svc.default.svc.cluster.local:389
         - ssl://openldap-svc.default.svc.cluster.local:636
@@ -24,7 +24,7 @@ cortx:
     release:
       name: CORTX
       version: 2.0.0-1111
-    environment_type: K8                    # deprecated
+    environment_type: K8                                       # deprecated
     setup_size: small
     service:
       admin: admin
@@ -40,7 +40,7 @@ cortx:
   utils:
     message_bus_backend: kafka
   s3:
-    iam:                                       # deprecated
+    iam:                                                       # deprecated
       endpoints:
       - https://cortx-io-svc:9443
       - http://cortx-io-svc:9080
@@ -48,14 +48,15 @@ cortx:
       endpoints:
       - http://s3.cortx.seagate.com:80
       - https://s3.cortx.seagate.com:443
-    internal:                                  # deprecated
+    internal:                                                 # deprecated
       endpoints:
       - http://cortx-io-svc:28049
     io_max_units: 8
     max_start_timeout: 240
-    auth_user: user_name                       # (new) IAM user name 
+    auth_user: user_name                                       # (new) IAM user name 
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
+    service_instances: 2                                       # deprecated
     limits:
       services:
       - name: s3
@@ -66,31 +67,32 @@ cortx:
           min: 250m
           max: 1000m
   motr:
-    client_instances: 0                        # deprecated [part of client]
-    interface_type: tcp                        # deprecated [part of URL]
-    interface_family: inet                     # Optional: inet (default) | inet6
-    transport_type: libfab                     # libfab | lnet (libfab==inet)
+    client_instances: 0                                        # deprecated [part of client]
+    interface_type: tcp                                        # deprecated [part of URL]
+    interface_family: inet                                     # Optional: inet (default) | inet6
+    transport_type: libfab                                     # libfab | lnet (libfab==inet)
+    md_size: 10                                                # % MD size w.r.t. total capacity
     ios:
       endpoints:
-      - tcp://data1-node1:21001                # This is a starting endpoint and total num of ios
-                                               # endpoints will be equal to num of CVG's in this pod.
-                                               # 21001 + <number of cvg's in the pod>
-      - tcp://data1-node2:21001
+      - tcp://data1-node1:21001                                # This is a starting endpoint and total num of ios
+                                                               # endpoints will be equal to num of CVG's in this pod.
+                                                               # 21001 + <number of cvg's in the pod>
+      - tcp://data1-node2:21001  
       - tcp://data1-node3:21001
     confd:
       endpoints:
       - tcp://data1-node1:22002
       - tcp://data1-node2:22002
       - tcp://data1-node3:22002
-    clients:                                   # Motr Client Settings 
-    - name: s3                                # s3|s3|cclient (Motr Clients)
-      num_instances: 1                         # Client instances per node (pod)
+    clients:                                                   # Motr Client Settings 
+    - name: s3                                                 # deprecated s3|s3|cclient (Motr Clients)
+      num_instances: 1                                         # Client instances per node (pod)
       endpoints:             
-      - tcp://server1-node1:21001              # Format: <protocol>://<hostname_ip>:21001 
-      - tcp://server1-node2:21001              # Num endpoints will be same as num of client instances
-                                               # Port range would be 21001 - 21001+num_instances 
+      - tcp://server1-node1:21001                              # Format: <protocol>://<hostname_ip>:21001 
+      - tcp://server1-node2:21001                              # Num endpoints will be same as num of client instances
+                                                               # Port range would be 21001 - 21001+num_instances 
     - name: motr_client                         
-      num_instances: 0                         # Optional client. Only for Dev.
+      num_instances: 0                                         # Optional client. Only for Dev.
       endpoints:
       - tcp://server1-node1:21001  
       - tcp://server1-node2:21001    
@@ -98,13 +100,13 @@ cortx:
       services:
       - name: ios
         memory:
-          min: 1Gi                    # Needs to compute this dynamically 
-                                      # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
-                                      # where K= Num CVGs, N=Num Containers
-          max: 0                      # max = 1.1 * min. For now set to 0.
+          min: 1Gi                                             # Needs to compute this dynamically 
+                                                               # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
+                                                               # where K= Num CVGs, N=Num Containers
+          max: 0                                               # max = 1.1 * min. For now set to 0.
         cpu:
-          min: 1000m                  # 1000m * N where N = Num of "ios" Containers
-          max: 1500m                  # 1500m * N where N = Num of "ios" Containers
+          min: 1000m                                           # 1000m * N where N = Num of "ios" Containers
+          max: 1500m                                           # 1500m * N where N = Num of "ios" Containers
       - name: confd
         memory:
           min: 128Mi
@@ -115,19 +117,22 @@ cortx:
   hare:
     hax:
       endpoints:
-      - https://motr-hax-svc:22003              # Control endpoint
-      - tcp://data1-node1:22001                 # For motr and Hax communication
-      - tcp://data1-node2:22001                 # For motr and Hax communication
-      - tcp://data1-node3:22001                 # For motr and Hax communication
-      - tcp://server-node1:22001                # if s3 client is configured
-      - tcp://server-node2:22001                # if s3 client is configured
-      - tcp://server-node3:22001                # if s3 client is configured
-      - tcp://client-node1:22001                # Only if motr_client is configured
-      - tcp://client-node2:22001                # Only if motr_client is configured
-      - tcp://client-node3:22001                # Only if motr_client is configured
-    control:                                  # Control Interface for CSM
+      - https://motr-hax-svc:22003                             # Control endpoint
+      - tcp://data1-node1:22001                                # For motr and Hax communication
+      - tcp://data1-node2:22001                                # For motr and Hax communication
+      - tcp://data1-node3:22001                                # For motr and Hax communication
+      - tcp://server-node1:22001                               # if s3 client is configured
+      - tcp://server-node2:22001                               # if s3 client is configured
+      - tcp://server-node3:22001                               # if s3 client is configured
+      - tcp://client-node1:22001                               # Only if motr_client is configured
+      - tcp://client-node2:22001                               # Only if motr_client is configured
+      - tcp://client-node3:22001                               # Only if motr_client is configured
+      - https://data1-node1:22003                              # Hax http server for CSM
+      - https://data1-node2:22003                              # Hax http server for CSM
+      - https://data1-node3:22003                              # Hax http server for CSM
+    control:                                                   # Control Interface for CSM
       endpoints:
-      - https://motr-hax-svc:22003            # Cluster IP service for Hax http requests
+      - https://motr-hax-svc:22003                             # Cluster IP service for Hax http requests
     limits:
       services:
       - name: hax
