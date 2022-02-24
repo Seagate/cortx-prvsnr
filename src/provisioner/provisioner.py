@@ -412,7 +412,7 @@ class CortxProvisioner:
 
     @staticmethod
     def _get_cluster_health():
-        """API call to get cluster health"""
+        """API call to get cluster health."""
         # This is a place holder definition for cluster health API call.
         # Soon to be updated by actual interface calls.
         Log.info("Querying cluster health")
