@@ -126,6 +126,8 @@ class CortxProvisioner:
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
             CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
+            # Adding array count key in conf
+            cortx_conf.add_num_keys()
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
