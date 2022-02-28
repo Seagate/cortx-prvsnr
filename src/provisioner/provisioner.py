@@ -287,7 +287,7 @@ class CortxProvisioner:
         # query to get cluster health
         upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE).upper()
         if upgrade_mode != "COLD" and not CortxProvisioner.is_cluster_healthy():
-            Log.error(f'Cluster is unhealthy, Aborting upgrade with return code 1')
+            Log.error('Cluster is unhealthy, Aborting upgrade with return code 1')
             return 1
         cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = ProvisionerStages.UPGRADE.value
@@ -411,11 +411,11 @@ class CortxProvisioner:
         # Checks if cluster is healthy
         CortxProvisioner._get_resource_health(resource="cortx")
         return True
-    
+
     @staticmethod
     def _get_resource_health(resource='cortx'):
         """API call to get cluster health."""
         # This is a place holder definition for cluster health API call.
         # Soon to be updated by actual interface calls.
         Log.info("Querying cluster health")
-        return 
+        return
