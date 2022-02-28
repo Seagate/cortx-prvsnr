@@ -408,13 +408,11 @@ class CortxProvisioner:
     
     @staticmethod
     def is_cluster_healthy():
-        # Checks if cluster is healthy
-        CortxProvisioner._get_resource_health(resource="cortx")
-        return True
+        health = CortxProvisioner._get_resource_health(resource="cortx")
+        return True if health == "OK" else False
 
     @staticmethod
     def _get_resource_health(resource='cortx'):
         """API call to get cluster health."""
-        # This is a place holder definition for cluster health API call.
-        # Soon to be updated by actual interface calls.
-        Log.info("Querying cluster health")
+        # TODO Make a call to HA Health API to get the resource status
+        return "OK"
