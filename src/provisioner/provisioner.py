@@ -285,16 +285,10 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         # query to get cluster health
-        _disruptive_upgrade = os.getenv('DISRUPTIVE_UPGRADE', str(const.DISRUPTIVE_UPGRADE))
-        if _disruptive_upgrade.upper() != "TRUE":
-            _healthy, _status = CortxProvisioner._get_cluster_health()
-            if _healthy:
-                Log.info(f'Cluster is healthy\nStatus: {_status}')
-            else:
-                ret_code = 1
-                Log.error(f'Cluster is unhealthy,\nStatus:\n{_status}\n'
-                   f'Aborting upgrade with return code {ret_code}')
-                return ret_code
+        upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE).upper()
+        if upgrade_mode != "COLD" and not CortxProvisioner.is_cluster_healthy():
+            Log.error(f'Cluster is unhealthy, Aborting upgrade with return code 1')
+            return 1
         cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = ProvisionerStages.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
@@ -411,13 +405,17 @@ class CortxProvisioner:
         else:
             Log.info(msg)
         return validate_result[0], validate_result[1]
-
+    
     @staticmethod
-    def _get_cluster_health():
+    def is_cluster_healthy():
+        # Checks if cluster is healthy
+        CortxProvisioner._get_resource_health(resource="cortx")
+        return True
+    
+    @staticmethod
+    def _get_resource_health(resource='cortx'):
         """API call to get cluster health."""
         # This is a place holder definition for cluster health API call.
         # Soon to be updated by actual interface calls.
         Log.info("Querying cluster health")
-        _status = {"COMPONENT1_HEALTH": True, "COMPONENT2_HEALTH": True}
-        _healthy = True
-        return _healthy, _status
+        return 
