@@ -55,6 +55,9 @@ cortx:
     agent:
       endpoints:
       - https://csm.seagate.com:8081
+    public:                                                    # Public Control Endpoint
+      endpoints:
+      - https://control-svc:8081
     auth_admin: admin                                          # deprecated
     auth_secret: !!binary |                                    # deprecated
       UTdTaDl0TzVLMWZsQUp6SnVKeTZaYlNtUUFscld1WjU4UHNSek1aUGc9PQ==
@@ -74,7 +77,7 @@ cortx:
           max: 500m
   ha:
     limits:         
-      num_services: 1 
+      num_services: 3
       services:        
       - name: fault_tolerance
         memory:
@@ -131,7 +134,7 @@ cortx:
           max: 1000m
   hare:
     hax:
-      num_endpoints: 10
+      num_endpoints: 13
       endpoints:
       - https://motr-hax-svc:22003                             # Control endpoint
       - tcp://data1-node1:22001                                # For motr and Hax communication
