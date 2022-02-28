@@ -418,4 +418,3 @@ class CortxProvisioner:
         # This is a place holder definition for cluster health API call.
         # Soon to be updated by actual interface calls.
         Log.info("Querying cluster health")
-        return
