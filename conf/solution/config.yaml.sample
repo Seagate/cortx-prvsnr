@@ -73,6 +73,7 @@ cortx:
     transport_type: libfab                                     # libfab | lnet (libfab==inet)
     md_size: 10                                                # % MD size w.r.t. total capacity
     ios:
+      group_size: 1
       endpoints:
       - tcp://data1-node1:21001                                # This is a starting endpoint and total num of ios
                                                                # endpoints will be equal to num of CVG's in this pod.
@@ -130,9 +131,9 @@ cortx:
       - https://data1-node1:22003                              # Hax http server for CSM
       - https://data1-node2:22003                              # Hax http server for CSM
       - https://data1-node3:22003                              # Hax http server for CSM
-    control:                                                   # Control Interface for CSM
+    control:                                      #deprecated
       endpoints:
-      - https://motr-hax-svc:22003                             # Cluster IP service for Hax http requests
+      - https://motr-hax-svc:22003
     limits:
       services:
       - name: hax
@@ -143,9 +144,14 @@ cortx:
           min: 250m
           max: 500m
   csm:
+    auth_admin: admin                          #deprecated
+    auth_secret: csm_auth_admin_secret         #deprecated
     mgmt_admin: cortxadmin
     mgmt_secret: csm_mgmt_admin_secret
     email_address: cortx@seagate.com
+    public:                                    # Public Control Endpoint
+      endpoints:
+      - https://control-svc:8081
     agent:
       endpoints:
       - https://csm.seagate.com:8081
