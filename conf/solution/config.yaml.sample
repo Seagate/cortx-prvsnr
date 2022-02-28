@@ -144,9 +144,14 @@ cortx:
           min: 250m
           max: 500m
   csm:
+    auth_admin: admin                          #deprecated
+    auth_secret: csm_auth_admin_secret         #deprecated
     mgmt_admin: cortxadmin
     mgmt_secret: csm_mgmt_admin_secret
     email_address: cortx@seagate.com
+    public:                                    # Public Control Endpoint
+      endpoints:
+      - https://control-svc:8081
     agent:
       endpoints:
       - https://csm.seagate.com:8081
