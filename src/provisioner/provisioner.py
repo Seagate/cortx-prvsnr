@@ -284,6 +284,11 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
+        # query to get cluster health
+        upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE_VAL).upper()
+        if upgrade_mode != "COLD" and not CortxProvisioner.is_cluster_healthy():
+            Log.error('Cluster is unhealthy, Aborting upgrade with return code 1')
+            return 1
         cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = ProvisionerStages.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
@@ -400,3 +405,14 @@ class CortxProvisioner:
         else:
             Log.info(msg)
         return validate_result[0], validate_result[1]
+
+    @staticmethod
+    def is_cluster_healthy():
+        health = CortxProvisioner._get_resource_health(resource="cortx")
+        return True if health == "OK" else False
+
+    @staticmethod
+    def _get_resource_health(resource:str):
+        """API call to get cluster health."""
+        # TODO Make a call to HA Health API to get the resource status
+        return "OK"
