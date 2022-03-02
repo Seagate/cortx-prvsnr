@@ -45,11 +45,7 @@ class CortxConfig:
                     errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
 
             if k == 'external':
-<<<<<<< HEAD
                 required_external_keys = const.REQUIRED_EXTERNAL_SW
-=======
-                required_external_keys = ['kafka', 'consul']
->>>>>>> 76715089 (EOS-27645: conf_structure-restructure the conf files (#6326))
                 for e_key in required_external_keys:
                     try:
                         if cortx_solution_config[k][e_key]['endpoints'] is None:
