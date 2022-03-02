@@ -1,6 +1,6 @@
 # This is CORTX GConf (Config Store) which serves as input 
 # to all the CORTX Services
-# Location: /etc/cortx/cluster.conf 
+# Location: /etc/cortx/cluster.conf
 
 cortx:
   external:
@@ -8,37 +8,68 @@ cortx:
       admin: admin
       endpoints:
       - http://consul-server.cortx-cluster.com:80
-      secret: MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
+      secret: !!binary |
+        MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
       admin: admin
+      num_endpoints: 2
       endpoints:
       - kafka-server1.cortx-cluster.com
       - kafka-server2.cortx-cluster.com
-      secret: TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
+      secret: !!binary |
+        TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
+    openldap:                                                  # deprecated
+      admin: admin                                             # deprecated
+      base_dn: dc=seagate,dc=com                               # deprecated
+      num_endpoints: 2
+      endpoints:                                               # deprecated
+      - ldap://oldap-server.cortx-cluster.com:389 
+      - ssl://oldap-server.cortx-cluster.com:636
+      secret: !!binary |                                       # deprecated
+        cFh1dkw1ZlJ2THR4Rmp1ZnA5Mkt4NndhbGZhWkg0dXdqT0I4bGtxZ3c9PQ==
+      servers:                                                 # deprecated
+      - oldap-server1.cortx-cluster.com
+      - oldap-server2.cortx-cluster.com
+      - oldap-server3.cortx-cluster.com
   common:
+    product_release: LC                                        # deprecated
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
       ssl_certificate: /opt/seagate/cortx/s3/install/haproxy/ssl/s3.seagate.com.pem
     service:
       admin: admin
-      secret: Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
+      secret: !!binary |
+        Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
-    setup_size: small                # TBD: To be removed and derived from limits
+    setup_size: small                                          # deprecated and derived from limits
+    setup_type: K8                                             # deprecated
     storage:
       config: /etc/cortx
       local: /etc/cortx
       log: /var/log/cortx/
+      shared: /share                                           # deprecated
+  utils:
+    message_bus_backend: kafka
   csm:
     agent:
+      num_endpoints: 1
       endpoints:
-      - https://csm.seagate.com:8081
+      - https://:8081
+    public:                                                    # Public Control Endpoint
+      num_endpoints: 1
+      endpoints:
+      - https://control-svc:8081
+    auth_admin: admin                                          # deprecated
+    auth_secret: !!binary |                                    # deprecated
+      UTdTaDl0TzVLMWZsQUp6SnVKeTZaYlNtUUFscld1WjU4UHNSek1aUGc9PQ==
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
-    mgmt_secret: UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
-    limits:
-      num_services: 1
-      services:
+    mgmt_secret: !!binary |
+      UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
+    limits:  
+      num_services: 1  
+      services:              
       - name: agent
         memory:
           min: 128Mi
@@ -49,7 +80,7 @@ cortx:
   ha:
     limits:         
       num_services: 3
-      services:
+      services:        
       - name: fault_tolerance
         memory:
           min: 128Mi
@@ -71,33 +102,83 @@ cortx:
         cpu:
           min: 250m
           max: 500m
-  rgw:
-    auth_user: auth_user            # auth admin user name
-    auth_admin: auth_access_key     # auth admin user access key
-    auth_secret: TVRGNDBQVnY3OXJ5bG4tLTQwSjNZQ0xQZVJiczBmUVNqcXFvTXdvNHc9PQ==
-    s3:
+    health:                                                    # TBD: Future. Do not use for now
+      num_endpoints: 1
       endpoints:
-      - http://s3.cortx.seagate.com:80
-      - https://s3.cortx.seagate.com:443
+      - http://server1-node1.com:22000
+  rgw:
+    auth_user: user_name
+    auth_admin: sgiamadmin
+    auth_secret: s3_auth_admin_secret
+
+    thread_pool_size: 10                                       # To be tuned as we go
+    data_path: /var/cortx/radosgw/$clusterid                   # Needs to be under Local PVC
+    init_timeout: 300                                          # In seconds
+    gc_max_objs: 32                                            # In seconds
+    gc_obj_min_wait: 1800                                      # In seconds
+    gc_processor_max_time: 3600                                # In seconds
+    gc_processor_period: 3600                                  # In seconds
+    
+    motr_layout_id: 9                          
+    motr_unit_size: 1048576 
+    motr_max_units_per_request: 8
+    motr_max_idx_fetch_count: 30
+    motr_max_rpc_msg_size: 524288                              # In bytes
+
+    iam:                                                       # deprecated
+      num_endpoints: 2                                     
+      endpoints:
+      - https://cortx-iam-svc:9443
+      - http://cortx-iam-svc:9080
+    s3:                                                        # deprecated
+      num_endpoints: 2
+      endpoints:
+      - http://cortx-io-svc:80
+      - https://cortx-io-svc:443
+    public:                                                    # NOTE: was s3 earlier 
+      num_endpoints: 2
+      endpoints:                                               # S3 IO K8s service endpoint
+      - http://s3-rgw-svc:80                                   # Optional (if http needs to be enabled)
+      - https://s3-rgw-svc:443                                 # There will be one endpoint (http/https)
+    service:
+      num_endpoints: 2
+      endpoints:                                               # RGW Service Endpoint
+      - http://:22751                                          # S ports. S = # of RGW Instances
+      - https://:23001
+    internal:                                                  # deprecated
+      num_endpoints: 1
+      endpoints:
+      - http://cortx-io-svc:28049
     io_max_units: 8
-    num_limits: 1
+    max_start_timeout: <<.Values.cortx.max_start_timeout>>
+    service_instances: 1                                       # deprecated
     limits:
-      num_services: 1
       services:
       - name: rgw
         memory:
-          min: 300Mi
-          max: 2Gi
+          min: 128Mi
+          max: 1Gi
         cpu:
           min: 250m
-          max: 1000m
+          max: 1000m 
   hare:
-    control:
-      endpoints:
-      - https://motr-hax-svc:22003
     hax:
+      num_endpoints: 13
       endpoints:
-      - tcp://hax.seagate.com:28000
+      - https://motr-hax-svc:22003                             # Control endpoint
+      - tcp://data1-node1:22001                                # For motr and Hax communication
+      - tcp://data1-node2:22001                                # For motr and Hax communication
+      - tcp://data1-node3:22001                                # For motr and Hax communication
+      - tcp://server-node1:22001                               # if s3 client is configured
+      - tcp://server-node2:22001                               # if s3 client is configured
+      - tcp://server-node3:22001                               # if s3 client is configured
+      - tcp://client-node1:22001                               # Only if motr_client is configured
+      - tcp://client-node2:22001                               # Only if motr_client is configured
+      - tcp://client-node3:22001                               # Only if motr_client is configured
+    control:                                                   # deprecated (Moved to hax>endpoints)
+      num_endpoints: 1
+      endpoints:                                               # deprecated (Moved to hax>endpoints)
+      - https://motr-hax-svc:22003                             # deprecated (Moved to hax>endpoints)
     limits:
       num_services: 1
       services:
@@ -109,33 +190,40 @@ cortx:
           min: 250m
           max: 500m
   motr:
-    client_instances: 1            # To be removed
-    interface_type: tcp            # To be removed (This is now part of URL)
-    interface_family: inet         # Optional: inet (default) | inet6
-    transport_type: libfab         # libfab | lnet (libfab==inet)
+    client_instances: 1                                        # deprecated
+    interface_type: tcp                                        # deprecated (This is now part of URL)
+    interface_family: inet                                     # Optional: inet (default) | inet6
+    transport_type: libfab                                     # libfab | lnet (libfab==inet)
+    md_size: 10                                                # % MD size w.r.t. total capacity
     ios:
+      group_size: 1                                            # Number of services to be started in a group
+                                                               # N = Total CVG / group_size. N must be <=24. 
+      num_endpoints: 3
       endpoints:
-      - tcp://data1-node1:21001    # Format: <protocol>://<hostname_ip>:<port>
-                                   # N endpoints one for each Pod, first mentioned here
-                                   # N == Number of CVGs in the Pod
-                                   # Ports: 21001 - (21001+Number of CVGs)
-      - tcp://data2-node1:21001    # Same thing for the second pod
-      - tcp://data1-node2:21001    # of for Pods on the other nodes
+      - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:<port>
+                                                              # N endpoints one for each Pod, first mentioned here
+                                                              # N == Number of CVGs in the Pod
+                                                              # Ports: 21001 - (21001+Number of CVGs)
+      - tcp://data2-node1:21001                               # Same thing for the second pod
+      - tcp://data1-node2:21001                               # of for Pods on the other nodes
     confd:
+      num_endpoints: 3
       endpoints:
-      - tcp://data1-node1:22002    # Format: <protocol>://<hostname_ip>:22002
-      - tcp://data1-node2:22002       
-      - tcp://data1-node3:22002    
-    limits:                        # NOTE: This section is different from solution config
+      - tcp://data1-node1:22002                                # Format: <protocol>://<hostname_ip>:22002
+      - tcp://data1-node2:22002
+      - tcp://data1-node3:22002
+    limits:
       num_services: 2
       services:
       - name: ios
         memory:
-          min: 1Gi
-          max: 2Gi
-        cpu:
-          min: 250m
-          max: 1000m
+          min: 1Gi                                             # Needs to compute this dynamically 
+                                                               # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
+                                                               # where K= Num CVGs, N=Num Containers
+          max: 0                                               # max = 1.1 * min. For now set to 0.
+        cpu:                         
+          min: 1000m                                           # 1000m * N where N = Num of "ios" Containers
+          max: 1500m                                           # 1500m * N where N = Num of "ios" Containers
       - name: confd
           memory:
           min: 128Mi
@@ -143,22 +231,25 @@ cortx:
         cpu:
           min: 250m
           max: 500m
-    num_clients: 2                 # Number of Clients
-    clients: 2                     # Motr Client Settings 
-    - name: rgw                    # rgw|s3|cclient (Motr Clients)
-      num_instances: 1             # Client instances per node (pod)
-      endpoints:
-      - tcp://server1-node1:21001  # Format: <protocol>://<hostname_ip>:21001 
-      - tcp://server1-node2:21001  # Num endpoints will be same as num of client instances
-                                   # Port range would be 21001 - 21001+num_instances 
-    - name: motr_client             
-      num_instances: 0             # Optional client. Only for Dev.
-      endpoints:
-      - tcp://server1-node1:21001
-      - tcp://server1-node2:21001
-  utils:
-    message_bus_backend: kafka
-
+    num_clients: 2
+    clients:                                                   # Motr Client Settings
+      - name: rgw                                              # rgw|s3|motr_client (Motr Clients)
+        num_instances: 1                                       # Client instances per node (pod)
+        num_endpoints: 2
+        endpoints:
+        - tcp://server1-node1:21001                            # Format: <protocol>://<hostname_ip>:21001 
+        - tcp://server2-node1:21001                            # Num endpoints will be same as num of client instances
+                                                               # Port range would be 21001 - 21001+num_instances
+                                                               # Same endpoint will be used for s3 admin CLI
+      - name: motr_client
+        num_instances: 0                                       # Optional client. Only for Dev.
+        num_subscriptions: 1
+        subscriptions:                                         # NEW: Optional: Services subscribed for client
+        - fdmi
+        num_endpoints: 2
+        endpoints:
+        - tcp://client-node1:21201
+        - tcp://client-node2:21201
 cluster:
   id: 0007ec45379e36d9fa089a3d615c32a3
   name: cortx-cluster
@@ -182,26 +273,24 @@ cluster:
     - ccc8700fe6797ed532e311b0615c32a7
     - ddd120a9e051d103c164f605615c32a4
     - eee340f79047df9bb52fa460615c32a5
-    - fff8700fe6797ed532e311b0615c32a7
+    - fff8700fe6797ed532e311b0615c32a7  
 node:
   1115f539f4f770e2a3fe9e2e615c32a8:
     type: ha_node
-    hostname: ha-node
-    name: ha-node
     cluster_id: 0007ec45379e36d9fa089a3d615c32a3
-    components:
     num_components: 2
+    components:
     - name: utils
       version: 2.0.0-33
     - name: ha
       version: 2.0.0-47
-
-    provisioning:
+    hostname: ha-node
+    name: ha-node
+    provisioning:                                              # This is autogenerated/controlled/used by provisioner 
       phase: deployment
       status: success
       version: 2.0.0-576
     storage_set: storage-set-1
-
   9995f539f4f770e2a3fe9e2e615c32a8:
     type: control_node
     hostname: control-node
@@ -210,8 +299,6 @@ node:
     num_components: 4
     components:
     - name: utils
-      version: 2.0.0-33
-    - name: motr
       version: 2.0.0-33
     - name: csm
       services:
@@ -222,7 +309,20 @@ node:
       status: success
       version: 2.0.0-576
     storage_set: storage-set-1
-
+  eee340f79047df9bb52fa460615c32a5:
+    type: server_node
+    hostname: server-node1
+    name: server-node1
+    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
+    num_components: 3
+    components:
+    - name: utils
+      version: 2.0.0-33
+    - name: hare
+      version: 2.0.0-47
+    - name: rgw
+      version: 2.0.0-47
+    storage_set: storage-set-1
   aaa120a9e051d103c164f605615c32a4:
     type: data_node
     hostname: data-node1
@@ -262,24 +362,10 @@ node:
       status: success
       version: 2.0.0-576
     storage_set: storage-set-1
-
-  ddd120a9e051d103c164f605615c32a4:
-    cluster_id: 0007ec45379e36d9fa089a3d615c32a3
-    components:
-    - name: utils
-      version: 2.0.0-33
-    - name: hare
-      version: 2.0.0-47
-    hostname: server-node1
-    name: server-node1
-    num_components: 3
-    storage_set: storage-set-1
-    type: server_node
-    
   eee340f79047df9bb52fa460615c32a5:
-    type: server_node
-    hostname: server-node2
-    name: server-node2
+    type: client_node
+    hostname: client-node
+    name: client-node
     cluster_id: 0007ec45379e36d9fa089a3d615c32a3
     num_components: 3
     components:
@@ -287,6 +373,8 @@ node:
       version: 2.0.0-33
     - name: hare
       version: 2.0.0-47
-    - name: rgw
+    - name: motr
+      services:
+      - motr_client
       version: 2.0.0-47
     storage_set: storage-set-1
