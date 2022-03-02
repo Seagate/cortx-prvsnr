@@ -285,7 +285,7 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         # query to get cluster health
-        upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE).upper()
+        upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE_VAL).upper()
         if upgrade_mode != "COLD" and not CortxProvisioner.is_cluster_healthy():
             Log.error('Cluster is unhealthy, Aborting upgrade with return code 1')
             return 1
