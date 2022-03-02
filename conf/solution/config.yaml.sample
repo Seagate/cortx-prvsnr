@@ -39,27 +39,19 @@ cortx:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
     message_bus_backend: kafka
-  s3:
-    iam:                                                       # deprecated
-      endpoints:
-      - https://cortx-io-svc:9443
-      - http://cortx-io-svc:9080
-    data:
+  rgw:
+    s3:
       endpoints:
       - http://s3.cortx.seagate.com:80
       - https://s3.cortx.seagate.com:443
-    internal:                                                 # deprecated
-      endpoints:
-      - http://cortx-io-svc:28049
     io_max_units: 8
     max_start_timeout: 240
-    auth_user: user_name                                       # (new) IAM user name 
+    auth_user: user_name                       # (new) IAM user name 
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
-    service_instances: 2                                       # deprecated
     limits:
       services:
-      - name: s3
+      - name: rgw
         memory:
           min: 300Mi
           max: 2Gi
@@ -85,15 +77,15 @@ cortx:
       - tcp://data1-node1:22002
       - tcp://data1-node2:22002
       - tcp://data1-node3:22002
-    clients:                                                   # Motr Client Settings 
-    - name: s3                                                 # deprecated s3|s3|cclient (Motr Clients)
-      num_instances: 1                                         # Client instances per node (pod)
+    clients:                                   # Motr Client Settings 
+    - name: rgw                                # rgw|s3|cclient (Motr Clients)
+      num_instances: 1                         # Client instances per node (pod)
       endpoints:             
-      - tcp://server1-node1:21001                              # Format: <protocol>://<hostname_ip>:21001 
-      - tcp://server1-node2:21001                              # Num endpoints will be same as num of client instances
-                                                               # Port range would be 21001 - 21001+num_instances 
+      - tcp://server1-node1:21001              # Format: <protocol>://<hostname_ip>:21001 
+      - tcp://server1-node2:21001              # Num endpoints will be same as num of client instances
+                                               # Port range would be 21001 - 21001+num_instances 
     - name: motr_client                         
-      num_instances: 0                                         # Optional client. Only for Dev.
+      num_instances: 0                         # Optional client. Only for Dev.
       endpoints:
       - tcp://server1-node1:21001  
       - tcp://server1-node2:21001    
@@ -101,13 +93,13 @@ cortx:
       services:
       - name: ios
         memory:
-          min: 1Gi                                             # Needs to compute this dynamically 
-                                                               # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
-                                                               # where K= Num CVGs, N=Num Containers
-          max: 0                                               # max = 1.1 * min. For now set to 0.
+          min: 1Gi                    # Needs to compute this dynamically 
+                                      # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
+                                      # where K= Num CVGs, N=Num Containers
+          max: 0                      # max = 1.1 * min. For now set to 0.
         cpu:
-          min: 1000m                                           # 1000m * N where N = Num of "ios" Containers
-          max: 1500m                                           # 1500m * N where N = Num of "ios" Containers
+          min: 1000m                  # 1000m * N where N = Num of "ios" Containers
+          max: 1500m                  # 1500m * N where N = Num of "ios" Containers
       - name: confd
         memory:
           min: 128Mi
