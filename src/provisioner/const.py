@@ -24,3 +24,4 @@ RELEASE_INFO_URL = "yaml:///opt/seagate/cortx/RELEASE.INFO"
 UPGRADE_MODE_KEY = "UPGRADE_MODE"
 # 'UPGRADE_MODE_VAL' constant for default upgrade mode.
 UPGRADE_MODE_VAL = ""
+REQUIRED_EXTERNAL_SW = ['kafka', 'consul']
