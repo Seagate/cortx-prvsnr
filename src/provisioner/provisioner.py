@@ -209,6 +209,9 @@ class CortxProvisioner:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
                 component_name = cortx_conf.get(f'{key_prefix}>name')
+                # Check if RPM exists for the component, if it does exist get the build version
+                component_version = CortxProvisioner.cortx_release.get_component_version(
+                    component_name)
                 # Get services.
                 service_idx = 0
                 services = []
@@ -239,8 +242,6 @@ class CortxProvisioner:
                         component_name, err)
 
                 # Update version for each component if Provisioning successful.
-                component_version = CortxProvisioner.cortx_release.get_component_version(
-                    component_name)
                 cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
