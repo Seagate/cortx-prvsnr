@@ -1,6 +1,6 @@
-#!/bin/bash#
+#!/bin/bash
 #
-# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
+# Copyright (c) 2022 Seagate Technology LLC and/or its Affiliates
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -18,7 +18,7 @@
 
 YQ_VERSION=v4.13.3
 YQ_BINARY=yq_linux_386
-WORK_SPACE=/var/jenkins/workspace/Provisioner/N-Node_CORTX_Deployment_on_K8s_Cluster
+#WORK_SPACE=/var/jenkins/workspace/Provisioner/N-Node_CORTX_Deployment_on_K8s_Cluster
 SSH_KEY_FILE=/root/.ssh/id_rsa
 HOST_FILE=$PWD/hosts
 SCRIPT_PATH=/root/cortx-k8s/k8_cortx_cloud/
@@ -31,7 +31,7 @@ function install_yq() {
 }
 
 function update_solution_config() {
-    pushd $WORK_SPACE/devops/ci
+    pushd $WORKSPACE/devops/ci
         image=$CONTROL_IMAGE yq e -i '.solution.images.cortxcontrol = env(image)' solution_template.yaml
         image=$DATA_IMAGE yq e -i '.solution.images.cortxdata = env(image)' solution_template.yaml
         image=$SERVER_IMAGE yq e -i '.solution.images.cortxserver = env(image)' solution_template.yaml
@@ -83,7 +83,7 @@ function nodes_setup() {
 
 function add_node_info_solution_config() {
     echo "Updating node info in solution.yaml"
-    pushd $WORK_SPACE/devops/ci
+    pushd $WORKSPACE/devops/ci
         if [ "$(wc -l < $HOST_FILE)" == "1" ]; then
             local NODE=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
             i=$NODE yq e -i '.solution.nodes.node1.name = env(i)' solution_template.yaml
@@ -100,7 +100,7 @@ function add_node_info_solution_config() {
 }
 
 function copy_solution_file() {
-    pushd $WORK_SPACE/devops/ci
+    pushd $WORKSPACE/devops/ci
         local ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
         for node in $ALL_NODES
         do
