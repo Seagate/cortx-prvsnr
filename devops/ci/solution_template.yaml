@@ -1,0 +1,143 @@
+solution:
+  namespace: default
+  secrets:
+    name: cortx-secret
+    content:
+      openldap_admin_secret: seagate1
+      kafka_admin_secret: Seagate@123
+      consul_admin_secret: Seagate@123
+      common_admin_secret: Seagate@123
+      s3_auth_admin_secret: ldapadmin
+      csm_auth_admin_secret: seagate2
+      csm_mgmt_admin_secret: Cortxadmin@123
+  images:
+    cortxcontrol: ghcr.io/seagate/cortx-all:2.0.0-664
+    cortxdata: ghcr.io/seagate/cortx-all:2.0.0-664
+    cortxserver: ghcr.io/seagate/cortx-rgw:2.0.0-664
+    cortxha: ghcr.io/seagate/cortx-all:2.0.0-664
+    cortxclient: ghcr.io/seagate/cortx-all:2.0.0-664
+    openldap: ghcr.io/seagate/symas-openldap:2.4.58
+    consul: ghcr.io/seagate/consul:1.10.0
+    kafka: ghcr.io/seagate/kafka:3.0.0-debian-10-r7
+    zookeeper: ghcr.io/seagate/zookeeper:3.7.0-debian-10-r182
+    rancher: ghcr.io/seagate/local-path-provisioner:v0.0.20
+    busybox: ghcr.io/seagate/busybox:latest
+  common:
+    setup_size: small
+    storage_provisioner_path: /mnt/fs-local-volume
+    container_path:
+      local: /etc/cortx
+      shared: /share
+      log: /etc/cortx/log
+    s3:
+      default_iam_users:
+        auth_admin: "sgiamadmin"
+        auth_user: "user_name"
+        #auth_secret defined above in solution.secrets.content.s3_auth_admin_secret
+      num_inst: 2
+      start_port_num: 28051
+      max_start_timeout: 240
+    motr:
+      num_client_inst: 0
+      start_port_num: 29000
+      md_size: 10
+      group_size: 1
+    hax:
+      protocol: https
+      service_name: cortx-hax-svc
+      port_num: 22003
+    storage_sets:
+      name: storage-set-1
+      durability:
+        sns: 1+0+0
+        dix: 1+0+0
+    external_services:
+      s3:
+        type: NodePort
+        count: 1
+        ports:
+          http: 22751
+          https: 23001
+        nodePorts:
+          http: ""
+          https: ""
+      control:
+        type: NodePort
+        ports:
+          https: 8081
+        nodePorts:
+          https: ""
+    resource_allocation:
+      consul:
+        server:
+          storage: 10Gi
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 100m
+            limits:
+              memory: 300Mi
+              cpu: 100m
+        client:
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 100m
+            limits:
+              memory: 300Mi
+              cpu: 100m
+      openldap:
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 2
+          limits:
+            memory: 1Gi
+            cpu: 2
+      zookeeper:
+        storage_request_size: 8Gi
+        data_log_dir_request_size: 8Gi
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 250m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      kafka:
+        storage_request_size: 8Gi
+        log_persistence_request_size: 8Gi
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 250m
+          limits:
+            memory: 2Gi
+            cpu: 1
+  storage:
+    cvg1:
+      name: cvg-01
+      type: ios
+      devices:
+        metadata:
+          device: /dev/sdc
+          size: 5Gi
+        data:
+          d1:
+            device: /dev/sdd
+            size: 5Gi
+          d2:
+            device: /dev/sde
+            size: 5Gi
+          d3:
+            device: /dev/sdf
+            size: 5Gi
+          d4:
+            device: /dev/sdg
+            size: 5Gi
+          d5:
+            device: /dev/sdh
+            size: 5Gi
+  nodes:
+    node1:
+      name: node-1
