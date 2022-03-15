@@ -57,7 +57,7 @@ pipeline {
 
     stages {
 
-        stage('Setup K8s Cluster'){
+        stage('Setup K8s Cluster') {
             when { expression { params.SETUP_K8s_CLUSTER } }
             steps {
                 script {
@@ -101,7 +101,7 @@ pipeline {
 
         stage('Update solution.yaml') {
             steps {
-                sh label: 'Update solution.yaml', script: '''
+                sh label: "Update solution.yaml", script: '''
                     pushd ${WORKSPACE}/devops/ci
                         echo $NODE_HOST_LIST | tr ' ' '\n' > hosts
                         cat hosts
