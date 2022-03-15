@@ -84,3 +84,34 @@ function add_node_info_solution_config() {
     echo "Updating node info in solution.yaml"
     pushd "$WORKSPACE"/devops/ci
         if [ "$(wc -l < $HOST_FILE)" == "1" ]; then
+            local NODE=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+            i=$NODE yq e -i '.solution.nodes.node1.name = env(i)' solution_template.yaml
+        else
+            count=1
+            for node in $(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+                do
+                i=$node yq e -i '.solution.nodes.node'$count'.name = env(i)' solution_template.yaml
+                count=$((count+1))
+            done
+            sed -i -e 's/- //g' -e '/null/d' solution_template.yaml
+        popd
+        fi
+}
+
+function copy_solution_file() {
+    echo "Copy updated solution.yaml to setup."
+    pushd "$WORKSPACE"/devops/ci
+        local ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+        for node in "$ALL_NODES"
+        do
+            scp -q solution_template.yaml "$node":"$SCRIPT_PATH"/solution.yaml
+        done
+    popd
+}
+
+install_yq
+generate_rsa_key
+nodes_setup
+update_solution_config
+add_node_info_solution_config
+copy_solution_file
