@@ -133,7 +133,6 @@ pipeline {
                         env.HOST_PASS = sh( script: '''
                         echo $HOST_PASS |  head -1 sample.txt | awk -F[,] '{print $3}' | cut -d'=' -f2
                         ''', returnStdout: true).trim()
-
                         build job: '/Provisioner/Prvsnr-Sanity-Test', wait: true,
                         parameters: [
                             string(name: 'M_NODE', value: "${M_NODE}"),
