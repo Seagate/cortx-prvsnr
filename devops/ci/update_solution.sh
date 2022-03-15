@@ -18,7 +18,6 @@
 
 YQ_VERSION=v4.13.3
 YQ_BINARY=yq_linux_386
-#WORK_SPACE=/var/jenkins/workspace/Provisioner/N-Node_CORTX_Deployment_on_K8s_Cluster
 SSH_KEY_FILE=/root/.ssh/id_rsa
 HOST_FILE=$PWD/hosts
 SCRIPT_PATH=/root/cortx-k8s/k8_cortx_cloud/
