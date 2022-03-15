@@ -121,6 +121,17 @@ pipeline {
                 }
             }
         }
+        stage ("Prvsnr Sanity") {
+            steps {
+                script { build_stage = env.STAGE_NAME }
+                script {
+                    catchError(stageResult: 'FAILURE') {
+                        build job: '/Provisioner/Prvsnr-Sanity-Test', wait: true,
+                        parameters: [
+                            string(name: 'M_NODE', value: "${M_NODE}"),
+                            string(name: 'HOST_PASS', value: "${HOST_PASS}"),
+                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}")
+
     }
 
     post {
