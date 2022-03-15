@@ -126,6 +126,8 @@ class CortxProvisioner:
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
             CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
+            # Adding array count key in conf
+            cortx_conf.add_num_keys()
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
@@ -151,7 +153,7 @@ class CortxProvisioner:
 
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
-
+            # TODO: Need to remove storgae_set_count key
             cluster_keys = [('cluster>id', cluster_id),
                 ('cluster>name', cluster_name),
                 ('cluster>storage_set_count', len(storage_sets))]
@@ -207,6 +209,9 @@ class CortxProvisioner:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
                 component_name = cortx_conf.get(f'{key_prefix}>name')
+                # Check if RPM exists for the component, if it does exist get the build version
+                component_version = CortxProvisioner.cortx_release.get_component_version(
+                    component_name)
                 # Get services.
                 service_idx = 0
                 services = []
@@ -237,8 +242,6 @@ class CortxProvisioner:
                         component_name, err)
 
                 # Update version for each component if Provisioning successful.
-                component_version = CortxProvisioner.cortx_release.get_component_version(
-                    component_name)
                 cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
@@ -282,6 +285,11 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
+        # query to get cluster health
+        upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE_VAL).upper()
+        if upgrade_mode != "COLD" and not CortxProvisioner.is_cluster_healthy():
+            Log.error('Cluster is unhealthy, Aborting upgrade with return code 1')
+            return 1
         cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = ProvisionerStages.UPGRADE.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
@@ -398,3 +406,14 @@ class CortxProvisioner:
         else:
             Log.info(msg)
         return validate_result[0], validate_result[1]
+
+    @staticmethod
+    def is_cluster_healthy():
+        health = CortxProvisioner._get_resource_health(resource="cortx")
+        return True if health == "OK" else False
+
+    @staticmethod
+    def _get_resource_health(resource:str):
+        """API call to get cluster health."""
+        # TODO Make a call to HA Health API to get the resource status
+        return "OK"
