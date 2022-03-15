@@ -36,6 +36,7 @@ pipeline {
         string(name: 'CORTX_SCRIPTS_BRANCH', defaultValue: 'cortx-test', description: 'cortx-k8s scripts (Provisioner Team)', trim: true)
         text(defaultValue: '''hostname=<hostname>,user=<user>,pass=<password>''', description: 'VM details to be used. First node will be used as Master', name: 'NODE_HOST_LIST')
         booleanParam(name: 'SETUP_K8s_CLUSTER', defaultValue: false, description: 'Selecting this option will setup K8s Cluster before running Deployment.')
+        string(name: 'M_NODE', value: "${singlenode_host}")
     }
 
     stages {
@@ -126,11 +127,23 @@ pipeline {
                 script { build_stage = env.STAGE_NAME }
                 script {
                     catchError(stageResult: 'FAILURE') {
+                        env.M_NODE = sh( script: '''
+                        echo $M_NODE |  head -1 sample.txt | awk -F[,] '{print $1}' | cut -d'=' -f2
+                        ''', returnStdout: true).trim()
+                        env.HOST_PASS = sh( script: '''
+                        echo $HOST_PASS |  head -1 sample.txt | awk -F[,] '{print $3}' | cut -d'=' -f2
+                        ''', returnStdout: true).trim()
+
                         build job: '/Provisioner/Prvsnr-Sanity-Test', wait: true,
                         parameters: [
                             string(name: 'M_NODE', value: "${M_NODE}"),
                             string(name: 'HOST_PASS', value: "${HOST_PASS}"),
-                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}")
+                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}"
+                        ]
+                    }
+                }
+            }
+        }
 
     }
 
