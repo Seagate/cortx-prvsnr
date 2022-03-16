@@ -37,7 +37,6 @@ pipeline {
         string(name: 'CORTX_SCRIPTS_BRANCH', defaultValue: 'cortx-test', description: 'cortx-k8s scripts (Provisioner Team)', trim: true)
         text(defaultValue: '''hostname=<hostname>,user=<user>,pass=<password>''', description: 'VM details to be used. First node will be used as Master', name: 'NODE_HOST_LIST')
         booleanParam(name: 'SETUP_K8s_CLUSTER', defaultValue: false, description: 'Selecting this option will setup K8s Cluster before running Deployment.')
-        booleanParam(name: 'RUN_TEST_SANITY', defaultValue: false, description: 'Selecting this option will run test sanity after Deployment.')
         choice (
             choices: ['yes' , 'no'],
             description: 'Selecting this option will run test sanity after Deployment ',
