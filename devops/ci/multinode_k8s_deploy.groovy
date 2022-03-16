@@ -103,7 +103,7 @@ pipeline {
             steps {
                 sh label: "Update solution.yaml", script: '''
                     pushd ${WORKSPACE}/devops/ci
-                        echo $NODE_HOST_LIST | tr ' ' '\n' > hosts
+                        echo $NODE_HOST_LIST | tr " " "\n" > hosts
                         cat hosts
                         export WORKSPACE=${WORKSPACE}
                         export CONTROL_IMAGE=${CONTROL_IMAGE}
@@ -155,7 +155,7 @@ pipeline {
             script {
                 def recipientProvidersClass = [[$class: 'RequesterRecipientProvider']]
                 emailext (
-                    body: '''${SCRIPT, template="cluster-setup-email.template"}''',
+                    body: '${SCRIPT, template="cluster-setup-email.template"}',
                     mimeType: 'text/html',
                     subject: "[Jenkins Build ${currentBuild.currentResult}] : ${env.JOB_NAME}",
                     attachLog: true,
