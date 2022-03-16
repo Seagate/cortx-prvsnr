@@ -38,6 +38,11 @@ pipeline {
         booleanParam(name: 'SETUP_K8s_CLUSTER', defaultValue: false, description: 'Selecting this option will setup K8s Cluster before running Deployment.')
         booleanParam(name: 'RUN_TEST_SANITY', defaultValue: false, description: 'Selecting this option will run test sanity after Deployment.')
     }
+        choice (
+            choices: ['yes' , 'no'],
+            description: 'Selecting this option will run test sanity after Deployment ',
+            name: 'RUN_TEST_SANITY1'
+        )
 
     stages {
         stage ("Define Variable") {
