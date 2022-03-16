@@ -122,7 +122,7 @@ pipeline {
                     for (remote in remotes) {
                         sshCommand remote: remote, command: """
                             cd ${WORK_SPACE}
-                            ./prereq-deploy-cortx-cloud.sh /dev/sdb
+                            ./prereq-deploy-cortx-cloud.sh -d /dev/sdb
                         """
                     }
                 }
