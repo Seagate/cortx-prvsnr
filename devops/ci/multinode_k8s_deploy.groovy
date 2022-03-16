@@ -45,15 +45,15 @@ pipeline {
                 script { build_stage = env.STAGE_NAME }
                 script {
                     env.allhost = sh( script: '''
-                    echo $hosts | tr ' ' '\n' | awk -F["="] '{print $2}'|cut -d',' -f1
+                    echo $NODE_HOST_LIST | tr ' ' '\n' | awk -F["="] '{print $2}'|cut -d',' -f1
                     ''', returnStdout: true).trim()
                 
                     env.master_node = sh( script: '''
-                    echo $hosts | tr ' ' '\n' | head -1 | awk -F["="] '{print $2}' | cut -d',' -f1
+                    echo $NODE_HOST_LIST | tr ' ' '\n' | head -1 | awk -F["="] '{print $2}' | cut -d',' -f1
                     ''', returnStdout: true).trim()
 
                     env.hostpasswd = sh( script: '''
-                    echo $hosts | tr ' ' '\n' | head -1 | awk -F["="] '{print $4}'
+                    echo $NODE_HOST_LIST | tr ' ' '\n' | head -1 | awk -F["="] '{print $4}'
                     ''', returnStdout: true).trim()
 
                 }
