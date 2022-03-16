@@ -40,7 +40,7 @@ pipeline {
         choice (
             choices: ['yes' , 'no'],
             description: 'Selecting this option will run test sanity after Deployment ',
-            name: 'RUN_TEST_SANITY1'
+            name: 'RUN_TEST_SANITY'
         )
     }
 
