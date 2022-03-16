@@ -40,7 +40,25 @@ pipeline {
     }
 
     stages {
+        stage ("Define Variable") {
+            steps {
+                script { build_stage = env.STAGE_NAME }
+                script {
+                    env.allhost = sh( script: '''
+                    echo $hosts | tr ' ' '\n' | awk -F["="] '{print $2}'|cut -d',' -f1
+                    ''', returnStdout: true).trim()
+                
+                    env.master_node = sh( script: '''
+                    echo $hosts | tr ' ' '\n' | head -1 | awk -F["="] '{print $2}' | cut -d',' -f1
+                    ''', returnStdout: true).trim()
 
+                    env.hostpasswd = sh( script: '''
+                    echo $hosts | tr ' ' '\n' | head -1 | awk -F["="] '{print $4}'
+                    ''', returnStdout: true).trim()
+
+                }
+            }
+        }
         stage('Setup K8s Cluster'){
             when { expression { params.SETUP_K8s_CLUSTER } }
             steps {
@@ -128,18 +146,10 @@ pipeline {
                 script { build_stage = env.STAGE_NAME }
                 script {
                     catchError(stageResult: 'FAILURE') {
-                        
-                        // env.M_NODE = sh( script: '''
-                        // echo $M_NODE |  tr ' ' '\n' | head -1 | awk -F["="] '{print $2}' | cut -d',' -f1
-                        // ''', returnStdout: true).trim()
-                        // env.HOST_PASS = sh( script: '''
-                        // echo $HOST_PASS | cat sample.txt | tr ' ' '\n' | head -1 | awk -F["="] '{print $4}'
-                        // ''', returnStdout: true).trim()
                         build job: '/Provisioner/Prvsnr-Sanity-Test', wait: true,
                         parameters: [
-                            string(name: 'M_NODE', value: "${M_NODE}"),
-                            string(name: 'HOST_PASS', value: "${HOST_PASS}"),
-                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}"
+                            string(name: 'M_NODE', value: "${env.master_node}"),
+                            string(name: 'HOST_PASS', value: "${env.hostpasswd}")
                         ]
                     }
                 }
