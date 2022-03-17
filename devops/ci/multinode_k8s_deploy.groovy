@@ -86,7 +86,7 @@ pipeline {
                     for (remote in remotes) {
                         sshCommand remote: remote, command: """
                             cd /root
-                            rm -rf cortx-k8s
+                            rm -rf deploy-scripts
                             git clone ${CORTX_SCRIPTS_REPO} -b ${CORTX_SCRIPTS_BRANCH}
                         """
                     }
