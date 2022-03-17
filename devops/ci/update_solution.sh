@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2022 Seagate Technology LLC and/or its Affiliates
+# Copyright (c) 2020 Seagate Technology LLC and/or its Affiliates
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -31,19 +31,19 @@ function install_yq() {
 
 function update_solution_config() {
     pushd "$WORKSPACE"/devops/ci
-        image="$CONTROL_IMAGE" yq e -i '.solution.images.cortxcontrol = env(image)' solution_template.yaml
-        image="$DATA_IMAGE" yq e -i '.solution.images.cortxdata = env(image)' solution_template.yaml
-        image="$SERVER_IMAGE" yq e -i '.solution.images.cortxserver = env(image)' solution_template.yaml
-        image="$HA_IMAGE" yq e -i '.solution.images.cortxha = env(image)' solution_template.yaml
-        image="$HA_IMAGE" yq e -i '.solution.images.cortxclient = env(image)' solution_template.yaml
+        image=$CONTROL_IMAGE yq e -i '.solution.images.cortxcontrol = env(image)' solution_template.yaml
+        image=$DATA_IMAGE yq e -i '.solution.images.cortxdata = env(image)' solution_template.yaml
+        image=$SERVER_IMAGE yq e -i '.solution.images.cortxserver = env(image)' solution_template.yaml
+        image=$HA_IMAGE yq e -i '.solution.images.cortxha = env(image)' solution_template.yaml
+        image=$HA_IMAGE yq e -i '.solution.images.cortxclient = env(image)' solution_template.yaml
     popd
 }
 
 function generate_rsa_key() {
     if [ ! -f "$SSH_KEY_FILE" ]; then
-        ssh-keygen -b 2048 -t rsa -f "$SSH_KEY_FILE" -q -N ""
+        ssh-keygen -b 2048 -t rsa -f $SSH_KEY_FILE -q -N ""
      else
-        echo "$SSH_KEY_FILE" already present
+        echo $SSH_KEY_FILE already present
     fi
 }
 
@@ -83,12 +83,12 @@ function nodes_setup() {
 function add_node_info_solution_config() {
     echo "Updating node info in solution.yaml"
     pushd "$WORKSPACE"/devops/ci
-        if [ "$(wc -l < $HOST_FILE)" == "1" ]; then
-            local NODE=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+        if [ "$(wc -l < "$HOST_FILE")" == "1" ]; then
+            local NODE=$(awk -F[,] '{print $1}' < "$HOST_FILE" | cut -d'=' -f2)
             i=$NODE yq e -i '.solution.nodes.node1.name = env(i)' solution_template.yaml
         else
             count=1
-            for node in $(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+            for node in $(awk -F[,] '{print $1}' < "$HOST_FILE"| cut -d'=' -f2)
                 do
                 i=$node yq e -i '.solution.nodes.node'$count'.name = env(i)' solution_template.yaml
                 count=$((count+1))
@@ -99,12 +99,12 @@ function add_node_info_solution_config() {
 }
 
 function copy_solution_file() {
-    echo "Copy updated solution.yaml to setup."
+    echo "Copying updated solution.yaml"
     pushd "$WORKSPACE"/devops/ci
-        local ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
-        for node in "$ALL_NODES"
+        local ALL_NODES=$(awk -F[,] '{print $1}' < "$HOST_FILE"| cut -d'=' -f2)
+        for node in $ALL_NODES
         do
-            scp -q solution_template.yaml "$node":"$SCRIPT_PATH"/solution.yaml
+            scp -q solution_template.yaml "$node":$SCRIPT_PATH/solution.yaml
         done
     popd
 }
