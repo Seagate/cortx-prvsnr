@@ -25,7 +25,7 @@ pipeline {
         timeout(time: 240, unit: 'MINUTES')
         timestamps()
         buildDiscarder(logRotator(daysToKeepStr: '20', numToKeepStr: '20'))
-    }
+    }   
 
     environment {
         WORK_SPACE = "/root/cortx-k8s/k8_cortx_cloud"
@@ -112,6 +112,7 @@ pipeline {
                     pushd ${WORKSPACE}/devops/ci
                         echo $NODE_HOST_LIST | tr ' ' '\n' > hosts
                         cat hosts
+                        export WORKSPACE=${WORKSPACE}
                         export CONTROL_IMAGE=${CONTROL_IMAGE}
                         export DATA_IMAGE=${DATA_IMAGE}
                         export HA_IMAGE=${HA_IMAGE}
