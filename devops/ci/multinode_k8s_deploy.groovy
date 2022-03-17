@@ -28,7 +28,7 @@ pipeline {
     }   
 
     environment {
-        WORK_SPACE = "/root/cortx-k8s/k8_cortx_cloud"
+        WORK_SPACE = "/root/deploy-scripts/k8_cortx_cloud"
     }
 
     parameters {
