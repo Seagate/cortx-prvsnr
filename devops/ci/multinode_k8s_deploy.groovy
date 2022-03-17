@@ -28,7 +28,7 @@ pipeline {
     }   
 
     environment {
-        WORK_SPACE = "/root/deploy-scripts/k8_cortx_cloud"
+        WORK_SPACE = "/root/cortx-k8s/k8_cortx_cloud"
     }
 
     parameters {
@@ -86,7 +86,7 @@ pipeline {
                     for (remote in remotes) {
                         sshCommand remote: remote, command: """
                             cd /root
-                            rm -rf deploy-scripts
+                            rm -rf cortx-k8s
                             git clone ${CORTX_SCRIPTS_REPO} -b ${CORTX_SCRIPTS_BRANCH}
                         """
                     }
