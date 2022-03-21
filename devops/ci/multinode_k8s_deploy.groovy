@@ -25,7 +25,7 @@ pipeline {
         timeout(time: 240, unit: 'MINUTES')
         timestamps()
         buildDiscarder(logRotator(daysToKeepStr: '20', numToKeepStr: '20'))
-    }   
+    }
 
     environment {
         WORK_SPACE = "/root/cortx-k8s/k8_cortx_cloud"
@@ -112,7 +112,6 @@ pipeline {
                     pushd ${WORKSPACE}/devops/ci
                         echo $NODE_HOST_LIST | tr ' ' '\n' > hosts
                         cat hosts
-                        export WORKSPACE=${WORKSPACE}
                         export CONTROL_IMAGE=${CONTROL_IMAGE}
                         export DATA_IMAGE=${DATA_IMAGE}
                         export HA_IMAGE=${HA_IMAGE}
@@ -156,6 +155,8 @@ pipeline {
                         parameters: [
                             string(name: 'M_NODE', value: "${env.master_node}"),
                             string(name: 'HOST_PASS', value: "${env.hostpasswd}")
+                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}")
+
                         ]
                     }
                 }
@@ -177,13 +178,16 @@ pipeline {
         always {
             script {
                 def recipientProvidersClass = [[$class: 'RequesterRecipientProvider']]
+                mailRecipients = "aayushi.sharma@seagate.com"
                 emailext ( 
                     body: '''${SCRIPT, template="cluster-setup-email.template"}''',
                     mimeType: 'text/html',
                     subject: "[Jenkins Build ${currentBuild.currentResult}] : ${env.JOB_NAME}",
                     attachLog: true,
+                    to: "${mailRecipients}",
                     recipientProviders: recipientProvidersClass
                 )
+                cleanWs()
             }
         }
     }
