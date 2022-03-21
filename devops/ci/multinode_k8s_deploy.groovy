@@ -154,8 +154,8 @@ pipeline {
                         build job: '/Provisioner/Prvsnr-Sanity-Test', wait: true,
                         parameters: [
                             string(name: 'M_NODE', value: "${env.master_node}"),
-                            string(name: 'HOST_PASS', value: "${env.hostpasswd}")
-
+                            string(name: 'HOST_PASS', value: "${env.hostpasswd}"),
+                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}")
                         ]
                     }
                 }
@@ -177,7 +177,7 @@ pipeline {
         always {
             script {
                 def recipientProvidersClass = [[$class: 'RequesterRecipientProvider']]
-                mailRecipients = "aayushi.sharma@seagate.com,nitish.singh@seagate.com"
+                mailRecipients = "aayushi.sharma@seagate.com,karan.kakkar@seagate.com"
                 emailext ( 
                     body: '''${SCRIPT, template="cluster-setup-email.template"}''',
                     mimeType: 'text/html',
