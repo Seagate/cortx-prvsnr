@@ -155,7 +155,6 @@ pipeline {
                         parameters: [
                             string(name: 'M_NODE', value: "${env.master_node}"),
                             string(name: 'HOST_PASS', value: "${env.hostpasswd}")
-                            string(name: 'EMAIL_RECEPIENTS', value: "${EMAIL_RECEPIENTS}")
 
                         ]
                     }
@@ -178,7 +177,7 @@ pipeline {
         always {
             script {
                 def recipientProvidersClass = [[$class: 'RequesterRecipientProvider']]
-                mailRecipients = "aayushi.sharma@seagate.com"
+                mailRecipients = "aayushi.sharma@seagate.com,nitish.singh@seagate.com"
                 emailext ( 
                     body: '''${SCRIPT, template="cluster-setup-email.template"}''',
                     mimeType: 'text/html',
