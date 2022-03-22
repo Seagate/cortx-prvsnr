@@ -66,6 +66,7 @@ pipeline {
         stage('Destroy CORTX Cluster') {
             steps {
                 script {
+                    remotes = remote_host()
                     sshCommand remote: remotes[0], command: """
                         cd ${WORK_SPACE}
                         ./destroy-cortx-cloud.sh
