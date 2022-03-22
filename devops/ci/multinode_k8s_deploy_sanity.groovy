@@ -93,16 +93,14 @@ pipeline {
                 }
             }
         }
-        stage ('Destory Pre-existing Cluster') {
+        stage('Destroy CORTX Cluster') {
             steps {
-                script { build_stage = env.STAGE_NAME }
-                sh label: 'Destroy existing Cluster', script: '''
-                    pushd solutions/kubernetes/
-                        echo $hosts | tr ' ' '\n' > hosts
-                        cat hosts
-                        ./cortx-deploy.sh --destroy-cluster
-                    popd
-                '''
+                script {
+                    sshCommand remote: remotes[0], command: """
+                        cd ${WORK_SPACE}
+                        ./destroy-cortx-cloud.sh
+                    """
+                }
             }
         }
         stage('Remove solution.yaml') {
