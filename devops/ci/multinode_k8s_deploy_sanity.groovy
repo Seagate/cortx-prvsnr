@@ -42,6 +42,16 @@ pipeline {
             name: 'RUN_TEST_SANITY'
         )
     }
+    stage('Destroy CORTX Cluster') {
+            steps {
+                script {
+                    sshCommand remote: remotes[0], command: """
+                        cd ${WORK_SPACE}
+                        ./destroy-cortx-cloud.sh
+                    """
+                }
+            }
+        }
 
     stages {
         stage ("Define Variable") {
@@ -89,16 +99,6 @@ pipeline {
                             git clone ${CORTX_SCRIPTS_REPO} -b ${CORTX_SCRIPTS_BRANCH}
                         """
                     }
-                }
-            }
-        }
-        stage('Destroy CORTX Cluster') {
-            steps {
-                script {
-                    sshCommand remote: remotes[0], command: """
-                        cd ${WORK_SPACE}
-                        ./destroy-cortx-cloud.sh
-                    """
                 }
             }
         }
