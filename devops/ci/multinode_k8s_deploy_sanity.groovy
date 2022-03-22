@@ -42,16 +42,6 @@ pipeline {
             name: 'RUN_TEST_SANITY'
         )
     }
-    stage('Destroy CORTX Cluster') {
-            steps {
-                script {
-                    sshCommand remote: remotes[0], command: """
-                        cd ${WORK_SPACE}
-                        ./destroy-cortx-cloud.sh
-                    """
-                }
-            }
-        }
 
     stages {
         stage ("Define Variable") {
@@ -70,6 +60,16 @@ pipeline {
                     echo $NODE_HOST_LIST | tr ' ' '\n' | head -1 | awk -F["="] '{print $4}'
                     ''', returnStdout: true).trim()
 
+                }
+            }
+        }
+        stage('Destroy CORTX Cluster') {
+            steps {
+                script {
+                    sshCommand remote: remotes[0], command: """
+                        cd ${WORK_SPACE}
+                        ./destroy-cortx-cloud.sh
+                    """
                 }
             }
         }
