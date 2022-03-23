@@ -1,9 +1,9 @@
 solution:
   namespace: default
+  deployment_type: standard
   secrets:
     name: cortx-secret
     content:
-      openldap_admin_secret: seagate1
       kafka_admin_secret: Seagate@123
       consul_admin_secret: Seagate@123
       common_admin_secret: Seagate@123
@@ -11,12 +11,11 @@ solution:
       csm_auth_admin_secret: seagate2
       csm_mgmt_admin_secret: Cortxadmin@123
   images:
-    cortxcontrol: ghcr.io/seagate/cortx-all:2.0.0-664
-    cortxdata: ghcr.io/seagate/cortx-all:2.0.0-664
-    cortxserver: ghcr.io/seagate/cortx-rgw:2.0.0-664
-    cortxha: ghcr.io/seagate/cortx-all:2.0.0-664
-    cortxclient: ghcr.io/seagate/cortx-all:2.0.0-664
-    openldap: ghcr.io/seagate/symas-openldap:2.4.58
+    cortxcontrol: ghcr.io/seagate/cortx-all:2.0.0-689
+    cortxdata: ghcr.io/seagate/cortx-all:2.0.0-689
+    cortxserver: ghcr.io/seagate/cortx-rgw:2.0.0-689
+    cortxha: ghcr.io/seagate/cortx-all:2.0.0-689
+    cortxclient: ghcr.io/seagate/cortx-all:2.0.0-689
     consul: ghcr.io/seagate/consul:1.10.0
     kafka: ghcr.io/seagate/kafka:3.0.0-debian-10-r7
     zookeeper: ghcr.io/seagate/zookeeper:3.7.0-debian-10-r182
@@ -34,14 +33,15 @@ solution:
         auth_admin: "sgiamadmin"
         auth_user: "user_name"
         #auth_secret defined above in solution.secrets.content.s3_auth_admin_secret
-      num_inst: 2
       start_port_num: 28051
       max_start_timeout: 240
+      extra_configuration: ""
     motr:
       num_client_inst: 0
       start_port_num: 29000
       md_size: 10
       group_size: 1
+      extra_configuration: ""
     hax:
       protocol: https
       service_name: cortx-hax-svc
@@ -56,17 +56,17 @@ solution:
         type: NodePort
         count: 1
         ports:
-          http: 22751
-          https: 23001
+          http: 80
+          https: 443
         nodePorts:
-          http: ""
-          https: ""
+          http: null
+          https: null
       control:
         type: NodePort
         ports:
           https: 8081
         nodePorts:
-          https: ""
+          https: null
     resource_allocation:
       consul:
         server:
@@ -86,14 +86,6 @@ solution:
             limits:
               memory: 300Mi
               cpu: 100m
-      openldap:
-        resources:
-          requests:
-            memory: 1Gi
-            cpu: 2
-          limits:
-            memory: 1Gi
-            cpu: 2
       zookeeper:
         storage_request_size: 8Gi
         data_log_dir_request_size: 8Gi
