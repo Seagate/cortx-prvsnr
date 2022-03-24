@@ -130,40 +130,23 @@ solution:
           d2:
             device: /dev/sde
             size: 5Gi
-          d3:
-            device: /dev/sdf
-            size: 5Gi
-          d4:
-            device: /dev/sdg
-            size: 5Gi
-          d5:
-            device: /dev/sdh
-            size: 5Gi
     cvg2:
       name: cvg-02
       type: ios
       devices:
         metadata:
-          device: /dev/sdj
+          device: /dev/sdf
           size: 5Gi
         data:
           d1:
-            device: /dev/sdk
+            device: /dev/sdg
             size: 5Gi
           d2:
-            device: /dev/sdl
-            size: 5Gi
-          d3:
-            device: /dev/sdm
-            size: 5Gi
-          d4:
-            device: /dev/sdn
-            size: 5Gi
-          d5:
-            device: /dev/sdo
+            device: /dev/sdh
             size: 5Gi
 
   nodes:
     node1:
       name: node-1
+   
 
