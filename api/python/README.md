@@ -83,8 +83,8 @@ provisioner.auth_init(username=username, password=password)
 ```
 
 where `username` is a name of the user that is added to `prvsnrusers` group.
-So you should either add and existent user to that group or create new one and
-pass his name along with his password to `auth_init`.
+So you should either add an existent user to that group or create a new one and
+pass their name along with their password to `auth_init`.
 
 ## API
 

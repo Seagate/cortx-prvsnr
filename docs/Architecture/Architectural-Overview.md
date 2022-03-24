@@ -19,19 +19,19 @@ SaltStack has 3 possible modes of operation that were tried out before arriving 
 
 * SSH: This mechanism is similar to Ansible, which primarily performs remote executions over SSH protocol. Salt-SSH requires each node to be configured in roster file and thus the execution is limited to the number of entries in Roster file.
 
-  cortx-prvsnr uses Salt-SSH for initial provisioner bootstrap. This installs and configures Salt in master-minion configuration along with cortx-prvsnr itself.
+  cortx-prvsnr uses Salt-SSH for initial provisioner bootstrap. This installs and configures Salt in primary and minion configuration along with cortx-prvsnr itself.
 
   The cortx-prvsnr API (`provisioner --help`) provides various commands to perform this bootstrap on various environments and is also capable of remotely performing bootstrap on a system from a jump server/host.
 
-* Masterless: Salt formulae would be executed on each minion independently in absence of Salt master (using salt-call --local). This has lower overhead and works fine with single node configuration.
+* Without Primary: Salt formulae would be executed on each minion independently in absence of Salt primary (using salt-call --local). This has lower overhead and works fine with single node configuration.
 
   With multi-node configuration, the setup still was workable, however, the source of Salt formulae (cortx-prvsnr repo) requires replication on each node. Also, assigning role to each node independently becomes challenging.
 
   This mechanism is preferred to make local calls to fetch data (grains/pillar) from Salt.
 
-* Master-Minion: Primary node is elected as Salt master and minions installed on primary and non-primary nodes are connected to the master. This configuration allows better source code management, centralized control and possibility to remotely trigger execution using delegation (salt-syndic).
+* Master-Minion: Primary node is elected as Salt primary and minions installed on primary and non-primary nodes are connected to the primary node. This configuration allows better source code management, centralized control and possibility to remotely trigger execution using delegation (salt-syndic).
   
-  Master-Minion configuration is the backbone of cortx-prvsnr. Deployment, updates, Northbound API execution (and monitoring in future) are all designed around the capability of salt-minions to communicate with salt-master. This configuration allows for scalability and asynchronous mode of operations.
+  Master-Minion configuration is the backbone of cortx-prvsnr. Deployment, updates, Northbound API execution (and monitoring in future) are all designed around the capability of salt-minions to communicate with salt-primary. This configuration allows for scalability and asynchronous mode of operations.
 
 
 # High Level Repository Structure
@@ -165,7 +165,7 @@ Each sub-level file would consist of calls to respective southbound API as:
 * `start`: Start component services.
 * `stop`: Stop component services.
 
-* `housekeeping`: Any expected clean-up activities for junk files created during setup and if required, during operation phase.
+* `housekeeping`: Any expected clean-up activities for scrap files created during setup and if required, during operation phase.
 
 * `sanity_check`: This is a crucial stage as its outcome would determine and confirm the healthy state of the component in operation (post setup). This should be an independently reusable component.
 

@@ -199,7 +199,7 @@ This is one time activity required to setup passwordless ssh across nodes.
 
 
 ## Bootstrap Validation
-Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is executed successfully, verify salt master setup on both nodes (setup verification checklist)
+Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is executed successfully, verify salt-master setup on both nodes (setup verification checklist)
 ```
 salt '*' test.ping  
 salt "*" service.stop puppet

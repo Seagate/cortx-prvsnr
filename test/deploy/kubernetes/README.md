@@ -31,7 +31,7 @@ Run reimage.sh script to install helm, pull 3rd party as well as cortx-all docke
 
 Deploy Provisioner Deployment POD **(Run Only on Master Node)**  
 
-Run deploy.sh script to setup Runtime PODs on each nodes (example: 1 Control POD running on master node, Storage/Data POD running on all nodes). Each Runtime POD will have Init Container (Provisioner Deployment) which will execute cortx_setup config apply and cluster bootstrap commands.
+Run deploy.sh script to setup Runtime PODs on each nodes (example: 1 Control POD running on primary node, Storage/Data POD running on all nodes). Each Runtime POD will have Init Container (Provisioner Deployment) which will execute cortx_setup config apply and cluster bootstrap commands.
 ```bash
 Note: Before running the deploy.sh script, In test/deploy/kubernetes/solution-config/cluster.yaml 
 Make changes according to the number of nodes in the cluster.yaml and config.yaml. 

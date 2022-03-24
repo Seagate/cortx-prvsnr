@@ -34,7 +34,7 @@
 
 **User story:** As a field support engineer, I need a simple way to replace and restore failed server node in the field. 
 
-**User story:** As a field support engineer, I need to ensure that I’m able to collect support bundle logs in a case of catastrophic server crash. 
+**User story:** As a field support engineer, I need to ensure that I’m able to collect support bundle logs in a case of catastrophic server freeze. 
 
 **User story:** As a developer, I need to ensure that my component is fully functional regardless of the partitions’ layout changes. 
 
@@ -78,7 +78,7 @@ There are several ways the limitation described above could be resolved:
 
 2. **_Option-2:_** We could move the entire OS to the enclosure. The servers will be switched to booting from a LUN located on the enclosure. The OS partitions will be protected against the loss of up to three drives using enclosure’s built-in mechanisms. In this case, swap space shall be migrated to use the local servers’ drives. This swap should be set to a higher priority. An additional swap space (in form of a swap file with a lower swap priority) should be created on the root partition (located on the enclosure). The secondary swap will be used in case the appliance runs out of RAM and primary swap space.  
 
-	_Limitations of this option._ This option does not provide a clear way to collect support bundle in case of entire server crash or replacement. The performance impact, while predicted to be minimal, is also unknown and shall be assessed before this solution is implemented. Also, in their current implementation, RAS mechanisms are relying on local access to IPMI and should be changed to use out of band approach. And the last but not least, this solution is completely dependent on the health of enclosure: its failure will make the system completely unusable, without any ability to collect logs or debug.  
+	_Limitations of this option._ This option does not provide a clear way to collect support bundle in case of entire server freeze or replacement. The performance impact, while predicted to be minimal, is also unknown and shall be assessed before this solution is implemented. Also, in their current implementation, RAS mechanisms are relying on local access to IPMI and should be changed to use out of band approach. And the last but not least, this solution is completely dependent on the health of enclosure: its failure will make the system completely unusable, without any ability to collect logs or debug.  
 
 3. **_Option-3:_** We could use a mixed approach and utilize both RAID-1 and moving OS partitions to the enclosure. With such approach, one half of the RAID-1 volume will be located on the server while another will be located on the enclosure. In case of the server failure, customers will be able to replace the server and boot from the part of the RAID, located on the enclosure. In case of the enclosure failure, ability to access the system and collect logs and debug the failure will remain, since the servers will remain accessible. The location of the swap space will change to use second HDD in the server (as primary swap space). The secondary swap space will remain on enclosure. 
 
@@ -144,7 +144,7 @@ The initial release of CORTX software shall include the following changes:
 
 	* **_Option-1:_** Re-use the existing volume where swap and `/var/motr` is located. This will simplify and minimize the changes required for Provisioner. Swap space will be on the same volume; 
 
-	* **_Option-2:_** Create new, smaller volume on the enclosure for OS partitions. The biggest problem with this approach is the size of the volume. We could predict the size of `/boot`, `/boot/efi`, `/var/log/audit`, and `/` partitions. However, it’s harder to do that with `/var` and especially with `/var/log`. Moreover, this will complicate the Provisioner’s configuration. However, this may potentially make the layout more robust, especially if we decide to create a separate enclosure’s volume group (this idea, in its turn, has additional consequences: we’ll have to allocate additional disks to act as spares for this new group). 
+	* **_Option-2:_** Create new, smaller volume on the enclosure for OS partitions. The biggest problem with this approach is the size of the volume. We could predict the size of `/boot`, `/boot/efi`, `/var/log/audit`, and `/` partitions. However, it’s difficult to do that with `/var` and especially with `/var/log`. Moreover, this will complicate the Provisioner’s configuration. However, this may potentially make the layout more robust, especially if we decide to create a separate enclosure’s volume group (this idea, in its turn, has additional consequences: we’ll have to allocate additional disks to act as spares for this new group). 
 
 	**Decision: Option-1** will be used in our configuration. 
 
@@ -228,7 +228,7 @@ This challenge could be solved by utilizing PXE boot and kickstart setup. The fo
 2. The cluster should be completely stopped at the time, HA and the services shutdown to avoid any unpredicted situation. 
 3. Each server should have identical config and shall be able to re-install the partner node. 
 4. The software image used for the reinstallation could be outdated and a software update of the reinstalled server will be necessary immediately after the installation.  
-5. During reinstallation only the server should be reinstalled. That is, we shall not attempt to assembly the RAID but we shall create the partitions on server’s HDDs to be RAID-compatible. This way we can ensure that accidentally don’t destroy the data on the enclosure.  
+5. During reinstallation only the server should be reinstalled. That is, we shall not attempt to assembly the RAID but we shall create the partitions on server’s HDDs to be RAID-compatible. This way we can ensure that accidentally we don’t wipe off the data on the enclosure.  
 
 **Note:** This also means that an extra, perhaps manual step will be require to complete assembly of the RAID. We should provide instructions to the user how to complete the process. 
 

@@ -424,8 +424,7 @@ def test_build_isos(
             'cortx-sspl-cli-1.0.0-33_gitf0c05e3.el7.noarch.rpm',
             'cortx-sspl-test-1.0.0-33_gitf0c05e3.el7.noarch.rpm',
             'python36-cortx-prvsnr-0.39.0-75_gitb9b751c.x86_64.rpm',
-            'uds-pyi-1.1.1-1.r6.el7.x86_64.rpm',
-            'udx-discovery-0.1.2-3.el7.x86_64.rpm'
+            'uds-pyi-1.1.1-1.r6.el7.x86_64.rpm'
         ]
     }
 

@@ -126,7 +126,7 @@ Possible actions:
 
 *   `create`: builds and starts server docker container
 
-*   `start`/`stop`/`restart`/`remove`: to start/stop/restart/destroy server
+*   `start`/`stop`/`restart`/`remove`: to start/stop/restart/remove server
     container
 
 Options:

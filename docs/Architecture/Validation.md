@@ -27,7 +27,7 @@ Table of Contents:
   Python helps us in 2 ways:
 
   1. Better control over `stdout` and `stderr`.
-  2. Possibility of easily converting Python module to Salt module.
+  2. Possibility of smoothly converting Python module to Salt module.
 
   If you have concerns regarding Python code or lack confidence in Python, it is absolutely ok to capture the logic in a bash script and place it under `_cortx-prvsnr/validation/scripts/utils/uncategorized_`.
 

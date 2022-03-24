@@ -6,7 +6,7 @@ components issues and integration difficulties.
 
 For that cases mocked deployment should help. It comes with the following mocks and features:
 
-- dummy component packages which includes only `setup.yaml` (provisioner mini specification)
+- placeholder component packages which includes only `setup.yaml` (provisioner mini specification)
 - `setup.yaml` itself is a very simple spec that just logs (registers) all the calls from provisioner
   (pushes logs to `/tmp/mock.log`)
 - automated logic can build various deployment and upgrade artifacts (as an ISO or a directory):
