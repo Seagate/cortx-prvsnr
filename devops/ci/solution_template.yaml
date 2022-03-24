@@ -1,5 +1,6 @@
 solution:
   namespace: default
+  deployment_type: standard
   secrets:
     name: cortx-secret
     content:
