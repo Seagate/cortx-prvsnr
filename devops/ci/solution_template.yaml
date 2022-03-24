@@ -39,6 +39,8 @@ solution:
     motr:
       num_client_inst: 0
       start_port_num: 29000
+      md_size: 10
+      group_size: 1
       extra_configuration: ""
     hax:
       protocol: https
