@@ -148,5 +148,11 @@ solution:
   nodes:
     node1:
       name: node-1
+    node2:
+      name: node-2
+    node3:
+      name: node-3
+    node4:
+      name: node-4
    
 
