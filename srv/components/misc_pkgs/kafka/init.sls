@@ -30,5 +30,5 @@ Generate kafka checkpoint flag:
 {%- else -%}
 Kafka already applied:
   test.show_notification:
-    - text: "Kafka states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.Kafka.teardown' to reprovision these states."
+    - text: "Kafka states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.misc_pkgs.Kafka.teardown' to reprovision these states."
 {% endif %}

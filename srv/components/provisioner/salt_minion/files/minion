@@ -152,7 +152,7 @@ master_shuffle: False
 #verify_env: True
 
 # The minion can locally cache the return data from jobs sent to it, this
-# can be a good way to keep track of jobs the minion has executed
+# can be a good way to keep track of jobs the minion has performed
 # (on the minion side). By default this feature is disabled, to enable, set
 # cache_jobs to True.
 #cache_jobs: False
@@ -328,7 +328,7 @@ ping_interval: 2
 
 # Some installations choose to start all job returns in a cache or a returner
 # and forgo sending the results back to a salt-master. In this workflow, jobs
-# are most often executed with --async from the Salt CLI and then results
+# are most often run with --async from the Salt CLI and then results
 # are evaluated by examining job caches on the minions or any configured returners.
 # WARNING: Setting this to False will **disable** returns back to the salt-master.
 #pub_ret: True
@@ -466,7 +466,7 @@ mine_interval: 60
 
 #####    State Management Settings    #####
 ###########################################
-# The state management system executes all of the state templates on the minion
+# The state management system runs all of the state templates on the minion
 # to enable more granular control of system state management. The type of
 # template and serialization used for state management needs to be configured
 # on the minion, the default renderer is yaml_jinja. This is a yaml file
@@ -518,9 +518,9 @@ mine_interval: 60
 #state_top: top.sls
 #
 # Run states when the minion daemon starts. To enable, set startup_states to:
-# 'highstate' -- Execute state.highstate
-# 'sls' -- Read in the sls_list option and execute the named sls files
-# 'top' -- Read top_file option and execute based on that file on the Salt-Master
+# 'highstate' -- Run state.highstate
+# 'sls' -- Read in the sls_list option and run the named sls files
+# 'top' -- Read top_file option and run based on that file on the Salt-Master
 #startup_states: ''
 #
 # List of states to run when the minion starts up if startup_states is 'sls':
@@ -528,7 +528,7 @@ mine_interval: 60
 #  - edit.vim
 #  - hyper
 #
-# Top file to execute if startup_states is 'top':
+# Top file to run if startup_states is 'top':
 #top_file: ''
 
 # Automatically aggregate all states that have support for mod_aggregate by
@@ -721,7 +721,7 @@ state_output: changes
 ######         Thread settings        #####
 ###########################################
 # Disable multiprocessing support, by default when a minion receives a
-# publication a new process is spawned and the command is executed therein.
+# publication a new process is spawned and the command is run therein.
 #
 # WARNING: Disabling multiprocessing may result in substantial slowdowns
 # when processing large pillars. See https://github.com/saltstack/salt/issues/38758

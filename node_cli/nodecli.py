@@ -84,9 +84,9 @@ class NodeCli(Cmd):
                 err_str = f"Invalid communication protocol {command.comm.get('type','')} selected."
                 raise Exception(err_str)
             getattr(self, channel_name)(command)
-            Log.debug(f"{line}: Command executed")
+            Log.debug(f"{line}: Command ran")
         except SystemExit:
-            Log.debug(f" Command executed system exit")
+            Log.debug(f" Command ran system exit")
         except KeyboardInterrupt:
             Log.debug(f"Stopped via keyboard interrupt.")
             self.do_exit()

@@ -17,7 +17,7 @@ Test Design implementation is written in PyTest tool in Provisioner. The scope o
 
 PyTest is full-featured Python testing tool currently implemented in Provisioner. 
 It is installed along with other dependencies as part of `test-requirements.txt` file execution. The latest installed version is 5.1.x.
-Execute the test cases in the directory with the command,
+Run the test cases in the directory with the command,
 
 ```
 python3 -m pytest <test_case>
@@ -29,7 +29,7 @@ In the current directory and its subdirectories, PyTest will run all test files 
 test_*.py
 ```
 
-**Execute Multiple test cases as a Group:**
+**Run Multiple test cases as a Group:**
 
 A group of test cases can be run together by placing them under a common “marker” name or by a common string in the method name as `test_deploy` or file name as `test_deploy.py`.
 
@@ -49,7 +49,7 @@ A better approach would be to follow the use of string in file name, as we have 
 
 * The proposed design will not deviate a lot from the existing architecture, instead will only aim to streamline some scattered tests. This design will be updated/changed based on further discussions and design requirements.
 
-* The idea is to create a "Suite"-like design which will group all the related test cases and execute.
+* The idea is to create a "Suite"-like design which will group all the related test cases and run.
 
 
 ### Integration Tests
@@ -73,7 +73,7 @@ A better approach would be to follow the use of string in file name, as we have 
 * Test Suite and Test Module are always directories and Test Case is a python file with one or more methods implemented.
 
 * Each Test Suite (sub-directories) may contain a config file `pytest.ini` which would ideally contain the file names inside that directory.
-  * This is an option to make testing easier. As we add or remove more files in future to a particular directory, the file names can be listed here and only those would be executed.
+  * This is an option to make testing easier. As we add or remove more files in future to a particular directory, the file names can be listed here and only those would be run.
   * Removing any file name from `pytest.ini` will not have an overall effect in execution of that Test Module. This is only for testing the methods in given Test Suite.
 
   * Example, say a Test Suite (sub-directory named `pre_deploy`) has 5 files, and only 2 have to be tested new, then it can included as,

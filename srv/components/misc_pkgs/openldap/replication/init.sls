@@ -29,5 +29,5 @@ Generate openldap replication checkpoint flag:
 {%- else -%}
 OpenLDAP replication already applied:
   test.show_notification:
-    - text: "OpenLDAP replication states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
+    - text: "OpenLDAP replication states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.misc_pkgs.openldap.teardown' to reprovision these states."
 {% endif %}

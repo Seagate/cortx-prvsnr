@@ -27,5 +27,5 @@ Generate logrotate checkpoint flag:
 {%- else -%}
 logrotate already applied:
   test.show_notification:
-    - text: "logrotate states already executed on node: {{ grains['id'] }}. execute 'salt '*' state.apply components.system.logrotate.teardown' to reprovision these states."
+    - text: "logrotate states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.system.logrotate.teardown' to reprovision these states."
 {% endif %}

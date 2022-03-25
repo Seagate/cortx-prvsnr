@@ -88,7 +88,7 @@ timeout: 1200
 
 # The loop_interval option controls the seconds for the salt-master's maintenance
 # process check cycle. This process updates file server backends, cleans the
-# job cache and executes the scheduler.
+# job cache and runs the scheduler.
 #loop_interval: 60
 
 # Set the default outputter used by the salt command. The default is "nested".
@@ -135,7 +135,7 @@ cli_summary: True
 
 # The salt-master maintains a job cache. While this is a great addition, it can be
 # a burden on the salt-master for larger deployments (over 5000 minions).
-# Disabling the job cache will make previously executed jobs unavailable to
+# Disabling the job cache will make previously run jobs unavailable to
 # the jobs system and is not generally recommended.
 #job_cache: True
 
@@ -365,7 +365,7 @@ worker_threads: 10
 # specific file.
 #permissive_pki_access: False
 
-# Allow users on the salt-master access to execute specific commands on minions.
+# Allow users on the salt-master access to run specific commands on minions.
 # This setting should be treated with care since it opens up execution
 # capabilities to non root users. By default this capability is completely
 # disabled.
@@ -1068,14 +1068,14 @@ pillar_roots:
 
 # The configuration uses regular expressions to match minions and then a list
 # of regular expressions to match functions. The following will allow the
-# minion authenticated as foo.example.com to execute functions from the test
+# minion authenticated as foo.example.com to run functions from the test
 # and pkg modules.
 #peer:
 #  foo.example.com:
 #    - test.*
 #    - pkg.*
 #
-# This will allow all minions to execute all commands:
+# This will allow all minions to run all commands:
 #peer:
 #  .*:
 #    - .*
@@ -1083,7 +1083,7 @@ pillar_roots:
 # This is not recommended, since it would allow anyone who gets root on any
 # single minion to instantly have root on all of the minions!
 
-# Minions can also be allowed to execute runners from the salt salt-master.
+# Minions can also be allowed to run runners from the salt salt-master.
 # Since executing a runner from the minion could be considered a security risk,
 # it needs to be enabled. This setting functions just like the peer setting
 # except that it opens up runners instead of module functions.

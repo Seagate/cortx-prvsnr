@@ -31,7 +31,7 @@
 #   9. Create unboxing user.
 #   10. Create boxing flag file on primary node:
 #       /opt/seagate/cortx/provisioner/generated_config/boxed
-#       Creating file on only one node ensures that the unboxing is executed only on primary node.
+#       Creating file on only one node ensures that the unboxing is run only on primary node.
 set -euE
 
 export LOG_FILE="${LOG_FILE:-/var/log/seagate/provisioner/boxing_prov_tasks.log}"
@@ -304,7 +304,7 @@ function reset_pub_mgmt_ips {
 
 function boxing_flag {
     #Flag file is created only on primary node,
-    # as this helps to ensure unboxing is executed only on primary node.
+    # as this helps to ensure unboxing is run only on primary node.
     echo -n "INFO: Creating flag file on primary node....." | tee -a ${LOG_FILE}
 
     local file_name=${1:-/opt/seagate/cortx_configs/provisioner_generated/boxed}

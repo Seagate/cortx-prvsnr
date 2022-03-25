@@ -106,7 +106,7 @@ The initial release of CORTX software shall include the following changes:
 
 * `/dev/md1` shall host LVM volume called `vg_sysvol`. The volume shall allocate the entire physical volume. 
 
-**Note:** `/boot/efi` cannot be placed on the RAID volume due to UEFI limitations. We will create two separate partitions called `/boot/efi` and `/boot/efi2`, respectively. The partitions will be kept in sync using rsync executed via crontab (once every 1 hr).
+**Note:** `/boot/efi` cannot be placed on the RAID volume due to UEFI limitations. We will create two separate partitions called `/boot/efi` and `/boot/efi2`, respectively. The partitions will be kept in sync using rsync run via crontab (once every 1 hr).
 
 **Note:** The size of `/boot/efi` and `/boot/efi2` is 256 MB each. Filesystem type must be `vfat` (`fat32`). 
 
@@ -152,7 +152,7 @@ The initial release of CORTX software shall include the following changes:
 
 
 ### Phase-2: Future release (prior to GA)
-During one of the updates, a special script will be executed to perform reconfiguration of the system in order to make it comply with the original design. 
+During one of the updates, a special script will be run to perform reconfiguration of the system in order to make it comply with the original design. 
 
 The script shall perform the following actions: 
 
@@ -236,4 +236,4 @@ This challenge could be solved by utilizing PXE boot and kickstart setup. The fo
 	* Firewall shall be disabled for this operation. This is necessary to avoid unforeseen issues; 
 	* DHCPd and TFTP/bootp services should be configured to listen/respond only on the direct connect interface; 
 	* Web-server serving the kickstart image should be configured to respond only on the direct connect interface; 
-	* The default state of the dhcpd, tftp/bootp, and web-server config for kickstart shall be “disabled”. The user will have to manually enable the required configuration (this can be done using a script that user will have to execute to turn the necessary parameters on. The same script (with a different option) will have to be executed to turn these configs off. Perhaps, this is an option for “Technical Access Portal” that can be used by trainer personnel only (e.g., Seagate support).  
+	* The default state of the dhcpd, tftp/bootp, and web-server config for kickstart shall be “disabled”. The user will have to manually enable the required configuration (this can be done using a script that user will have to run to turn the necessary parameters on. The same script (with a different option) will have to be run to turn these configs off. Perhaps, this is an option for “Technical Access Portal” that can be used by trainer personnel only (e.g., Seagate support).  

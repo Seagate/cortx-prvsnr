@@ -29,5 +29,5 @@ Generate firewall checkpoint flag:
 {%- else -%}
 Firewall already applied:
   test.show_notification:
-    - text: "Firewall states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.firewall.teardown' to reprovision these states."
+    - text: "Firewall states already Run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.firewall.teardown' to reprovision these states."
 {%- endif -%}

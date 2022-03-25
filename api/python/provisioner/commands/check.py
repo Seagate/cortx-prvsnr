@@ -571,7 +571,7 @@ class Check(CommandParserFillerMixin):
 
         :param args: communicability check specific parameters and arguments
         :param Optional[Union[list, tuple, set]] targets:
-               target nodes where network checks will be executed
+               target nodes where network checks will be performed
         :return:
         """
         res: CheckEntry = CheckEntry(cfg.Checks.COMMUNICABILITY.value)
@@ -1397,7 +1397,7 @@ class Check(CommandParserFillerMixin):
         Basic run method to execute checks specified by `check_name` or
         perform all checks if `check_name` is omitted
 
-        :param str check_name: specific command to be executed on target nodes
+        :param str check_name: specific command to be run on target nodes
         :param str check_args: check specific arguments
 
         :return:

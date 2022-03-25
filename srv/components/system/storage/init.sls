@@ -28,5 +28,5 @@ Generate storage checkpoint flag:
 {%- else -%}
 Storage already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. execute 'salt '*' state.apply components.system.storage.teardown' to reprovision these states."
+    - text: "Storage states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.system.storage.teardown' to reprovision these states."
 {% endif %}

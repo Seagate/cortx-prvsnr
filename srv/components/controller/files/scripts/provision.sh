@@ -1221,7 +1221,7 @@ EOF
 fw_codeload_status_get()
 {
     _sftp_cmd="get progress:lastcodeload:text $ftp_log"
-    # Prepare the batch file of sftp commands to be executed over sftp.
+    # Prepare the batch file of sftp commands to be run over sftp.
     printf '%s\n' "$_sftp_cmd" > $tmpdir/fw_upd.bf
     echo "DEBUG: fw_codeload_status_get() _sftp_cmd=$_sftp_cmd." >> $logfile
     echo "DEBUG: fw_codeload_status_get() contents of $tmpdir/fw_upd.bf" >> $logfile

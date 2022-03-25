@@ -31,7 +31,7 @@ Generate multipath checkpoint flag:
 {%- else -%}
 multipath already applied:
   test.show_notification:
-    - text: "multipath states already executed on node: {{ grains['id'] }}. execute 'salt '*' state.apply components.system.multipath.teardown' to reprovision these states."
+    - text: "multipath states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.system.multipath.teardown' to reprovision these states."
 {% endif %}
 {%- else -%}
 multipath wont be applied on VM:

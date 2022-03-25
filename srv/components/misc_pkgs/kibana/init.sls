@@ -31,5 +31,5 @@ Generate Kibana checkpoint flag:
 {%- else -%}
 Kibana already applied:
   test.show_notification:
-    - text: "Storage states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.misc_pkgs.kibana.teardown' to reprovision these states."
+    - text: "Storage states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.misc_pkgs.kibana.teardown' to reprovision these states."
 {% endif %}

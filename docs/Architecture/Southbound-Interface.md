@@ -76,7 +76,7 @@ support_bundle:
 
 Each of the sub-sections (unless mentioned explicitly) will have the following parameters:
 
-  * `cmd`:  Command to be executed provided by component pertaining to this section.
+  * `cmd`:  Command to be run provided by component pertaining to this section.
   * `args`:  A list of arguments (in YAML format) to be passed to the script.
   * `--config <URL>`:  Source URL with cluster info
   * `--location <URL>`:  Target URL as specific end-point to backup/restore config info

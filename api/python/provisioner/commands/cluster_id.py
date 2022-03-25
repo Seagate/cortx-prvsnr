@@ -78,7 +78,7 @@ class ClusterId(CommandParserFillerMixin):
                         raise ValueError(
                            "ClusterID can be set only on the Primary node "
                            f"of the cluster. Role of current node: '{role}'. "
-                           "Execute the same command from the Primary node."
+                           "Run the same command from the Primary node."
                         )
                     else:
                         logger.debug("ClusterID file does not exist "
@@ -163,7 +163,7 @@ class ClusterId(CommandParserFillerMixin):
         Execution:
         `provisioner cluster_id`
         Takes no mandatory argument as input.
-        Executed only on primary node.
+        Run only on primary node.
 
         """
         try:

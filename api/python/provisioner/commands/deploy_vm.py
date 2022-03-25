@@ -146,7 +146,7 @@ class DeployVM(Deploy):
         if self._is_hw():
             # TODO EOS-12076 less generic error
             logger.error(
-                "Setup Type is HW. Executed command is specific for VM. "
+                "Setup Type is HW. Run command is specific for VM. "
                 "For HW please run `deploy`"
             )
             raise errors.ProvisionerError(

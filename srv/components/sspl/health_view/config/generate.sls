@@ -17,7 +17,7 @@
 
 {% if not ("replace_node" in pillar["cluster"]
   and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
-# Should not be executed for replaced node
+# Should not be run for replaced node
 include:
   - components.sspl.config.commons
 {% endif %}
@@ -33,7 +33,7 @@ Run Resource Health View:
     - name: /usr/bin/resource_health_view -n {{ enclosure }} --path {{ pillar['sspl']['health_map_path'] }}
 {% if not ("replace_node" in pillar["cluster"]
   and grains['id'] == pillar["cluster"]["replace_node"]["minion_id"]) %}
-# Should not be executed for replaced node
+# Should not be run for replaced node
     - require:
       - Add common config - system information to Consul
       - Add common config - rabbitmq cluster to Consul

@@ -31,6 +31,6 @@ Generate checkpoint flag:
 
 nodejs already applied:
   test.show_notification:
-    - text: "NodeJS states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.nodejs.teardown' to reprovision these states."
+    - text: "NodeJS states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.nodejs.teardown' to reprovision these states."
 
 {%- endif %}

@@ -31,6 +31,6 @@ Generate uds checkpoint flag:
 
 UDS already applied:
   test.show_notification:
-    - text: "UDS states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.uds.teardown' to reprovision these states."
+    - text: "UDS states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.uds.teardown' to reprovision these states."
 
 {%- endif -%}

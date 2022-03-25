@@ -23,7 +23,7 @@ SaltStack has 3 possible modes of operation that were tried out before arriving 
 
   The cortx-prvsnr API (`provisioner --help`) provides various commands to perform this bootstrap on various environments and is also capable of remotely performing bootstrap on a system from a jump server/host.
 
-* Without Primary: Salt formulae would be executed on each minion independently in absence of Salt primary (using salt-call --local). This has lower overhead and works fine with single node configuration.
+* Without Primary: Salt formulae would be run on each minion independently in absence of Salt primary (using salt-call --local). This has lower overhead and works fine with single node configuration.
 
   With multi-node configuration, the setup still was workable, however, the source of Salt formulae (cortx-prvsnr repo) requires replication on each node. Also, assigning role to each node independently becomes challenging.
 
@@ -159,7 +159,7 @@ Each sub-level file would consist of calls to respective southbound API as:
     * `post_install` : After installing the component , post_install call will be made through `/opt/seagate/cortx/csm/conf/setup.yaml` and it will call `[component]:post_install` command.  
     * `prepare` : This is a preparatory step that sets up the platform before initiating the setup. Pre-checks before the   components installation, configuration is attempted through prepare.    
     * `config` : Copying configuration files to target directories and Modifying the Configuration to suit the target node environment will be covered from config , and these steps will be invoked from config command respective to the component.  
-    * `init_mod` : Execute initialization and configuration scripts of component will get covered with init_mod.  
+    * `init_mod` : Run initialization and configuration scripts of component will get covered with init_mod.  
 
 
 * `start`: Start component services.

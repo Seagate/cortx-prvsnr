@@ -29,7 +29,7 @@ class CmdRunArgs:
     cmd_name: str = attr.ib(
         metadata={
             inputs.METADATA_ARGPARSER: {
-                'help': ("command to be executed on target nodes. "
+                'help': ("command to be run on target nodes. "
                          "Case sensitive")
             }
         }
@@ -59,7 +59,7 @@ class CmdRunArgs:
 @attr.s(auto_attribs=True)
 class CmdRun(CommandParserFillerMixin):
     """
-    Base class to support remote commands execution
+    Base class to support remote commands run
     """
 
     input_type: Type[inputs.NoParams] = inputs.NoParams
@@ -75,9 +75,9 @@ class CmdRun(CommandParserFillerMixin):
         :param args: `cortxcli` specific command parameters and arguments
         :param stdin: `cortxcli` stdin parameters like username and password.
                       NOTE: Parameters should be '\n' new line seperated
-        :param targets: target nodes where `cortxcli` command will be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real command execution on target nodes
+        :param targets: target nodes where `cortxcli` command will be run
+        :param bool dry_run: for debugging purposes. Run method without
+                             real command run on target nodes
         :return:
         """
 
@@ -93,16 +93,16 @@ class CmdRun(CommandParserFillerMixin):
     def run(self, cmd_name: str, cmd_args: str = "", cmd_stdin: str = None,
             targets: str = ALL_MINIONS, dry_run: bool = False):
         """
-        Basic run method to execute remote commands on targets nodes:
+        Basic run method to run remote commands on targets nodes:
 
-        :param str cmd_name: specific command to be executed on target nodes
+        :param str cmd_name: specific command to be run on target nodes
         :param str cmd_args: command specific arguments
         :param cmd_stdin: command specific stdin parameters like username and
                           password.
         :param str targets: target nodes where command is planned
-                            to be executed
-        :param bool dry_run: for debugging purposes. Execute method without
-                             real command execution on target nodes
+                            to be run
+        :param bool dry_run: for debugging purposes. Run method without
+                             real command running on target nodes
         :return:
         """
         cmd = cmd_name.strip()

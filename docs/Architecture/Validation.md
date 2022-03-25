@@ -76,9 +76,9 @@ Output shall always be a single JSON format string:
 
 Legend:
 
-* `check`: This is the check that has been performed by the called. It could be the command executed or a short string describing check performed.
+* `check`: This is the check that has been performed by the called. It could be the command run or a short string describing check performed.
 
-* `retcode`: Return code either from shell for an executed command or a preferable code decided by the called module to help understand the area of failure.
+* `retcode`: Return code either from shell for a run command or a preferable code decided by the called module to help understand the area of failure.
 
 * `stdout`: The `stdout` from shell command or a string that describes a success scenario.
 
@@ -395,7 +395,7 @@ provisioner check unboxing_pre_checks
 provisioner check unboxing_post_checks
 ```
 
-To execute ALL of the above validations, the below command works,
+To run ALL of the above validations, the below command works,
 
 `provisioner check all`  
 

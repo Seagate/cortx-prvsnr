@@ -58,7 +58,7 @@ Checklist:
 1.  Prepare cortx-prvsnr API
     ```
     pushd /opt/isos
-    # Execute cortx-prep script
+    # Run cortx-prep script
     sh /opt/isos/cortx-prep*.sh
     popd
     ```
@@ -136,7 +136,7 @@ Checklist:
 
 # Deploy VM Manually:
 
-Manual deployment of VM consists of following steps from Auto-Deploy, which could be individually executed:  
+Manual deployment of VM consists of following steps from Auto-Deploy, which could be individually run:  
 **NOTE**: Ensure [VM Preparation for Deployment](#vm-preparation-for-deployment) has been addressed successfully before proceeding  
 
 1.  **Bootstrap VM(s)**: Run setup_provisioner provisioner cli command:
@@ -185,7 +185,7 @@ Manual deployment of VM consists of following steps from Auto-Deploy, which coul
 
 
 1.  Bootstrap Validation
-    Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is executed successfully, verify salt-master setup on both nodes (setup verification checklist)
+    Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is run successfully, verify salt-master setup on both nodes (setup verification checklist)
     ```
     salt '*' test.ping  
     salt "*" service.stop puppet
@@ -241,7 +241,7 @@ Manual deployment of VM consists of following steps from Auto-Deploy, which coul
         ```
 
     ### Start Cluster (irrespective of number of nodes):  
-    1.  Execute the following command on primary node to start the cluster:
+    1.  Run the following command on primary node to start the cluster:
         ```
         cortx cluster start
         ```
@@ -293,7 +293,7 @@ Manual deployment of VM consists of following steps from Auto-Deploy, which coul
     1.  [OPTIONAL] For setting up a cluster of more than 3 nodes do append `--name <setup_profile_name>` to auto_deploy_vm command input parameters.  
 
 1.  Start cluster (irrespective of number of nodes):  
-    **NOTE**: Execute this command only on primary node (srvnode-1).  
+    **NOTE**: Run this command only on primary node (srvnode-1).  
     ```
     cortx cluster start
     ```

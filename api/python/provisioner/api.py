@@ -506,9 +506,9 @@ def cmd_run(cmd_name: str, cmd_args: str = "", cmd_stdin: str = "",
             targets: str = ALL_MINIONS, nowait: bool = False,
             dry_run: bool = False):
     """
-    Execute given command on targets nodes
+    Run given command on targets nodes
 
-    :param cmd_name: command to be executed
+    :param cmd_name: command to be run
     :param cmd_args: (optional) commands' arguments
     :param cmd_stdin: (optional) commands stdin parameters like username or
                       password
@@ -706,7 +706,7 @@ def check(check_name, check_args: str = "",
     :param check_name: name of validation. Use `all` parameter to trigger all
                        supported checks
     :param check_args: arguments and parameters for check (if supported)
-    :param targets: targets where to execute validations (optional)
+    :param targets: targets where to perform validations (optional)
     :return:
     """
     return _api_call('check', check_name,

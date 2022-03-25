@@ -144,7 +144,7 @@ Checklist:
 
 # Deploy VM Manually:
 
-Manual deployment of VM consists of following steps from Auto-Deploy, which could be individually executed:  
+Manual deployment of VM consists of following steps from Auto-Deploy, which could be individually run:  
 **NOTE**: Ensure [VM Preparation for Deployment](#vm-preparation-for-deployment) has been addressed successfully before proceeding  
 
 **Bootstrap VM(s)**: Run setup_provisioner provisioner cli command:
@@ -199,7 +199,7 @@ This is one time activity required to setup passwordless ssh across nodes.
 
 
 ## Bootstrap Validation
-Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is executed successfully, verify salt-master setup on both nodes (setup verification checklist)
+Once deployment is bootstrapped (auto_deploy or setup_provisioner) command is run successfully, verify salt-master setup on both nodes (setup verification checklist)
 ```
 salt '*' test.ping  
 salt "*" service.stop puppet
@@ -268,7 +268,7 @@ If provisioner setup is completed and you want to deploy in stages based on comp
     ```
 
 ### Start cluster (irrespective of number of nodes):  
-1.  Execute the following command on primary node to start the cluster:
+1.  Run the following command on primary node to start the cluster:
     ```
     cortx cluster start
     ```
@@ -311,7 +311,7 @@ If provisioner setup is completed and you want to deploy in stages based on comp
     ```
 
 1.  Start cluster (irrespective of number of nodes):  
-    **NOTE**: Execute this command only on primary node (srvnode-1).  
+    **NOTE**: Run this command only on primary node (srvnode-1).  
     ```
     cortx cluster start
     ```

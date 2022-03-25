@@ -33,6 +33,6 @@ Generate statsd checkpoint flag:
 
 statsd already applied:
   test.show_notification:
-    - text: "Statsd states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.statsd.teardown' to reprovision these states."
+    - text: "Statsd states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.statsd.teardown' to reprovision these states."
 
 {%- endif %}

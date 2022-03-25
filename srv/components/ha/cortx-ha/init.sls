@@ -29,5 +29,5 @@ Generate cortx_ha checkpoint flag:
 {%- else -%}
 cortx-ha already applied:
   test.show_notification:
-    - text: "cortx-ha states already executed on node: {{ grains['id'] }}. Execute 'salt '*' state.apply components.ha.cortx-ha.teardown' to reprovision these states."
+    - text: "cortx-ha states already run on node: {{ grains['id'] }}. Run 'salt '*' state.apply components.ha.cortx-ha.teardown' to reprovision these states."
 {%- endif -%}
