@@ -186,7 +186,7 @@ pipeline {
         always {
             script {
                 def recipientProvidersClass = [[$class: 'RequesterRecipientProvider']]
-                mailRecipients = "aayushi.sharma@seagate.com"
+                mailRecipients = "CORTX.Provisioner@seagate.com"
                 emailext ( 
                     body: '''${SCRIPT, template="cluster-setup-email.template"}''',
                     mimeType: 'text/html',
