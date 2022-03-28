@@ -17,8 +17,7 @@ cortx:
       endpoints:                                               # deprecated
       - ldap://oldap-server.cortx-cluster.com:389 
       - ssl://oldap-server.cortx-cluster.com:636
-      secret: !!binary |                                       # deprecated
-        cFh1dkw1ZlJ2THR4Rmp1ZnA5Mkt4NndhbGZhWkg0dXdqT0I4bGtxZ3c9PQ==
+      secret: openldap_admin_secret                            # deprecated
       servers:                                                 # deprecated
       - oldap-server1.cortx-cluster.com
       - oldap-server2.cortx-cluster.com
