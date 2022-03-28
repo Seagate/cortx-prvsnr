@@ -7,15 +7,15 @@ cortx:
     consul:
       admin: admin
       endpoints:
-      - http://consul-server.cortx-cluster.com:80
+      - tcp://consul-server.default.svc.cluster.local:8301
+      - http://consul-server.default.svc.cluster.local:8500
       secret: !!binary |
         MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
       admin: admin
       num_endpoints: 2
       endpoints:
-      - kafka-server1.cortx-cluster.com
-      - kafka-server2.cortx-cluster.com
+      - tcp://kafka.default.svc.cluster.local:9092
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
     openldap:                                                  # deprecated
@@ -55,7 +55,7 @@ cortx:
     agent:
       num_endpoints: 1
       endpoints:
-      - https://:8081
+      - https://:23256
     public:                                                    # Public Control Endpoint
       num_endpoints: 1
       endpoints:
@@ -200,18 +200,18 @@ cortx:
                                                                # N = Total CVG / group_size. N must be <=24. 
       num_endpoints: 3
       endpoints:
-      - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:<port>
-                                                              # N endpoints one for each Pod, first mentioned here
-                                                              # N == Number of CVGs in the Pod
-                                                              # Ports: 21001 - (21001+Number of CVGs)
-      - tcp://data2-node1:21001                               # Same thing for the second pod
-      - tcp://data1-node2:21001                               # of for Pods on the other nodes
+      - tcp://data1-node1:21002                                # Format: <protocol>://<hostname_ip>:<port>
+                                                               # N endpoints one for each Pod, first mentioned here
+                                                               # N == Number of CVGs in the Pod
+                                                               # Ports: 21002 - (21002 + Number of CVGs)
+      - tcp://data2-node1:21002                                # Same thing for the second pod
+      - tcp://data1-node2:21002                                # of for Pods on the other nodes
     confd:
       num_endpoints: 3
       endpoints:
-      - tcp://data1-node1:22002                                # Format: <protocol>://<hostname_ip>:22002
-      - tcp://data1-node2:22002
-      - tcp://data1-node3:22002
+      - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:21001
+      - tcp://data1-node2:21001       
+      - tcp://data1-node3:21001
     limits:
       num_services: 2
       services:
@@ -237,10 +237,13 @@ cortx:
         num_instances: 1                                       # Client instances per node (pod)
         num_endpoints: 2
         endpoints:
-        - tcp://server1-node1:21001                            # Format: <protocol>://<hostname_ip>:21001 
-        - tcp://server2-node1:21001                            # Num endpoints will be same as num of client instances
-                                                               # Port range would be 21001 - 21001+num_instances
-                                                               # Same endpoint will be used for s3 admin CLI
+        - tcp://server1-node1:22501                            # Format: <protocol>://<hostname_ip>:22501 
+        - tcp://server2-node1:22501                            # This is for client>type == "s3"
+                                                               # This is a starting endpoint and num of s3
+                                                               # endpoints will be equal to num of s3 instances 
+                                                               # in this pod. Port range would be 
+                                                               # 22501 to (22501 + "motr>client>{rgw_s3}>num_instances")
+        - tcp://server-node1:22501
       - name: motr_client
         num_instances: 0                                       # Optional client. Only for Dev.
         num_subscriptions: 1
@@ -248,8 +251,9 @@ cortx:
         - fdmi
         num_endpoints: 2
         endpoints:
-        - tcp://client-node1:21201
-        - tcp://client-node2:21201
+        - tcp://client1-node1:21501                            # Port range would be 
+                                                               # 21501 to (21501 + "motr>client>{motr_client}>num_instances")
+
 cluster:
   id: 0007ec45379e36d9fa089a3d615c32a3
   name: cortx-cluster
