@@ -91,8 +91,6 @@ class CortxCluster:
         """Return list of confstore key-values for components."""
         # Create confstore keys, from given component list(config from config.yaml).
         component_kv_list = []
-        # TODO: Need to remove num_components key later
-        component_kv_list.append((f'node>{node_id}>num_components', len(component_list)))
         for index, component in enumerate(component_list):
             key_prefix = f'node>{node_id}>components[{index}]'
             component_name = component['name']
@@ -111,8 +109,6 @@ class CortxCluster:
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
         key_prefix = f'node>{node_id}>storage'
-        # TODO: Need to remove num cvg_count key later
-        storage_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
         for index, group in enumerate(storage_spec):
             for key, val in group.items():
                 if key == 'devices':
