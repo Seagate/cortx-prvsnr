@@ -76,7 +76,7 @@ class CortxCluster:
         self._node_list.append(node)
 
     def _get_kvs(self, prefix: str, node: dict):
-        """ Converts dict into list of keys and values """
+        """Converts dict into list of keys and values."""
         kvs = []
         if isinstance(node, dict):
             for attr, val in node.items():
@@ -111,7 +111,9 @@ class CortxCluster:
         """"Return list of confstore key-values for storage."""
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
-        key_prefix = f'node>{node_id}'
+        key_prefix = f'node>{node_id}>storage'
+        # TODO: Need to remove num cvg_count key later
+        storage_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
         for index, group in enumerate(storage_spec):
             for key, val in group.items():
                 if not isinstance(val, str):
