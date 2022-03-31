@@ -112,10 +112,6 @@ cortx:
       endpoints:                                               # S3 IO K8s service endpoint
       - http://s3-rgw-svc:80                                   # Optional (if http needs to be enabled)
       - https://s3-rgw-svc:443                                 # There will be one endpoint (http/https)
-    s3:
-      endpoints:
-      - http://s3-rgw-svc:80
-      - https://s3-rgw-svc:443
     service:
       num_endpoints: 2
       endpoints:                                               # RGW Service Endpoint
