@@ -1,8 +1,0 @@
----
-NAME: CORTX
-VERSION: {{ VERSION }}
-BUILD: {{ BUILD }}
-OS: Red Hat Enterprise Linux Server release 7.7 (Maipo)
-DATETIME: {{ DATE }}
-KERNEL: {{ KERNEL }}
-COMPONENTS:

@@ -1,8 +1,0 @@
-# Rotate journald log files
-/var/log/journal/*/*.journal
-{
-    weekly
-    rotate 2
-    size 200M
-    compress
-}
