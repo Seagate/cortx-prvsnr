@@ -1,5 +1,0 @@
-FROM {parent}
-
-COPY images/docker/setup_rsyslog.sh /tmp/
-RUN bash /tmp/setup_rsyslog.sh \
-    && rm -f /tmp/setup_rsyslog.sh

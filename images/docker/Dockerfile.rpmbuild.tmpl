@@ -1,5 +1,0 @@
-FROM {parent}
-
-COPY images/docker/setup_rpmbuild.sh /tmp/
-RUN NO_YUM_CLEAN=1 bash /tmp/setup_rpmbuild.sh \
-    && rm -f /tmp/setup_rpmbuild.sh
