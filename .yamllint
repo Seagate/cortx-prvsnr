@@ -6,7 +6,6 @@ yaml-files:
   - '*.yaml'
   - '*.yml'
   - '.yamllint'
-  - '*.sls'
 
 rules:
   comments: disable

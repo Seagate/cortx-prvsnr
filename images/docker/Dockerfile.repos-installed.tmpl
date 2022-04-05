@@ -1,8 +1,0 @@
-FROM {parent}
-
-# TODO populate .dockerignore
-COPY cli/src/common_utils/functions.sh /tmp/cortx/provisioner/cli/src/
-COPY files /tmp/cortx/provisioner/files/
-RUN bash -xec ". /tmp/cortx/provisioner/cli/src/functions.sh; install_repos" \
-    && rm -rf /tmp/cortx \
-    && rm -rf /var/cache/yum

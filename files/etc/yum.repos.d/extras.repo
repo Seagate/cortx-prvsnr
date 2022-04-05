@@ -1,5 +1,0 @@
-[extras]
-gpgcheck=0
-enabled=1
-baseurl=https://vault.centos.org/7.8.2003/extras/x86_64/
-name=extras

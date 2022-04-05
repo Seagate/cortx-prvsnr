@@ -1,9 +1,0 @@
-#!/bin/sh
-if [ "x$1" != "x" ] ; then
-	echo "CTRL-G is the escape character!!"
-	echo ipmitool -H $1 -U admin -P admin -I lanplus sol -e ^g activate
-	ipmitool -H $1 -U admin -P admin -I lanplus sol -e '' activate
-	ipmitool -H $1 -U admin -P admin -I lanplus sol deactivate
-else
-	echo Please supply the host name as the one and only parameter.
-fi
