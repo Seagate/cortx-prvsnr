@@ -16,7 +16,7 @@ Please refer to this [URL](https://seagate-systems.atlassian.net/wiki/spaces/PRI
 <br>
 
 Kubernetes Cluster Formation  
-Use this [URL](http://eos-jenkins.mero.colo.seagate.com/job/Cortx-kubernetes/job/setup-kubernetes-cluster/) Jenkins Job to Form the Kubernetes cluster of 3 Nodes with Master node Tainted.  
+Use this [URL](http://eos-jenkins.mero.colo.seagate.com/job/Cortx-kubernetes/job/setup-kubernetes-cluster/) Jenkins Job to Form the Kubernetes cluster of 3 Nodes with Primary node Tainted.  
 <br>
 
 ## Deploy Cortx Stack on Kubernetes Environment  
@@ -29,9 +29,9 @@ Run reimage.sh script to install helm, pull 3rd party as well as cortx-all docke
 ```
 <br>
 
-Deploy Provisioner Deployment POD **(Run Only on Master Node)**  
+Deploy Provisioner Deployment POD **(Run Only on Primary Node)**  
 
-Run deploy.sh script to setup Runtime PODs on each nodes (example: 1 Control POD running on master node, Storage/Data POD running on all nodes). Each Runtime POD will have Init Container (Provisioner Deployment) which will execute cortx_setup config apply and cluster bootstrap commands.
+Run deploy.sh script to setup Runtime PODs on each nodes (example: 1 Control POD running on primary node, Storage/Data POD running on all nodes). Each Runtime POD will have Init Container (Provisioner Deployment) which will execute cortx_setup config apply and cluster bootstrap commands.
 ```bash
 Note: Before running the deploy.sh script, In test/deploy/kubernetes/solution-config/cluster.yaml 
 Make changes according to the number of nodes in the cluster.yaml and config.yaml. 
@@ -54,7 +54,7 @@ Note: For Redefined PODs structure (Data, Server, Control and HA)
 ./deploy.sh -i <image-tag> -r
 ```
 
-Validate Services Startup **(On Master node)**  
+Validate Services Startup **(On Primary node)**  
 ```bash
 # Go inside any storage pod on the cluster
 kubectl exec -it <storage-pod-name> -c cortx-motr-hax -- /bin/bash
@@ -73,11 +73,11 @@ kubectl logs <pod-name>
 ```
 <br>
 
-## Delete ALL CORTX PODs **(On Master Node)**
+## Delete ALL CORTX PODs **(On Primary Node)**
 ```bash
 ./destroy.sh
 ```
-## Upgrade CORTX POD's **(On Master Node)
+## Upgrade CORTX POD's **(On Primary Node)
  Run Upgrade script present at test/deploy/kubernetes/upgrade.sh with -i (Upgrade Image) argument by providing CORTX-ALL Image B for Upgrade as follows
  ```bash
  cd /root/cortx-prvsnr/test/deploy/kubernetes
@@ -90,7 +90,7 @@ Note: For Redefined PODs structure (Data, Server, Control and HA)
 ./upgrade.sh -i <image-tag> -r
 ```
 
-Validate Services Startup **(On Master node)**  
+Validate Services Startup **(On Primary node)**  
 ```bash
 # Go inside any storage pod on the cluster
 kubectl exec -it <storage-pod-name> -c cortx-motr-hax -- /bin/bash
