@@ -73,7 +73,7 @@ kubectl logs <pod-name>
 ```
 <br>
 
-## Destroy ALL CORTX PODs **(On Master Node)**
+## Delete ALL CORTX PODs **(On Master Node)**
 ```bash
 ./destroy.sh
 ```
