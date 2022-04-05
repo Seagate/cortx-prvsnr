@@ -1,9 +1,0 @@
-[saltstack]
-name=SaltStack repo for RHEL/CentOS $releasever
-#baseurl=https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0
-baseurl=https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3002
-enabled=1
-gpgcheck=1
-#gpgkey=https://archive.repo.saltstack.com/py3/redhat/$releasever/$basearch/archive/2019.2.0/SALTSTACK-GPG-KEY.pub
-gpgkey=https://repo.saltstack.com/py3/redhat/$releasever/$basearch/3002/SALTSTACK-GPG-KEY.pub
-priority=1

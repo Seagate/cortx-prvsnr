@@ -1,5 +1,0 @@
-FROM {parent}
-
-COPY images/docker/setup_fpm.sh /tmp/
-RUN bash /tmp/setup_fpm.sh \
-    && rm -f /tmp/setup_fpm.sh

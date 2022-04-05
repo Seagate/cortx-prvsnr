@@ -1,7 +1,5 @@
 *
-!cli
-!images
-!files
-!api/python/requirements/**
-!api/python/provisioner/srv/salt/resources/**
 !.build/repo.tgz
+!src
+!conf
+!setup.py

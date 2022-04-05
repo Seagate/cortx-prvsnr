@@ -1,6 +1,0 @@
-FROM {parent}
-
-COPY api/python/provisioner/srv/salt/resources/3rd_party/saltstack ${{SALT_FILEROOT}}/saltstack
-COPY images/docker/setup_salt.sh /tmp/
-RUN bash /tmp/setup_salt.sh \
-    && rm -f /tmp/setup_salt.sh

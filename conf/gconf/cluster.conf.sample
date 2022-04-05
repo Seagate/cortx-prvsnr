@@ -7,32 +7,18 @@ cortx:
     consul:
       admin: admin
       endpoints:
-      - http://consul-server.cortx-cluster.com:80
+      - tcp://consul-server.default.svc.cluster.local:8301
+      - http://consul-server.default.svc.cluster.local:8500
       secret: !!binary |
         MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
       admin: admin
       num_endpoints: 2
       endpoints:
-      - kafka-server1.cortx-cluster.com
-      - kafka-server2.cortx-cluster.com
+      - tcp://kafka.default.svc.cluster.local:9092
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
-    openldap:                                                  # deprecated
-      admin: admin                                             # deprecated
-      base_dn: dc=seagate,dc=com                               # deprecated
-      num_endpoints: 2
-      endpoints:                                               # deprecated
-      - ldap://oldap-server.cortx-cluster.com:389 
-      - ssl://oldap-server.cortx-cluster.com:636
-      secret: !!binary |                                       # deprecated
-        cFh1dkw1ZlJ2THR4Rmp1ZnA5Mkt4NndhbGZhWkg0dXdqT0I4bGtxZ3c9PQ==
-      servers:                                                 # deprecated
-      - oldap-server1.cortx-cluster.com
-      - oldap-server2.cortx-cluster.com
-      - oldap-server3.cortx-cluster.com
   common:
-    product_release: LC                                        # deprecated
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -42,27 +28,21 @@ cortx:
       secret: !!binary |
         Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
-    setup_size: small                                          # deprecated and derived from limits
-    setup_type: K8                                             # deprecated
     storage:
       config: /etc/cortx
       local: /etc/cortx
       log: /var/log/cortx/
-      shared: /share                                           # deprecated
   utils:
     message_bus_backend: kafka
   csm:
     agent:
       num_endpoints: 1
       endpoints:
-      - https://:8081
+      - https://:23256
     public:                                                    # Public Control Endpoint
       num_endpoints: 1
       endpoints:
       - https://control-svc:8081
-    auth_admin: admin                                          # deprecated
-    auth_secret: !!binary |                                    # deprecated
-      UTdTaDl0TzVLMWZsQUp6SnVKeTZaYlNtUUFscld1WjU4UHNSek1aUGc9PQ==
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
     mgmt_secret: !!binary |
@@ -124,17 +104,9 @@ cortx:
     motr_max_units_per_request: 8
     motr_max_idx_fetch_count: 30
     motr_max_rpc_msg_size: 524288                              # In bytes
+    motr_reconnect_interval: 10                                # Wait for Seconds before reconnect 
+    motr_reconnect_retry_count: 10                             # Give up after these many retries
 
-    iam:                                                       # deprecated
-      num_endpoints: 2                                     
-      endpoints:
-      - https://cortx-iam-svc:9443
-      - http://cortx-iam-svc:9080
-    s3:                                                        # deprecated
-      num_endpoints: 2
-      endpoints:
-      - http://cortx-io-svc:80
-      - https://cortx-io-svc:443
     public:                                                    # NOTE: was s3 earlier 
       num_endpoints: 2
       endpoints:                                               # S3 IO K8s service endpoint
@@ -145,13 +117,8 @@ cortx:
       endpoints:                                               # RGW Service Endpoint
       - http://:22751                                          # S ports. S = # of RGW Instances
       - https://:23001
-    internal:                                                  # deprecated
-      num_endpoints: 1
-      endpoints:
-      - http://cortx-io-svc:28049
     io_max_units: 8
     max_start_timeout: <<.Values.cortx.max_start_timeout>>
-    service_instances: 1                                       # deprecated
     limits:
       services:
       - name: rgw
@@ -175,10 +142,6 @@ cortx:
       - tcp://client-node1:22001                               # Only if motr_client is configured
       - tcp://client-node2:22001                               # Only if motr_client is configured
       - tcp://client-node3:22001                               # Only if motr_client is configured
-    control:                                                   # deprecated (Moved to hax>endpoints)
-      num_endpoints: 1
-      endpoints:                                               # deprecated (Moved to hax>endpoints)
-      - https://motr-hax-svc:22003                             # deprecated (Moved to hax>endpoints)
     limits:
       num_services: 1
       services:
@@ -190,8 +153,6 @@ cortx:
           min: 250m
           max: 500m
   motr:
-    client_instances: 1                                        # deprecated
-    interface_type: tcp                                        # deprecated (This is now part of URL)
     interface_family: inet                                     # Optional: inet (default) | inet6
     transport_type: libfab                                     # libfab | lnet (libfab==inet)
     md_size: 10                                                # % MD size w.r.t. total capacity
@@ -200,18 +161,18 @@ cortx:
                                                                # N = Total CVG / group_size. N must be <=24. 
       num_endpoints: 3
       endpoints:
-      - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:<port>
-                                                              # N endpoints one for each Pod, first mentioned here
-                                                              # N == Number of CVGs in the Pod
-                                                              # Ports: 21001 - (21001+Number of CVGs)
-      - tcp://data2-node1:21001                               # Same thing for the second pod
-      - tcp://data1-node2:21001                               # of for Pods on the other nodes
+      - tcp://data1-node1:21002                                # Format: <protocol>://<hostname_ip>:<port>
+                                                               # N endpoints one for each Pod, first mentioned here
+                                                               # N == Number of CVGs in the Pod
+                                                               # Ports: 21002 - (21002 + Number of CVGs)
+      - tcp://data2-node1:21002                                # Same thing for the second pod
+      - tcp://data1-node2:21002                                # of for Pods on the other nodes
     confd:
       num_endpoints: 3
       endpoints:
-      - tcp://data1-node1:22002                                # Format: <protocol>://<hostname_ip>:22002
-      - tcp://data1-node2:22002
-      - tcp://data1-node3:22002
+      - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:21001
+      - tcp://data1-node2:21001       
+      - tcp://data1-node3:21001
     limits:
       num_services: 2
       services:
@@ -237,10 +198,13 @@ cortx:
         num_instances: 1                                       # Client instances per node (pod)
         num_endpoints: 2
         endpoints:
-        - tcp://server1-node1:21001                            # Format: <protocol>://<hostname_ip>:21001 
-        - tcp://server2-node1:21001                            # Num endpoints will be same as num of client instances
-                                                               # Port range would be 21001 - 21001+num_instances
-                                                               # Same endpoint will be used for s3 admin CLI
+        - tcp://server1-node1:22501                            # Format: <protocol>://<hostname_ip>:22501 
+        - tcp://server2-node1:22501                            # This is for client>type == "s3"
+                                                               # This is a starting endpoint and num of s3
+                                                               # endpoints will be equal to num of s3 instances 
+                                                               # in this pod. Port range would be 
+                                                               # 22501 to (22501 + "motr>client>{rgw_s3}>num_instances")
+        - tcp://server-node1:22501
       - name: motr_client
         num_instances: 0                                       # Optional client. Only for Dev.
         num_subscriptions: 1
@@ -248,8 +212,9 @@ cortx:
         - fdmi
         num_endpoints: 2
         endpoints:
-        - tcp://client-node1:21201
-        - tcp://client-node2:21201
+        - tcp://client1-node1:21501                            # Port range would be 
+                                                               # 21501 to (21501 + "motr>client>{motr_client}>num_instances")
+
 cluster:
   id: 0007ec45379e36d9fa089a3d615c32a3
   name: cortx-cluster
