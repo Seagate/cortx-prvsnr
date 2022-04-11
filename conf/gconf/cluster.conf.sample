@@ -18,21 +18,7 @@ cortx:
       - tcp://kafka.default.svc.cluster.local:9092
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
-    openldap:                                                  # deprecated
-      admin: admin                                             # deprecated
-      base_dn: dc=seagate,dc=com                               # deprecated
-      num_endpoints: 2
-      endpoints:                                               # deprecated
-      - ldap://oldap-server.cortx-cluster.com:389 
-      - ssl://oldap-server.cortx-cluster.com:636
-      secret: !!binary |                                       # deprecated
-        cFh1dkw1ZlJ2THR4Rmp1ZnA5Mkt4NndhbGZhWkg0dXdqT0I4bGtxZ3c9PQ==
-      servers:                                                 # deprecated
-      - oldap-server1.cortx-cluster.com
-      - oldap-server2.cortx-cluster.com
-      - oldap-server3.cortx-cluster.com
   common:
-    product_release: LC                                        # deprecated
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -42,13 +28,10 @@ cortx:
       secret: !!binary |
         Z0FBQUFBQmhVY1dCdzJ6RkRXT3FSVjJXTWtUM0paZlB1LXFRRW0xNy1rRGhJLVpHUjcxMkVOeDZ6
         MG9KWmpsM21yTmprZTJkYTBHUU1OWVl4dnZSaVRTeEs4UEdReHhkR1E9PQ==
-    setup_size: small                                          # deprecated and derived from limits
-    setup_type: K8                                             # deprecated
     storage:
       config: /etc/cortx
       local: /etc/cortx
       log: /var/log/cortx/
-      shared: /share                                           # deprecated
   utils:
     message_bus_backend: kafka
   csm:
@@ -60,9 +43,6 @@ cortx:
       num_endpoints: 1
       endpoints:
       - https://control-svc:8081
-    auth_admin: admin                                          # deprecated
-    auth_secret: !!binary |                                    # deprecated
-      UTdTaDl0TzVLMWZsQUp6SnVKeTZaYlNtUUFscld1WjU4UHNSek1aUGc9PQ==
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
     mgmt_secret: !!binary |
@@ -124,17 +104,9 @@ cortx:
     motr_max_units_per_request: 8
     motr_max_idx_fetch_count: 30
     motr_max_rpc_msg_size: 524288                              # In bytes
+    motr_reconnect_interval: 10                                # Wait for Seconds before reconnect 
+    motr_reconnect_retry_count: 10                             # Give up after these many retries
 
-    iam:                                                       # deprecated
-      num_endpoints: 2                                     
-      endpoints:
-      - https://cortx-iam-svc:9443
-      - http://cortx-iam-svc:9080
-    s3:                                                        # deprecated
-      num_endpoints: 2
-      endpoints:
-      - http://cortx-io-svc:80
-      - https://cortx-io-svc:443
     public:                                                    # NOTE: was s3 earlier 
       num_endpoints: 2
       endpoints:                                               # S3 IO K8s service endpoint
@@ -145,13 +117,8 @@ cortx:
       endpoints:                                               # RGW Service Endpoint
       - http://:22751                                          # S ports. S = # of RGW Instances
       - https://:23001
-    internal:                                                  # deprecated
-      num_endpoints: 1
-      endpoints:
-      - http://cortx-io-svc:28049
     io_max_units: 8
     max_start_timeout: <<.Values.cortx.max_start_timeout>>
-    service_instances: 1                                       # deprecated
     limits:
       services:
       - name: rgw
@@ -175,10 +142,6 @@ cortx:
       - tcp://client-node1:22001                               # Only if motr_client is configured
       - tcp://client-node2:22001                               # Only if motr_client is configured
       - tcp://client-node3:22001                               # Only if motr_client is configured
-    control:                                                   # deprecated (Moved to hax>endpoints)
-      num_endpoints: 1
-      endpoints:                                               # deprecated (Moved to hax>endpoints)
-      - https://motr-hax-svc:22003                             # deprecated (Moved to hax>endpoints)
     limits:
       num_services: 1
       services:
@@ -190,8 +153,6 @@ cortx:
           min: 250m
           max: 500m
   motr:
-    client_instances: 1                                        # deprecated
-    interface_type: tcp                                        # deprecated (This is now part of URL)
     interface_family: inet                                     # Optional: inet (default) | inet6
     transport_type: libfab                                     # libfab | lnet (libfab==inet)
     md_size: 10                                                # % MD size w.r.t. total capacity

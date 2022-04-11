@@ -1,8 +1,0 @@
-/var/log/wpa_supplicant.log {
-    missingok
-    notifempty
-    size 30k
-    rotate 3
-    create 0600 root root
-    compress
-}

@@ -75,7 +75,8 @@ class CortxCluster:
         self._validate(node)
         self._node_list.append(node)
 
-    def _get_kvs(self, prefix, node):
+    def _get_kvs(self, prefix: str, node: dict):
+        """Converts dict into list of keys and values."""
         kvs = []
         if isinstance(node, dict):
             for attr, val in node.items():
@@ -111,11 +112,6 @@ class CortxCluster:
         key_prefix = f'node>{node_id}>storage'
         for index, group in enumerate(storage_spec):
             for key, val in group.items():
-                if key == 'devices':
-                    metadata_device = group[key]['metadata']
-                    # Convert metadata value to list.
-                    if isinstance(metadata_device, str):
-                        group[key]['metadata'] = metadata_device.split(',')
                 if not isinstance(val, str):
                     storage_kv_list.extend(self._get_kvs(f'{key_prefix}>cvg[{index}]>{key}', val))
                 else:

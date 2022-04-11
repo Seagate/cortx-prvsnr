@@ -7,7 +7,7 @@ b. config.yaml
 
 Install cortx-utils and cortx-provisioner, cortx-components rpms.Make sure PYTHON_PATH includes src folder, if you are not using rpm.  
 ```bash
-export CORTX_RELEASE_REPO=<<build-link of kubernetes branch>>
+export CORTX_RELEASE_REPO=<<build-link>>
 yum install -y yum-utils
 yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/3rd_party/"
 yum-config-manager --add-repo "${CORTX_RELEASE_REPO}/cortx_iso/"
