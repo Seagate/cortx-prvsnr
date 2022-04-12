@@ -17,7 +17,9 @@ import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.provisioner.log import Log
-
+from cortx.provisioner import const
+import hashlib
+import socket
 
 class CortxCluster:
     """ Represents CORTX Cluster """
@@ -124,17 +126,23 @@ class CortxCluster:
 
     def save(self, cortx_conf):
         """ Saves cluster information onto the conf store """
-
         kvs = []
         try:
             for node in self._node_list:
-                node_id = node.pop('id')
+                node_id1 = node.pop('id')
+                result = hashlib.md5(node_id1.encode())
+                node_id= result.hexdigest()
                 key_prefix = f'node>{node_id}'
+                if socket.gethostname() == node['hostname'] :
+                    machine_id = open(const.MACHINE_ID_PATH, 'w')
+                    machine_id.write(node_id)
+                    print("ok")
                 # confstore keys
                 kvs.extend((
                     (f'{key_prefix}>cluster_id', node['cluster_id']),
                     (f'{key_prefix}>name', node['name']),
                     (f'{key_prefix}>hostname', node['hostname']),
+                    (f'{key_prefix}>logical_id', node_id1),
                     (f'{key_prefix}>type', node['type']),
                     (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
@@ -201,7 +209,9 @@ class CortxStorageSet:
                 nodes = storage_set['nodes']
                 for node_idx, node in enumerate(nodes):
                     # confstore keys
-                    kvs.append((f'{key_prefix}>nodes[{node_idx}]', node['id']))
+                    result = hashlib.md5(node['id'].encode())
+                    node_id= result.hexdigest() 
+                    kvs.append((f'{key_prefix}>nodes[{node_idx}]', node_id))
 
                 # Read sns and dix value from storage_set
                 durability = storage_set['durability']
