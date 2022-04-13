@@ -1,59 +1,73 @@
 cluster:
   name: cortx-cluster
-  id: 'C01'
+  id: 0007ec45379e36d9fa089a3d615c32a3
   node_types:
-  - name: storage_node
+  - name: client_node        # Optional
     components:
     - name: utils
     - name: motr
       services:
-      - io
+      - motr_client          # motr_setup --services=motr_client
     - name: hare
-    - name: s3
+  - name: data_node/1        # For multiple pods per node, there will another type "data_node/2"
+    components:
+    - name: utils
+    - name: motr
       services:
-      - io
-      - auth
-      - bg_consumer
+        - io
+    - name: hare
     storage:
     - name: cvg-01
       type: ios
       devices:
-        metadata: /dev/sdc
+        metadata:
+        - /dev/sdb
         data:
-          - /dev/sdd
-          - /dev/sde
+        - /dev/sdc
+        - /dev/sdd
     - name: cvg-02
       type: ios
       devices:
-        metadata: /dev/sdf
+        metadata:
+        - /dev/sde
         data:
-          - /dev/sdg
-          - /dev/sdh
+        - /dev/sdf
+        - /dev/sdg
+  - name: server_node
+    components:
+    - name: utils
+    - name: hare
+    - name: rgw
   - name: control_node
     components:
     - name: utils
-    - name: motr
-      services:
-      - fsm
-    - name: s3
-      services:
-      - bg_producer
-      - openldap
     - name: csm
       services:
       - agent
+  - name: ha_node
+    components:
+    - name: utils
+    - name: ha
   storage_sets:
   - name: storage-set-1
     durability:
       sns: 1+0+0
       dix: 1+0+0
     nodes:
-    - name: pod-1
-      id: 97085a8ab7cf42669c94963929864a70
-      hostname: pod-1.colo.seagate.com
+    - name: control-node
+      id: 9995f539f4f770e2a3fe9e2e615c32a8
+      hostname: control-node
       type: control_node
-    - name: pod-2
-      id: 8efd697708a8f7e428d3fd520c180795
-      hostname: pod-2.colo.seagate.com
-      type: storage_node
-
+    - name: ha-node
+      id: 1115f539f4f770e2a3fe9e2e615c32a8
+      hostname: ha-node
+      type: ha_node
+    - name: data-node1
+      id: aaa120a9e051d103c164f605615c32a4
+      hostname: data-node1
+      type: data_node/1
+      node_group: data-node-1              # Node group can be physical host name or node label
+    - name: server-node1
+      id: ddd120a9e051d103c164f605615c32a4
+      hostname: server-node1
+      type: server_node
