@@ -77,6 +77,12 @@ class CortxCluster:
     def add_node(self, node: dict):
         CortxCluster._validate(node)
         self._node_list.append(node)
+    
+    @staticmethod
+    def get_machine_id(id: str):
+        result = hashlib.md5(id.encode())
+        node_id= result.hexdigest()
+        return node_id
 
     def _get_kvs(self, prefix: str, node: dict):
         """Converts dict into list of keys and values."""
@@ -128,20 +134,18 @@ class CortxCluster:
         kvs = []
         try:
             for node in self._node_list:
-                node_id1 = node.pop('id')
-                result = hashlib.md5(node_id1.encode())
-                node_id= result.hexdigest()
+                logical_id = node.pop('id')
+                node_id = CortxCluster.get_machine_id(logical_id)
                 key_prefix = f'node>{node_id}'
                 if socket.gethostname() == node['hostname'] :
                     machine_id = open(const.MACHINE_ID_PATH, 'w')
                     machine_id.write(node_id)
-                    print("ok")
                 # confstore keys
                 kvs.extend((
                     (f'{key_prefix}>cluster_id', node['cluster_id']),
                     (f'{key_prefix}>name', node['name']),
                     (f'{key_prefix}>hostname', node['hostname']),
-                    (f'{key_prefix}>logical_id', node_id1),
+                    (f'{key_prefix}>logical_id', logical_id),
                     (f'{key_prefix}>type', node['type']),
                     (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
@@ -209,8 +213,7 @@ class CortxStorageSet:
                 nodes = storage_set['nodes']
                 for node_idx, node in enumerate(nodes):
                     # confstore keys
-                    result = hashlib.md5(node['id'].encode())
-                    node_id= result.hexdigest() 
+                    node_id = CortxCluster.get_machine_id(node['id'])
                     kvs.append((f'{key_prefix}>nodes[{node_idx}]', node_id))
 
                 # Read sns and dix value from storage_set
