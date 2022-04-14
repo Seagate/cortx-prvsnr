@@ -111,7 +111,7 @@ class CortxCluster:
         """"Return list of confstore key-values for storage."""
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
-        key_prefix = f'node>{node_id}>storage'
+        key_prefix = f'node>{node_id}'
         # TODO: Need to remove num cvg_count key later
         storage_kv_list.append((f'{key_prefix}>cvg_count', len(storage_spec)))
         for index, group in enumerate(storage_spec):
