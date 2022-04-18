@@ -17,9 +17,7 @@
 
 import os
 import glob
-from fnmatch import fnmatch
 from setuptools import setup
-import json
 
 def get_version() ->str:
     """ returns version string """
@@ -38,6 +36,7 @@ def get_description() -> str:
     """ Returns description """
     with open('README.md', 'r') as rf:
         long_description = rf.read()
+        return long_description
 
 def get_install_requirements() -> list:
     """ Returns pre-requisite """
@@ -48,7 +47,7 @@ def get_install_requirements() -> list:
         with open('requirements.ext.txt') as req:
             install_requires = install_requires + [line.strip() for line in req]
     except Exception:
-        pass
+        return install_requires
     return install_requires
 
 def get_conf_files() -> list:
