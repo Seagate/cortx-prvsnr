@@ -32,8 +32,8 @@ class CortxConfig:
 
     @staticmethod
     def _validate(cortx_solution_config: dict):
-        """
-        validates a give node to have required properties
+        """Validates a give node to have required properties
+        
         Raises exception if there is any entry missing
         """
         required_keys_for_cortx_conf = [

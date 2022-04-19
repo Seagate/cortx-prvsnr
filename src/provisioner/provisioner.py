@@ -49,6 +49,7 @@ class ProvisionerStatus(Enum):
 
 
 class CortxProvisioner:
+    
     """ CORTX Provosioner """
 
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
@@ -64,8 +65,8 @@ class CortxProvisioner:
     @staticmethod
     def config_apply(solution_config_url: str, cortx_conf_url: str = None,
         force_override: bool = False):
-        """
-        Description:
+        """Description:
+
         Parses input config and store in CORTX config location
         Parameters:
         [IN]  Solution Config URL
@@ -131,7 +132,7 @@ class CortxProvisioner:
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
-        """ Convert CORTX config into confstore keys """
+        """Convert CORTX config into confstore keys"""
         config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
         cortx_solution_config = CortxConfig(config_info, cortx_release)
         cortx_solution_config.save(cortx_conf, CortxProvisioner._solution_index)
@@ -244,7 +245,7 @@ class CortxProvisioner:
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
-        """
+        """ 
         Description:
         Configures Cluster Components
         1. Reads Cortx Config and obtain cluster components
