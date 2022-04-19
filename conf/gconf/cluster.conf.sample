@@ -286,6 +286,8 @@ node:
     - name: hare
       version: 2.0.0-47
     - name: rgw
+      services:
+      - rgw_s3                                                 # rgw_setup --services=rgw_s3
       version: 2.0.0-47
     storage_set: storage-set-1
   aaa120a9e051d103c164f605615c32a4:
