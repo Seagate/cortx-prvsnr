@@ -20,7 +20,7 @@ from cortx.provisioner.log import Log
 
 
 class CortxCluster:
-    """ Represents CORTX Cluster """
+    """Represents CORTX Cluster"""
 
     def __init__(self, node_list: list = [], cortx_release = None):
         """
@@ -50,9 +50,10 @@ class CortxCluster:
         self._node_list = node_list
         self._cortx_release = cortx_release
         for node in node_list:
-            self._validate(node)
+            CortxCluster._validate(node)
 
-    def _validate(self, node: dict):
+    @staticmethod
+    def _validate(node: dict):
         """
         validates a give node to have required properties
         Raises exception if there is any entry missing
@@ -72,7 +73,7 @@ class CortxCluster:
                     f"'{k}' property is unspecified for node {node_name}")
 
     def add_node(self, node: dict):
-        self._validate(node)
+        CortxCluster._validate(node)
         self._node_list.append(node)
 
     def _get_kvs(self, prefix: str, node: dict):
@@ -88,7 +89,8 @@ class CortxCluster:
             kvs.append((prefix, node))
         return kvs
 
-    def _get_component_kv_list(self, component_list: list, node_id: str):
+    @staticmethod
+    def _get_component_kv_list(component_list: list, node_id: str):
         """Return list of confstore key-values for components."""
         # Create confstore keys, from given component list(config from config.yaml).
         component_kv_list = []
@@ -106,7 +108,7 @@ class CortxCluster:
         return component_kv_list
 
     def _get_storage_kv_list(self, storage_spec: dict, node_id: str):
-        """"Return list of confstore key-values for storage."""
+        """Return list of confstore key-values for storage."""
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
         key_prefix = f'node>{node_id}>storage'
@@ -119,7 +121,7 @@ class CortxCluster:
         return storage_kv_list
 
     def save(self, cortx_conf):
-        """ Saves cluster information onto the conf store """
+        """Saves cluster information onto the conf store"""
 
         kvs = []
         try:
@@ -135,7 +137,7 @@ class CortxCluster:
                     (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
                 component_list = node['components']
-                kvs.extend(self._get_component_kv_list(component_list, node_id))
+                kvs.extend(CortxCluster._get_component_kv_list(component_list, node_id))
                 storage_spec = node.get('storage')
                 if storage_spec:
                     kvs.extend(self._get_storage_kv_list(storage_spec, node_id))
@@ -147,14 +149,15 @@ class CortxCluster:
 
 
 class CortxStorageSet:
-    """ Represents CORTX storage_set """
+    """Represents CORTX storage_set"""
 
     def __init__(self, storage_sets: list = []):
         self._storage_sets = storage_sets
         for s_set in self._storage_sets:
-            self._validate(s_set)
+            CortxStorageSet._validate(s_set)
 
-    def _validate(self, s_set: dict):
+    @staticmethod
+    def _validate(s_set: dict):
         """
         validates a give storage_sets to have required properties
         Raises exception if there is any entry missing

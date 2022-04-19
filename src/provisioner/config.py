@@ -21,10 +21,10 @@ from cortx.provisioner.log import Log
 from cortx.provisioner import const
 
 class CortxConfig:
-    """ CORTX Configuration """
+    """CORTX Configuration"""
 
     def __init__(self, cortx_solution_config: list = [], cortx_release = None):
-        """ Create CORTX config """
+        """Create CORTX config"""
 
         self._cortx_release = cortx_release
         self._cortx_solution_config = cortx_solution_config
@@ -57,7 +57,7 @@ class CortxConfig:
                             f'{str(e)} is unspecified for external in cortx_config.')
 
     def save(self, cortx_conf, cortx_solution_config):
-        """ Save cortx-config into confstore """
+        """Save cortx-config into confstore"""
 
         try:
             cortx_solution_config_keys = filter(lambda x: x.startswith('cortx'), Conf.get_keys(cortx_solution_config))
