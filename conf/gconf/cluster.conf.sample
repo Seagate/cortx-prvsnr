@@ -194,7 +194,7 @@ cortx:
           max: 500m
     num_clients: 2
     clients:                                                   # Motr Client Settings
-      - name: rgw                                              # rgw|s3|motr_client (Motr Clients)
+      - name: rgw_s3                                           # rgw|s3|motr_client (Motr Clients)
         num_instances: 1                                       # Client instances per node (pod)
         num_endpoints: 2
         endpoints:
