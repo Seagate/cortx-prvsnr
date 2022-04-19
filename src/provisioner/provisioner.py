@@ -201,7 +201,7 @@ class CortxProvisioner:
     @staticmethod
     def _provision_components(cortx_conf: MappedConf, interfaces: Enum, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
+        node_id, _ = CortxProvisioner._get_node_info(cortx_conf)
         num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
         for interface in interfaces:
             for comp_idx in range(0, num_components):

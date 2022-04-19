@@ -14,10 +14,10 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 class CortxProvisionerError(Exception):
-    """ Generic Exception with error code and output """
+    """Generic Exception with error code and output"""
 
     def __init__(self, rc, message, *args):
-        """ Initialize Message with args """
+        """Initialize Message with args"""
         self._rc = rc
         self._desc = message % (args)
 
@@ -26,7 +26,7 @@ class CortxProvisionerError(Exception):
         return self._rc
 
     def __str__(self):
-        """ Convert to error message which includes arg """
+        """Convert to error message which includes arg"""
 
         if self._rc == 0: return self._desc
         return "error(%d): %s" %(self._rc, self._desc)
