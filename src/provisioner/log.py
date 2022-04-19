@@ -22,7 +22,7 @@ from cortx.provisioner import const
 
 
 class CortxProvisionerLog(Log):
-    """ Redirect log message to log file and console using cortx utils logger """
+    """Redirect log message to log file and console using cortx utils logger"""
 
     logger = None
 

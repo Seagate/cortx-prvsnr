@@ -20,7 +20,7 @@ from cortx.provisioner.log import Log
 
 
 class CortxCluster:
-    """ Represents CORTX Cluster """
+    """Represents CORTX Cluster"""
 
     def __init__(self, node_list: list = [], cortx_release = None):
         """
@@ -110,7 +110,7 @@ class CortxCluster:
         return component_kv_list
 
     def _get_storage_kv_list(self, storage_spec: dict, node_id: str):
-        """ Return list of confstore key-values for storage."""
+        """Return list of confstore key-values for storage."""
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
         key_prefix = f'node>{node_id}>storage'
@@ -125,7 +125,7 @@ class CortxCluster:
         return storage_kv_list
 
     def save(self, cortx_conf):
-        """ Saves cluster information onto the conf store """
+        """Saves cluster information onto the conf store"""
 
         kvs = []
         try:
@@ -153,7 +153,7 @@ class CortxCluster:
 
 
 class CortxStorageSet:
-    """ Represents CORTX storage_set """
+    """Represents CORTX storage_set"""
 
     def __init__(self, storage_sets: list = []):
         self._storage_sets = storage_sets
