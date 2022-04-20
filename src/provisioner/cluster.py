@@ -23,7 +23,8 @@ class CortxCluster:
     """Represents CORTX Cluster"""
 
     def __init__(self, node_list: list = [], cortx_release = None):
-        """Creates cluster from the list of nodes.
+        """
+        Creates cluster from the list of nodes.
 
         Each node in the is is a dict and contains following attributes
         - name: <name>
@@ -54,7 +55,8 @@ class CortxCluster:
 
     @staticmethod
     def _validate(node: dict):
-        """validates a give node to have required properties
+        """
+        validates a give node to have required properties
 
         Raises exception if there is any entry missing
         """
@@ -157,8 +159,9 @@ class CortxStorageSet:
 
     @staticmethod
     def _validate(s_set: dict):
-        """validates a give storage_sets to have required properties
-        
+        """
+        validates a give storage_sets to have required properties
+
         Raises exception if there is any entry missing
         """
         s_set_name = s_set.get('name')
@@ -176,7 +179,8 @@ class CortxStorageSet:
                     f"'{k}' property is unspecified for storage_set {s_set_name}.")
 
     def save(self, cortx_conf):
-        """Converts storage_set confstore keys and add into conf_store.
+        """
+        Converts storage_set confstore keys and add into conf_store.
 
         confstore representation for storage_set key:
          storage_set:

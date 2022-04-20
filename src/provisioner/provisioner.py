@@ -49,9 +49,7 @@ class ProvisionerStatus(Enum):
 
 
 class CortxProvisioner:
-    
-    """ CORTX Provosioner """
-
+    """CORTX Provosioner."""
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
@@ -65,7 +63,8 @@ class CortxProvisioner:
     @staticmethod
     def config_apply(solution_config_url: str, cortx_conf_url: str = None,
         force_override: bool = False):
-        """Description:
+        """
+        Description:
 
         Parses input config and store in CORTX config location
         Parameters:
@@ -245,8 +244,9 @@ class CortxProvisioner:
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
-        """ 
+        """
         Description:
+
         Configures Cluster Components
         1. Reads Cortx Config and obtain cluster components
         2. Invoke Mini Provisioners of cluster components
@@ -317,7 +317,8 @@ class CortxProvisioner:
     def _update_provisioning_status(cortx_conf: MappedConf, node_id: str,
         phase: str, status: str = ProvisionerStatus.DEFAULT.value):
         """
-        Description
+        Description:
+        
         Add phase, status, version, release keys in confstore.
         Args:
         cortx_conf: config store url. eg. yaml:///etc/cortx/cluster.conf
