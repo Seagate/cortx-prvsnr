@@ -38,6 +38,8 @@ cluster:
     - name: utils
     - name: hare
     - name: rgw
+      services:
+      - rgw_s3               # rgw_setup --services=rgw_s3
   - name: control_node
     components:
     - name: utils
