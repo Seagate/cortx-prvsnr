@@ -318,7 +318,7 @@ class CortxProvisioner:
         phase: str, status: str = ProvisionerStatus.DEFAULT.value):
         """
         Description:
-        
+
         Add phase, status, version, release keys in confstore.
         Args:
         cortx_conf: config store url. eg. yaml:///etc/cortx/cluster.conf
