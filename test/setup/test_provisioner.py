@@ -20,12 +20,21 @@ import sys
 import os
 import traceback
 import unittest
+import yaml
 from cortx.provisioner.provisioner import CortxProvisioner
+from cortx.utils.conf_store import MappedConf, Conf
 
 solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
+def delete_file(file):
+    """Delete Temporary file."""
+    try:
+        if os.path.exists(file):
+            os.remove(file)
+    except OSError as e:
+        print(e)
 
 class TestProvisioner(unittest.TestCase):
 
@@ -56,6 +65,24 @@ class TestProvisioner(unittest.TestCase):
 
         self.assertEqual(rc, 0)
 
+    def test_add_num_keys(self):
+        """Test add_num_keys interface."""
+        data = {
+                'a' : ['1', '2', '3'],
+                'b' : '4',
+                'c' : [{'5' : ['6', '7']}, '8']
+        }
+        test_index = 'test_index'
+        config_path = "/tmp/sample_config.yaml"
+        with open(config_path, 'w+') as config:
+            config.write(yaml.dump(data))
+        config_url = f"yaml://{config_path}"
+        cortx_conf = MappedConf(config_url)
+        CortxProvisioner._add_num_keys(cortx_conf)
+        Conf.load(test_index, config_url)
+        self.assertEqual(3, Conf.get(test_index, 'num_a'))
+        self.assertEqual(2, Conf.get(test_index, 'c[0]>num_5'))
+        delete_file(config_path)
 
 if __name__ == '__main__':
     unittest.main()
