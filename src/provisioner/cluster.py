@@ -56,7 +56,7 @@ class CortxCluster:
     @staticmethod
     def _validate(node: dict):
         """
-        validates a give node to have required properties
+        validates a given node to have required properties
 
         Raises exception if there is any entry missing
         """
@@ -160,7 +160,7 @@ class CortxStorageSet:
     @staticmethod
     def _validate(s_set: dict):
         """
-        validates a give storage_sets to have required properties
+        validates a given storage_sets to have required properties
 
         Raises exception if there is any entry missing
         """

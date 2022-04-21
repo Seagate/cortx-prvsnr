@@ -33,7 +33,7 @@ class CortxConfig:
     @staticmethod
     def _validate(cortx_solution_config: dict):
         """
-        Validates a give node to have required properties
+        Validates a given node to have required properties
 
         Raises exception if there is any entry missing
         """
