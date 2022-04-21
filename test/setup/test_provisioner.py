@@ -73,7 +73,8 @@ class TestProvisioner(unittest.TestCase):
                 'c' : [{'5' : ['6', '7']}, '8']
         }
         test_index = 'test_index'
-        config_path = "/tmp/sample_config.yaml"
+        working_directory = os.path.realpath(sys.argv[0])
+        config_path = os.path.join(working_directory,"/sample_config.yaml")
         with open(config_path, 'w+') as config:
             config.write(yaml.dump(data))
         config_url = f"yaml://{config_path}"
