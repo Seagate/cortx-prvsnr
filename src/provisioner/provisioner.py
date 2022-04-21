@@ -127,7 +127,7 @@ class CortxProvisioner:
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
             CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
             # Adding array count key in conf
-            cortx_conf.add_num_keys()
+            CortxProvisioner._add_num_keys(cortx_conf)
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
@@ -415,3 +415,14 @@ class CortxProvisioner:
         """API call to get cluster health."""
         # TODO Make a call to HA Health API to get the resource status
         return "OK"
+
+    @staticmethod
+    def _add_num_keys(cortx_conf:MappedConf):
+        """
+        Add num_xxx keys that holds the count of list items in gconf.
+
+        Keywords:
+        cortx_conf: Conf store mapped to gconf URL path
+        """
+        cortx_conf.add_num_keys()
+        Conf.save(cortx_conf._conf_idx)
