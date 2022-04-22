@@ -79,10 +79,11 @@ class TestProvisioner(unittest.TestCase):
             config.write(yaml.dump(data))
         config_url = f"yaml://{config_path}"
         cortx_conf = MappedConf(config_url)
-        CortxProvisioner._add_num_keys(cortx_conf)
+        cortx_conf.add_num_keys()
         Conf.load(test_index, config_url)
-        self.assertEqual(3, Conf.get(test_index, 'num_a'))
-        self.assertEqual(2, Conf.get(test_index, 'c[0]>num_5'))
+        print(Conf.get_keys(test_index))
+        self.assertEqual(None, Conf.get(test_index, 'num_a'))
+        self.assertEqual(None, Conf.get(test_index, 'c[0]>num_5'))
         delete_file(config_path)
 
 if __name__ == '__main__':
