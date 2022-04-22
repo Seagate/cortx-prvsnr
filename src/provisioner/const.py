@@ -17,6 +17,7 @@ SERVICE_NAME = "cortx_setup"
 APP_NAME = "provisioner"
 TMP_LOG_PATH = "/tmp/%s" % APP_NAME
 DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
+CONFIG_PATH="/etc/cortx/config"
 MACHINE_ID_PATH = "/etc/cortx/config/machine-id"
 DEFAULT_LOG_LEVEL = "INFO"
 SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]

@@ -16,6 +16,7 @@
 import errno
 import hashlib
 import socket
+import os
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.utils.cortx.const import Const
@@ -146,6 +147,7 @@ class CortxCluster:
                 node_id = node.pop('id')
                 machine_id = CortxCluster.get_machine_id(node_id)
                 key_prefix = f'node>{machine_id}'
+                os.makedirs(const.CONFIG_PATH, exist_ok = True)
                 if socket.gethostname() == node['hostname']:
                     with open(const.MACHINE_ID_PATH,'w') as machine_id_path:
                         machine_id_path.write(machine_id)
