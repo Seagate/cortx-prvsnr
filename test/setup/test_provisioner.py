@@ -72,7 +72,8 @@ class TestProvisioner(unittest.TestCase):
                 'b' : '4',
                 'c' : [{'5' : ['6', '7']}, '8']
         }
-        test_index = 'test_index'
+        test_index1 = 'test_index1'
+        test_index2 = 'test_index2'
         working_directory = os.path.realpath(sys.argv[0])
         config_path = os.path.join(working_directory,"/sample_config.yaml")
         with open(config_path, 'w+') as config:
@@ -80,9 +81,13 @@ class TestProvisioner(unittest.TestCase):
         config_url = f"yaml://{config_path}"
         cortx_conf = MappedConf(config_url)
         cortx_conf.add_num_keys()
-        Conf.load(test_index, config_url)
-        self.assertEqual(None, Conf.get(test_index, 'num_a'))
-        self.assertEqual(None, Conf.get(test_index, 'c[0]>num_5'))
+        Conf.load(test_index1, config_url)
+        self.assertEqual(None, Conf.get(test_index1, 'num_a'))
+        self.assertEqual(None, Conf.get(test_index1, 'c[0]>num_5'))
+        Conf.save(cortx_conf._conf_idx)
+        Conf.load(test_index2, config_url)
+        self.assertEqual(3, Conf.get(test_index2, 'num_a'))
+        self.assertEqual(2, Conf.get(test_index2, 'c[0]>num_5'))
         delete_file(config_path)
 
 if __name__ == '__main__':
