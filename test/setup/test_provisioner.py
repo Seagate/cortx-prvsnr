@@ -81,7 +81,6 @@ class TestProvisioner(unittest.TestCase):
         cortx_conf = MappedConf(config_url)
         cortx_conf.add_num_keys()
         Conf.load(test_index, config_url)
-        print(Conf.get_keys(test_index))
         self.assertEqual(None, Conf.get(test_index, 'num_a'))
         self.assertEqual(None, Conf.get(test_index, 'c[0]>num_5'))
         delete_file(config_path)
