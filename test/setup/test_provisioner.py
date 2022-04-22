@@ -28,12 +28,10 @@ cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
 
 class TestProvisioner(unittest.TestCase):
-
     """Test cortx_setup config and cluster functionality."""
 
     def test_config_apply_bootstrap(self):
-        """ Test Config Apply """
-
+        """Test Config Apply"""
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)

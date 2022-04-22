@@ -25,11 +25,10 @@ cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
 
 class TestMultipleStorageSet(unittest.TestCase):
-    """ Test multiple storage_sets """
+    """Test multiple storage_sets"""
 
     def test_for_multiple_storage_sets(self):
-        """ Test for multiple storage sets """
-
+        """Test for multiple storage sets"""
         cluster_conf_file_path = "/tmp/cluster.yaml"
         data = {
             "cluster": {

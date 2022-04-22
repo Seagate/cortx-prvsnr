@@ -63,7 +63,7 @@ def get_requirements_files() -> list:
     return []
 
 def get_secret_files() -> list:
-    """Returns secret files"""
+    """Returns secret files."""
     return glob.glob('conf/secret/*')
 
 setup(name='cortx-provisioner',
