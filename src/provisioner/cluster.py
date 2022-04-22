@@ -90,7 +90,7 @@ class CortxCluster:
         """
         returns a hashed string information as a string of hexadecimal digits
         """
-        result = hashlib.md5(node_id.encode('utf-8'))
+        result = hashlib.md5(node_id.encode())
         machine_id = result.hexdigest()
         return machine_id
 
