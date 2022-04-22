@@ -84,39 +84,11 @@ function validate_config {
     done
 }
 
-function compare {
-    # Returns
-    # -1 if $1 < v2
-    # 0 if $1 == $2
-    # 1 if $1 > $2
-    deploy_ver_spec=${1%-[0-9]*}
-    release_ver_spec=${2%-[0-9]*}
-
-    deploy_ver=${deploy_ver_spec%.[0-9]}
-    release_ver=${release_ver_spec%.[0-9]}
-    [[ $deploy_ver < $release_ver ]] && echo "-1" && return
-    [[ $deploy_ver > $release_ver ]] && echo "1" && return
-
-    deploy_ver=${deploy_ver_spec#[0-9].[0-9].}
-    release_ver=${release_ver_spec#[0-9].[0-9].}
-    [[ $deploy_ver -lt $release_ver ]] && echo "-1" && return
-    [[ $deploy_ver -gt $release_ver ]] && echo "1" && return
-
-    deploy_build=${1#[0-9.]*-}
-    release_build=${2#[0-9.]*-}
-    [[ $deploy_build -lt $release_build ]] && echo "-1" && return
-    [[ $deploy_build -gt $release_build ]] && echo "1" && return
-
-    echo "0"
-}
-
 # Constants
 DEBUG_FLAG=false
 SOLUTION_CONFIG="/etc/cortx/solution"
 CORTX_CONFSTORE="yaml:///etc/cortx/cluster.conf"
 RELEASE_INFO="yaml:///opt/seagate/cortx/RELEASE.INFO"
-
-action="" # upgrade|deploy|downgrade|replace|recover|etc.
 
 while [ $# -gt 0 ];  do
     case $1 in
@@ -159,43 +131,12 @@ done
 
 export PATH=$PATH:/opt/seagate/provisioner/bin
 
-node_id=`cat /etc/machine-id`
-log $INFO "Starting provisioning on node $node_id."
+# Apply Configuration
+apply_config
+[ ! -z $VALIDATE_CONF ] && validate_config
+# Deploy cortx
+deploy
 
-# Check current image version
-installed_version=$(conf_get $CORTX_CONFSTORE "node>$node_id>provisioning>version")
-release_version=$(conf_get $RELEASE_INFO "VERSION")
-
-if [ $installed_version == "null" ]
-then
-    action="deploy"
-else
-    ret_code=$(compare $installed_version $release_version)
-    [[ "$ret_code" == "0" && -z $FORCE_PROVISIONING ]] &&
-        log $INFO "installed_version ($installed_version) = release_version ($release_version)" &&
-        exit 0
-    [[ "$ret_code" == "1" ]] &&
-        log $ERROR "Invalid image. installed_version ($installed_version) > release_version ($release_version)" &&
-        exit 1
-
-    [[ ! -z $installed_version ]] && [[ "$ret_code" == "-1" ]] && action="upgrade"
-fi
-
-case $action in
-    deploy)
-        apply_config
-        [ ! -z $VALIDATE_CONF ] && validate_config
-        # Deploy cortx
-        deploy
-        ;;
-    upgrade)
-        # Upgrade cortx
-        upgrade
-        ;;
-    *)
-        log $ERROR "Internal error. Could not determine version. Invalid image. current_version is ($installed_version) and release_version is ($release_version)"
-        ;;
-esac
 # Check if debugging is enabled
 if [ $DEBUG_FLAG = true ]; then
     log $INFO "cortx_setup DEBUG enabled...";

@@ -83,7 +83,7 @@ class CortxCluster:
         """
         returns a hashed string information as a string of hexadecimal digits
         """
-        result = hashlib.md5(node_id.encode())
+        result = hashlib.md5(node_id.encode('utf-8'))
         machine_id = result.hexdigest()
         return machine_id
 
@@ -153,10 +153,10 @@ class CortxCluster:
                     (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
                 component_list = node['components']
-                kvs.extend(CortxCluster._get_component_kv_list(component_list, node_id))
+                kvs.extend(CortxCluster._get_component_kv_list(component_list, machine_id))
                 storage_spec = node.get('storage')
                 if storage_spec:
-                    kvs.extend(self._get_storage_kv_list(storage_spec, node_id))
+                    kvs.extend(self._get_storage_kv_list(storage_spec, machine_id))
             cortx_conf.set_kvs(kvs)
         except (KeyError, IndexError) as e:
             raise CortxProvisionerError(

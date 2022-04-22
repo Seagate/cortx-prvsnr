@@ -247,6 +247,34 @@ class CortxProvisioner:
         """
         Description:
         Configures Cluster Components
+        1. Compares current installed version with New version
+        2. Invoke Mini Provisioners of cluster components deploy/upgrade based on version compatibility
+        Paramaters:
+        [IN] CORTX Config URL
+        """
+        cortx_conf = MappedConf(cortx_conf_url)
+        node_id = Conf.machine_id
+        installed_version = cortx_conf.get(f'node>{node_id}>provisioning>version')
+        release_version = CortxProvisioner.cortx_release.get_release_version()
+        if installed_version is None:
+            CortxProvisioner.cluster_deploy(cortx_conf_url,force_override)
+        else:
+            ret_code = CortxProvisioner.cortx_release.version_check(
+                release_version, installed_version)
+            if ret_code == 1:
+                CortxProvisioner.cluster_upgrade(cortx_conf_url,force_override)
+            elif ret_code == -1:
+                raise CortxProvisionerError(errno.EINVAL, 'Downgrade is Not Supported')
+            elif ret_code == 0:
+                CortxProvisioner.cluster_deploy(cortx_conf_url,force_override)
+            else:
+                raise CortxProvisionerError(errno.EINVAL, 'Internal error. Could not determine version. Invalid image.')
+
+    @staticmethod
+    def cluster_deploy(cortx_conf_url: str, force_override: bool = False):
+        """
+        Description:
+        Configures Cluster Components
         1. Reads Cortx Config and obtain cluster components
         2. Invoke Mini Provisioners of cluster components
         Paramaters:
