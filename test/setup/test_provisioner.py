@@ -32,7 +32,6 @@ class TestProvisioner(unittest.TestCase):
 
     def test_config_apply_bootstrap(self):
         """ Test Config Apply """
-
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
@@ -41,9 +40,7 @@ class TestProvisioner(unittest.TestCase):
             print('Exception: ', e)
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
-
         self.assertEqual(rc, 0)
-
         rc = 0
         try:
             CortxProvisioner.cluster_bootstrap(cortx_conf_url)
@@ -52,7 +49,6 @@ class TestProvisioner(unittest.TestCase):
             print('Exception: ', e)
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
-
         self.assertEqual(rc, 0)  
 
 if __name__ == '__main__':
