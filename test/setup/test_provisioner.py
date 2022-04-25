@@ -53,19 +53,7 @@ class TestProvisioner(unittest.TestCase):
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
 
-        self.assertEqual(rc, 0)
-    
-    def test_001_motr_mini_provisioner(self):
-        """Test required keys e.g. num_cvg are present for Motr mini provisioner."""
-        rc = 0
-        try:
-            CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
-        except Exception as e:
-            print('Exception: ', e)
-            sys.stderr.write("%s\n" % traceback.format_exc())
-            rc = 1
-        self.assertEqual(rc, 0)
-        mini_provisioner(cortx_conf_url, 'storage>num_cvg')
+        self.assertEqual(rc, 0)  
 
 if __name__ == '__main__':
     unittest.main()
