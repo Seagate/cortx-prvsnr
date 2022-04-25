@@ -29,7 +29,6 @@ cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
 def check_num_xx_keys(data):
     """Returns true if all the xxx list have respective num_xxx key"""
-    result = False
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, dict):
@@ -83,7 +82,6 @@ class TestProvisioner(unittest.TestCase):
         with open(conf_path, 'r') as stream:
             try:
                 gconf =yaml.safe_load(stream)
-                print(gconf)
             except yaml.YAMLError as exc:
                 print(exc)
                 rc = 1
