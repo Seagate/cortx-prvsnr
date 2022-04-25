@@ -21,6 +21,7 @@ import os
 import traceback
 import unittest
 from cortx.provisioner.provisioner import CortxProvisioner
+from cortx.utils.conf_store import Conf
 
 solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
@@ -50,6 +51,25 @@ class TestProvisioner(unittest.TestCase):
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
         self.assertEqual(rc, 0)
+
+    def test_num_cvg_in_gconf(self):
+        """Test if num_cvg key is present in gconf (CORTX-30863)"""
+        rc = 0
+        try:
+            CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
+            CortxProvisioner.config_apply(solution_conf_url, cortx_conf_url, force_override=True)
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
+        Conf.load('test_index', cortx_conf_url)
+        all_keys = Conf.get_keys('test_index')
+        is_num_cvg = False
+        for key in all_keys:
+            if 'num_cvg' in key:
+                is_num_cvg = True
+        self.assertTrue(is_num_cvg, "The key num_cvg is not present in Gconf")
 
 if __name__ == '__main__':
     unittest.main()
