@@ -28,7 +28,7 @@ solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys
 cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
 
 def check_num_xx_keys(data):
-    """Returns true if all the xxx list have respective num_xxx key"""
+    """Returns true if all the xxx list have respective num_xxx key."""
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, dict):
@@ -40,7 +40,7 @@ def check_num_xx_keys(data):
     if isinstance(data, list):
         for v in data:
             check_num_xx_keys(v)
-    return True, f"The keys num_xx are saved in gconf"
+    return True, "The keys num_xx are saved in gconf"
 
 class TestProvisioner(unittest.TestCase):
 
@@ -68,7 +68,7 @@ class TestProvisioner(unittest.TestCase):
         self.assertEqual(rc, 0)
 
     def test_num_xxx_in_gconf(self):
-        """Test if num_xxx key is saved in gconf for list items(CORTX-30863)"""
+        """Test if num_xxx key is saved in gconf for list items(CORTX-30863)."""
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
