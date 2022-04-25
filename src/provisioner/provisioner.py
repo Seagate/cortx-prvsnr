@@ -153,10 +153,8 @@ class CortxProvisioner:
 
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
-            # TODO: Need to remove storgae_set_count key
             cluster_keys = [('cluster>id', cluster_id),
-                ('cluster>name', cluster_name),
-                ('cluster>storage_set_count', len(storage_sets))]
+                ('cluster>name', cluster_name)]
             cortx_conf.set_kvs(cluster_keys)
 
             nodes = []
@@ -203,7 +201,7 @@ class CortxProvisioner:
     @staticmethod
     def _provision_components(cortx_conf: MappedConf, interfaces: Enum, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
-        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
+        node_id, _ = CortxProvisioner._get_node_info(cortx_conf)
         num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
         for interface in interfaces:
             for comp_idx in range(0, num_components):
