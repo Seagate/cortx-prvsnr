@@ -81,7 +81,7 @@ class TestProvisioner(unittest.TestCase):
         conf_path = cortx_conf_url.split('//')[1]
         with open(conf_path, 'r') as stream:
             try:
-                gconf =yaml.safe_load(stream)
+                gconf = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
                 rc = 1
