@@ -128,6 +128,7 @@ class CortxProvisioner:
             CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
             # Adding array count key in conf
             cortx_conf.add_num_keys()
+            Conf.save(cortx_conf._conf_idx)
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
