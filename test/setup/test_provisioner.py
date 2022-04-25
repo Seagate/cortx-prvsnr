@@ -20,12 +20,28 @@ import sys
 import os
 import traceback
 import unittest
+import yaml
 from cortx.provisioner.provisioner import CortxProvisioner
-from cortx.utils.conf_store import Conf
 
 solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test_conf_store.conf"
+
+def check_num_xx_keys(data):
+    """Returns true if all the xxx list have respective num_xxx key"""
+    result = False
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if isinstance(v, dict):
+                check_num_xx_keys(v)
+            elif isinstance(v, list):
+                if not f"num_{k}" in data:
+                    return False, f"The key num_{k} is not saved in Gconf"
+                check_num_xx_keys(v)
+    if isinstance(data, list):
+        for v in data:
+            check_num_xx_keys(v)
+    return True, f"The keys num_xx are saved in gconf"
 
 class TestProvisioner(unittest.TestCase):
 
@@ -52,8 +68,8 @@ class TestProvisioner(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
 
-    def test_num_cvg_in_gconf(self):
-        """Test if num_cvg key is present in gconf (CORTX-30863)"""
+    def test_num_xxx_in_gconf(self):
+        """Test if num_xxx key is saved in gconf for list items(CORTX-30863)"""
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
@@ -63,13 +79,17 @@ class TestProvisioner(unittest.TestCase):
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
         self.assertEqual(rc, 0)
-        Conf.load('test_index', cortx_conf_url)
-        all_keys = Conf.get_keys('test_index')
-        is_num_cvg = False
-        for key in all_keys:
-            if 'num_cvg' in key:
-                is_num_cvg = True
-        self.assertTrue(is_num_cvg, "The key num_cvg is not present in Gconf")
+        conf_path = cortx_conf_url.split('//')[1]
+        with open(conf_path, 'r') as stream:
+            try:
+                gconf =yaml.safe_load(stream)
+                print(gconf)
+            except yaml.YAMLError as exc:
+                print(exc)
+                rc = 1
+        self.assertEqual(rc, 0)
+        is_key_present, message = check_num_xx_keys(gconf)
+        self.assertTrue(is_key_present, message)
 
 if __name__ == '__main__':
     unittest.main()
