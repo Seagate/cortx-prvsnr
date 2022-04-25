@@ -20,9 +20,7 @@ import sys
 import os
 import traceback
 import unittest
-import yaml
 from cortx.provisioner.provisioner import CortxProvisioner
-from cortx.utils.conf_store import MappedConf, Conf
 
 solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
@@ -56,6 +54,18 @@ class TestProvisioner(unittest.TestCase):
             rc = 1
 
         self.assertEqual(rc, 0)
+    
+    def test_001_motr_mini_provisioner(self):
+        """Test required keys e.g. num_cvg are present for Motr mini provisioner."""
+        rc = 0
+        try:
+            CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
+        mini_provisioner(cortx_conf_url, 'storage>num_cvg')
 
 if __name__ == '__main__':
     unittest.main()
