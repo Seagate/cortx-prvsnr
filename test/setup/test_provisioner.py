@@ -49,7 +49,7 @@ class TestProvisioner(unittest.TestCase):
             print('Exception: ', e)
             sys.stderr.write("%s\n" % traceback.format_exc())
             rc = 1
-        self.assertEqual(rc, 0)  
+        self.assertEqual(rc, 0)
 
 if __name__ == '__main__':
     unittest.main()
