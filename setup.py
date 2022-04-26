@@ -20,7 +20,7 @@ import glob
 from setuptools import setup
 
 def get_version() ->str:
-    """ returns version string """
+    """returns version string"""
     if os.path.isfile("./VERSION"):
         with open("VERSION") as v:
             return v.read().strip()
@@ -28,19 +28,18 @@ def get_version() ->str:
 
 
 def get_license() -> str:
-    """ Returns license information """
+    """Returns license information"""
     with open('LICENSE', 'r') as lf:
         return lf.read()
 
 def get_description() -> str:
-    """ Returns description """
+    """Returns description"""
     with open('README.md', 'r') as rf:
         long_description = rf.read()
         return long_description
 
 def get_install_requirements() -> list:
-    """ Returns pre-requisite """
-
+    """Returns pre-requisite"""
     with open('requirements.txt') as req:
         install_requires = [line.strip() for line in req]
     try:
@@ -51,13 +50,11 @@ def get_install_requirements() -> list:
     return install_requires
 
 def get_conf_files() -> list:
-    """ returns list of conf files """
-
+    """returns list of conf files"""
     return glob.glob('conf/solution/*.yaml*')
 
 def get_requirements_files() -> list:
-    """ Returns requirements file """
-
+    """Returns requirements file"""
     if os.path.exists('requirements.txt'):
       return ['requirements.txt']
     return []
