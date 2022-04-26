@@ -60,7 +60,7 @@ cortx:
   ha:
     service:
       endpoints:
-      - http://cortx-ha-svc:23501
+      - http://cortx-ha-svc:23501                            # HA service  endpoint
     limits:         
       num_services: 3
       services:
@@ -89,10 +89,6 @@ cortx:
       num_endpoints: 1
       endpoints:
       - http://server1-node1.com:22000
-    service:
-      num_endpoints: 1
-      endpoints:                                               # Ha service endpoint
-      - http://cortx-ha-svc:23501
   rgw:
     auth_user: user_name
     auth_admin: sgiamadmin
