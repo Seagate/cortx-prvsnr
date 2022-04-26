@@ -99,14 +99,14 @@ cortx:
           min: 1000m                                           # 1000m * N where N = Num of "ios" Containers
           max: 1500m                                           # 1500m * N where N = Num of "ios" Containers
       - name: confd
-          memory:
+        memory:
           min: 128Mi
           max: 512Mi
         cpu:
           min: 250m
           max: 500m
     clients:                                                   # Motr Client Settings
-      - name: rgw                                              # rgw|s3|motr_client (Motr Clients)
+      - name: rgw_s3                                           # rgw|s3|motr_client (Motr Clients)
         num_instances: 1                                       # Client instances per node (pod)
         endpoints:
         - tcp://server1-node1:22501                            # Format: <protocol>://<hostname_ip>:22501 

@@ -201,7 +201,7 @@ cortx:
           max: 500m
     num_clients: 2
     clients:                                                   # Motr Client Settings
-      - name: rgw                                              # rgw|s3|motr_client (Motr Clients)
+      - name: rgw_s3                                           # rgw|s3|motr_client (Motr Clients)
         num_instances: 1                                       # Client instances per node (pod)
         num_endpoints: 2
         endpoints:
@@ -293,6 +293,8 @@ node:
     - name: hare
       version: 2.0.0-47
     - name: rgw
+      services:
+      - rgw_s3                                                 # rgw_setup --services=rgw_s3
       version: 2.0.0-47
     storage_set: storage-set-1
   aaa120a9e051d103c164f605615c32a4:

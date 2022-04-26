@@ -20,7 +20,6 @@ import os
 import traceback
 import sys
 import unittest
-from cortx.setup import cortx_setup
 from cortx.provisioner import const
 from cortx.utils.cmd_framework import Cmd
 from cortx.provisioner.log import CortxProvisionerLog, Log
