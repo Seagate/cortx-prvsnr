@@ -58,9 +58,12 @@ cortx:
           min: 250m
           max: 500m
   ha:
+    service:
+      endpoints:
+      - http://cortx-ha-svc:23501
     limits:         
       num_services: 3
-      services:        
+      services:
       - name: fault_tolerance
         memory:
           min: 128Mi
@@ -86,6 +89,10 @@ cortx:
       num_endpoints: 1
       endpoints:
       - http://server1-node1.com:22000
+    service:
+      num_endpoints: 1
+      endpoints:                                               # Ha service endpoint
+      - http://cortx-ha-svc:23501
   rgw:
     auth_user: user_name
     auth_admin: sgiamadmin

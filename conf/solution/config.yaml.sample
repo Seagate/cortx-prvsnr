@@ -168,6 +168,9 @@ cortx:
           min: 250m
           max: 500m
   ha:
+    service:
+      endpoints:
+      - http://cortx-ha-svc:23501
     limits:         
       services:        
       - name: fault_tolerance
