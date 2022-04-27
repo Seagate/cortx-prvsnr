@@ -28,8 +28,7 @@ class TestInvalidClusterConf(unittest.TestCase):
     """ Test invalid cluster config """
 
     def test_invalid_cluster_config(self):
-        """ Test config_apply for invalid cluster.yaml """
-
+        """Test config_apply for invalid cluster.yaml"""
         cluster_conf_file_path = "/tmp/invalid_cluster.yaml"
         # cluster_id, node_types, nodes are missing in below data.
         # config_apply should fail.

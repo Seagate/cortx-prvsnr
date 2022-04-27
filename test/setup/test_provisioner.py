@@ -43,11 +43,10 @@ def check_num_xx_keys(data):
     return True, "The keys num_xx are saved in gconf"
 
 class TestProvisioner(unittest.TestCase):
-
     """Test cortx_setup config and cluster functionality."""
 
     def test_config_apply_bootstrap(self):
-        """ Test Config Apply """
+        """Test Config Apply."""
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)

@@ -29,18 +29,18 @@ from cortx.provisioner import const
 
 
 class ConfigCmd(Cmd):
-    """ Config Setup Cmd """
+
+    """Config Setup Cmd"""
 
     name = 'config'
 
     def __init__(self, args: dict):
-        """ Initialize Command line parameters """
+        """Initialize Command line parameters"""
         super().__init__(args)
 
     @staticmethod
     def add_args(parser: str):
-        """ Add Command args for parsing """
-
+        """Add Command args for parsing"""
         parser.add_argument('action', help='apply, validate')
         parser.add_argument('-f', dest='solution_conf',
             help='Solution Config URL')
@@ -53,7 +53,7 @@ class ConfigCmd(Cmd):
         parser.add_argument('-l', dest='log_level', help='Log level')
 
     def _validate(self):
-        """ Validate config command args """
+        """ Validate config command args"""
 
         if self._args.action not in ['apply', 'validate']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
@@ -66,7 +66,7 @@ class ConfigCmd(Cmd):
         Log.logger.setLevel(log_level)
 
     def process(self):
-        """ Apply Config """
+        """Apply Config"""
         self._validate()
         if self._args.action == 'apply':
             force_override = True if self._args.override else False
@@ -82,17 +82,17 @@ class ConfigCmd(Cmd):
 
 
 class ClusterCmd(Cmd):
-    """ Cluster Setup Cmd """
+    """Cluster Setup Cmd"""
 
     name = 'cluster'
 
     def __init__(self, args: dict):
+        """Initialise cluster command."""
         super().__init__(args)
 
     @staticmethod
     def add_args(parser: str):
-        """ Add Command args for parsing """
-
+        """Add Command args for parsing."""
         parser.add_argument('action', help='bootstrap, upgrade')
         parser.add_argument('-c', dest='cortx_conf', help='Cortx Config URL')
         parser.add_argument('-l', dest='log_level', help='Log level')
@@ -100,8 +100,7 @@ class ClusterCmd(Cmd):
             help='Override deployment')
 
     def _validate(self):
-        """ Validate cluster command args """
-
+        """Validate cluster command args."""
         if self._args.action not in ['bootstrap', 'upgrade']:
             raise CortxProvisionerError(errno.EINVAL, 'Invalid action type')
 
@@ -113,7 +112,7 @@ class ClusterCmd(Cmd):
         os.environ['CORTX_PROVISIONER_DEBUG_LEVEL'] = log_level
 
     def process(self, *args, **kwargs):
-        """ Bootsrap Cluster """
+        """Bootsrap Cluster."""
         self._validate()
         force_override = True if self._args.override else False
         if self._args.action == 'bootstrap':
