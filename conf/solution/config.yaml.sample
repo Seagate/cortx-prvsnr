@@ -99,7 +99,7 @@ cortx:
           min: 1000m                                           # 1000m * N where N = Num of "ios" Containers
           max: 1500m                                           # 1500m * N where N = Num of "ios" Containers
       - name: confd
-          memory:
+        memory:
           min: 128Mi
           max: 512Mi
         cpu:
@@ -168,6 +168,9 @@ cortx:
           min: 250m
           max: 500m
   ha:
+    service:
+      endpoints:
+      - http://cortx-ha-svc:23501
     limits:         
       services:        
       - name: fault_tolerance

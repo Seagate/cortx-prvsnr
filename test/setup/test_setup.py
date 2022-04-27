@@ -33,12 +33,10 @@ if Log.logger is None:
 
 
 class TestSetup(unittest.TestCase):
-
     """Test cortx_setup config and cluster functionality."""
 
     def test_001_config_apply(self):
-        """ Test Config Apply """
-
+        """Test Config Apply"""
         rc = 0
         try:
             for solution_conf_url in [solution_cluster_url, solution_config_url]:
@@ -53,8 +51,7 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(rc, 0)
 
     def test_002_cluster_bootstrap(self):
-        """ Test Cluster Bootstrap """
-
+        """Test Cluster Bootstrap"""
         rc = 0
         try:
             argv = ['cluster', 'bootstrap', '-c', cortx_conf_url]
