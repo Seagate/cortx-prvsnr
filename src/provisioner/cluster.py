@@ -112,7 +112,7 @@ class CortxCluster:
         """Return list of confstore key-values for storage."""
         # Create confstore keys,from storage_spec(config from config.yaml).
         storage_kv_list = []
-        key_prefix = f'node>{node_id}>storage'
+        key_prefix = f'node>{node_id}'
         for index, group in enumerate(storage_spec):
             for key, val in group.items():
                 if not isinstance(val, str):
