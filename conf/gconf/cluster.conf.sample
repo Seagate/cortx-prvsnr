@@ -58,9 +58,12 @@ cortx:
           min: 250m
           max: 500m
   ha:
+    service:
+      endpoints:
+      - http://cortx-ha-svc:23501                            # HA service  endpoint
     limits:         
       num_services: 3
-      services:        
+      services:
       - name: fault_tolerance
         memory:
           min: 128Mi
