@@ -72,4 +72,7 @@ cortx:
     agent:
       endpoints:
       - https://cortx-io-svc:8081
-
+  ha:
+    service:
+      endpoints:
+      - http://cortx-ha-svc:23501
