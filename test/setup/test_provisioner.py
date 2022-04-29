@@ -47,7 +47,6 @@ class TestProvisioner(unittest.TestCase):
 
     def test_config_apply_bootstrap(self):
         """Test Config Apply."""
-
         rc = 0
         try:
             CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
