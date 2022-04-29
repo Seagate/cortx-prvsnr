@@ -26,19 +26,18 @@ from cortx.utils.cortx import Const
 
 
 class Validator:
-    """ Validator Framework """
+    """Validator Framework"""
 
     name = "validator"
 
     @staticmethod
     def process(*args):
-        """ This interface needs to be implemented in derived class """
+        """This interface needs to be implemented in derived class"""
         pass
 
     @staticmethod
     def validate(validations: list, *args):
-        """ Return the validator after parsing the validator list """
-
+        """Return the validator after parsing the validator list"""
         validators = [
             y for x, y in inspect.getmembers(sys.modules[__name__])
             if x.endswith('Validator') and (
@@ -48,7 +47,7 @@ class Validator:
 
 
 class ConfigValidator(Validator):
-    """ Config Validator """
+    """Config Validator"""
 
     name = "config"
     _solution_index = "solution_config"
@@ -58,8 +57,7 @@ class ConfigValidator(Validator):
 
     @staticmethod
     def process(*args):
-        """ Process input parameters """
-
+        """Process input parameters"""
         if len(args) < 2:
             raise CortxProvisionerError(errno.EINVAL,
                 'Please provide solution_config and conf_store '
@@ -86,8 +84,7 @@ class ConfigValidator(Validator):
 
     @classmethod
     def load_config(cls, solution_conf_url, cortx_conf_url):
-        """ Load config """
-
+        """Load config"""
         cls.solution_conf_url = solution_conf_url
         cls.cortx_conf_url = cortx_conf_url
         Conf.load(cls._solution_index, cls.solution_conf_url)
@@ -196,9 +193,10 @@ class ConfigValidator(Validator):
         return config_value
 
     def _get_value_from_conf_store(self, key):
-        """ Read config value from conf_store """
+        """Read config value from conf_store"""
 
         config_value = self.cortx_conf.get(key)
+
         if config_value is None:
             raise CortxProvisionerError(
                 errno.EINVAL,
