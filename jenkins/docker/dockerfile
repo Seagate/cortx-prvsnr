@@ -9,16 +9,14 @@ RUN yum-config-manager --add-repo "${BUILD_URL}/cortx_iso/"
 COPY ./python_requirements.txt ./tmp/python_requirements.txt
 COPY ./python_requirements.ext.txt ./tmp/python_requirements.ext.txt
 RUN yum install --nogpgcheck -y python3 yum-utilis sudo which python3-pip
-RUN pip3 install --no-cache-dir --trusted-host $(echo $BUILD_URL \
-  | awk -F '/' '{print $3}')  -i $BUILD_URL/python_deps \
-  -r ./tmp/python_requirements.txt -r ./tmp/python_requirements.ext.txt
+RUN sudo pip3 install -r https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.txt
+RUN sudo pip3 install -r https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.ext.txt
 RUN yum install --nogpgcheck -y cortx-py-utils
 # Dependencies
 RUN yum install -y python36-dbus --nogpgcheck
 RUN yum install epel-release -y --nogpgcheck
 RUN yum update -y --nogpgcheck
 RUN yum install jq -y --nogpgcheck
-RUN pip3 install yq
 # CORTX Provisioner
 COPY ./tmp/*.rpm /tmp/
 RUN rpm -ivh ./tmp/$RPM

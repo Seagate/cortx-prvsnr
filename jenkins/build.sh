@@ -61,6 +61,6 @@ echo $VER > "$BASE_DIR"/VERSION
 /bin/chmod +rx "$BASE_DIR"/VERSION
 /bin/chmod +x "$BASE_DIR"/src/setup/cortx_deploy
 
-cd $BASE_DIR
+cd "$BASE_DIR"
 
 ./setup.py bdist_rpm --release="$REL"
