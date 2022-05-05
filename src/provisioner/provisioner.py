@@ -149,8 +149,7 @@ class CortxProvisioner:
                 if key is None:
                     raise CortxProvisionerError(
                         errno.EINVAL,
-                        f"One of the key [id, name,storage_sets,node_types]"
-                        " is unspecified for cluster.")
+                        "One of the key [id, name,storage_sets,node_types] is unspecified for cluster.")
 
             for node_type in node_types:
                 node_map[node_type['name']] = node_type

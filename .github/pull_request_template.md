@@ -2,18 +2,18 @@
 
 *   Problem statement
 
-# Design
+## Design
 
 *   For Bug, Describe the fix here.
 *   For Feature, Post the link for design
 
-# Coding
+## Coding
 
 Checklist for Author
 
 *   \[ ] Coding conventions are followed and code is consistent
 
-# Testing
+## Testing
 
 Checklist for Author
 
@@ -21,7 +21,7 @@ Checklist for Author
 *   \[ ] Test Cases cover Happy Path, Non-Happy Path and Scalability
 *   \[ ] Testing was performed with RPM
 
-# Impact Analysis
+## Impact Analysis
 
 Checklist for Author/Reviewer/GateKeeper
 
@@ -29,7 +29,7 @@ Checklist for Author/Reviewer/GateKeeper
 *   \[ ] Side effects on other features (deployment/upgrade)
 *   \[ ] Dependencies on other component(s)
 
-# Review Checklist
+## Review Checklist
 
 Checklist for Author
 
@@ -38,7 +38,7 @@ Checklist for Author
 *   \[ ] Jira and state/status is updated and JIRA is updated with PR link
 *   \[ ] Check if the description is clear and explained
 
-# Documentation
+## Documentation
 
 Checklist for Author
 
