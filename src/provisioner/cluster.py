@@ -22,7 +22,7 @@ from cortx.provisioner.log import Log
 class CortxCluster:
     """Represents CORTX Cluster"""
 
-    def __init__(self, node_list: list = [], cortx_release = None):
+    def __init__(self, node_list = None, cortx_release = None):
         """
         Creates cluster from the list of nodes.
 
@@ -48,6 +48,8 @@ class CortxCluster:
             - /dev/<device 1>
             - /dev/<device 2>
         """
+        if node_list is None:
+            node_list = []
         self._node_list = node_list
         self._cortx_release = cortx_release
         for node in node_list:
@@ -152,7 +154,9 @@ class CortxCluster:
 class CortxStorageSet:
     """Represents CORTX storage_set"""
 
-    def __init__(self, storage_sets: list = []):
+    def __init__(self, storage_sets = None):
+        if storage_sets is None:
+            storage_sets = []
         self._storage_sets = storage_sets
         for s_set in self._storage_sets:
             CortxStorageSet._validate(s_set)
