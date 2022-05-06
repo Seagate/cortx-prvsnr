@@ -23,9 +23,10 @@ from cortx.provisioner import const
 class CortxConfig:
     """CORTX Configuration"""
 
-    def __init__(self, cortx_solution_config: list = [], cortx_release = None):
+    def __init__(self, cortx_solution_config = None, cortx_release = None):
         """Create CORTX config"""
-
+        if cortx_solution_config is None:
+            cortx_solution_config = []
         self._cortx_release = cortx_release
         self._cortx_solution_config = cortx_solution_config
         CortxConfig._validate(self._cortx_solution_config)
