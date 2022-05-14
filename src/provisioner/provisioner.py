@@ -77,13 +77,7 @@ class CortxProvisioner:
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_conf = MappedConf(cortx_conf_url)
-
-        # Check if config is already applied on node.
-        node_id = Conf.machine_id
-        if cortx_conf.get(f'node>{node_id}>provisioning>version') and force_override is False:
-            Log.info('CORTX config already applied on this node.')
-            return 0
+        tmp_conf = MappedConf(const.CORTX_TMP_URL)
 
         # Load same config again if force_override is True
         try:
@@ -95,19 +89,19 @@ class CortxProvisioner:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
 
         # Secrets path from config file
-        if cortx_conf.get('cortx>common>storage>local'):
-            CortxProvisioner._secrets_path = cortx_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
+        if tmp_conf.get('cortx>common>storage>local'):
+            CortxProvisioner._secrets_path = tmp_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
-            CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
+            CortxProvisioner.apply_cluster_config(tmp_conf, CortxProvisioner.cortx_release)
 
         if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             # generating cipher key
             cipher_key = None
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
             if cluster_id is None:
-                cluster_id = cortx_conf.get('cluster>id')
+                cluster_id = tmp_conf.get('cluster>id')
                 if cluster_id is None:
                     raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
             cipher_key = Cipher.gen_key(cluster_id, 'cortx')
@@ -126,20 +120,20 @@ class CortxProvisioner:
                     val = Cipher.encrypt(cipher_key, val)
                     # decoding the byte string in val variable
                     Conf.set(CortxProvisioner._solution_index, key, val.decode('utf-8'))
-            CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
+            CortxProvisioner.apply_cortx_config(tmp_conf, CortxProvisioner.cortx_release)
             # Adding array count key in conf
-            cortx_conf.add_num_keys()
-            Conf.save(cortx_conf._conf_idx)
+            tmp_conf.add_num_keys()
+            Conf.save(tmp_conf._conf_idx)
 
     @staticmethod
-    def apply_cortx_config(cortx_conf, cortx_release):
+    def apply_cortx_config(tmp_conf, cortx_release):
         """Convert CORTX config into confstore keys"""
         config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
         cortx_solution_config = CortxConfig(config_info, cortx_release)
-        cortx_solution_config.save(cortx_conf, CortxProvisioner._solution_index)
+        cortx_solution_config.save(tmp_conf, CortxProvisioner._solution_index)
 
     @staticmethod
-    def apply_cluster_config(cortx_conf, cortx_release):
+    def apply_cluster_config(tmp_conf, cortx_release):
         node_map = {}
         try:
             node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
@@ -156,7 +150,7 @@ class CortxProvisioner:
                 node_map[node_type['name']] = node_type
             cluster_keys = [('cluster>id', cluster_id),
                 ('cluster>name', cluster_name)]
-            cortx_conf.set_kvs(cluster_keys)
+            tmp_conf.set_kvs(cluster_keys)
 
             nodes = []
             for storage_set in storage_sets:
@@ -168,9 +162,9 @@ class CortxProvisioner:
                     nodes.append(node)
 
             solution_config_nodes = CortxCluster(nodes, cortx_release)
-            solution_config_nodes.save(cortx_conf)
+            solution_config_nodes.save(tmp_conf)
             solution_config_storagesets = CortxStorageSet(storage_sets)
-            solution_config_storagesets.save(cortx_conf)
+            solution_config_storagesets.save(tmp_conf)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
@@ -227,9 +221,14 @@ class CortxProvisioner:
                         continue
                 CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, ProvisionerStatus.PROGRESS.value)
-                cmd = (
-                    f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
-                    f" --config {cortx_conf._conf_url} --services {service}")
+                if interface.value == 'upgrade':
+                    cmd = (
+                        f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
+                        f" --delta {const.DELTA_PATH} --config {cortx_conf._conf_url} --services {service}")
+                else:
+                    cmd = (
+                        f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
+                        f" --config {cortx_conf._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
@@ -261,6 +260,44 @@ class CortxProvisioner:
         Description:
 
         Configures Cluster Components
+        1. Compares current installed version with New version
+        2. Invoke Mini Provisioners of cluster components deploy/upgrade based on version compatibility
+        Paramaters:
+        [IN] CORTX Config URL
+        """
+        cortx_conf = MappedConf(cortx_conf_url)
+        node_id = Conf.machine_id
+        Conf.load(const.TMP_IDX, const.CORTX_TMP_URL)
+        tmp_conf_keys = Conf.get_keys(const.TMP_IDX)
+        installed_version = cortx_conf.get(f'node>{node_id}>provisioning>version')
+        release_version = CortxProvisioner.cortx_release.get_release_version()
+        if installed_version is None:
+            cortx_conf.copy(const.TMP_IDX, tmp_conf_keys)
+            Conf.save(cortx_conf._conf_idx)
+            CortxProvisioner.cluster_deploy(cortx_conf_url, force_override)
+        else:
+            # TODO: add a case where release_version > installed_version but is not compatible.
+            ret_code = CortxProvisioner.cortx_release.version_check(
+                release_version, installed_version)
+            if ret_code == 1:
+                CortxProvisioner.Prepare_upgrade(cortx_conf._conf_idx, const.TMP_IDX)
+                CortxProvisioner.cluster_upgrade(cortx_conf_url, force_override)
+                CortxProvisioner.Post_upgrade(cortx_conf, const.TMP_IDX, tmp_conf_keys)
+            # TODO: This will be removed once downgrade is also supported.
+            elif ret_code == -1:
+                raise CortxProvisionerError(errno.EINVAL, 'Downgrade is Not Supported')
+            elif ret_code == 0:
+                cortx_conf.copy(const.TMP_IDX, tmp_conf_keys)
+                Conf.save(cortx_conf._conf_idx)
+                CortxProvisioner.cluster_deploy(cortx_conf_url, force_override)
+            else:
+                raise CortxProvisionerError(errno.EINVAL, 'Internal error. Could not determine version. Invalid image.')
+
+    @staticmethod
+    def cluster_deploy(cortx_conf_url: str, force_override: bool = False):
+        """
+        Description:
+        Configures Cluster Components
         1. Reads Cortx Config and obtain cluster components
         2. Invoke Mini Provisioners of cluster components
         Paramaters:
@@ -288,6 +325,27 @@ class CortxProvisioner:
             cortx_conf, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
+    @staticmethod
+    def Prepare_upgrade(_conf_idx: str, _tmp_idx: str):
+        new_keys, deleted_keys, updated_keys = Conf.compare(_conf_idx, _tmp_idx)
+        Conf.load(const.DELTA_IDX, const.DELTA_PATH)
+        for key in new_keys:
+            Conf.set(const.DELTA_IDX, f'new>{key}', Conf.get(_tmp_idx, key))
+        for key in deleted_keys:
+            Conf.set(const.DELTA_IDX, f'deleted>{key}', Conf.get(_conf_idx, key))
+        for key in updated_keys:
+            value = f"{Conf.get(_conf_idx, key)}|{Conf.get(_tmp_idx, key)}"
+            Conf.set(const.DELTA_IDX, f'updated>{key}', value)
+        Conf.save(const.DELTA_IDX)
+
+    @staticmethod
+    def Post_upgrade(cortx_conf: MappedConf, _tmp_idx: str, keys: list):
+        _, deleted_keys, _ = Conf.compare(cortx_conf._conf_idx, _tmp_idx)
+        cortx_conf.copy(_tmp_idx, keys)
+        for key in deleted_keys:
+            Conf.delete(cortx_conf._conf_idx, key)
+        Conf.save(cortx_conf._conf_idx)
+    
     @staticmethod
     def cluster_upgrade(cortx_conf_url: str, force_override: bool = False):
         """
