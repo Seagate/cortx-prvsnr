@@ -222,6 +222,7 @@ class CortxProvisioner:
                 CortxProvisioner._update_provisioning_status(
                         cortx_conf, node_id, apply_phase, ProvisionerStatus.PROGRESS.value)
                 if interface.value == 'upgrade':
+                    # TODO: Remove config parameter for upgrade once all components will have --delta implementation
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
                         f" --delta {const.DELTA_PATH} --config {cortx_conf._conf_url} --services {service}")
@@ -280,9 +281,11 @@ class CortxProvisioner:
             ret_code = CortxProvisioner.cortx_release.version_check(
                 release_version, installed_version)
             if ret_code == 1:
-                CortxProvisioner.Prepare_upgrade(cortx_conf._conf_idx, const.TMP_IDX)
+                CortxProvisioner.prepare_delta(cortx_conf._conf_idx, const.TMP_IDX)
                 CortxProvisioner.cluster_upgrade(cortx_conf_url, force_override)
-                CortxProvisioner.Post_upgrade(cortx_conf, const.TMP_IDX, tmp_conf_keys)
+                # TODO: update_conf needs to be removed once gconf moves to consul.
+                # Gconf update after upgrade should not be handled here if gconf is in consul.
+                CortxProvisioner.update_conf(cortx_conf, const.TMP_IDX, tmp_conf_keys)
             # TODO: This will be removed once downgrade is also supported.
             elif ret_code == -1:
                 raise CortxProvisionerError(errno.EINVAL, 'Downgrade is Not Supported')
@@ -326,7 +329,7 @@ class CortxProvisioner:
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
 
     @staticmethod
-    def Prepare_upgrade(_conf_idx: str, _tmp_idx: str):
+    def prepare_delta(_conf_idx: str, _tmp_idx: str):
         new_keys, deleted_keys, updated_keys = Conf.compare(_conf_idx, _tmp_idx)
         Conf.load(const.DELTA_IDX, const.DELTA_PATH)
         for key in new_keys:
@@ -339,11 +342,11 @@ class CortxProvisioner:
         Conf.save(const.DELTA_IDX)
 
     @staticmethod
-    def Post_upgrade(cortx_conf: MappedConf, _tmp_idx: str, keys: list):
+    def update_conf(cortx_conf: MappedConf, _tmp_idx: str, keys: list):
         _, deleted_keys, _ = Conf.compare(cortx_conf._conf_idx, _tmp_idx)
         cortx_conf.copy(_tmp_idx, keys)
         for key in deleted_keys:
-            Conf.delete(cortx_conf._conf_idx, key)
+            cortx_conf.delete(key)
         Conf.save(cortx_conf._conf_idx)
     
     @staticmethod
