@@ -348,7 +348,7 @@ class CortxProvisioner:
         for key in deleted_keys:
             cortx_conf.delete(key)
         Conf.save(cortx_conf._conf_idx)
-    
+
     @staticmethod
     def cluster_upgrade(cortx_conf_url: str, force_override: bool = False):
         """
