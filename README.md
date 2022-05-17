@@ -4,16 +4,15 @@
 
 The process of setting up your IT Infrastructure is called Provisioning. Provisioning involves managing access to data and resources to make these available to users and systems. Resource deployment is a two-step process where you provision and then configure the resource. To set up the CORTX project, you'll need to provision your:
 
-- Server 
-- Network 
-- Service 
+-   Server 
+-   Network 
+-   Service 
 
 The main feature of the CORTX-Provisioner is to:
-- Let you provision your environments such as Dev, QA, Lab, and Production with minimal user intervention.
-- Allow you to maintain the modularity or granularity of during various stages of Provisioning process so as to help enhancements, maintainability, and training with minimal collateral impacts
+-   Let you provision your environments such as Dev, QA, Lab, and Production with minimal user intervention.
+-   Allow you to maintain the modularity or granularity of during various stages of Provisioning process so as to help enhancements, maintainability, and training with minimal collateral impacts
 
 Please also read and contribute to our [Wiki](https://github.com/Seagate/cortx-prvsnr/wiki) and [docs folder](/docs) where we maintain a lot more documentation about this repository.
-
 
 ## Contribute to CORTX-Provisioner
 
@@ -26,6 +25,6 @@ We take community very seriously and we are committed to creating a community bu
 -   Join our CORTX-Open Source Slack Channel to interact with your fellow community members and gets your questions answered. [![Slack Channel](https://img.shields.io/badge/chat-on%20Slack-blue)](https://join.slack.com/t/cortxcommunity/shared_invite/zt-femhm3zm-yiCs5V9NBxh89a_709FFXQ?)
 -   If you'd like to contact us directly, drop us a mail at cortx-questions@seagate.com.
 
-## Thank You!
+## Thank You
 
 We thank you for stopping by to check out the CORTX Community. We are fully dedicated to our mission to build open source technologies that help the world save unlimited data and solve challenging data problems. Join our mission to help reinvent a data-driven world.
