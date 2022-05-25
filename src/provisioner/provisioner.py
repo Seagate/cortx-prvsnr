@@ -54,6 +54,7 @@ class CortxProvisioner:
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
+    _cortx_gconf_consul_index = "consul_index"
     cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
@@ -244,14 +245,11 @@ class CortxProvisioner:
 
     @staticmethod
     def _apply_consul_config(cortx_conf: MappedConf):
-        consul_endpoints = cortx_conf.get('cortx>external>consul>endpoints')
-        print(consul_endpoints)
-        gconf_consul_url = consul_endpoints[1].replace('http','consul') + '/conf'
-        print(gconf_consul_url)
-        Conf.load('consul_index', gconf_consul_url)
-        gconf_keys = Conf.get_keys(cortx_conf._conf_idx)
-        Conf.copy(cortx_conf._conf_idx, 'consul_index', gconf_keys)
-        Conf.save('consul_index')
+        consul_endpoint = cortx_conf.get('cortx>external>consul>endpoints[1]')
+        gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
+        Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
+        Conf.copy(cortx_conf._conf_idx, 'consul_index', Conf.get_keys(cortx_conf._conf_idx))
+        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):

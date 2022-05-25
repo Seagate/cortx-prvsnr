@@ -133,7 +133,7 @@ class CortxCluster:
             for node in self._node_list:
                 node_id = node.pop('id')
                 key_prefix = f'node>{node_id}'
-                if socket.gethostname() == node['hostname'] and node['type'] == 'data_node':
+                if socket.gethostname() == node['hostname'] and node['type'] in Const.NODE_TYPE_DATA.value:
                     kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
                 # confstore keys
                 kvs.extend((
