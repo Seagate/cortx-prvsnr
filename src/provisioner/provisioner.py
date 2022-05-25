@@ -243,6 +243,17 @@ class CortxProvisioner:
                 cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
+    def _apply_consul_config(cortx_conf: MappedConf):
+        consul_endpoints = cortx_conf.get('cortx>external>consul>endpoints')
+        print(consul_endpoints)
+        gconf_consul_url = consul_endpoints[1].replace('http','consul') + '/conf'
+        print(gconf_consul_url)
+        Conf.load('consul_index', gconf_consul_url)
+        gconf_keys = Conf.get_keys(cortx_conf._conf_idx)
+        Conf.copy(cortx_conf._conf_idx, 'consul_index', gconf_keys)
+        Conf.save('consul_index')
+
+    @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
         """
         Description:
@@ -254,6 +265,7 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = MappedConf(cortx_conf_url)
+        CortxProvisioner._apply_consul_config(cortx_conf)
         apply_phase = ProvisionerStages.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
