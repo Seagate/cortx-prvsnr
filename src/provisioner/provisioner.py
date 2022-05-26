@@ -246,7 +246,7 @@ class CortxProvisioner:
     @staticmethod
     def _apply_consul_config(cortx_conf: MappedConf):
         num_endpoints = cortx_conf.get('cortx>external>consul>num_endpoints')
-        for idx in range(0, num_endpoints): 
+        for idx in range(0, num_endpoints):
             if 'http' in Conf.get(f'cortx>external>consul>endpoints[{idx}]'):
                 consul_endpoint = Conf.get(f'cortx>external>consul>endpoints[{idx}]')
                 break
