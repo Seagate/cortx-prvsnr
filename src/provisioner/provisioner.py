@@ -245,7 +245,11 @@ class CortxProvisioner:
 
     @staticmethod
     def _apply_consul_config(cortx_conf: MappedConf):
-        consul_endpoint = cortx_conf.get('cortx>external>consul>endpoints[1]')
+        num_endpoints = cortx_conf.get('cortx>external>consul>num_endpoints')
+        for idx in range(0, num_endpoints): 
+            if 'http' in Conf.get(f'cortx>external>consul>endpoints[{idx}]'):
+                consul_endpoint = Conf.get(f'cortx>external>consul>endpoints[{idx}]')
+                break
         gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
         Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
         Conf.copy(cortx_conf._conf_idx, 'consul_index', Conf.get_keys(cortx_conf._conf_idx))
