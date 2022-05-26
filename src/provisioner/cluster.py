@@ -16,8 +16,10 @@
 import errno
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
+from cortx.utils.cortx.const import Const
 from cortx.provisioner.log import Log
-
+import socket
+import os
 
 class CortxCluster:
     """Represents CORTX Cluster"""
@@ -131,6 +133,8 @@ class CortxCluster:
             for node in self._node_list:
                 node_id = node.pop('id')
                 key_prefix = f'node>{node_id}'
+                if socket.gethostname() == node['hostname'] and node['type'] in Const.NODE_TYPE_DATA.value:
+                    kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
                 # confstore keys
                 kvs.extend((
                     (f'{key_prefix}>cluster_id', node['cluster_id']),

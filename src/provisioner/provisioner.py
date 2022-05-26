@@ -54,6 +54,7 @@ class CortxProvisioner:
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
+    _cortx_gconf_consul_index = "consul_index"
     cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
@@ -243,6 +244,18 @@ class CortxProvisioner:
                 cortx_conf.set(f'{key_prefix}>version', component_version)
 
     @staticmethod
+    def _apply_consul_config(cortx_conf: MappedConf):
+        num_endpoints = cortx_conf.get('cortx>external>consul>num_endpoints')
+        for idx in range(0, num_endpoints):
+            if 'http' in cortx_conf.get(f'cortx>external>consul>endpoints[{idx}]'):
+                consul_endpoint = cortx_conf.get(f'cortx>external>consul>endpoints[{idx}]')
+                break
+        gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
+        Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
+        Conf.copy(cortx_conf._conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(cortx_conf._conf_idx))
+        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+
+    @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
         """
         Description:
@@ -254,6 +267,7 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = MappedConf(cortx_conf_url)
+        CortxProvisioner._apply_consul_config(cortx_conf)
         apply_phase = ProvisionerStages.DEPLOYMENT.value
         node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
