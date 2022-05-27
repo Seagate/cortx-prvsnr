@@ -254,6 +254,9 @@ class CortxProvisioner:
         Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
         Conf.copy(cortx_conf._conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(cortx_conf._conf_idx))
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+        # TODO: place the below code at a proper location when this function is removed.
+        with open(const.CONSUL_CONF_URL, 'w') as f:
+            f.write(gconf_consul_url)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -342,6 +345,10 @@ class CortxProvisioner:
         key_prefix = f'node>{node_id}>provisioning>'
         keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
         cortx_conf.set_kvs(keys)
+        # TODO: Remove the following section once gconf is moved to consul completely.
+        for key, val in keys:
+            Conf.set(CortxProvisioner._cortx_gconf_consul_index, key, val)
+        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
