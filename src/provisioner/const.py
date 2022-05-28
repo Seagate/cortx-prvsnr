@@ -26,4 +26,3 @@ UPGRADE_MODE_KEY = "UPGRADE_MODE"
 UPGRADE_MODE_VAL = ""
 REQUIRED_EXTERNAL_SW = ['kafka', 'consul']
 CORTX_DELTA_URL = "yaml:///etc/cortx/delta.conf"
-TMP_CORTX_CONF_URL = "yaml:///tmp/tmp.conf"

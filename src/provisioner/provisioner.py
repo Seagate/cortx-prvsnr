@@ -57,6 +57,7 @@ class CortxProvisioner:
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
     _cortx_gconf_consul_index = "consul_index"
+    _tmp_cortx_conf_url = "yaml:///tmp/tmp.conf"
     cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
@@ -79,7 +80,7 @@ class CortxProvisioner:
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_conf = MappedConf(const.TMP_CORTX_CONF_URL)
+        cortx_conf = MappedConf(CortxProvisioner._tmp_cortx_conf_url)
 
         # Load same config again if force_override is True
         try:
@@ -270,7 +271,7 @@ class CortxProvisioner:
         """
         cortx_conf = MappedConf(cortx_conf_url)
         node_id = Conf.machine_id
-        Conf.load(CortxProvisioner._tmp_index, const.TMP_CORTX_CONF_URL)
+        Conf.load(CortxProvisioner._tmp_index, CortxProvisioner._tmp_cortx_conf_url)
         tmp_conf_keys = Conf.get_keys(CortxProvisioner._tmp_index)
         installed_version = cortx_conf.get(f'node>{node_id}>provisioning>version')
         release_version = CortxProvisioner.cortx_release.get_release_version()
