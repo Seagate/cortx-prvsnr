@@ -228,7 +228,7 @@ class CortxProvisioner:
                     # TODO: Remove config parameter for upgrade once all components will have --delta implementation
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
-                        f" --delta {const.CORTX_DELTA_URL} --config {cortx_conf._conf_url} --services {service}")
+                        f" --changeset {const.CORTX_DELTA_URL} --config {cortx_conf._conf_url} --services {service}")
                 else:
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
@@ -359,14 +359,13 @@ class CortxProvisioner:
         """
         Description:
         Updates conf by updating new keys/values post upgrade.
-        1. Fetch deleted keys usinf conf compare
-        2. Update gconf by adding new keys as well as updated values
-        3. Delete all deleted keys from gconf.
+        1. Fetch new keys using conf compare
+        2. Update gconf by adding new keys.
         """
-        _, deleted_keys, _ = Conf.compare(cortx_conf._conf_idx, _tmp_idx)
-        cortx_conf.copy(_tmp_idx, keys)
-        for key in deleted_keys:
-            cortx_conf.delete(key)
+        new_keys, _, _ = Conf.compare(cortx_conf._conf_idx, _tmp_idx)
+        for key in new_keys:
+            value= Conf.get(_tmp_idx, key)
+            cortx_conf.set(key, value)
         Conf.save(cortx_conf._conf_idx)
 
     @staticmethod

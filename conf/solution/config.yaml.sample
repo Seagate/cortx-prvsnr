@@ -156,8 +156,7 @@ cortx:
       - https://control-svc:8081
     email_address: cortx@seagate.com # Optional 
     mgmt_admin: cortxadmin
-    mgmt_secret: !!binary |
-      UlU1U0NrYklraS0ta3BOamN5X2J1VmUwRnJXTUFlb2JDdkItY1B3ZEE9PQ==
+    mgmt_secret: csm_mgmt_admin_secret
     limits:   
       services:              
       - name: agent
