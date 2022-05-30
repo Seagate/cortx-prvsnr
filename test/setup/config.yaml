@@ -1,39 +1,26 @@
 cortx:
   external:
-    kafka:
-      endpoints:
-        - tcp://kafka.default.svc.cluster.local:9092
-      admin: admin
-      secret: kafka_admin_secret
-    openldap:
-      endpoints:
-        - ldap://openldap-svc.default.svc.cluster.local:389
-        - ssl://openldap-svc.default.svc.cluster.local:636
-      servers:
-        - openldap-0.openldap-svc.default.svc.cluster.local
-        - openldap-1.openldap-svc.default.svc.cluster.local
-        - openldap-2.openldap-svc.default.svc.cluster.local
-      admin: admin
-      secret: openldap_admin_secret
-      base_dn: dc=seagate,dc=com
     consul:
-      endpoints:
-        - tcp://consul-server.default.svc.cluster.local:8301
       admin: admin
-      secret: consul_admin_secret
+      endpoints:
+      - tcp://consul-server.default.svc.cluster.local:8301
+      - http://consul-server.default.svc.cluster.local:8500
+      secret: consul_admin_secret                              # Key in the list of secrets  
+    kafka:
+      admin: admin
+      endpoints:
+      - tcp://kafka.default.svc.cluster.local:9092
+      secret: kafka_admin_secret                               # Key in the list of secrets
   common:
     release:
       name: CORTX
       version: 2.0.0-1111
-    environment_type: K8
-    setup_size: small
     service:
       admin: admin
       secret: common_admin_secret
     storage:
-      shared: /share
+      log: /var/log/cortx/
       local: /etc/cortx
-      log: /etc/cortx/log
       config: /etc/cortx
     security:
       ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
@@ -41,38 +28,168 @@ cortx:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
   utils:
     message_bus_backend: kafka
-  s3:
-    iam:
-      endpoints:
-      - https://cortx-io-svc:9443
-      - http://cortx-io-svc:9080
-    data:
-      endpoints:
-      - http://cortx-io-svc:80
-      - https://cortx-io-svc:443
-    internal:
-      endpoints:
-      - http://cortx-io-svc:28049
-    service_instances: 2
-    io_max_units: 8
-    max_start_timeout: 240
+  rgw:
+    auth_user: user_name
     auth_admin: sgiamadmin
     auth_secret: s3_auth_admin_secret
+
+    thread_pool_size: 10                                       # To be tuned as we go
+    data_path: /var/cortx/radosgw/$clusterid                   # Needs to be under Local PVC
+    init_timeout: 300                                          # In seconds
+    gc_max_objs: 32                                            # In seconds
+    gc_obj_min_wait: 1800                                      # In seconds
+    gc_processor_max_time: 3600                                # In seconds
+    gc_processor_period: 3600                                  # In seconds
+    
+    motr_layout_id: 9                          
+    motr_unit_size: 1048576 
+    motr_max_units_per_request: 8
+    motr_max_idx_fetch_count: 30
+    motr_max_rpc_msg_size: 524288                              # In bytes
+    motr_reconnect_interval: 10                                # Wait for Seconds before reconnect 
+    motr_reconnect_retry_count: 10                             # Give up after these many retries
+    public:                                                    # NOTE: was s3 earlier 
+      endpoints:                                               # S3 IO K8s service endpoint
+      - http://s3-rgw-svc:80                                   # Optional (if http needs to be enabled)
+      - https://s3-rgw-svc:443                                 # There will be one endpoint (http/https)
+    service:
+      endpoints:                                               # RGW Service Endpoint
+      - http://:22751                                          # S ports. S = # of RGW Instances
+      - https://:23001
+    io_max_units: 8
+    max_start_timeout: <<.Values.cortx.max_start_timeout>>
+    limits:
+      services:
+      - name: rgw
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 1000m 
   motr:
-    client_instances: 0
-    interface_type: tcp
-    interface_family: inet
-    transport_type: libfab
+    interface_family: inet                                     # Optional: inet (default) | inet6
+    transport_type: libfab                                     # libfab | lnet (libfab==inet)
+    md_size: 10                                                # % MD size w.r.t. total capacity
+    ios:
+      group_size: 1                                            # Number of services to be started in a group
+                                                               # N = Total CVG / group_size. N must be <=24. 
+      endpoints:
+      - tcp://data1-node1:21002                                # Format: <protocol>://<hostname_ip>:<port>
+                                                               # N endpoints one for each Pod, first mentioned here
+                                                               # N == Number of CVGs in the Pod
+                                                               # Ports: 21002 - (21002 + Number of CVGs)
+      - tcp://data2-node1:21002                                # Same thing for the second pod
+      - tcp://data1-node2:21002                                # of for Pods on the other nodes
+
+    confd:
+      endpoints:
+      - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:21001
+      - tcp://data1-node2:21001       
+      - tcp://data1-node3:21001  
+    limits:
+      services:
+      - name: ios
+        memory:
+          min: 1Gi                                             # Needs to compute this dynamically 
+                                                               # min = Max. of (K * 0.5 /N, ((M/N) * 5% * (K/N)) Gi)
+                                                               # where K= Num CVGs, N=Num Containers
+          max: 0                                               # max = 1.1 * min. For now set to 0.
+        cpu:                         
+          min: 1000m                                           # 1000m * N where N = Num of "ios" Containers
+          max: 1500m                                           # 1500m * N where N = Num of "ios" Containers
+      - name: confd
+        memory:
+          min: 128Mi
+          max: 512Mi
+        cpu:
+          min: 250m
+          max: 500m
+    clients:                                                   # Motr Client Settings
+      - name: rgw_s3                                           # rgw|s3|motr_client (Motr Clients)
+        num_instances: 1                                       # Client instances per node (pod)
+        endpoints:
+        - tcp://server1-node1:22501                            # Format: <protocol>://<hostname_ip>:22501 
+        - tcp://server2-node1:22501                            # This is for client>type == "s3"
+                                                               # This is a starting endpoint and num of s3
+                                                               # endpoints will be equal to num of s3 instances 
+                                                               # in this pod. Port range would be 
+                                                               # 22501 to (22501 + "motr>client>{rgw_s3}>num_instances")
+        - tcp://server-node1:22501
+      - name: motr_client
+        num_instances: 0                                       # Optional client. Only for Dev.
+        num_subscriptions: 1
+        subscriptions:                                         # NEW: Optional: Services subscribed for client
+        - fdmi
+        endpoints:
+        - tcp://client1-node1:21501                            # Port range would be 
+                                                               # 21501 to (21501 + "motr>client>{motr_client}>num_instances")
+
+  hare:
+    hax:
+      endpoints:
+      - https://motr-hax-svc:22003                             # Control endpoint
+      - tcp://data1-node1:22001                                # For motr and Hax communication
+      - tcp://data1-node2:22001                                # For motr and Hax communication
+      - tcp://data1-node3:22001                                # For motr and Hax communication
+      - tcp://server-node1:22001                               # if s3 client is configured
+      - tcp://server-node2:22001                               # if s3 client is configured
+      - tcp://server-node3:22001                               # if s3 client is configured
+      - tcp://client-node1:22001                               # Only if motr_client is configured
+      - tcp://client-node2:22001                               # Only if motr_client is configured
+      - tcp://client-node3:22001                               # Only if motr_client is configured
+    limits:
+      services:
+      - name: hax
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
   csm:
-    auth_admin: authadmin
-    auth_secret: csm_auth_admin_secret
-    mgmt_admin: cortxadmin
-    mgmt_secret: csm_mgmt_admin_secret
-    email_address: cortx@seagate.com
     agent:
       endpoints:
-      - https://cortx-io-svc:8081
+      - https://:23256
+    public:                                                    # Public Control Endpoint
+      endpoints:
+      - https://control-svc:8081
+    email_address: cortx@seagate.com # Optional 
+    mgmt_admin: cortxadmin
+    mgmt_secret: csm_mgmt_admin_secret
+    limits:   
+      services:              
+      - name: agent
+        memory:
+          min: 128Mi
+          max: 256Mi
+        cpu:
+          min: 250m
+          max: 500m
   ha:
     service:
       endpoints:
       - http://cortx-ha-svc:23501
+    limits:         
+      services:        
+      - name: fault_tolerance
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: health_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
+      - name: k8s_monitor
+        memory:
+          min: 128Mi
+          max: 1Gi
+        cpu:
+          min: 250m
+          max: 500m
