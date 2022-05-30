@@ -71,6 +71,15 @@ class TestProvisioner(unittest.TestCase):
 
     def test_num_xxx_in_gconf(self):
         """Test if num_xxx key is saved in gconf for list items(CORTX-30863)."""
+        rc = 0
+        try:
+            CortxProvisioner.config_apply(solution_cluster_url, cortx_conf_url)
+            CortxProvisioner.config_apply(solution_conf_url, cortx_conf_url, force_override=True)
+        except Exception as e:
+            print('Exception: ', e)
+            sys.stderr.write("%s\n" % traceback.format_exc())
+            rc = 1
+        self.assertEqual(rc, 0)
         conf_path = cortx_conf_url.split('//')[1]
         rc = 0
         with open(conf_path, 'r') as stream:

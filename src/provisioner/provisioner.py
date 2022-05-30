@@ -368,7 +368,7 @@ class CortxProvisioner:
             value= Conf.get(_tmp_idx, key)
             Conf.set(_conf_idx, key, value)
         for key in changed_keys:
-            if key.stratswith('cortx>common'):
+            if key.startswith('cortx>common'):
                 value= Conf.get(_tmp_idx, key)
                 Conf.set(_conf_idx, key, value)
         Conf.save(_conf_idx)
