@@ -343,13 +343,13 @@ class CortxProvisioner:
         [idx2] conf index 2
         [diff_idx] delta diff index
         """
-        new_keys, deleted_keys, updated_keys = Conf.compare(idx1, idx2)
+        new_keys, deleted_keys, changed_keys = Conf.compare(idx1, idx2)
         Conf.load(diff_idx, const.CORTX_DELTA_URL)
         for key in new_keys:
             Conf.set(diff_idx, f'new>{key}', Conf.get(idx2, key))
         for key in deleted_keys:
             Conf.set(diff_idx, f'deleted>{key}', Conf.get(idx1, key))
-        for key in updated_keys:
+        for key in changed_keys:
             value = f"{Conf.get(idx1, key)}|{Conf.get(idx2, key)}"
             Conf.set(diff_idx, f'changed>{key}', value)
         Conf.save(diff_idx)
@@ -361,11 +361,16 @@ class CortxProvisioner:
         Updates conf by updating new keys/values post upgrade.
         1. Fetch new keys using conf compare
         2. Update gconf by adding new keys.
+        3. Update gconf by updating changed values for cortx>common
         """
-        new_keys, _, _ = Conf.compare(_conf_idx, _tmp_idx)
+        new_keys, _, changed_keys = Conf.compare(_conf_idx, _tmp_idx)
         for key in new_keys:
             value= Conf.get(_tmp_idx, key)
             Conf.set(_conf_idx, key, value)
+        for key in changed_keys:
+            if key.stratswith('cortx>common'):
+                value= Conf.get(_tmp_idx, key)
+                Conf.set(_conf_idx, key, value)
         Conf.save(_conf_idx)
 
     @staticmethod
