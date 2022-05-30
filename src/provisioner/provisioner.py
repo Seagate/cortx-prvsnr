@@ -226,10 +226,10 @@ class CortxProvisioner:
                 CortxProvisioner._update_provisioning_status(
                         _conf_idx, node_id, apply_phase, ProvisionerStatus.PROGRESS.value)
                 if interface.value == 'upgrade':
-                    # TODO: Remove config parameter for upgrade once all components will have --delta implementation
+                    # TODO: add --changeset parameter once all components support config upgrade
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
-                        f" --changeset {const.CORTX_DELTA_URL} --config {cortx_conf_url} --services {service}")
+                        f" --config {cortx_conf_url} --services {service}")
                 else:
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
