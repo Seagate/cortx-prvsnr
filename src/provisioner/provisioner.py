@@ -258,6 +258,9 @@ class CortxProvisioner:
         Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
         Conf.copy(_conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(_conf_idx))
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+        # TODO: place the below code at a proper location when this function is removed.
+        with open(const.CONSUL_CONF_URL, 'w') as f:
+            f.write(gconf_consul_url)
 
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
@@ -427,6 +430,10 @@ class CortxProvisioner:
         Conf.set(_conf_idx, f'{key_prefix}>phase', phase)
         Conf.set(_conf_idx, f'{key_prefix}>status', status)
         Conf.save(_conf_idx)
+        # TODO: Remove the following section once gconf is moved to consul completely.
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
+        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
