@@ -431,9 +431,16 @@ class CortxProvisioner:
         Conf.set(_conf_idx, f'{key_prefix}>status', status)
         Conf.save(_conf_idx)
         # TODO: Remove the following section once gconf is moved to consul completely.
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+        _idx = CortxProvisioner._cortx_gconf_consul_index
+        if phase.upper() == 'UPGRADE':
+            with open(const.CONSUL_CONF_URL, 'r') as f:
+                gconf_consul_url = f.read().strip()
+            _idx = 'consul_upgrade_idx'
+            if status == ProvisionerStatus.DEFAULT.value:
+                Conf.load(_idx, gconf_consul_url)
+        Conf.set(_idx, f'{key_prefix}>phase', phase)
+        Conf.set(_idx, f'{key_prefix}>status', status)
+        Conf.save(_idx)
 
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
