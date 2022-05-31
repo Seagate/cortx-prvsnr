@@ -117,6 +117,8 @@ class ClusterCmd(Cmd):
         force_override = True if self._args.override else False
         if self._args.action == 'bootstrap':
             CortxProvisioner.cluster_bootstrap(self._args.cortx_conf, force_override)
+        # TODO: upgrade CLI code needs to be removed as boostrap CLi will be
+        # Internally calling deploy/upgrade based on version compatibility
         if self._args.action == 'upgrade':
             CortxProvisioner.cluster_upgrade(self._args.cortx_conf, force_override)
         return 0
