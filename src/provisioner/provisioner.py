@@ -247,6 +247,12 @@ class CortxProvisioner:
                 # Update version for each component if Provisioning successful.
                 Conf.set(_conf_idx, f'{key_prefix}>version', component_version)
 
+                # TODO: Remove the following code when gconf is completely moved to consul.
+                CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
+                Conf.set(CortxProvisioner._cortx_gconf_consul_index,
+                        f'{key_prefix}>version', component_version)
+                Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+
     @staticmethod
     def _apply_consul_config(_conf_idx: str):
         num_endpoints = Conf.get(_conf_idx, 'cortx>external>consul>num_endpoints')
@@ -431,17 +437,12 @@ class CortxProvisioner:
         Conf.set(_conf_idx, f'{key_prefix}>phase', phase)
         Conf.set(_conf_idx, f'{key_prefix}>status', status)
         Conf.save(_conf_idx)
+
         # TODO: Remove the following section once gconf is moved to consul completely.
-        _idx = CortxProvisioner._cortx_gconf_consul_index
-        if phase.upper() == 'UPGRADE':
-            with open(const.CONSUL_CONF_URL, 'r') as f:
-                gconf_consul_url = f.read().strip()
-            _idx = 'consul_upgrade_idx'
-            if status == ProvisionerStatus.DEFAULT.value:
-                Conf.load(_idx, gconf_consul_url)
-        Conf.set(_idx, f'{key_prefix}>phase', phase)
-        Conf.set(_idx, f'{key_prefix}>status', status)
-        Conf.save(_idx)
+        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
+        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
@@ -461,6 +462,12 @@ class CortxProvisioner:
         version = CortxProvisioner.cortx_release.get_release_version()
         Conf.set(_conf_idx, 'cortx>common>release>version', version)
         Conf.set(_conf_idx, f'node>{node_id}>provisioning>version', version)
+
+        # TODO: Remove the following sdection when gconf is completely moved to consul
+        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, 'cortx>common>release>version', version)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'node>{node_id}>provisioning>version', version)
+        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _validate_provisioning_status(_conf_idx: str, node_id: str, apply_phase: str):
@@ -531,3 +538,14 @@ class CortxProvisioner:
         """API call to get cluster health."""
         # TODO Make a call to HA Health API to get the resource status
         return "OK"
+    
+    @staticmethod
+    def _load_consul_conf(_idx: str):
+        """Load consul conf with given index if not already loaded."""
+        #TODO: Remove  the function when gconf is moved to consul completely.
+        with open(const.CONSUL_CONF_URL, 'r') as f:
+            gconf_consul_url = f.read()
+        try:
+            Conf.load(_idx, gconf_consul_url)
+        except ConfError:
+            return 1
