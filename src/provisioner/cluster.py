@@ -14,12 +14,16 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
 import errno
+import hashlib
+import socket
+import os
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.utils.cortx.const import Const
 from cortx.provisioner.log import Log
 import socket
 import os
+from cortx.provisioner import const
 
 class CortxCluster:
     """Represents CORTX Cluster"""
@@ -81,6 +85,15 @@ class CortxCluster:
         CortxCluster._validate(node)
         self._node_list.append(node)
 
+    @staticmethod
+    def get_machine_id(node_id: str):
+        """
+        returns a hashed string information as a string of hexadecimal digits
+        """
+        result = hashlib.md5(node_id.encode())
+        machine_id = result.hexdigest()
+        return machine_id
+
     def _get_kvs(self, prefix: str, node: dict):
         """Converts dict into list of keys and values."""
         kvs = []
@@ -132,22 +145,28 @@ class CortxCluster:
         try:
             for node in self._node_list:
                 node_id = node.pop('id')
-                key_prefix = f'node>{node_id}'
-                if socket.gethostname() == node['hostname'] and node['type'] in Const.NODE_TYPE_DATA.value:
-                    kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
+                machine_id = CortxCluster.get_machine_id(node_id)
+                key_prefix = f'node>{machine_id}'
+                os.makedirs(const.CONFIG_PATH, exist_ok = True)
+                if socket.gethostname() == node['hostname']:
+                    with open(const.MACHINE_ID_PATH,'w') as machine_id_path:
+                        machine_id_path.write(machine_id)
+                    if node['type'] in Const.NODE_TYPE_DATA.value:
+                        kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
                 # confstore keys
                 kvs.extend((
                     (f'{key_prefix}>cluster_id', node['cluster_id']),
                     (f'{key_prefix}>name', node['name']),
                     (f'{key_prefix}>hostname', node['hostname']),
+                    (f'{key_prefix}>node_id', node_id),
                     (f'{key_prefix}>type', node['type']),
                     (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
                 component_list = node['components']
-                kvs.extend(CortxCluster._get_component_kv_list(component_list, node_id))
+                kvs.extend(CortxCluster._get_component_kv_list(component_list, machine_id))
                 storage_spec = node.get('storage')
                 if storage_spec:
-                    kvs.extend(self._get_storage_kv_list(storage_spec, node_id))
+                    kvs.extend(self._get_storage_kv_list(storage_spec, machine_id))
             cortx_conf.set_kvs(kvs)
         except (KeyError, IndexError) as e:
             raise CortxProvisionerError(
@@ -211,7 +230,8 @@ class CortxStorageSet:
                 nodes = storage_set['nodes']
                 for node_idx, node in enumerate(nodes):
                     # confstore keys
-                    kvs.append((f'{key_prefix}>nodes[{node_idx}]', node['id']))
+                    machine_id = CortxCluster.get_machine_id(node['id'])
+                    kvs.append((f'{key_prefix}>nodes[{node_idx}]', machine_id))
 
                 # Read sns and dix value from storage_set
                 durability = storage_set['durability']

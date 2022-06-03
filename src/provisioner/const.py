@@ -17,6 +17,8 @@ SERVICE_NAME = "cortx_setup"
 APP_NAME = "provisioner"
 TMP_LOG_PATH = "/tmp/%s" % APP_NAME
 DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
+CONFIG_PATH="/etc/cortx/config"
+MACHINE_ID_PATH = "/etc/cortx/config/machine-id"
 DEFAULT_LOG_LEVEL = "INFO"
 SUPPORTED_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 RELEASE_INFO_URL = "yaml:///opt/seagate/cortx/RELEASE.INFO"
@@ -27,4 +29,4 @@ UPGRADE_MODE_VAL = ""
 REQUIRED_EXTERNAL_SW = ['kafka', 'consul']
 # Path to the location that holds the cortx gconf consul url.
 CONSUL_CONF_URL = "/etc/cortx/consul_conf"
-CORTX_DELTA_URL = "yaml:///etc/cortx/changeset.conf"
+CORTX_CHANGESET_URL = "yaml:///etc/cortx/changeset.conf"

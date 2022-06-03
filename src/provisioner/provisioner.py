@@ -53,7 +53,7 @@ class CortxProvisioner:
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
     _tmp_index = "temp_conf"
-    _delta_index = "delta_index"
+    _changeset_index = "changeset_index"
     _conf_index = "conf_index"
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
@@ -295,7 +295,7 @@ class CortxProvisioner:
             ret_code = CortxProvisioner.cortx_release.version_check(
                 release_version, installed_version)
             if ret_code == 1:
-                CortxProvisioner._prepare_diff(CortxProvisioner._conf_index, CortxProvisioner._tmp_index, CortxProvisioner._delta_index)
+                CortxProvisioner._prepare_diff(CortxProvisioner._conf_index, CortxProvisioner._tmp_index, CortxProvisioner._changeset_index)
                 CortxProvisioner.cluster_upgrade(cortx_conf_url, force_override)
                 # TODO: update_conf needs to be removed once gconf moves to consul.
                 # Gconf update after upgrade should not be handled here if gconf is in consul.
@@ -306,6 +306,7 @@ class CortxProvisioner:
             elif ret_code == 0:
                 Conf.copy(CortxProvisioner._tmp_index, CortxProvisioner._conf_index, tmp_conf_keys)
                 Conf.save(CortxProvisioner._conf_index)
+                CortxProvisioner._apply_consul_config(CortxProvisioner._conf_index)
                 CortxProvisioner.cluster_deploy(cortx_conf_url, force_override)
             else:
                 raise CortxProvisionerError(errno.EINVAL, 'Internal error. Could not determine version. Invalid image.')
@@ -344,16 +345,16 @@ class CortxProvisioner:
     def _prepare_diff(idx1: str, idx2: str, diff_idx: str):
         """
         Description:
-        Compare two conf index and prepare delta diff config.
+        Compare two conf index and prepare changeset diff config.
         1. Fetch new/deleted/updated keys by comparing idx1 and idx2
-        2. Prepare delta config on diff_index
+        2. Prepare changeset config on diff_index
         Paramaters:
         [idx1] conf index 1
         [idx2] conf index 2
-        [diff_idx] delta diff index
+        [diff_idx] changeset diff index
         """
         new_keys, deleted_keys, changed_keys = Conf.compare(idx1, idx2)
-        Conf.load(diff_idx, const.CORTX_DELTA_URL)
+        Conf.load(diff_idx, const.CORTX_CHANGESET_URL)
         for key in new_keys:
             Conf.set(diff_idx, f'new>{key}', Conf.get(idx2, key))
         for key in deleted_keys:
