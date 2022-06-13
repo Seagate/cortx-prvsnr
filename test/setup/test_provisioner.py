@@ -112,7 +112,7 @@ class TestProvisioner(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
         self.assertEqual(Conf.get('index3','new>cortx>common>name'),'CORTX')
-    
+
     def test_update_conf(self):
         """Test if new keys from changeset are getting updated in conf"""
         rc = 0
