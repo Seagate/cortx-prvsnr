@@ -538,7 +538,7 @@ class CortxProvisioner:
         """API call to get cluster health."""
         # TODO Make a call to HA Health API to get the resource status
         return "OK"
-    
+
     @staticmethod
     def _load_consul_conf(_idx: str):
         """Load consul conf with given index if not already loaded."""
