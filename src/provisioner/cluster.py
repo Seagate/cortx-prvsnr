@@ -21,8 +21,6 @@ from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
 from cortx.utils.cortx.const import Const
 from cortx.provisioner.log import Log
-import socket
-import os
 from cortx.provisioner import const
 
 class CortxCluster:

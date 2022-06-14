@@ -91,7 +91,7 @@ class TestProvisioner(unittest.TestCase):
         self.assertEqual(rc, 0)
         is_key_present, message = check_num_xx_keys(gconf)
         self.assertTrue(is_key_present, message)
-    
+
     def test_prepare_diff(self):
         """Test if changeset file is getting generated with new/changes/deleted keys"""
         Conf.load('index1', tmp_conf_url)
@@ -112,7 +112,7 @@ class TestProvisioner(unittest.TestCase):
             rc = 1
         self.assertEqual(rc, 0)
         self.assertEqual(Conf.get('index3','new>cortx>common>name'),'CORTX')
-    
+
     def test_update_conf(self):
         """Test if new keys from changeset are getting updated in conf"""
         rc = 0
