@@ -30,3 +30,4 @@ REQUIRED_EXTERNAL_SW = ['kafka', 'consul']
 # Path to the location that holds the cortx gconf consul url.
 CONSUL_CONF_URL = "/etc/cortx/consul_conf"
 CORTX_CHANGESET_URL = "yaml:///etc/cortx/changeset.conf"
+DEFAULT_CONSOLE_OUTPUT_LEVEL = "INFO"
