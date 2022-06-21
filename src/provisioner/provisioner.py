@@ -16,6 +16,7 @@
 import errno
 import os
 from enum import Enum
+from urllib.parse import urlparse
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf, MappedConf
 from cortx.utils.security.cipher import Cipher
@@ -255,11 +256,21 @@ class CortxProvisioner:
 
     @staticmethod
     def _apply_consul_config(_conf_idx: str):
-        num_endpoints = Conf.get(_conf_idx, 'cortx>external>consul>num_endpoints')
-        for idx in range(0, num_endpoints):
-            if 'http' in Conf.get(_conf_idx, f'cortx>external>consul>endpoints[{idx}]'):
+        try:
+            num_endpoints = int(Conf.get(_conf_idx, 'cortx>external>consul>num_endpoints'))
+            if num_endpoints == 0:
+                raise CortxProvisionerError(errno.EINVAL, f"Invalid value for num_endpoints '{num_endpoints}'")
+            for idx in range(0, num_endpoints):
                 consul_endpoint = Conf.get(_conf_idx, f'cortx>external>consul>endpoints[{idx}]')
-                break
+                if not consul_endpoint:
+                    raise CortxProvisionerError(errno.EINVAL, "Consul Endpoint can't be empty.")
+                if urlparse(consul_endpoint).scheme not in ['http', 'https', 'tcp']:
+                    raise CortxProvisionerError(errno.EINVAL, f"Invalid Consul Endpoint {consul_endpoint}")
+                if 'http' in consul_endpoint:
+                    break
+        except ConfError as e:
+            raise CortxProvisionerError(errno.EINVAL, f"Unable to get consul endpoint detail , Error:{e}")
+
         gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
         Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
         Conf.copy(_conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(_conf_idx))
