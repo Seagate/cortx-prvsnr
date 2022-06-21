@@ -247,11 +247,6 @@ class CortxProvisioner:
                 # Update version for each component if Provisioning successful.
                 Conf.set(_conf_idx, f'{key_prefix}>version', component_version)
 
-                # TODO: Remove the following code when gconf is completely moved to consul.
-                CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-                Conf.set(CortxProvisioner._cortx_gconf_consul_index,
-                        f'{key_prefix}>version', component_version)
-                Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _apply_consul_config(_conf_idx: str):
@@ -288,7 +283,6 @@ class CortxProvisioner:
         if installed_version is None:
             Conf.copy(CortxProvisioner._tmp_index, CortxProvisioner._conf_index, tmp_conf_keys)
             Conf.save(CortxProvisioner._conf_index)
-            CortxProvisioner._apply_consul_config(CortxProvisioner._conf_index)
             CortxProvisioner.cluster_deploy(cortx_conf_url, force_override)
         else:
             # TODO: add a case where release_version > installed_version but is not compatible.
@@ -438,12 +432,6 @@ class CortxProvisioner:
         Conf.set(_conf_idx, f'{key_prefix}>status', status)
         Conf.save(_conf_idx)
 
-        # TODO: Remove the following section once gconf is moved to consul completely.
-        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
-
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
         """Check deployed and release component version."""
@@ -463,11 +451,6 @@ class CortxProvisioner:
         Conf.set(_conf_idx, 'cortx>common>release>version', version)
         Conf.set(_conf_idx, f'node>{node_id}>provisioning>version', version)
 
-        # TODO: Remove the following sdection when gconf is completely moved to consul
-        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, 'cortx>common>release>version', version)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'node>{node_id}>provisioning>version', version)
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _validate_provisioning_status(_conf_idx: str, node_id: str, apply_phase: str):
