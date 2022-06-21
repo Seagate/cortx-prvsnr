@@ -38,7 +38,8 @@ class CortxProvisionerLog(Log):
         if not CortxProvisionerLog.logger:
             if level not in const.SUPPORTED_LOG_LEVELS:
                 level = const.DEFAULT_LOG_LEVEL
-            Log.init(service_name, log_path, level=level, console_output=console_output)
+            Log.init(service_name, log_path, level=level, console_output=console_output,
+             console_output_level=const.DEFAULT_CONSOLE_OUTPUT_LEVEL)
             CortxProvisionerLog.logger = Log.logger
 
 
@@ -74,4 +75,5 @@ class CortxProvisionerLog(Log):
                         'a+') as f:
                     f.writelines(lines)
 
-        Log.init(const.SERVICE_NAME, log_path, level=level, console_output=console_output)
+        Log.init(const.SERVICE_NAME, log_path, level=level, console_output=console_output,
+         console_output_level=const.DEFAULT_CONSOLE_OUTPUT_LEVEL)
