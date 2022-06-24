@@ -149,7 +149,8 @@ class CortxCluster:
                 if socket.getfqdn() == node['hostname']:
                     with open(const.MACHINE_ID_PATH,'w') as machine_id_path:
                         machine_id_path.write(machine_id)
-                    if node['type'] in Const.NODE_TYPE_DATA.value:
+                        storage_spec = node.get('storage')
+                    if storage_spec:
                         kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
                 # confstore keys
                 kvs.extend((
@@ -162,7 +163,6 @@ class CortxCluster:
                     ))
                 component_list = node['components']
                 kvs.extend(CortxCluster._get_component_kv_list(component_list, machine_id))
-                storage_spec = node.get('storage')
                 if storage_spec:
                     kvs.extend(self._get_storage_kv_list(storage_spec, machine_id))
             cortx_conf.set_kvs(kvs)
