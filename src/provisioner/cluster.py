@@ -148,7 +148,7 @@ class CortxCluster:
                 if socket.getfqdn() == node['hostname']:
                     with open(const.MACHINE_ID_PATH,'w') as machine_id_path:
                         machine_id_path.write(machine_id)
-                        storage_spec = node.get('storage')
+                    storage_spec = node.get('storage')
                     if storage_spec:
                         kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
                 # confstore keys
