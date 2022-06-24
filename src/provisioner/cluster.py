@@ -19,7 +19,6 @@ import socket
 import os
 from cortx.provisioner.error import CortxProvisionerError
 from cortx.utils.validator.error import VError
-from cortx.utils.cortx.const import Const
 from cortx.provisioner.log import Log
 from cortx.provisioner import const
 
@@ -149,7 +148,7 @@ class CortxCluster:
                 if socket.getfqdn() == node['hostname']:
                     with open(const.MACHINE_ID_PATH,'w') as machine_id_path:
                         machine_id_path.write(machine_id)
-                    if node['type'] in Const.NODE_TYPE_DATA.value:
+                    if node.get('storage'):
                         kvs.append((f'{key_prefix}>node_group', os.getenv('NODE_NAME')))
                 # confstore keys
                 kvs.extend((
