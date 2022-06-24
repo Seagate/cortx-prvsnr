@@ -97,10 +97,10 @@ class CortxProvisioner:
             CortxProvisioner._secrets_path = cortx_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
 
         # source code for encrypting and storing secret key
-        if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
+        if Conf.get(CortxProvisioner._solution_index, 'cluster', force=True) is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
-        if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+        if Conf.get(CortxProvisioner._solution_index, 'cortx', force=True) is not None:
             # generating cipher key
             cipher_key = None
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
@@ -132,7 +132,7 @@ class CortxProvisioner:
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
         """Convert CORTX config into confstore keys"""
-        config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
+        config_info = Conf.get(CortxProvisioner._solution_index, 'cortx', force=True)
         cortx_solution_config = CortxConfig(config_info, cortx_release)
         cortx_solution_config.save(cortx_conf, CortxProvisioner._solution_index)
 
@@ -140,10 +140,10 @@ class CortxProvisioner:
     def apply_cluster_config(cortx_conf, cortx_release):
         node_map = {}
         try:
-            node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types')
+            node_types = Conf.get(CortxProvisioner._solution_index, 'cluster>node_types', force=True)
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
             cluster_name = Conf.get(CortxProvisioner._solution_index, 'cluster>name')
-            storage_sets = Conf.get(CortxProvisioner._solution_index, 'cluster>storage_sets')
+            storage_sets = Conf.get(CortxProvisioner._solution_index, 'cluster>storage_sets', force=True)
             for key in [cluster_id, cluster_name, storage_sets, node_types]:
                 if key is None:
                     raise CortxProvisionerError(
