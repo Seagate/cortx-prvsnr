@@ -19,6 +19,9 @@ cortx:
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
   common:
+    release:
+      name: CORTX
+      version: 2.0.0-5072
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -271,6 +274,9 @@ node:
         - /dev/sdd
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-01
@@ -305,6 +311,9 @@ node:
         - /dev/sdg
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-02
@@ -356,6 +365,9 @@ node:
         - /dev/sdd
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-01
@@ -453,6 +465,9 @@ node:
         - /dev/sdd
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-01
@@ -509,6 +524,9 @@ node:
         - /dev/sdg
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-02
@@ -543,6 +561,9 @@ node:
         - /dev/sdg
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-02

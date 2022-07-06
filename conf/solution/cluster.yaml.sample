@@ -22,6 +22,8 @@ cluster:
       devices:
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
         data:
         - /dev/sdc
         - /dev/sdd
@@ -38,6 +40,8 @@ cluster:
       devices:
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
         data:
         - /dev/sdf
         - /dev/sdg

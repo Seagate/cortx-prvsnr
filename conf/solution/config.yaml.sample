@@ -12,9 +12,6 @@ cortx:
       - tcp://kafka.default.svc.cluster.local:9092
       secret: kafka_admin_secret                               # Key in the list of secrets
   common:
-    release:
-      name: CORTX
-      version: 2.0.0-1111
     service:
       admin: admin
       secret: common_admin_secret
