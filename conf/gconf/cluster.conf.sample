@@ -14,7 +14,6 @@ cortx:
         MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
       admin: admin
-      num_endpoints: 2
       endpoints:
       - tcp://kafka.default.svc.cluster.local:9092
       num_endpoints: 1
