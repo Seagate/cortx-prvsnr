@@ -9,6 +9,7 @@ cortx:
       endpoints:
       - tcp://consul-server.default.svc.cluster.local:8301
       - http://consul-server.default.svc.cluster.local:8500
+      num_endpoints: 2
       secret: !!binary |
         MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
@@ -16,6 +17,7 @@ cortx:
       num_endpoints: 2
       endpoints:
       - tcp://kafka.default.svc.cluster.local:9092
+      num_endpoints: 1
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
   common:
