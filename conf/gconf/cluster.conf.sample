@@ -8,17 +8,21 @@ cortx:
       admin: admin
       endpoints:
       - tcp://consul-server.default.svc.cluster.local:8301
-      - http://consul-server.default.svc.cluster.local:8500
+      - http://cortx-consul-server:8500
+      num_endpoints: 2
       secret: !!binary |
         MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
     kafka:
       admin: admin
-      num_endpoints: 2
       endpoints:
       - tcp://kafka.default.svc.cluster.local:9092
+      num_endpoints: 1
       secret: !!binary |
         TmRPNThMSm5GOVl5RHgwTVFfaTRJZ3k3YUUwMldmNkdxRE1KYVIxc0E9PQ==
   common:
+    release:
+      name: CORTX
+      version: 2.0.0-5072
     security:
       device_certificate: /etc/cortx/solution/ssl/stx.pem
       domain_certificate: /etc/cortx/solution/ssl/stx.pem
@@ -165,7 +169,7 @@ cortx:
     ios:
       group_size: 1                                            # Number of services to be started in a group
                                                                # N = Total CVG / group_size. N must be <=24. 
-      num_endpoints: 3
+      num_endpoints: 6
       endpoints:
       - tcp://data1-node1:21002                                # Format: <protocol>://<hostname_ip>:<port>
                                                                # N endpoints one for each Pod, first mentioned here
@@ -177,7 +181,7 @@ cortx:
       - tcp://data1-node3:21002
       - tcp://data2-node3:21002  
     confd:
-      num_endpoints: 3
+      num_endpoints: 6
       endpoints:
       - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:21001
       - tcp://data1-node2:21001       
@@ -243,14 +247,17 @@ cluster:
         parity: '0'
         spare: '0'
     nodes:
-    - 9995f539f4f770e2a3fe9e2e615c32a8
-    - 1115f539f4f770e2a3fe9e2e615c32a8
-    - aaa120a9e051d103c164f605615c32a4
-    - bbb340f79047df9bb52fa460615c32a5
-    - ccc8700fe6797ed532e311b0615c32a7
-    - ddd120a9e051d103c164f605615c32a4
-    - eee340f79047df9bb52fa460615c32a5
-    - fff8700fe6797ed532e311b0615c32a7
+    - 11dfe4bc7d43c202b28a2a1d8bcaa0f6
+    - 26f752930474c28d64c09b4c198c0fea
+    - 309ff7f0a7c4dfc22171b75c174bb70c
+    - 380fb4a039ffc67865bc5b1d51a38811
+    - 4eb5285f0ec23864604123b79de13e38
+    - 5a230afb7355d23155bcc58328bbe03a
+    - 8581ff0c598abccbd020e3b72f2cd334
+    - a41d31a905d3892ba80bc0604041d4af
+    - aab7732613c4483da0784d14e5ad917d
+    - b5e8544fd1b3ec3764fff509652a8d07
+    - c4a32f1a4a3a43c1c65563511d9536b0
 node:
   11dfe4bc7d43c202b28a2a1d8bcaa0f6:
     cluster_id: 0007ec45379e36d9fa089a3d615c32a3
@@ -271,6 +278,9 @@ node:
         - /dev/sdd
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-01
@@ -305,6 +315,9 @@ node:
         - /dev/sdg
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-02
@@ -356,6 +369,9 @@ node:
         - /dev/sdd
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-01
@@ -453,6 +469,9 @@ node:
         - /dev/sdd
         metadata:
         - /dev/sdb
+        log:
+        - /dev/sdh
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-01
@@ -509,6 +528,9 @@ node:
         - /dev/sdg
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-02
@@ -543,6 +565,9 @@ node:
         - /dev/sdg
         metadata:
         - /dev/sde
+        log:
+        - /dev/sdi
+        num_log: 1
         num_data: 2
         num_metadata: 1
       name: cvg-02
