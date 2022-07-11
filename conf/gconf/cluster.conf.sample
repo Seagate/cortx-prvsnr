@@ -8,7 +8,7 @@ cortx:
       admin: admin
       endpoints:
       - tcp://consul-server.default.svc.cluster.local:8301
-      - http://consul-server.default.svc.cluster.local:8500
+      - http://cortx-consul-server:8500
       num_endpoints: 2
       secret: !!binary |
         MG12NU5BVjBVeWpBSWJuSV9uVjV5UzUxN3lTSVNkNUk1YkRzbjd2QkE9PQ==
