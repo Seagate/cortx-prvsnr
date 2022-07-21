@@ -15,6 +15,7 @@
 
 import errno
 import os
+import time
 from enum import Enum
 from urllib.parse import urlparse
 from cortx.utils.process import SimpleProcess
@@ -53,13 +54,11 @@ class CortxProvisioner:
     """CORTX Provosioner."""
     _cortx_conf_url = "yaml:///etc/cortx/cluster.conf"
     _solution_index = "solution_conf"
-    _tmp_index = "temp_conf"
-    _changeset_index = "changeset_index"
-    _conf_index = "conf_index"
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
+    _lock_key = "conf>lock"
     _cortx_gconf_consul_index = "consul_index"
-    _tmp_cortx_conf_url = "yaml:///tmp/tmp.conf"
+    _lock_timeout = 10
     cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
@@ -82,7 +81,7 @@ class CortxProvisioner:
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
-        cortx_conf = MappedConf(CortxProvisioner._tmp_cortx_conf_url)
+        cortx_conf = MappedConf(cortx_conf_url)
 
         # Load same config again if force_override is True
         try:
@@ -101,7 +100,14 @@ class CortxProvisioner:
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
-        if Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+        if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
+            Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, force = True, lock_key=CortxProvisioner._lock_key)
+            # TODO: remove Conf.save once gconf is completly moved to consul
+            Conf.save(cortx_conf._conf_idx)
+        if cortx_conf.get('cortx') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+            Conf.lock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+            # TODO: remove Conf.save once gconf is completly moved to consul
+            Conf.save(cortx_conf._conf_idx)
             # generating cipher key
             cipher_key = None
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
@@ -128,6 +134,8 @@ class CortxProvisioner:
             CortxProvisioner.apply_cortx_config(cortx_conf, CortxProvisioner.cortx_release)
             # Adding array count key in conf
             cortx_conf.add_num_keys()
+            Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+            # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
 
     @staticmethod
@@ -168,15 +176,35 @@ class CortxProvisioner:
 
             solution_config_nodes = CortxCluster(nodes, cortx_release)
             solution_config_nodes.save(cortx_conf)
-            solution_config_storagesets = CortxStorageSet(storage_sets)
-            solution_config_storagesets.save(cortx_conf)
+            if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
+                Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, force = True, lock_key=CortxProvisioner._lock_key)
+                # TODO: remove Conf.save once gconf is completly moved to consul
+                Conf.save(cortx_conf._conf_idx)
+            if cortx_conf.get('cluster>storage_set') is None:
+                Conf.lock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+                # TODO: remove Conf.save once gconf is completly moved to consul
+                Conf.save(cortx_conf._conf_idx)
+                solution_config_storagesets = CortxStorageSet(storage_sets)
+                solution_config_storagesets.save(cortx_conf)
+                Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+                # TODO: remove Conf.save once gconf is completly moved to consul
+                Conf.save(cortx_conf._conf_idx)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
-    def _get_node_info(_conf_idx: str):
+    def _wait_for_lock_to_be_released(cortx_conf: MappedConf, timeout: int):
+        while timeout > 0:
+            if not Conf.test_lock(cortx_conf._conf_idx, lock_key='gconf>lock'):
+                return True
+            time.sleep(1)
+            timeout -= 1
+        return False
+
+    @staticmethod
+    def _get_node_info(cortx_conf: MappedConf):
         """To get the node information."""
         node_id = Conf.machine_id
         if node_id is None:
@@ -185,68 +213,68 @@ class CortxProvisioner:
 
         # Reinitialize logging with configured log path
         log_path = os.path.join(
-            Conf.get(_conf_idx, 'cortx>common>storage>log'), const.APP_NAME, node_id)
+            cortx_conf.get('cortx>common>storage>log'), const.APP_NAME, node_id)
         log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
 
-        if Conf.get(_conf_idx, f'node>{node_id}>name') is None:
+        if cortx_conf.get(f'node>{node_id}>name') is None:
             raise CortxProvisionerError(
                 errno.EINVAL, f'Node name not found in cortx config for node {node_id}.')
 
-        node_name = Conf.get(_conf_idx, f'node>{node_id}>name')
+        node_name = cortx_conf.get(f'node>{node_id}>name')
 
         return node_id, node_name
 
     @staticmethod
-    def _provision_components(cortx_conf_url: str, _conf_idx: str, interfaces: Enum, apply_phase: str):
+    def _provision_components(cortx_conf: MappedConf, interfaces: Enum, apply_phase: str):
         """Invoke Mini Provisioners of cluster components."""
-        node_id, _ = CortxProvisioner._get_node_info(_conf_idx)
-        num_components = int(Conf.get(_conf_idx, f'node>{node_id}>num_components'))
+        node_id, _ = CortxProvisioner._get_node_info(cortx_conf)
+        num_components = int(cortx_conf.get(f'node>{node_id}>num_components'))
         for interface in interfaces:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
-                component_name = Conf.get(_conf_idx, f'{key_prefix}>name')
+                component_name = cortx_conf.get(f'{key_prefix}>name')
                 # Check if RPM exists for the component, if it does exist get the build version
                 component_version = CortxProvisioner.cortx_release.get_component_version(
                     component_name)
                 # Get services.
                 service_idx = 0
                 services = []
-                while (Conf.get(_conf_idx, f'{key_prefix}>services[{service_idx}]') is not None):
-                    services.append(Conf.get(_conf_idx, f'{key_prefix}>services[{service_idx}]'))
+                while (cortx_conf.get(f'{key_prefix}>services[{service_idx}]') is not None):
+                    services.append(cortx_conf.get(f'{key_prefix}>services[{service_idx}]'))
                     service_idx = service_idx + 1
                 service = 'all' if service_idx == 0 else ','.join(services)
                 if apply_phase == ProvisionerStages.UPGRADE.value:
-                    version = Conf.get(_conf_idx, f'{key_prefix}>version')
+                    version = cortx_conf.get(f'{key_prefix}>version')
                     # Skip update for component if it is already updated.
                     is_updated = CortxProvisioner._is_component_updated(component_name, version)
                     if is_updated is True:
                         Log.info(f'{component_name} is already updated with {version} version.')
                         continue
                 CortxProvisioner._update_provisioning_status(
-                        _conf_idx, node_id, apply_phase, ProvisionerStatus.PROGRESS.value)
+                        cortx_conf, node_id, apply_phase, ProvisionerStatus.PROGRESS.value)
                 if interface.value == 'upgrade':
                     # TODO: add --changeset parameter once all components support config upgrade
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
-                        f" --config {cortx_conf_url} --services {service}")
+                        f" --config {cortx_conf._conf_url} --services {service}")
                 else:
                     cmd = (
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
-                        f" --config {cortx_conf_url} --services {service}")
+                        f" --config {cortx_conf._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
                 if rc != 0:
                     CortxProvisioner._update_provisioning_status(
-                        _conf_idx, node_id, apply_phase, ProvisionerStatus.ERROR.value)
+                        cortx_conf, node_id, apply_phase, ProvisionerStatus.ERROR.value)
                     raise CortxProvisionerError(
                         rc, "%s phase of %s, failed. %s", interface.value,
                         component_name, err)
 
                 # Update version for each component if Provisioning successful.
-                Conf.set(_conf_idx, f'{key_prefix}>version', component_version)
+                cortx_conf.set(f'{key_prefix}>version', component_version)
 
                 # TODO: Remove the following code when gconf is completely moved to consul.
                 CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
@@ -255,13 +283,13 @@ class CortxProvisioner:
                 Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
-    def _apply_consul_config(_conf_idx: str):
+    def _apply_consul_config(cortx_conf: MappedConf):
         try:
-            num_endpoints = int(Conf.get(_conf_idx, 'cortx>external>consul>num_endpoints'))
+            num_endpoints = int(cortx_conf.get('cortx>external>consul>num_endpoints'))
             if num_endpoints == 0:
                 raise CortxProvisionerError(errno.EINVAL, f"Invalid value for num_endpoints '{num_endpoints}'")
             for idx in range(0, num_endpoints):
-                consul_endpoint = Conf.get(_conf_idx, f'cortx>external>consul>endpoints[{idx}]')
+                consul_endpoint = cortx_conf.get(f'cortx>external>consul>endpoints[{idx}]')
                 if not consul_endpoint:
                     raise CortxProvisionerError(errno.EINVAL, "Consul Endpoint can't be empty.")
                 if urlparse(consul_endpoint).scheme not in ['http', 'https', 'tcp']:
@@ -273,7 +301,7 @@ class CortxProvisioner:
 
         gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
         Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
-        Conf.copy(_conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(_conf_idx))
+        Conf.copy(cortx_conf._conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(cortx_conf._conf_idx))
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
         # TODO: place the below code at a proper location when this function is removed.
         with open(const.CONSUL_CONF_URL, 'w') as f:
@@ -290,34 +318,24 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
-        Conf.load(CortxProvisioner._conf_index, cortx_conf_url)
-        Conf.load(CortxProvisioner._tmp_index, CortxProvisioner._tmp_cortx_conf_url)
-        tmp_conf_keys = Conf.get_keys(CortxProvisioner._tmp_index)
+        cortx_conf = MappedConf(cortx_conf_url)
+        # TODO: Remove the following code when gconf is completely moved to consul.
+        CortxProvisioner._apply_consul_config(cortx_conf)
         node_id = Conf.machine_id
-        installed_version = Conf.get(CortxProvisioner._conf_index, f'node>{node_id}>provisioning>version')
+        installed_version = cortx_conf.get(f'node>{node_id}>provisioning>version')
         release_version = CortxProvisioner.cortx_release.get_release_version()
         if installed_version is None:
-            Conf.copy(CortxProvisioner._tmp_index, CortxProvisioner._conf_index, tmp_conf_keys)
-            Conf.save(CortxProvisioner._conf_index)
-            CortxProvisioner._apply_consul_config(CortxProvisioner._conf_index)
             CortxProvisioner.cluster_deploy(cortx_conf_url, force_override)
         else:
             # TODO: add a case where release_version > installed_version but is not compatible.
             ret_code = CortxProvisioner.cortx_release.version_check(
                 release_version, installed_version)
             if ret_code == 1:
-                CortxProvisioner._prepare_diff(CortxProvisioner._conf_index, CortxProvisioner._tmp_index, CortxProvisioner._changeset_index)
                 CortxProvisioner.cluster_upgrade(cortx_conf_url, force_override)
-                # TODO: update_conf needs to be removed once gconf moves to consul.
-                # Gconf update after upgrade should not be handled here if gconf is in consul.
-                CortxProvisioner._update_conf(CortxProvisioner._conf_index, CortxProvisioner._tmp_index)
             # TODO: This will be removed once downgrade is also supported.
             elif ret_code == -1:
                 raise CortxProvisionerError(errno.EINVAL, 'Downgrade is Not Supported')
             elif ret_code == 0:
-                Conf.copy(CortxProvisioner._tmp_index, CortxProvisioner._conf_index, tmp_conf_keys)
-                Conf.save(CortxProvisioner._conf_index)
-                CortxProvisioner._apply_consul_config(CortxProvisioner._conf_index)
                 CortxProvisioner.cluster_deploy(cortx_conf_url, force_override)
             else:
                 raise CortxProvisionerError(errno.EINVAL, 'Internal error. Could not determine version. Invalid image.')
@@ -332,10 +350,11 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
+        cortx_conf = MappedConf(cortx_conf_url)
         apply_phase = ProvisionerStages.DEPLOYMENT.value
-        node_id, node_name = CortxProvisioner._get_node_info(CortxProvisioner._conf_index)
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
-            CortxProvisioner._conf_index, node_id, apply_phase)
+            cortx_conf, node_id, apply_phase)
         if is_valid is False:
             if force_override is False:
                 Log.warn('Validation check failed, Aborting cluster bootstarp'
@@ -345,54 +364,12 @@ class CortxProvisioner:
                 Log.info('Validation check failed, Forcefully overriding deployment.')
         Log.info(f"Starting cluster bootstrap on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
-            CortxProvisioner._conf_index, node_id, apply_phase)
-        CortxProvisioner._provision_components(cortx_conf_url, CortxProvisioner._conf_index, DeploymentInterfaces, apply_phase)
-        CortxProvisioner._add_version_info(CortxProvisioner._conf_index, node_id)
+            cortx_conf, node_id, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, DeploymentInterfaces, apply_phase)
+        CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
-            CortxProvisioner._conf_index, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
+            cortx_conf, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
         Log.info(f"Finished cluster bootstrap on {node_id}:{node_name}")
-
-    @staticmethod
-    def _prepare_diff(idx1: str, idx2: str, diff_idx: str):
-        """
-        Description:
-        Compare two conf index and prepare changeset diff config.
-        1. Fetch new/deleted/updated keys by comparing idx1 and idx2
-        2. Prepare changeset config on diff_index
-        Paramaters:
-        [idx1] conf index 1
-        [idx2] conf index 2
-        [diff_idx] changeset diff index
-        """
-        new_keys, deleted_keys, changed_keys = Conf.compare(idx1, idx2)
-        Conf.load(diff_idx, const.CORTX_CHANGESET_URL)
-        for key in new_keys:
-            Conf.set(diff_idx, f'new>{key}', Conf.get(idx2, key))
-        for key in deleted_keys:
-            Conf.set(diff_idx, f'deleted>{key}', Conf.get(idx1, key))
-        for key in changed_keys:
-            value = f"{Conf.get(idx1, key)}|{Conf.get(idx2, key)}"
-            Conf.set(diff_idx, f'changed>{key}', value)
-        Conf.save(diff_idx)
-
-    @staticmethod
-    def _update_conf(_conf_idx: str, _tmp_idx: str):
-        """
-        Description:
-        Updates conf by updating new keys/values post upgrade.
-        1. Fetch new keys using conf compare
-        2. Update gconf by adding new keys.
-        3. Update gconf by updating changed values for cortx>common
-        """
-        new_keys, _, changed_keys = Conf.compare(_conf_idx, _tmp_idx)
-        for key in new_keys:
-            value= Conf.get(_tmp_idx, key)
-            Conf.set(_conf_idx, key, value)
-        for key in changed_keys:
-            if key.startswith('cortx>common'):
-                value= Conf.get(_tmp_idx, key)
-                Conf.set(_conf_idx, key, value)
-        Conf.save(_conf_idx)
 
     @staticmethod
     def cluster_upgrade(cortx_conf_url: str, force_override: bool = False):
@@ -404,15 +381,16 @@ class CortxProvisioner:
         Paramaters:
         [IN] CORTX Config URL
         """
+        cortx_conf = MappedConf(cortx_conf_url)
         # query to get cluster health
         upgrade_mode = os.getenv(const.UPGRADE_MODE_KEY, const.UPGRADE_MODE_VAL).upper()
         if upgrade_mode != "COLD" and not CortxProvisioner.is_cluster_healthy():
             Log.error('Cluster is unhealthy, Aborting upgrade with return code 1')
             return 1
         apply_phase = ProvisionerStages.UPGRADE.value
-        node_id, node_name = CortxProvisioner._get_node_info(CortxProvisioner._conf_index)
+        node_id, node_name = CortxProvisioner._get_node_info(cortx_conf)
         is_valid, ret_code = CortxProvisioner._validate_provisioning_status(
-            CortxProvisioner._conf_index, node_id, apply_phase)
+            cortx_conf, node_id, apply_phase)
         if is_valid is False:
             if force_override is False:
                 Log.warn('Validation check failed, Aborting upgrade with '
@@ -423,31 +401,29 @@ class CortxProvisioner:
 
         Log.info(f"Starting cluster upgrade on {node_id}:{node_name}")
         CortxProvisioner._update_provisioning_status(
-            CortxProvisioner._conf_index, node_id, apply_phase)
+            cortx_conf, node_id, apply_phase)
 
-        CortxProvisioner._provision_components(cortx_conf_url, CortxProvisioner._conf_index, UpgradeInterfaces, apply_phase)
+        CortxProvisioner._provision_components(cortx_conf, UpgradeInterfaces, apply_phase)
         # Update CORTX version, once the upgrade is successful
-        CortxProvisioner._add_version_info(CortxProvisioner._conf_index, node_id)
+        CortxProvisioner._add_version_info(cortx_conf, node_id)
         CortxProvisioner._update_provisioning_status(
-            CortxProvisioner._conf_index, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
+            cortx_conf, node_id, apply_phase, ProvisionerStatus.SUCCESS.value)
         Log.info(f"Finished cluster upgrade on {node_id}:{node_name}")
 
     @staticmethod
-    def _update_provisioning_status(_conf_idx: str, node_id: str,
+    def _update_provisioning_status(cortx_conf: MappedConf, node_id: str,
         phase: str, status: str = ProvisionerStatus.DEFAULT.value):
         """
         Description:
-
         Add phase, status, version, release keys in confstore.
         Args:
         cortx_conf: config store url. eg. yaml:///etc/cortx/cluster.conf
         node_id: machine-id
         phase: deployment/upgrade
         status: default/progress/success/error."""
-        key_prefix = f'node>{node_id}>provisioning'
-        Conf.set(_conf_idx, f'{key_prefix}>phase', phase)
-        Conf.set(_conf_idx, f'{key_prefix}>status', status)
-        Conf.save(_conf_idx)
+        key_prefix = f'node>{node_id}>provisioning>'
+        keys = [(key_prefix + 'phase', phase), (key_prefix + 'status', status)]
+        cortx_conf.set_kvs(keys)
 
         # TODO: Remove the following section once gconf is moved to consul completely.
         CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
@@ -468,11 +444,11 @@ class CortxProvisioner:
         return is_updated
 
     @staticmethod
-    def _add_version_info(_conf_idx: str, node_id):
+    def _add_version_info(cortx_conf: MappedConf, node_id):
         """Add version in confstore."""
         version = CortxProvisioner.cortx_release.get_release_version()
-        Conf.set(_conf_idx, 'cortx>common>release>version', version)
-        Conf.set(_conf_idx, f'node>{node_id}>provisioning>version', version)
+        cortx_conf.set('cortx>common>release>version', version)
+        cortx_conf.set(f'node>{node_id}>provisioning>version', version)
 
         # TODO: Remove the following sdection when gconf is completely moved to consul
         CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
@@ -481,11 +457,11 @@ class CortxProvisioner:
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
-    def _validate_provisioning_status(_conf_idx: str, node_id: str, apply_phase: str):
+    def _validate_provisioning_status(cortx_conf: MappedConf, node_id: str, apply_phase: str):
         """Validate provisioning."""
         ret_code = 0
-        recent_phase = Conf.get(_conf_idx, f'node>{node_id}>provisioning>phase')
-        recent_status = Conf.get(_conf_idx, f'node>{node_id}>provisioning>status')
+        recent_phase = cortx_conf.get(f'node>{node_id}>provisioning>phase')
+        recent_status = cortx_conf.get(f'node>{node_id}>provisioning>status')
         msg = f'Recent phase for this node is {recent_phase} and ' + \
                 f'recent status is {recent_status}. '
         # {apply_phase: {recent_phase: {recent_status: [boolean_result,rc]}}}
@@ -533,7 +509,7 @@ class CortxProvisioner:
             Log.error(msg + f'{apply_phase} is not possible on this node.')
             if apply_phase == ProvisionerStages.UPGRADE.value:
                 # Reset status.
-                recent_status = Conf.set(_conf_idx, f'node>{node_id}>provisioning>status',
+                recent_status = cortx_conf.set(f'node>{node_id}>provisioning>status',
                     ProvisionerStatus.DEFAULT.value)
         else:
             Log.info(msg)
