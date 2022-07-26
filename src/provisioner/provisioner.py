@@ -102,6 +102,8 @@ class CortxProvisioner:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
         print("1")
+        Log.info(f"lock owner: {cortx_conf.get(f'{CortxProvisioner._lock_key}>owner')}")
+        Log.info(f"lock time: {cortx_conf.get(f'{CortxProvisioner._lock_key}>time')}")
         Machine_id = const.MACHINE_ID_PATH.read_text().strip()
         Log.info(f"Machine id: {Machine_id}")
         if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
@@ -110,7 +112,7 @@ class CortxProvisioner:
             Log.info(f"unlock response: {res}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
-        if cortx_conf.get('cortx') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+        if cortx_conf.get('cortx>utils>message_bus_backend') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             Log.info("generating cortx config")
             res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
             Log.info(f"lock response: {res}")
@@ -188,8 +190,8 @@ class CortxProvisioner:
 
             solution_config_nodes = CortxCluster(nodes, cortx_release)
             solution_config_nodes.save(cortx_conf)
-            Log.info(f"lock owner: {cortx_conf.get('consul_conf>lock>owner')}")
-            Log.info(f"lock time: {cortx_conf.get('consul_conf>lock>time')}")
+            Log.info(f"lock owner: {cortx_conf.get(f'{CortxProvisioner._lock_key}>owner')}")
+            Log.info(f"lock time: {cortx_conf.get(f'{CortxProvisioner._lock_key}>time')}")
             Machine_id = const.MACHINE_ID_PATH.read_text().strip()
             Log.info(f"Machine id: {Machine_id}")
             if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
@@ -198,7 +200,8 @@ class CortxProvisioner:
                 Log.info(f"unlock response: {res}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
-            if cortx_conf.get('cluster>storage_set') is None:
+            Log.info(f"storage_set value: {cortx_conf.get('cluster>storage_set[0]>name')}")
+            if cortx_conf.get('cluster>storage_set[0]>name') is None:
                 Log.info("generating cluster config")
                 res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
                 Log.info(f"lock response: {res}")
@@ -222,7 +225,9 @@ class CortxProvisioner:
     def _wait_for_lock_to_be_released(cortx_conf: MappedConf, timeout: int):
         while timeout > 0:
             Log.info("testing lock")
-            if not Conf.test_lock(cortx_conf._conf_idx, lock_key='gconf>lock'):
+            res = Conf.test_lock(cortx_conf._conf_idx, lock_key=CortxProvisioner._lock_key)
+            Log.info(f"test_lock response: {res}")
+            if not res:
                 return True
             Log.info("sleeping now..")
             time.sleep(2)
