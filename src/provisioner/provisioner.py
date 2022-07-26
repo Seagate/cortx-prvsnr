@@ -117,6 +117,7 @@ class CortxProvisioner:
             res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
             Log.info(f"lock response: {res}")
             Log.info("locked cortx config")
+            Log.info(f"lock owner: {cortx_conf.get(f'{CortxProvisioner._lock_key}>owner')}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
             # generating cipher key
