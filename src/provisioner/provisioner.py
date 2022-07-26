@@ -102,15 +102,17 @@ class CortxProvisioner:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
         print("1")
+        Machine_id = const.MACHINE_ID_PATH.read_text().strip()
+        Log.info(f"Machine id: {Machine_id}")
         if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
             Log.info("waiting done, unlocking forcefully")
-            res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, force = True, lock_key=CortxProvisioner._lock_key)
+            res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key)
             Log.info(f"unlock response: {res}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
         if cortx_conf.get('cortx') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             Log.info("generating cortx config")
-            res = Conf.lock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+            res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
             Log.info(f"lock response: {res}")
             Log.info("locked cortx config")
             # TODO: remove Conf.save once gconf is completly moved to consul
@@ -142,7 +144,7 @@ class CortxProvisioner:
             # Adding array count key in conf
             cortx_conf.add_num_keys()
             Conf.save(cortx_conf._conf_idx)
-            res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+            res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
             Log.info(f"unlock response: {res}")
             Log.info("unlocked cortx config")
             # TODO: remove Conf.save once gconf is completly moved to consul
@@ -186,18 +188,19 @@ class CortxProvisioner:
 
             solution_config_nodes = CortxCluster(nodes, cortx_release)
             solution_config_nodes.save(cortx_conf)
-            Log.info(f"Machine id: {Conf.machine_id}")
             Log.info(f"lock owner: {cortx_conf.get('consul_conf>lock>owner')}")
             Log.info(f"lock time: {cortx_conf.get('consul_conf>lock>time')}")
+            Machine_id = const.MACHINE_ID_PATH.read_text().strip()
+            Log.info(f"Machine id: {Machine_id}")
             if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
                 Log.info("waiting for cluster config done, unlocking forcefully")
-                res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, force = True, lock_key=CortxProvisioner._lock_key)
+                res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key)
                 Log.info(f"unlock response: {res}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
             if cortx_conf.get('cluster>storage_set') is None:
                 Log.info("generating cluster config")
-                res = Conf.lock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+                res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
                 Log.info(f"lock response: {res}")
                 Log.info("locked cluster config")
                 # TODO: remove Conf.save once gconf is completly moved to consul
@@ -205,7 +208,7 @@ class CortxProvisioner:
                 solution_config_storagesets = CortxStorageSet(storage_sets)
                 solution_config_storagesets.save(cortx_conf)
                 Conf.save(cortx_conf._conf_idx)
-                res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Conf.machine_id, lock_key=CortxProvisioner._lock_key)
+                res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
                 Log.info(f"unlock response: {res}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
