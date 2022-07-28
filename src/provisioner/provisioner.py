@@ -13,9 +13,11 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
+from datetime import datetime
 import errno
 import os
 import time
+import socket
 from enum import Enum
 from urllib.parse import urlparse
 from cortx.utils.process import SimpleProcess
@@ -58,7 +60,7 @@ class CortxProvisioner:
     _rel_secret_path = "/solution/secret"
     _lock_key = "consul_conf>lock"
     _cortx_gconf_consul_index = "consul_index"
-    _lock_timeout = 25
+    _timeout = 25
     cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
@@ -81,6 +83,12 @@ class CortxProvisioner:
 
         if cortx_conf_url is None:
             cortx_conf_url = CortxProvisioner._cortx_conf_url
+
+        # Check if consul endpoint is reachable
+        if 'consul' in cortx_conf_url:
+            if not CortxProvisioner._check_consul_connection(cortx_conf_url, CortxProvisioner._timeout):
+                raise CortxProvisionerError(errno.EINVAL, f"Consul endpoint {cortx_conf_url} not reachable over network")
+
         cortx_conf = MappedConf(cortx_conf_url)
 
         # Load same config again if force_override is True
@@ -101,7 +109,7 @@ class CortxProvisioner:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
         Machine_id = CortxProvisioner._get_machine_id()
-        if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
+        if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout):
             if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key):
                 raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
@@ -166,9 +174,6 @@ class CortxProvisioner:
 
             for node_type in node_types:
                 node_map[node_type['name']] = node_type
-            cluster_keys = [('cluster>id', cluster_id),
-                ('cluster>name', cluster_name)]
-            cortx_conf.set_kvs(cluster_keys)
 
             nodes = []
             for storage_set in storage_sets:
@@ -182,12 +187,15 @@ class CortxProvisioner:
             solution_config_nodes = CortxCluster(nodes, cortx_release)
             solution_config_nodes.save(cortx_conf)
             Machine_id = CortxProvisioner._get_machine_id()
-            if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
+            if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout):
                 if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key):
                     raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
-            if cortx_conf.get('cluster>storage_set[0]>name') is None:
+            if cortx_conf.get('cluster>id') is None:
+                cluster_keys = [('cluster>id', cluster_id),
+                    ('cluster>name', cluster_name)]
+                cortx_conf.set_kvs(cluster_keys)
                 if not Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
                     raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
@@ -205,14 +213,33 @@ class CortxProvisioner:
                 f'Error occurred while applying cluster_config {e}')
 
     @staticmethod
+    def _check_consul_connection(cortx_conf_url: str, timeout: int):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        host, path = (cortx_conf_url.split('//')[-1]).split(':')
+        port = path.split('/')[0]
+        ## wait logic for consul endpoint to be available
+        while timeout > 0 :
+            try:
+                if sock.connect_ex((host, int(port))) == 0:
+                    return True
+            except Exception:
+                Log.debug('Waiting for Consul to be ready..')
+            time.sleep(2)
+            timeout -=1
+        return False
+
+    @staticmethod
     def _wait_for_lock_to_be_released(cortx_conf: MappedConf, timeout: int):
-        while timeout > 0:
+        while True:
             if not Conf.test_lock(cortx_conf._conf_idx, lock_key=CortxProvisioner._lock_key):
                 return True
+            lock_time = float(cortx_conf.get(f'{CortxProvisioner._lock_key}>time'))
+            if (lock_time + timeout) < float(datetime.timestamp(datetime.now())):
+                break
             time.sleep(2)
-            timeout -= 1
         return False
-    
+
     @staticmethod
     def _get_machine_id():
         return const.MACHINE_ID_PATH.read_text().strip()
@@ -314,6 +341,9 @@ class CortxProvisioner:
             raise CortxProvisionerError(errno.EINVAL, f"Unable to get consul endpoint detail , Error:{e}")
 
         gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
+        # Check if consul endpoint is reachable
+        if not CortxProvisioner._check_consul_connection(gconf_consul_url, CortxProvisioner._timeout):
+            raise CortxProvisionerError(errno.EINVAL, f"Consul endpoint {gconf_consul_url} not reachable over network")
         Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
         Conf.copy(cortx_conf._conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(cortx_conf._conf_idx))
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
