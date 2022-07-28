@@ -209,12 +209,8 @@ class CortxProvisioner:
     @staticmethod
     def _wait_for_lock_to_be_released(cortx_conf: MappedConf, timeout: int):
         while timeout > 0:
-            Log.info("testing lock")
-            res = Conf.test_lock(cortx_conf._conf_idx, lock_key=CortxProvisioner._lock_key)
-            Log.info(f"test_lock response: {res}")
-            if not res:
+            if not Conf.test_lock(cortx_conf._conf_idx, lock_key=CortxProvisioner._lock_key):
                 return True
-            Log.info("sleeping now..")
             time.sleep(2)
             timeout -= 1
         return False
