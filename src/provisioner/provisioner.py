@@ -102,23 +102,15 @@ class CortxProvisioner:
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
-        print("1")
-        Log.info(f"lock owner: {cortx_conf.get(f'{CortxProvisioner._lock_key}>owner')}")
-        Log.info(f"lock time: {cortx_conf.get(f'{CortxProvisioner._lock_key}>time')}")
-        Machine_id = const.MACHINE_ID_PATH.read_text().strip()
-        Log.info(f"Machine id: {Machine_id}")
+        Machine_id = CortxProvisioner._get_machine_id()
         if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
-            Log.info("waiting done, unlocking forcefully")
-            res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key)
-            Log.info(f"unlock response: {res}")
+            if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key):
+                raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
-        if cortx_conf.get('cortx>utils>message_bus_backend') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
-            Log.info("generating cortx config")
-            res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
-            Log.info(f"lock response: {res}")
-            Log.info("locked cortx config")
-            Log.info(f"lock owner: {cortx_conf.get(f'{CortxProvisioner._lock_key}>owner')}")
+        if cortx_conf.get('cortx>common>storage>local') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+            if not Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+                raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
             # generating cipher key
@@ -148,9 +140,8 @@ class CortxProvisioner:
             # Adding array count key in conf
             cortx_conf.add_num_keys()
             Conf.save(cortx_conf._conf_idx)
-            res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
-            Log.info(f"unlock response: {res}")
-            Log.info("unlocked cortx config")
+            if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+                raise CortxProvisionerError(errno.EINVAL, f"unlocking failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
 
@@ -192,32 +183,24 @@ class CortxProvisioner:
 
             solution_config_nodes = CortxCluster(nodes, cortx_release)
             solution_config_nodes.save(cortx_conf)
-            Log.info(f"lock owner: {cortx_conf.get(f'{CortxProvisioner._lock_key}>owner')}")
-            Log.info(f"lock time: {cortx_conf.get(f'{CortxProvisioner._lock_key}>time')}")
-            Machine_id = const.MACHINE_ID_PATH.read_text().strip()
-            Log.info(f"Machine id: {Machine_id}")
+            Machine_id = CortxProvisioner._get_machine_id()
             if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._lock_timeout):
-                Log.info("waiting for cluster config done, unlocking forcefully")
-                res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key)
-                Log.info(f"unlock response: {res}")
+                if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key):
+                    raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
-            Log.info(f"storage_set value: {cortx_conf.get('cluster>storage_set[0]>name')}")
             if cortx_conf.get('cluster>storage_set[0]>name') is None:
-                Log.info("generating cluster config")
-                res = Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
-                Log.info(f"lock response: {res}")
-                Log.info("locked cluster config")
+                if not Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+                    raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
                 solution_config_storagesets = CortxStorageSet(storage_sets)
                 solution_config_storagesets.save(cortx_conf)
                 Conf.save(cortx_conf._conf_idx)
-                res = Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key)
-                Log.info(f"unlock response: {res}")
+                if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+                    raise CortxProvisionerError(errno.EINVAL, f"unlocking failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
-                Log.info("unlocked cluster config")
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
@@ -235,6 +218,10 @@ class CortxProvisioner:
             time.sleep(2)
             timeout -= 1
         return False
+    
+    @staticmethod
+    def _get_machine_id():
+        return const.MACHINE_ID_PATH.read_text().strip()
 
     @staticmethod
     def _get_node_info(cortx_conf: MappedConf):
