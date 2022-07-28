@@ -112,7 +112,6 @@ class CortxProvisioner:
                 raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
-            print("lock")
             # generating cipher key
             cipher_key = None
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
@@ -194,7 +193,6 @@ class CortxProvisioner:
                     raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
-                print("lock")
                 solution_config_storagesets = CortxStorageSet(storage_sets)
                 solution_config_storagesets.save(cortx_conf)
                 Conf.save(cortx_conf._conf_idx)
