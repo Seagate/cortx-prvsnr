@@ -62,6 +62,7 @@ class CortxProvisioner:
     _lock_key = "consul_conf>lock"
     _cortx_gconf_consul_index = "consul_index"
     _timeout = 25
+    _sleep = 2
     cortx_release = Release(const.RELEASE_INFO_URL)
 
     @staticmethod
@@ -109,14 +110,14 @@ class CortxProvisioner:
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
 
-        Machine_id = CortxProvisioner._get_machine_id()
+        machine_id = CortxProvisioner._get_machine_id()
         if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout):
-            if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key):
+            if not Conf.unlock(cortx_conf._conf_idx, lock_owner=machine_id, force = True, lock_key=CortxProvisioner._lock_key):
                 raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
         if cortx_conf.get('cortx>common>storage>local') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
-            if not Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+            if not Conf.lock(cortx_conf._conf_idx, lock_owner=machine_id, lock_key=CortxProvisioner._lock_key):
                 raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
@@ -147,7 +148,7 @@ class CortxProvisioner:
             # Adding array count key in conf
             cortx_conf.add_num_keys()
             Conf.save(cortx_conf._conf_idx)
-            if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+            if not Conf.unlock(cortx_conf._conf_idx, lock_owner=machine_id, lock_key=CortxProvisioner._lock_key):
                 raise CortxProvisionerError(errno.EINVAL, f"unlocking failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
@@ -187,9 +188,9 @@ class CortxProvisioner:
 
             solution_config_nodes = CortxCluster(nodes, cortx_release)
             solution_config_nodes.save(cortx_conf)
-            Machine_id = CortxProvisioner._get_machine_id()
+            machine_id = CortxProvisioner._get_machine_id()
             if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout):
-                if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, force = True, lock_key=CortxProvisioner._lock_key):
+                if not Conf.unlock(cortx_conf._conf_idx, lock_owner=machine_id, force = True, lock_key=CortxProvisioner._lock_key):
                     raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
@@ -197,14 +198,14 @@ class CortxProvisioner:
                 cluster_keys = [('cluster>id', cluster_id),
                     ('cluster>name', cluster_name)]
                 cortx_conf.set_kvs(cluster_keys)
-                if not Conf.lock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+                if not Conf.lock(cortx_conf._conf_idx, lock_owner=machine_id, lock_key=CortxProvisioner._lock_key):
                     raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
                 solution_config_storagesets = CortxStorageSet(storage_sets)
                 solution_config_storagesets.save(cortx_conf)
                 Conf.save(cortx_conf._conf_idx)
-                if not Conf.unlock(cortx_conf._conf_idx, lock_owner=Machine_id, lock_key=CortxProvisioner._lock_key):
+                if not Conf.unlock(cortx_conf._conf_idx, lock_owner=machine_id, lock_key=CortxProvisioner._lock_key):
                     raise CortxProvisionerError(errno.EINVAL, f"unlocking failed for index {cortx_conf._conf_idx}")
                 # TODO: remove Conf.save once gconf is completly moved to consul
                 Conf.save(cortx_conf._conf_idx)
@@ -216,7 +217,7 @@ class CortxProvisioner:
     @staticmethod
     def _check_consul_connection(cortx_conf_url: str, timeout: int):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
+        sock.settimeout(CortxProvisioner._sleep)
         host, path = (cortx_conf_url.split('//')[-1]).split(':')
         port = path.split('/')[0]
         ## wait logic for consul endpoint to be available
@@ -226,7 +227,7 @@ class CortxProvisioner:
                     return True
             except Exception:
                 Log.debug('Waiting for Consul to be ready..')
-            time.sleep(2)
+            time.sleep(CortxProvisioner._sleep)
             timeout -=1
         return False
 
@@ -238,7 +239,7 @@ class CortxProvisioner:
             lock_time = float(cortx_conf.get(f'{CortxProvisioner._lock_key}>time'))
             if (lock_time + timeout) < float(datetime.timestamp(datetime.now())):
                 break
-            time.sleep(2)
+            time.sleep(CortxProvisioner._sleep)
         return False
 
     @staticmethod
