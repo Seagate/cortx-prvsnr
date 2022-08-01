@@ -27,8 +27,6 @@ from cortx.utils.conf_store import Conf
 solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))
 cortx_conf_url = "yaml:///tmp/test.conf"
-tmp_conf_url = "yaml:///tmp/tmp.conf"
-delta_url = "yaml:///etc/cortx/changeset.conf"
 
 def check_num_xx_keys(data):
     """Returns true if all the xxx list have respective num_xxx key."""
@@ -91,39 +89,6 @@ class TestProvisioner(unittest.TestCase):
         self.assertEqual(rc, 0)
         is_key_present, message = check_num_xx_keys(gconf)
         self.assertTrue(is_key_present, message)
-
-    def test_prepare_diff(self):
-        """Test if changeset file is getting generated with new/changes/deleted keys"""
-        Conf.load('index1', tmp_conf_url)
-        Conf.load('index2', cortx_conf_url)
-        # add 1 new key in tmp conf
-        Conf.set('index1', 'cortx>common>name', 'CORTX')
-        # Change previous key from tmp conf
-        Conf.set('index1', 'cortx>common>security>device_certificate', '/etc/cortx/solution/security.pem')
-        # Delete one key from tmp conf
-        Conf.delete('index1', 'cortx>common>security>domain_certificate')
-        Conf.save('index1')
-        rc = 0
-        try:
-            CortxProvisioner._prepare_diff('index2','index1', 'index3')
-        except Exception as e:
-            print('Exception: ', e)
-            sys.stderr.write("%s\n" % traceback.format_exc())
-            rc = 1
-        self.assertEqual(rc, 0)
-        self.assertEqual(Conf.get('index3','new>cortx>common>name'),'CORTX')
-
-    def test_update_conf(self):
-        """Test if new keys from changeset are getting updated in conf"""
-        rc = 0
-        try:
-            CortxProvisioner._update_conf('index2','index1')
-        except Exception as e:
-            print('Exception: ', e)
-            sys.stderr.write("%s\n" % traceback.format_exc())
-            rc = 1
-        self.assertEqual(rc, 0)
-        self.assertEqual(Conf.get('index2','cortx>common>name'),'CORTX')
 
 if __name__ == '__main__':
     unittest.main()
