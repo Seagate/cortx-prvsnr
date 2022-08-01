@@ -16,6 +16,7 @@
 import errno
 import os
 from enum import Enum
+import time
 from urllib.parse import urlparse
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf, MappedConf
@@ -453,6 +454,9 @@ class CortxProvisioner:
         CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
         Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
         Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
+        if phase is ProvisionerStages.DEPLOYMENT.value:
+            Conf.set(_conf_idx, f'{key_prefix}>time', int(time.time()))
+            Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>time', int(time.time()))
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
