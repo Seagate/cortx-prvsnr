@@ -468,7 +468,7 @@ class CortxProvisioner:
         phase: deployment/upgrade
         status: default/progress/success/error."""
         key_prefix = f'node>{node_id}>provisioning'
-        keys = [(key_prefix + '>phase', phase), (key_prefix + '>status', status)]
+        keys = [(key_prefix + '>' + 'phase', phase), (key_prefix + '>' + 'status', status)]
         cortx_conf.set_kvs(keys)
 
         # TODO: Remove the following section once gconf is moved to consul completely.
