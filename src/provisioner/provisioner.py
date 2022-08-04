@@ -473,11 +473,11 @@ class CortxProvisioner:
 
         # TODO: Remove the following section once gconf is moved to consul completely.
         CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}phase', phase)
+        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}status', status)
         if phase is ProvisionerStages.DEPLOYMENT.value:
-            cortx_conf.set(f'node>{node_id}>provisioning>time', int(time.time()))
-            Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>time', int(time.time()))
+            cortx_conf.set(f'{key_prefix}time', int(time.time()))
+            Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}time', int(time.time()))
         Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
