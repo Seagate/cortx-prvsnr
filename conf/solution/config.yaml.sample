@@ -3,8 +3,8 @@ cortx:
     consul:
       admin: admin
       endpoints:
-      - tcp://consul-server.default.svc.cluster.local:8301
-      - http://consul-server.default.svc.cluster.local:8500
+      - tcp://cortx-consul-server:8301
+      - http://cortx-consul-server:8500
       secret: consul_admin_secret                              # Key in the list of secrets  
     kafka:
       admin: admin
@@ -33,10 +33,13 @@ cortx:
     thread_pool_size: 10                                       # To be tuned as we go
     data_path: /var/cortx/radosgw/$clusterid                   # Needs to be under Local PVC
     init_timeout: 300                                          # In seconds
-    gc_max_objs: 32                                            # In seconds
-    gc_obj_min_wait: 1800                                      # In seconds
+    gc_max_objs: 64                                            # In seconds
+    gc_obj_min_wait: 7200                                      # In seconds
     gc_processor_max_time: 3600                                # In seconds
     gc_processor_period: 3600                                  # In seconds
+    enable_gc_threads: true
+    gc_max_concurrent_io: 1
+    gc_max_trim_chunk: 256
     
     motr_layout_id: 9                          
     motr_unit_size: 1048576 
@@ -156,7 +159,7 @@ cortx:
   csm:
     agent:
       endpoints:
-      - https://:23256
+      - https://:8081
     public:                                                    # Public Control Endpoint
       endpoints:
       - https://control-svc:8081

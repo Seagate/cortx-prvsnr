@@ -3,8 +3,8 @@ cortx:
     consul:
       admin: admin
       endpoints:
-      - tcp://consul-server.default.svc.cluster.local:8301
-      - http://consul-server.default.svc.cluster.local:8500
+      - tcp://cortx-consul-server:8301
+      - http://cortx-consul-server:8500
       secret: consul_admin_secret                              # Key in the list of secrets  
     kafka:
       admin: admin
@@ -12,9 +12,6 @@ cortx:
       - tcp://kafka.default.svc.cluster.local:9092
       secret: kafka_admin_secret                               # Key in the list of secrets
   common:
-    release:
-      name: CORTX
-      version: 2.0.0-1111
     service:
       admin: admin
       secret: common_admin_secret
@@ -36,10 +33,13 @@ cortx:
     thread_pool_size: 10                                       # To be tuned as we go
     data_path: /var/cortx/radosgw/$clusterid                   # Needs to be under Local PVC
     init_timeout: 300                                          # In seconds
-    gc_max_objs: 32                                            # In seconds
-    gc_obj_min_wait: 1800                                      # In seconds
+    gc_max_objs: 64                                            # In seconds
+    gc_obj_min_wait: 7200                                      # In seconds
     gc_processor_max_time: 3600                                # In seconds
     gc_processor_period: 3600                                  # In seconds
+    enable_gc_threads: true
+    gc_max_concurrent_io: 1
+    gc_max_trim_chunk: 256
     
     motr_layout_id: 9                          
     motr_unit_size: 1048576 
@@ -81,12 +81,18 @@ cortx:
                                                                # Ports: 21002 - (21002 + Number of CVGs)
       - tcp://data2-node1:21002                                # Same thing for the second pod
       - tcp://data1-node2:21002                                # of for Pods on the other nodes
+      - tcp://data2-node2:21002
+      - tcp://data1-node3:21002
+      - tcp://data2-node3:21002
 
     confd:
       endpoints:
       - tcp://data1-node1:21001                               # Format: <protocol>://<hostname_ip>:21001
-      - tcp://data1-node2:21001       
-      - tcp://data1-node3:21001  
+      - tcp://data2-node1:21001
+      - tcp://data1-node2:21001
+      - tcp://data2-node2:21001
+      - tcp://data1-node3:21001
+      - tcp://data2-node3:21001  
     limits:
       services:
       - name: ios
@@ -109,13 +115,13 @@ cortx:
       - name: rgw_s3                                           # rgw|s3|motr_client (Motr Clients)
         num_instances: 1                                       # Client instances per node (pod)
         endpoints:
-        - tcp://server1-node1:22501                            # Format: <protocol>://<hostname_ip>:22501 
-        - tcp://server2-node1:22501                            # This is for client>type == "s3"
+        - tcp://server-node1:22501                            # Format: <protocol>://<hostname_ip>:22501 
+        - tcp://server-node2:22501                            # This is for client>type == "s3"
                                                                # This is a starting endpoint and num of s3
                                                                # endpoints will be equal to num of s3 instances 
                                                                # in this pod. Port range would be 
                                                                # 22501 to (22501 + "motr>client>{rgw_s3}>num_instances")
-        - tcp://server-node1:22501
+        - tcp://server-node3:22501
       - name: motr_client
         num_instances: 0                                       # Optional client. Only for Dev.
         num_subscriptions: 1
@@ -130,8 +136,11 @@ cortx:
       endpoints:
       - https://motr-hax-svc:22003                             # Control endpoint
       - tcp://data1-node1:22001                                # For motr and Hax communication
+      - tcp://data2-node1:22001
       - tcp://data1-node2:22001                                # For motr and Hax communication
+      - tcp://data2-node2:22001
       - tcp://data1-node3:22001                                # For motr and Hax communication
+      - tcp://data2-node3:22001
       - tcp://server-node1:22001                               # if s3 client is configured
       - tcp://server-node2:22001                               # if s3 client is configured
       - tcp://server-node3:22001                               # if s3 client is configured
@@ -150,7 +159,7 @@ cortx:
   csm:
     agent:
       endpoints:
-      - https://:23256
+      - https://:8081
     public:                                                    # Public Control Endpoint
       endpoints:
       - https://control-svc:8081
