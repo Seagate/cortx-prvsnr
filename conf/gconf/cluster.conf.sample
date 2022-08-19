@@ -3,6 +3,20 @@
 # Location: /etc/cortx/cluster.conf
 
 cortx:
+  external:
+    consul:
+      admin: admin
+      endpoints:
+      - tcp://cortx-consul-server:8301
+      - http://cortx-consul-server:8500
+      num_endpoints: 2
+      secret: gAAAAABi_w-5lmv3sGSkA4xgHQpp8t11mUIXGOXtpxZAasuFYut_kejtdqbCIkllULg5wpQDwGuTwMdIuzLWSNCSWm11OzETOw==
+    kafka:
+      admin: admin
+      endpoints:
+      - tcp://kafka.default.svc.cluster.local:9092
+      num_endpoints: 1
+      secret: gAAAAABi_w-5EOTuaNs0xUctkXDo7ZXCcwyM2Apc9H8d2w0p-8Bm2g_A3zzcZ_HQQ8a25jEO8mr6v0SYBYmaMEUlr1LWy07Stw==
   common:
     release:
       name: CORTX
