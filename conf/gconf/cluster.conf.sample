@@ -271,7 +271,8 @@ node:
     num_components: 2
     provisioning:
       phase: deployment
-      status: progress
+      status: success
+      version: 2.0.0-7528
       time: 1660882878
     storage_set: storage-set-1
     type: control_node
@@ -302,6 +303,11 @@ node:
     name: data1-node2
     node_id: bbb340f79047df9bb52fa460615c32a5
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     num_cvg: 1
     storage_set: storage-set-1
     type: data_node/1
@@ -332,6 +338,11 @@ node:
     name: data2-node2
     node_id: bba340f79047df9bb52fa460615c32a5
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     num_cvg: 1
     storage_set: storage-set-1
     type: data_node/2
@@ -344,6 +355,11 @@ node:
     name: ha-node
     node_id: 1115f539f4f770e2a3fe9e2e615c32a8
     num_components: 2
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     storage_set: storage-set-1
     type: ha_node
   380fb4a039ffc67865bc5b1d51a38811:
@@ -373,6 +389,11 @@ node:
     name: data1-node3
     node_id: ccc8700fe6797ed532e311b0615c32a7
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     num_cvg: 1
     storage_set: storage-set-1
     type: data_node/1
@@ -389,6 +410,11 @@ node:
     name: server-node3
     node_id: fff8700fe6797ed532e311b0615c32a7
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     storage_set: storage-set-1
     type: server_node
   8581ff0c598abccbd020e3b72f2cd334:
@@ -404,6 +430,11 @@ node:
     name: server-node2
     node_id: eee340f79047df9bb52fa460615c32a5
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     storage_set: storage-set-1
     type: server_node
   a41d31a905d3892ba80bc0604041d4af:
@@ -433,6 +464,11 @@ node:
     name: data1-node1
     node_id: aaa120a9e051d103c164f605615c32a4
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     num_cvg: 1
     storage_set: storage-set-1
     type: data_node/1
@@ -449,6 +485,11 @@ node:
     name: server-node1
     node_id: ddd120a9e051d103c164f605615c32a4
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     storage_set: storage-set-1
     type: server_node
   b5e8544fd1b3ec3764fff509652a8d07:
@@ -478,6 +519,11 @@ node:
     name: data2-node3
     node_id: cca8700fe6797ed532e311b0615c32a7
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     num_cvg: 1
     storage_set: storage-set-1
     type: data_node/2
@@ -508,6 +554,11 @@ node:
     name: data2-node1
     node_id: eee120a9e051d103c164f605615c32a4
     num_components: 3
+    provisioning:
+      phase: deployment
+      status: success
+      version: 2.0.0-7528
+      time: 1660882878
     num_cvg: 1
     storage_set: storage-set-1
     type: data_node/2
