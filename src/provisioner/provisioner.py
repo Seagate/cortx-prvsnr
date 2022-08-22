@@ -70,7 +70,7 @@ class CortxProvisioner:
 
     @staticmethod
     def config_apply(solution_config_url: str, cortx_conf_url: str = None,
-        force_override: bool = False):
+        force_override: bool = False):    # noqa: C901
         """
         Description:
 
