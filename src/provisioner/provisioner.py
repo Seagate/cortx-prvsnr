@@ -546,8 +546,8 @@ class CortxProvisioner:
             return True, ret_code
 
         if (not validations_checks.get(apply_phase) or
-            not validations_checks.get(apply_phase).get(recent_phase) or
-            not validations_checks.get(apply_phase).get(recent_phase).get(recent_status)):
+        not validations_checks.get(apply_phase).get(recent_phase) or 
+        not validations_checks.get(apply_phase).get(recent_phase).get(recent_status)):
             Log.error('Invalid phase or status.')
             ret_code = 1
             return False, ret_code

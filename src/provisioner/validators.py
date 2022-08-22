@@ -78,7 +78,7 @@ class ConfigValidator(Validator):
         # if cluster/cortx both keys are not present in file means file is
         # empty or file doesn't have required config.
         if (Conf.get(ConfigValidator._solution_index, 'cluster') is None and
-            Conf.get(ConfigValidator._solution_index, 'cortx') is None):
+        Conf.get(ConfigValidator._solution_index, 'cortx') is None):
             raise CortxProvisionerError(errno.EINVAL,
                 'File is empty OR Cluster config and cortx config is not present in file.')
 

@@ -55,5 +55,6 @@ class TestInvalidClusterConf(unittest.TestCase):
         self.assertEqual(rc, 1)
         os.remove(cluster_conf_file_path)
 
+
 if __name__ == '__main__':
     unittest.main()

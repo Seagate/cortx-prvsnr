@@ -77,5 +77,6 @@ class TestMultipleStorageSet(unittest.TestCase):
         self.assertEqual(rc, 0)
         os.remove(cluster_conf_file_path)
 
+
 if __name__ == '__main__':
     unittest.main()

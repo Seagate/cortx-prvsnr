@@ -34,13 +34,14 @@ def check_num_xx_keys(data):
             if isinstance(v, dict):
                 check_num_xx_keys(v)
             elif isinstance(v, list):
-                if not f"num_{k}" in data:
+                if f"num_{k}" not in data:
                     return False, f"The key num_{k} is not saved in Gconf"
                 check_num_xx_keys(v)
     if isinstance(data, list):
         for v in data:
             check_num_xx_keys(v)
     return True, "The keys num_xx are saved in gconf"
+
 
 class TestProvisioner(unittest.TestCase):
     """Test cortx_setup config and cluster functionality."""
@@ -88,6 +89,7 @@ class TestProvisioner(unittest.TestCase):
         self.assertEqual(rc, 0)
         is_key_present, message = check_num_xx_keys(gconf)
         self.assertTrue(is_key_present, message)
+
 
 if __name__ == '__main__':
     unittest.main()
