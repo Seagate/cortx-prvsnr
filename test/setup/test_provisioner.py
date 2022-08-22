@@ -22,7 +22,6 @@ import traceback
 import unittest
 import yaml
 from cortx.provisioner.provisioner import CortxProvisioner
-from cortx.utils.conf_store import Conf
 
 solution_cluster_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "cluster.yaml"))
 solution_conf_url = "yaml://" + os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), "config.yaml"))

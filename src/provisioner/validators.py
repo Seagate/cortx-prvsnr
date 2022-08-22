@@ -33,7 +33,7 @@ class Validator:
     @staticmethod
     def process(*args):
         """This interface needs to be implemented in derived class"""
-        pass
+        Log.debug("To be implemented in derived class")
 
     @staticmethod
     def validate(validations: list, *args):

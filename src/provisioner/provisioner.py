@@ -13,13 +13,11 @@
 # For any questions about this software or licensing,
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 
-from datetime import datetime
 import errno
 import os
 import time
 import socket
 from enum import Enum
-import time
 from urllib.parse import urlparse
 from cortx.utils.process import SimpleProcess
 from cortx.utils.conf_store import Conf, MappedConf
