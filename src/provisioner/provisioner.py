@@ -57,7 +57,6 @@ class CortxProvisioner:
     _solution_index = "solution_conf"
     _secrets_path = "/etc/cortx/solution/secret"
     _rel_secret_path = "/solution/secret"
-    _cortx_gconf_consul_index = "consul_index"
     _lock_domain = "provisioner"
     _timeout = 25
     _duration = 20
@@ -113,13 +112,9 @@ class CortxProvisioner:
         if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout, machine_id):
             if not Conf.unlock(cortx_conf._conf_idx, owner=machine_id, force = True, domain=CortxProvisioner._lock_domain):
                 raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
-            # TODO: remove Conf.save once gconf is completly moved to consul
-            Conf.save(cortx_conf._conf_idx)
         if cortx_conf.get('cortx>common>storage>local') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
             if not Conf.lock(cortx_conf._conf_idx, owner=machine_id, domain=CortxProvisioner._lock_domain, duration=CortxProvisioner._duration):
                 raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
-            # TODO: remove Conf.save once gconf is completly moved to consul
-            Conf.save(cortx_conf._conf_idx)
             # generating cipher key
             cipher_key = None
             cluster_id = Conf.get(CortxProvisioner._solution_index, 'cluster>id')
@@ -149,8 +144,6 @@ class CortxProvisioner:
             Conf.save(cortx_conf._conf_idx)
             if not Conf.unlock(cortx_conf._conf_idx, owner=machine_id, domain=CortxProvisioner._lock_domain):
                 raise CortxProvisionerError(errno.EINVAL, f"unlocking failed for index {cortx_conf._conf_idx}")
-            # TODO: remove Conf.save once gconf is completly moved to consul
-            Conf.save(cortx_conf._conf_idx)
 
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
@@ -191,8 +184,6 @@ class CortxProvisioner:
             if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout, machine_id):
                 if not Conf.unlock(cortx_conf._conf_idx, owner=machine_id, force = True, domain=CortxProvisioner._lock_domain):
                     raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
-                # TODO: remove Conf.save once gconf is completly moved to consul
-                Conf.save(cortx_conf._conf_idx)
             if cortx_conf.get('cluster>id') is None:
                 cluster_keys = [('cluster>id', cluster_id),
                     ('cluster>name', cluster_name)]
@@ -206,8 +197,6 @@ class CortxProvisioner:
                 Conf.save(cortx_conf._conf_idx)
                 if not Conf.unlock(cortx_conf._conf_idx, owner=machine_id, domain=CortxProvisioner._lock_domain):
                     raise CortxProvisionerError(errno.EINVAL, f"unlocking failed for index {cortx_conf._conf_idx}")
-                # TODO: remove Conf.save once gconf is completly moved to consul
-                Conf.save(cortx_conf._conf_idx)
         except KeyError as e:
             raise CortxProvisionerError(
                 errno.EINVAL,
@@ -318,40 +307,6 @@ class CortxProvisioner:
                 # Update version for each component if Provisioning successful.
                 cortx_conf.set(f'{key_prefix}>version', component_version)
 
-                # TODO: Remove the following code when gconf is completely moved to consul.
-                CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-                Conf.set(CortxProvisioner._cortx_gconf_consul_index,
-                        f'{key_prefix}>version', component_version)
-                Conf.save(CortxProvisioner._cortx_gconf_consul_index)
-
-    @staticmethod
-    def _apply_consul_config(cortx_conf: MappedConf):
-        try:
-            num_endpoints = int(cortx_conf.get('cortx>external>consul>num_endpoints'))
-            if num_endpoints == 0:
-                raise CortxProvisionerError(errno.EINVAL, f"Invalid value for num_endpoints '{num_endpoints}'")
-            for idx in range(0, num_endpoints):
-                consul_endpoint = cortx_conf.get(f'cortx>external>consul>endpoints[{idx}]')
-                if not consul_endpoint:
-                    raise CortxProvisionerError(errno.EINVAL, "Consul Endpoint can't be empty.")
-                if urlparse(consul_endpoint).scheme not in ['http', 'https', 'tcp']:
-                    raise CortxProvisionerError(errno.EINVAL, f"Invalid Consul Endpoint {consul_endpoint}")
-                if 'http' in consul_endpoint:
-                    break
-        except ConfError as e:
-            raise CortxProvisionerError(errno.EINVAL, f"Unable to get consul endpoint detail , Error:{e}")
-
-        gconf_consul_url = consul_endpoint.replace('http','consul') + '/conf'
-        # Check if consul endpoint is reachable
-        if not CortxProvisioner._check_consul_connection(gconf_consul_url, CortxProvisioner._timeout):
-            raise CortxProvisionerError(errno.EINVAL, f"Consul endpoint {gconf_consul_url} not reachable over network")
-        Conf.load(CortxProvisioner._cortx_gconf_consul_index, gconf_consul_url)
-        Conf.copy(cortx_conf._conf_idx, CortxProvisioner._cortx_gconf_consul_index, Conf.get_keys(cortx_conf._conf_idx))
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
-        # TODO: place the below code at a proper location when this function is removed.
-        with open(const.CONSUL_CONF_URL, 'w') as f:
-            f.write(gconf_consul_url)
-
     @staticmethod
     def cluster_bootstrap(cortx_conf_url: str, force_override: bool = False):
         """
@@ -364,8 +319,6 @@ class CortxProvisioner:
         [IN] CORTX Config URL
         """
         cortx_conf = MappedConf(cortx_conf_url)
-        # TODO: Remove the following code when gconf is completely moved to consul.
-        CortxProvisioner._apply_consul_config(cortx_conf)
         node_id = Conf.machine_id
         installed_version = cortx_conf.get(f'node>{node_id}>provisioning>version')
         release_version = CortxProvisioner.cortx_release.get_release_version()
@@ -469,15 +422,8 @@ class CortxProvisioner:
         key_prefix = f'node>{node_id}>provisioning'
         keys = [(key_prefix + '>' + 'phase', phase), (key_prefix + '>' + 'status', status)]
         cortx_conf.set_kvs(keys)
-
-        # TODO: Remove the following section once gconf is moved to consul completely.
-        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
         if phase is ProvisionerStages.DEPLOYMENT.value:
             cortx_conf.set(f'{key_prefix}>time', int(time.time()))
-            Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>time', int(time.time()))
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
@@ -497,12 +443,6 @@ class CortxProvisioner:
         version = CortxProvisioner.cortx_release.get_release_version()
         cortx_conf.set('cortx>common>release>version', version)
         cortx_conf.set(f'node>{node_id}>provisioning>version', version)
-
-        # TODO: Remove the following sdection when gconf is completely moved to consul
-        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, 'cortx>common>release>version', version)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'node>{node_id}>provisioning>version', version)
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _validate_provisioning_status(cortx_conf: MappedConf, node_id: str, apply_phase: str):
@@ -573,14 +513,3 @@ class CortxProvisioner:
         """API call to get cluster health."""
         # TODO Make a call to HA Health API to get the resource status
         return "OK"
-
-    @staticmethod
-    def _load_consul_conf(_idx: str):
-        """Load consul conf with given index if not already loaded."""
-        #TODO: Remove  the function when gconf is moved to consul completely.
-        with open(const.CONSUL_CONF_URL, 'r') as f:
-            gconf_consul_url = f.read()
-        try:
-            Conf.load(_idx, gconf_consul_url)
-        except ConfError:
-            return 1
