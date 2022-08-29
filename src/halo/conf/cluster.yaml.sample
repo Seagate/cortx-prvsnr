@@ -1,0 +1,56 @@
+cortx:
+  external:
+    consul:
+      admin: admin
+      endpoints:
+      - tcp://consul-server:8301
+      - http://consul-server:8500
+      secret: consul_admin_secret                              # Key in the list of secrets
+    kafka:
+      admin: admin
+      endpoints:
+      - tcp://kafka.default.svc.cluster.local:9092
+      secret: kafka_admin_secret                               # Key in the list of secrets
+  common:
+    storage:
+      log: /var/log/
+      local: /etc/config
+      config: /etc/config
+cluster:
+  name: obj-cluster
+  id: 0007ec45379e36d9fa089a3d615c32a3
+  node_types:
+  - name: k8s_node
+    components:
+    - name: k8s
+      path: /opt/seagate/halo/k8s/k8s_setup
+  - name: control_node
+    components:
+    - name: manager
+  - name: monitor_node
+    components:
+    - name: monitor
+  storage_sets:
+  - name: storage-set-1
+    durability:
+      sns: 1+0+0
+      dix: 1+0+0
+    nodes:
+    - name: node1
+      id: 9995f539f4f770e2a3fe9e2e615c32a8
+      hostname: node1
+      type: k8s_node
+      username: root
+      passwd: seagate
+    - name: node2
+      id: 1115f539f4f770e2a3fe9e2e615c32a8
+      hostname: node2
+      type: control_node
+      username: root
+      passwd: seagate
+    - name: node3
+      id: bbb340f79047df9bb52fa460615c32a5
+      hostname: node3
+      type: monitor_node
+      username: root
+      passwd: seagate

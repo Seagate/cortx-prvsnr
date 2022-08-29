@@ -277,6 +277,7 @@ class CortxProvisioner:
             for comp_idx in range(0, num_components):
                 key_prefix = f'node>{node_id}>components[{comp_idx}]'
                 component_name = cortx_conf.get(f'{key_prefix}>name')
+                component_path = cortx_conf.get(f'{key_prefix}>path')
                 # Check if RPM exists for the component, if it does exist get the build version
                 component_version = CortxProvisioner.cortx_release.get_component_version(
                     component_name)
@@ -302,9 +303,14 @@ class CortxProvisioner:
                         f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
                         f" --config {cortx_conf._conf_url} --services {service}")
                 else:
-                    cmd = (
-                        f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
-                        f" --config {cortx_conf._conf_url} --services {service}")
+                    if component_path:
+                        cmd = (
+                            f"{component_path} {interface.value}"
+                            f" --config {cortx_conf._conf_url} --services {service}")
+                    else:
+                        cmd = (
+                            f"/opt/seagate/cortx/{component_name}/bin/{component_name}_setup {interface.value}"
+                            f" --config {cortx_conf._conf_url} --services {service}")
                 Log.info(f"{cmd}")
                 cmd_proc = SimpleProcess(cmd)
                 _, err, rc = cmd_proc.run()
