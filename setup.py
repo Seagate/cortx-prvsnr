@@ -75,6 +75,10 @@ def get_halo_obj_store_files() -> list:
     """returns halo cortx setup files"""
     return glob.glob('src/halo/obj_store/cortx/*')
 
+def get_halo_manager_files() -> list:
+    """returns halo manager setup files"""
+    return glob.glob('src/halo/manager/*')
+
 setup(name='cortx-provisioner',
     version=get_version(),
     url='https://github.com/Seagate/cortx-provisioner',
@@ -101,7 +105,8 @@ setup(name='cortx-provisioner',
         ('/opt/seagate/cortx/provisioner/bin', ['src/setup/cortx_deploy']),
         ('/opt/seagate/halo/k8s', get_halo_k8s_files()),
         ('/opt/seagate/halo/conf', get_halo_conf_files()),
-        ('/opt/seagate/halo/obj_store/cortx', get_halo_obj_store_files())
+        ('/opt/seagate/halo/obj_store/cortx', get_halo_obj_store_files()),
+        ('/opt/seagate/halo/manager', get_halo_manager_files())
     ],
     long_description=get_description(),
     zip_safe=False,

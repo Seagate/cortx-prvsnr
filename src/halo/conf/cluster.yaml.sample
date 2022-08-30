@@ -14,6 +14,8 @@ cluster:
       path: /opt/seagate/halo/k8s
     - name: cortx
       path: /opt/seagate/halo/obj_store/cortx
+    - name: manager
+      path: /opt/seagate/halo/manager
   - name: control_node
     components:
     - name: manager
