@@ -96,11 +96,8 @@ class PrepareCmd(SetupCmdBase):
 
             # fill nodes info in solution.yaml
             node_hostname_keys = self._conf.search('node', 'hostname')
-            Log.info(node_hostname_keys)
             _idx = 0
             for node_hostname_key in node_hostname_keys:
-                Log.info(node_hostname_key)
-                Log.info(self._conf.get(node_hostname_key))
                 Conf.set('index2', f'solution>storage_sets[0]>nodes[{_idx}]', self._conf.get(node_hostname_key))
                 Conf.save('index2')
                 _idx += 1
@@ -129,9 +126,12 @@ class ConfigCmd(SetupCmdBase):
         try:
             # run prereq script on all nodes
             for node in nodes:
-                subprocess.Popen(f"ssh -o StrictHostKeyChecking=no root@{node} ./cortx-k8s/k8_cortx_cloud/prereq-deploy-cortx-cloud.sh \
-                    -d /dev/sdb -s cortx-k8s/k8_cortx_cloud/solution.yaml", \
+                subprocess.Popen(f"scp /root/cortx-k8s/k8_cortx_cloud/prereq-deploy-cortx-cloud.sh root@{node}:./", \
                     shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+                subprocess.Popen(f"scp /root/cortx-k8s/k8_cortx_cloud/solution.yaml root@{node}:./", \
+                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+                subprocess.Popen(f"ssh -o StrictHostKeyChecking=no root@{node} ./prereq-deploy-cortx-cloud.sh \
+                    -d /dev/sdb -s solution.yaml", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             
             # run cortx deploy script
             subprocess.Popen("/opt/seagate/halo/obj_store/cortx/deploy_cortx.sh", \
