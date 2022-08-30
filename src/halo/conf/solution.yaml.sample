@@ -167,7 +167,7 @@ solution:
       dix: 1+0+0
     container_group_size: 1
     nodes:
-    - ssc-vm-rhev4-2982.colo.seagate.com
+    - node-1
     storage:
     - name: cvg-01
       type: ios

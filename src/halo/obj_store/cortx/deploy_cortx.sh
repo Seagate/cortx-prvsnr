@@ -18,6 +18,7 @@
 # please email opensource@seagate.com or cortx-questions@seagate.com.
 #
 
+cd /root/cortx-k8s/k8_cortx_cloud;./destroy-cortx-cloud.sh
 pip3 show yq && pip3 uninstall yq -y
 YQ_VERSION=v4.25.1
 YQ_BINARY=yq_linux_386

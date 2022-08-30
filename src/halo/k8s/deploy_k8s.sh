@@ -38,7 +38,8 @@ function setup_cluster() {
     add_common_separator
 
     # Copy scripts to all nodes:
-    scp_all_nodes /opt/seagate/halo/k8s/cluster-functions.sh /opt/seagate/halo/k8s/functions.sh
+    scp_all_nodes /opt/seagate/halo/k8s/cluster-functions.sh 
+    scp_all_nodes /opt/seagate/halo/k8s/functions.sh
 
     echo $ALL_NODES > /var/tmp/pdsh-hosts
 

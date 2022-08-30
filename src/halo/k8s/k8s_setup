@@ -11,8 +11,6 @@
 # GNU Affero General Public License for more details.
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-# For any questions about this software or licensing,
-# please email opensource@seagate.com or cortx-questions@seagate.com.
 
 import os
 import sys
@@ -46,7 +44,7 @@ class SetupCmdBase(Cmd):
 
     def _initialize_logging(self, conf: MappedConf):
         """Initialize Logging."""
-        log_path = conf.get('cortx>common>storage>log')
+        log_path = conf.get('config>common>storage>log')
         if log_path is None:
             raise Exception('Log path is None.')
         log_path = os.path.join(log_path, 'k8s', Conf.machine_id)
@@ -110,12 +108,12 @@ class ConfigCmd(SetupCmdBase):
     def process(self):
         self._initialize_logging(self._conf)
         rc = 0
-        # try:
-        #     session = subprocess.Popen(['/opt/seagate/halo/k8s/deploy_k8s.sh', 'true'], stdout=PIPE, stderr=PIPE)
-        #     session.communicate()
-        # except:
-        #     rc = 1
-        #     raise Exception("failed to setup k8s cluster")
+        try:
+            session = subprocess.Popen(['/opt/seagate/halo/k8s/deploy_k8s.sh', 'true'], stdout=PIPE, stderr=PIPE)
+            session.communicate()
+        except:
+            rc = 1
+            raise Exception("failed to setup k8s cluster")
         Log.info(f'successfully executed config phase')
         return rc
 
@@ -138,7 +136,7 @@ def main():
     argv = sys.argv
 
     try:
-        desc = "CORTX K8s Setup command"
+        desc = "K8s Setup command"
         command = Cmd.get_command(sys.modules[__name__], desc, argv[1:])
         rc = command.process()
 

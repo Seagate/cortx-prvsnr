@@ -17,6 +17,7 @@ from pathlib import Path
 
 SERVICE_NAME = "cortx_setup"
 APP_NAME = "provisioner"
+ROOT = "config"
 TMP_LOG_PATH = "/tmp/%s" % APP_NAME
 DEFAULT_LOG_PATH = "/var/log/cortx/%s" % APP_NAME
 CONFIG_PATH="/etc/cortx/config"

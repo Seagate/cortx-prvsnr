@@ -47,7 +47,7 @@ class SetupCmdBase(Cmd):
 
     def _initialize_logging(self, conf: MappedConf):
         """Initialize Logging."""
-        log_path = conf.get('cortx>common>storage>log')
+        log_path = conf.get('config>common>storage>log')
         if log_path is None:
             raise Exception('Log path is None.')
         log_path = os.path.join(log_path, 'cortx', Conf.machine_id)
@@ -93,6 +93,18 @@ class PrepareCmd(SetupCmdBase):
             Conf.load('index2', 'yaml:///root/cortx-k8s/k8_cortx_cloud/solution.yaml')
             Conf.copy('index1', 'index2', Conf.get_keys('index1'))
             Conf.save('index2')
+
+            # fill nodes info in solution.yaml
+            node_hostname_keys = self._conf.search('node', 'hostname')
+            Log.info(node_hostname_keys)
+            _idx = 0
+            for node_hostname_key in node_hostname_keys:
+                Log.info(node_hostname_key)
+                Log.info(self._conf.get(node_hostname_key))
+                Conf.set('index2', f'solution>storage_sets[0]>nodes[{_idx}]', self._conf.get(node_hostname_key))
+                Conf.save('index2')
+                _idx += 1
+
         except:
             rc = 1
             raise Exception("failed to copy solution.yaml")
@@ -110,14 +122,14 @@ class ConfigCmd(SetupCmdBase):
 
     def process(self):
         self._initialize_logging(self._conf)
+        rc = 0
         # fetch node hostnames from solution.yaml
         Conf.load('index2', 'yaml:///root/cortx-k8s/k8_cortx_cloud/solution.yaml')
         nodes = Conf.get('index2', 'solution>storage_sets[0]>nodes')
-        rc = 0
         try:
             # run prereq script on all nodes
             for node in nodes:
-                subprocess.Popen(f"ssh -y root@{node} ./cortx-k8s/k8_cortx_cloud/prereq-deploy-cortx-cloud.sh \
+                subprocess.Popen(f"ssh -o StrictHostKeyChecking=no root@{node} ./cortx-k8s/k8_cortx_cloud/prereq-deploy-cortx-cloud.sh \
                     -d /dev/sdb -s cortx-k8s/k8_cortx_cloud/solution.yaml", \
                     shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             

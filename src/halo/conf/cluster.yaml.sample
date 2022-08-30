@@ -1,4 +1,4 @@
-cortx:
+config:
   common:
     storage:
       log: /var/log/

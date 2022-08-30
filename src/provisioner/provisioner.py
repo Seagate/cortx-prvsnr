@@ -102,8 +102,8 @@ class CortxProvisioner:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
 
         # Secrets path from config file
-        if cortx_conf.get('cortx>common>storage>local'):
-            CortxProvisioner._secrets_path = cortx_conf.get('cortx>common>storage>local')+CortxProvisioner._rel_secret_path
+        if cortx_conf.get(f'{const.ROOT}>common>storage>local'):
+            CortxProvisioner._secrets_path = cortx_conf.get(f'{const.ROOT}>common>storage>local')+CortxProvisioner._rel_secret_path
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
@@ -115,7 +115,7 @@ class CortxProvisioner:
                 raise CortxProvisionerError(errno.EINVAL, f"Force unlock failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
             Conf.save(cortx_conf._conf_idx)
-        if cortx_conf.get('cortx>common>storage>local') is None and Conf.get(CortxProvisioner._solution_index, 'cortx') is not None:
+        if cortx_conf.get(f'{const.ROOT}>common>storage>local') is None and Conf.get(CortxProvisioner._solution_index, const.ROOT) is not None:
             if not Conf.lock(cortx_conf._conf_idx, owner=machine_id, domain=CortxProvisioner._lock_domain, duration=CortxProvisioner._duration):
                 raise CortxProvisionerError(errno.EINVAL, f"locking failed for index {cortx_conf._conf_idx}")
             # TODO: remove Conf.save once gconf is completly moved to consul
@@ -127,7 +127,7 @@ class CortxProvisioner:
                 cluster_id = cortx_conf.get('cluster>id')
                 if cluster_id is None:
                     raise CortxProvisionerError(errno.EINVAL, 'Cluster ID not specified')
-            cipher_key = Cipher.gen_key(cluster_id, 'cortx')
+            cipher_key = Cipher.gen_key(cluster_id, const.ROOT)
             if cipher_key is None:
                 raise CortxProvisionerError(errno.EINVAL, 'Cipher key not specified')
             for key in Conf.get_keys(CortxProvisioner._solution_index):
@@ -155,7 +155,7 @@ class CortxProvisioner:
     @staticmethod
     def apply_cortx_config(cortx_conf, cortx_release):
         """Convert CORTX config into confstore keys"""
-        config_info = Conf.get(CortxProvisioner._solution_index, 'cortx')
+        config_info = Conf.get(CortxProvisioner._solution_index, const.ROOT)
         cortx_solution_config = CortxConfig(config_info, cortx_release)
         cortx_solution_config.save(cortx_conf, CortxProvisioner._solution_index)
 
@@ -255,7 +255,7 @@ class CortxProvisioner:
 
         # Reinitialize logging with configured log path
         log_path = os.path.join(
-            cortx_conf.get('cortx>common>storage>log'), const.APP_NAME, node_id)
+            cortx_conf.get(f'{const.ROOT}>common>storage>log'), const.APP_NAME, node_id)
         log_level = os.getenv('CORTX_PROVISIONER_DEBUG_LEVEL', const.DEFAULT_LOG_LEVEL)
         CortxProvisionerLog.reinitialize(
             const.SERVICE_NAME, log_path, level=log_level)
@@ -333,11 +333,11 @@ class CortxProvisioner:
     @staticmethod
     def _apply_consul_config(cortx_conf: MappedConf):
         try:
-            num_endpoints = int(cortx_conf.get('cortx>external>consul>num_endpoints'))
+            num_endpoints = int(cortx_conf.get(f'{const.ROOT}>external>consul>num_endpoints'))
             if num_endpoints == 0:
                 raise CortxProvisionerError(errno.EINVAL, f"Invalid value for num_endpoints '{num_endpoints}'")
             for idx in range(0, num_endpoints):
-                consul_endpoint = cortx_conf.get(f'cortx>external>consul>endpoints[{idx}]')
+                consul_endpoint = cortx_conf.get(f'{const.ROOT}>external>consul>endpoints[{idx}]')
                 if not consul_endpoint:
                     raise CortxProvisionerError(errno.EINVAL, "Consul Endpoint can't be empty.")
                 if urlparse(consul_endpoint).scheme not in ['http', 'https', 'tcp']:
@@ -502,7 +502,7 @@ class CortxProvisioner:
     def _add_version_info(cortx_conf: MappedConf, node_id):
         """Add version in confstore."""
         version = CortxProvisioner.cortx_release.get_release_version()
-        cortx_conf.set('cortx>common>release>version', version)
+        cortx_conf.set(f'{const.ROOT}>common>release>version', version)
         cortx_conf.set(f'node>{node_id}>provisioning>version', version)
 
         # TODO: Remove the following sdection when gconf is completely moved to consul

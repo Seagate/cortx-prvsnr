@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source /var/tmp/functions.sh
+source /opt/seagate/halo/k8s/functions.sh
 
 CALICO_PLUGIN_VERSION=v3.23.0
 K8_VERSION=1.22.6

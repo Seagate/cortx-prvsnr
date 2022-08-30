@@ -49,20 +49,15 @@ class CortxConfig:
         """Save cortx-config into confstore"""
 
         try:
-            cortx_solution_config_keys = filter(lambda x: x.startswith('cortx'), Conf.get_keys(cortx_solution_config))
+            cortx_solution_config_keys = filter(lambda x: x.startswith(const.ROOT), Conf.get_keys(cortx_solution_config))
             cortx_conf.copy(cortx_solution_config, cortx_solution_config_keys)
 
-            # Change environment_type to setup_type
-            # TODO: remove this code once setup_type key is deleted.
-            cortx_conf.set(
-                'cortx>common>setup_type', cortx_conf.get('cortx>common>environment_type'))
-            cortx_conf.delete('cortx>common>environment_type')
             # Check for release key.
             release_spec = self._cortx_solution_config.get('common').get('release')
             is_valid, release_info = self._cortx_release.validate(release_spec)
             if is_valid is False:
                 for key in release_info.keys():
-                    release_key_path = f'cortx>common>release>{key}'
+                    release_key_path = f'{const.ROOT}>common>release>{key}'
                     Log.warn(f'Release key {release_key_path} is missing or has '
                         'incorrect value.')
                     Log.info(f'Adding key "{release_key_path}" '
