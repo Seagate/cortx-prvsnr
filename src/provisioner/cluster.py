@@ -112,8 +112,11 @@ class CortxCluster:
         for index, component in enumerate(component_list):
             key_prefix = f'node>{node_id}>components[{index}]'
             component_name = component['name']
-            component_kv_list.append((
-                (f'{key_prefix}>name', component_name)))
+            component_path = component['path']
+            component_kv_list.extend((
+                (f'{key_prefix}>name', component_name),
+                (f'{key_prefix}>path', component_path)
+                ))
 
             service_list = component.get('services')
             if service_list:

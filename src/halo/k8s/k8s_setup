@@ -112,7 +112,7 @@ class ConfigCmd(SetupCmdBase):
         self._initialize_logging(self._conf)
         rc = 0
         try:
-            session = subprocess.Popen(['/opt/seagate/cortx/k8s/bin/cluster-setup.sh', 'true'], stdout=PIPE, stderr=PIPE)
+            session = subprocess.Popen(['/opt/seagate/halo/k8s/cluster-setup.sh', 'true'], stdout=PIPE, stderr=PIPE)
             session.communicate()
         except:
             raise CortxProvisionerError(errno.EINVAL, f"failed to setup k8s cluster")

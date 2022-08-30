@@ -67,7 +67,7 @@ def get_halo_conf_files() -> list:
     """returns list of conf files"""
     return glob.glob('src/halo/conf/*.yaml*')
 
-def get_k8s_files() -> list:
+def get_halo_k8s_files() -> list:
     """returns k8s setup files"""
     return glob.glob('src/halo/k8s/*')
 
@@ -95,7 +95,7 @@ setup(name='cortx-provisioner',
         ('/opt/seagate/cortx/provisioner/conf', get_requirements_files()),
         ('/etc/cortx/solution/secret/', get_secret_files()),
         ('/opt/seagate/cortx/provisioner/bin', ['src/setup/cortx_deploy']),
-        ('/opt/seagate/cortx/k8s/bin', get_k8s_files()),
+        ('/opt/seagate/halo/k8s', get_halo_k8s_files()),
         ('/opt/seagate/halo/conf', get_halo_conf_files())
     ],
     long_description=get_description(),

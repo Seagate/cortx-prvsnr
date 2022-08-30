@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-source /opt/seagate/cortx/k8s/bin/functions.sh
+source /opt/seagate/halo/k8s/functions.sh
 
 HOST_FILE=$PWD/hosts
 SSH_KEY_FILE=/root/.ssh/id_rsa
@@ -38,7 +38,7 @@ function setup_cluster() {
     add_common_separator
 
     # Copy scripts to all nodes:
-    scp_all_nodes /opt/seagate/cortx/k8s/bin/cluster-functions.sh /opt/seagate/cortx/k8s/bin/functions.sh
+    scp_all_nodes /opt/seagate/halo/k8s/cluster-functions.sh /opt/seagate/halo/k8s/functions.sh
 
     echo $ALL_NODES > /var/tmp/pdsh-hosts
 
