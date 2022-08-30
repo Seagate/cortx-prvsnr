@@ -1,16 +1,4 @@
 cortx:
-  external:
-    consul:
-      admin: admin
-      endpoints:
-      - tcp://consul-server:8301
-      - http://consul-server:8500
-      secret: consul_admin_secret                              # Key in the list of secrets
-    kafka:
-      admin: admin
-      endpoints:
-      - tcp://kafka.default.svc.cluster.local:9092
-      secret: kafka_admin_secret                               # Key in the list of secrets
   common:
     storage:
       log: /var/log/
@@ -23,7 +11,9 @@ cluster:
   - name: k8s_node
     components:
     - name: k8s
-      path: /opt/seagate/halo/k8s/k8s_setup
+      path: /opt/seagate/halo/k8s
+    - name: cortx
+      path: /opt/seagate/halo/obj_store/cortx
   - name: control_node
     components:
     - name: manager

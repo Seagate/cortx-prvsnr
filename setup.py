@@ -64,12 +64,16 @@ def get_secret_files() -> list:
     return glob.glob('conf/secret/*')
 
 def get_halo_conf_files() -> list:
-    """returns list of conf files"""
+    """returns halo conf files"""
     return glob.glob('src/halo/conf/*.yaml*')
 
 def get_halo_k8s_files() -> list:
-    """returns k8s setup files"""
+    """returns halo k8s setup files"""
     return glob.glob('src/halo/k8s/*')
+
+def get_halo_obj_store_files() -> list:
+    """returns halo cortx setup files"""
+    return glob.glob('src/halo/obj_store/cortx/*')
 
 setup(name='cortx-provisioner',
     version=get_version(),
@@ -96,7 +100,8 @@ setup(name='cortx-provisioner',
         ('/etc/cortx/solution/secret/', get_secret_files()),
         ('/opt/seagate/cortx/provisioner/bin', ['src/setup/cortx_deploy']),
         ('/opt/seagate/halo/k8s', get_halo_k8s_files()),
-        ('/opt/seagate/halo/conf', get_halo_conf_files())
+        ('/opt/seagate/halo/conf', get_halo_conf_files()),
+        ('/opt/seagate/halo/obj_store/cortx', get_halo_obj_store_files())
     ],
     long_description=get_description(),
     zip_safe=False,

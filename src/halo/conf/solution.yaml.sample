@@ -1,0 +1,193 @@
+solution:
+  namespace: cortx
+  deployment_type: standard
+  secrets:
+    name: cortx-secret
+    content:
+      kafka_admin_secret: Seagate@123
+      consul_admin_secret: Seagate@123
+      common_admin_secret: Seagate@123
+      s3_auth_admin_secret: ldapadmin
+      csm_auth_admin_secret: Seagate@123
+      csm_mgmt_admin_secret: Cortxadmin@123
+  images:
+    cortxcontrol: ghcr.io/seagate/cortx-control:2.0.0-latest
+    cortxdata: ghcr.io/seagate/cortx-data:2.0.0-latest
+    cortxserver: ghcr.io/seagate/cortx-rgw:2.0.0-latest
+    cortxha: ghcr.io/seagate/cortx-control:2.0.0-latest
+    cortxclient: ghcr.io/seagate/cortx-data:2.0.0-latest
+    consul: ghcr.io/seagate/consul:1.11.4
+    kafka: ghcr.io/seagate/kafka:3.0.0-debian-10-r97
+    zookeeper: ghcr.io/seagate/zookeeper:3.8.0-debian-10-r9
+    rancher: ghcr.io/seagate/local-path-provisioner:v0.0.20
+    busybox: ghcr.io/seagate/busybox:latest
+  common:
+    storage_provisioner_path: /mnt/fs-local-volume
+    s3:
+      default_iam_users:
+        auth_admin: "sgiamadmin"
+        auth_user: "user_name"
+        #auth_secret defined above in solution.secrets.content.s3_auth_admin_secret
+      max_start_timeout: 240
+      instances_per_node: 1
+      extra_configuration: ""
+    motr:
+      num_client_inst: 0
+      extra_configuration: ""
+    hax:
+      protocol: https
+      port_num: 22003
+    external_services:
+      s3:
+        type: NodePort
+        count: 1
+        ports:
+          http: 80
+          https: 443
+        nodePorts:
+          http: null
+          https: null
+      control:
+        type: NodePort
+        ports:
+          https: 8081
+        nodePorts:
+          https: null
+    resource_allocation:
+      consul:
+        server:
+          storage: 10Gi
+          resources:
+            requests:
+              memory: 200Mi
+              cpu: 200m
+            limits:
+              memory: 500Mi
+              cpu: 500m
+        client:
+          resources:
+            requests:
+              memory: 200Mi
+              cpu: 200m
+            limits:
+              memory: 500Mi
+              cpu: 500m
+      zookeeper:
+        storage_request_size: 8Gi
+        data_log_dir_request_size: 8Gi
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 250m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      kafka:
+        storage_request_size: 8Gi
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 250m
+          limits:
+            memory: 2Gi
+            cpu: 1000m
+      hare:
+        hax:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 2Gi
+              cpu:    1000m
+      data:
+        motr:
+          resources:
+            requests:
+              memory: 1Gi
+              cpu:    250m
+            limits:
+              memory: 2Gi
+              cpu:    1000m
+        confd:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 512Mi
+              cpu:    500m
+      server:
+        rgw:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 2Gi
+              cpu:    2000m
+      control:
+        agent:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 256Mi
+              cpu:    500m
+      ha:
+        fault_tolerance:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 1Gi
+              cpu:    500m
+        health_monitor:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 1Gi
+              cpu:    500m
+        k8s_monitor:
+          resources:
+            requests:
+              memory: 128Mi
+              cpu:    250m
+            limits:
+              memory: 1Gi
+              cpu:    500m
+  storage_sets:
+  - name: storage-set-1
+    durability:
+      sns: 1+0+0
+      dix: 1+0+0
+    container_group_size: 1
+    nodes:
+    - ssc-vm-rhev4-2982.colo.seagate.com
+    storage:
+    - name: cvg-01
+      type: ios
+      devices:
+        metadata:
+        - path: /dev/sdc
+          size: 5Gi
+        data:
+        - path: /dev/sdd
+          size: 5Gi
+        - path: /dev/sde
+          size: 5Gi
+    - name: cvg-02
+      type: ios
+      devices:
+        metadata:
+        - path: /dev/sdf
+          size: 5Gi
+        data:
+        - path: /dev/sdg
+          size: 5Gi
+        - path: /dev/sdh
+          size: 5Gi

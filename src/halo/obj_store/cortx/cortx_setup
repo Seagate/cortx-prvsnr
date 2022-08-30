@@ -39,6 +39,7 @@ class SetupCmdBase(Cmd):
                 Supported service names are {SUPPORTED_SERVICE_NAMES}.')
         config_url = args.config
         self._conf = MappedConf(config_url)
+        Conf.load('index1', 'yaml:///opt/seagate/halo/conf/solution.yaml.sample')
 
     def add_args(parser):
         parser.add_argument('--services', default='all', help='services')
@@ -49,9 +50,9 @@ class SetupCmdBase(Cmd):
         log_path = conf.get('cortx>common>storage>log')
         if log_path is None:
             raise Exception('Log path is None.')
-        log_path = os.path.join(log_path, 'k8s', Conf.machine_id)
+        log_path = os.path.join(log_path, 'cortx', Conf.machine_id)
         os.makedirs(log_path, exist_ok=True)
-        Log.init('k8s_setup', log_path, console_output=True)
+        Log.init('cortx_setup', log_path, console_output=True)
 
 
 class PostInstallCmd(SetupCmdBase):
@@ -65,8 +66,15 @@ class PostInstallCmd(SetupCmdBase):
 
     def process(self):
         self._initialize_logging(self._conf)
+        rc = 0
+        try:
+            session = subprocess.Popen(['git clone https://github.com/seagate/cortx-k8s -b main'], shell=True, stdout=PIPE, stderr=PIPE)
+            session.communicate()
+        except:
+            rc = 1
+            raise Exception("failed to fetch cortx-k8s repository")
         Log.info(f'successfully executed post_install phase')
-        return 0
+        return rc
 
 
 class PrepareCmd(SetupCmdBase):
@@ -79,24 +87,17 @@ class PrepareCmd(SetupCmdBase):
 
     def process(self):
         self._initialize_logging(self._conf)
-        conf_hostname_keys = self._conf.search('node', 'hostname')
-
-        # TODO: optimize below code
-        master_node = self._conf.get(f'node>{Conf.machine_id}>hostname')
-        master_node_username = self._conf.get(f'node>{Conf.machine_id}>username')
-        master_node_passwd = self._conf.get(f'node>{Conf.machine_id}>passwd')
-        with open('hosts','w') as hosts_file:
-            hosts_file.write(f"hostname={master_node},user=root,passwd=1234\n")
-        for hostname_key in conf_hostname_keys:
-            node_hostname = self._conf.get(hostname_key)
-            node_id = hostname_key.split('>')[1]
-            node_username = self._conf.get(f'node>{node_id}>username')
-            node_passwd = self._conf.get(f'node>{node_id}>passwd')
-            if node_hostname != socket.getfqdn():
-                with open('hosts','a') as hosts_file:
-                    hosts_file.write(f"hostname={node_hostname},user={node_username},passwd={node_passwd}\n")
+        rc = 0
+        # TODO: remove this code and replace with proper solution.yaml mapping with cluster.yaml
+        try:
+            Conf.load('index2', 'yaml:///root/cortx-k8s/k8_cortx_cloud/solution.yaml')
+            Conf.copy('index1', 'index2', Conf.get_keys('index1'))
+            Conf.save('index2')
+        except:
+            rc = 1
+            raise Exception("failed to copy solution.yaml")
         Log.info(f'successfully executed prepare phase')
-        return 0
+        return rc
 
 
 class ConfigCmd(SetupCmdBase):
@@ -109,13 +110,23 @@ class ConfigCmd(SetupCmdBase):
 
     def process(self):
         self._initialize_logging(self._conf)
+        # fetch node hostnames from solution.yaml
+        Conf.load('index2', 'yaml:///root/cortx-k8s/k8_cortx_cloud/solution.yaml')
+        nodes = Conf.get('index2', 'solution>storage_sets[0]>nodes')
         rc = 0
-        # try:
-        #     session = subprocess.Popen(['/opt/seagate/halo/k8s/deploy_k8s.sh', 'true'], stdout=PIPE, stderr=PIPE)
-        #     session.communicate()
-        # except:
-        #     rc = 1
-        #     raise Exception("failed to setup k8s cluster")
+        try:
+            # run prereq script on all nodes
+            for node in nodes:
+                subprocess.Popen(f"ssh -y root@{node} ./cortx-k8s/k8_cortx_cloud/prereq-deploy-cortx-cloud.sh \
+                    -d /dev/sdb -s cortx-k8s/k8_cortx_cloud/solution.yaml", \
+                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+            
+            # run cortx deploy script
+            subprocess.Popen("/opt/seagate/halo/obj_store/cortx/deploy_cortx.sh", \
+                shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        except:
+            rc = 1
+            raise Exception("Failed to deploy cortx")
         Log.info(f'successfully executed config phase')
         return rc
 

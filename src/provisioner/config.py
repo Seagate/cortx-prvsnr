@@ -38,25 +38,12 @@ class CortxConfig:
 
         Raises exception if there is any entry missing
         """
-        required_keys_for_cortx_conf = [
-            'external', 'common']
+        required_keys_for_cortx_conf = ['common']
 
         for k in required_keys_for_cortx_conf:
             if cortx_solution_config.get(k) is None:
                 raise VError(
                     errno.EINVAL, f"'{k}' property is unspecified in cortx_config.")
-
-            if k == 'external':
-                required_external_keys = const.REQUIRED_EXTERNAL_SW
-                for e_key in required_external_keys:
-                    try:
-                        if cortx_solution_config[k][e_key]['endpoints'] is None:
-                            raise VError(errno.EINVAL,
-                                f"'Endpoint for {e_key}' is unspecified in cortx_config.")
-                    except KeyError as e:
-                        raise CortxProvisionerError(
-                            errno.EINVAL,
-                            f'{str(e)} is unspecified for external in cortx_config.')
 
     def save(self, cortx_conf, cortx_solution_config):
         """Save cortx-config into confstore"""
