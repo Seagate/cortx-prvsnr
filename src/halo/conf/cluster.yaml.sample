@@ -1,4 +1,16 @@
 config:
+  external:
+    consul:
+      admin: admin
+      endpoints:
+      - tcp://cortx-consul-server:8301
+      - http://ssc-vm-rhev4-2981.colo.seagate.com:8500
+      secret: consul_admin_secret                              # Key in the list of secrets  
+    kafka:
+      admin: admin
+      endpoints:
+      - tcp://kafka.default.svc.cluster.local:9092
+      secret: kafka_admin_secret                               # Key in the list of secrets
   common:
     storage:
       log: /var/log/
@@ -32,17 +44,11 @@ cluster:
       id: 9995f539f4f770e2a3fe9e2e615c32a8
       hostname: node1
       type: k8s_node
-      username: root
-      passwd: seagate
     - name: node2
       id: 1115f539f4f770e2a3fe9e2e615c32a8
       hostname: node2
       type: control_node
-      username: root
-      passwd: seagate
     - name: node3
       id: bbb340f79047df9bb52fa460615c32a5
       hostname: node3
       type: monitor_node
-      username: root
-      passwd: seagate

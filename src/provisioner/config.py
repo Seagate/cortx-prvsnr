@@ -38,7 +38,7 @@ class CortxConfig:
 
         Raises exception if there is any entry missing
         """
-        required_keys_for_cortx_conf = ['common']
+        required_keys_for_cortx_conf = ['external', 'common']
 
         for k in required_keys_for_cortx_conf:
             if cortx_solution_config.get(k) is None:

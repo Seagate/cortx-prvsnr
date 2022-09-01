@@ -81,18 +81,13 @@ class PrepareCmd(SetupCmdBase):
 
         # TODO: optimize below code
         master_node = self._conf.get(f'node>{Conf.machine_id}>hostname')
-        master_node_username = self._conf.get(f'node>{Conf.machine_id}>username')
-        master_node_passwd = self._conf.get(f'node>{Conf.machine_id}>passwd')
         with open('hosts','w') as hosts_file:
-            hosts_file.write(f"hostname={master_node},user=root,passwd=1234\n")
+            hosts_file.write(f"hostname={master_node}\n")
         for hostname_key in conf_hostname_keys:
             node_hostname = self._conf.get(hostname_key)
-            node_id = hostname_key.split('>')[1]
-            node_username = self._conf.get(f'node>{node_id}>username')
-            node_passwd = self._conf.get(f'node>{node_id}>passwd')
             if node_hostname != socket.getfqdn():
                 with open('hosts','a') as hosts_file:
-                    hosts_file.write(f"hostname={node_hostname},user={node_username},passwd={node_passwd}\n")
+                    hosts_file.write(f"hostname={node_hostname}\n")
         Log.info(f'successfully executed prepare phase')
         return 0
 

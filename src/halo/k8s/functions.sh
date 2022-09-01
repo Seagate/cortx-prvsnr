@@ -62,42 +62,6 @@ function generate_rsa_key() {
     fi
 }
 
-function passwordless_ssh() {
-    local NODE=$1
-    local USER=$2
-    local PASS=$3
-    ping -c1 -W1 -q "$NODE"
-    check_status
-
-    if [[ "$ID" == "rocky" || "$ID" == "centos" ]]; then
-        yum list pdsh -q || yum install epel-release -y
-        yum install sshpass openssh-clients pdsh -y
-        check_status "$NODE: Package installation failed"
-    fi
-    
-    if [[ "$ID" == "ubuntu" ]]; then
-        apt install -y pdsh sshpass openssh-client
-        check_status "$NODE: Package installation failed"
-    fi
-
-    test -f /root/.ssh/known_hosts && sed -i '/"$NODE"/d' /root/.ssh/known_hosts
-    
-    sshpass -p "$PASS" ssh-copy-id -f -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub "$USER"@"$NODE"
-    check_status "$NODE: Passwordless ssh setup failed. Please validate provided credentails"
-}
-
-function nodes_setup() {
-    for ssh_node in $(cat "$HOST_FILE")
-    do
-        local NODE=$(echo "$ssh_node" | awk -F[,] '{print $1}' | cut -d'=' -f2)
-        local USER=$(echo "$ssh_node" | awk -F[,] '{print $2}' | cut -d'=' -f2)
-        local PASS=$(echo "$ssh_node" | awk -F[,] '{print $3}' | cut -d'=' -f2)
-
-        add_secondary_separator Setting up passwordless ssh for "$NODE"
-        passwordless_ssh "$NODE" "$USER" "$PASS"
-    done
-}
-
 function k8s_deployment_type() {
     if [ "$(wc -l < $HOST_FILE)" == "1" ]; then
         SINGLE_NODE_DEPLOYMENT="True"

@@ -160,9 +160,7 @@ class CortxCluster:
                     (f'{key_prefix}>hostname', node['hostname']),
                     (f'{key_prefix}>node_id', node_id),
                     (f'{key_prefix}>type', node['type']),
-                    (f'{key_prefix}>storage_set', node['storage_set']),
-                    (f'{key_prefix}>username', node['username']),
-                    (f'{key_prefix}>passwd', node['passwd'])
+                    (f'{key_prefix}>storage_set', node['storage_set'])
                     ))
                 component_list = node['components']
                 kvs.extend(CortxCluster._get_component_kv_list(component_list, machine_id))

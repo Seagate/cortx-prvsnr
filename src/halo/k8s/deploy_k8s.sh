@@ -29,7 +29,6 @@ UNTAINT="$1"
 function setup_cluster() {
     validation
     generate_rsa_key
-    nodes_setup
     k8s_deployment_type "$UNTAINT"
 
     add_primary_separator "Setting up kubernetes cluster for following nodes"
