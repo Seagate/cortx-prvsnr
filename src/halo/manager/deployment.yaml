@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: halo
+  namespace: default
   name: halo-manager
   labels:
     app.kubernetes.io/component: halo-manager
