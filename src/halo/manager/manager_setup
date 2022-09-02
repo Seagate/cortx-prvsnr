@@ -92,9 +92,9 @@ class ConfigCmd(SetupCmdBase):
         self._initialize_logging(self._conf)
         rc = 0
         try:
-            subprocess.Popen("kubectl create configmap solution-config --from-file=/opt/seagate/halo/manager/k8s_files/cluster.yaml", \
+            subprocess.Popen("kubectl create configmap solution-config --from-file=/opt/seagate/halo/manager/cluster.yaml", \
                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-            subprocess.Popen("kubectl apply -f /opt/seagate/halo/manager/k8s_files/deployment.yaml", \
+            subprocess.Popen("kubectl apply -f /opt/seagate/halo/manager/deployment.yaml", \
                 shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
         except:
             rc = 1

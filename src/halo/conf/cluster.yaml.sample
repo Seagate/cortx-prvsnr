@@ -15,7 +15,7 @@ cluster:
   name: obj-cluster
   id: 0007ec45379e36d9fa089a3d615c32a3
   node_types:
-  - name: k8s_node
+  - name: k8s_primary
     components:
     - name: k8s
       path: /opt/seagate/halo/k8s
@@ -38,11 +38,11 @@ cluster:
     - name: node1
       id: 9995f539f4f770e2a3fe9e2e615c32a8
       hostname: node1
-      type: k8s_node
+      type: k8s_primary
     - name: node2
       id: 1115f539f4f770e2a3fe9e2e615c32a8
       hostname: node2
-      type: control_node
+      type: manager_node
     - name: node3
       id: bbb340f79047df9bb52fa460615c32a5
       hostname: node3
