@@ -18,7 +18,6 @@
 source /opt/seagate/halo/k8s/functions.sh
 
 HOST_FILE=$PWD/hosts
-SSH_KEY_FILE=/root/.ssh/id_rsa
 validation
 
 ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
@@ -28,7 +27,6 @@ UNTAINT="$1"
 
 function setup_cluster() {
     validation
-    generate_rsa_key
     k8s_deployment_type "$UNTAINT"
 
     add_primary_separator "Setting up kubernetes cluster for following nodes"

@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: halo-manager
+  labels:
+    app.kubernetes.io/component: halo-manager
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: halo-manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: halo-manager
+        cortx.io/service-type: halo-manager
+    spec:
+      hostname: halo-manager
+      volumes:
+      - name: solution-config
+        configMap:
+          name: solution-config
+      - name: configuration-secrets
+        secret:
+          secretName: cortx-secret
+      - name: data
+        emptyDir: {}
+      - name: ssl-cert
+        configMap:
+          name: cortx-ssl-cert
+      initContainers:
+      - image: ghcr.io/seagate/cortx-control:2.0.0-latest
+        imagePullPolicy: IfNotPresent
+        name: provisioner
+        args:
+        - -c
+        - /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/cortx/solution -c $CONFSTORE_URL;
+        command:
+        - /bin/sh
+        env:
+        - name: CONFSTORE_URL
+          value: consul://cortx-consul-server:8500/halo-conf
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        volumeMounts:
+          - name: solution-config
+            mountPath: /etc/cortx/solution
+          - name: configuration-secrets
+            mountPath: /etc/cortx/solution/secret
+          - name: data
+            mountPath: /etc/config
+          - name: ssl-cert
+            mountPath: /etc/cortx/solution/ssl
+      containers:
+      - name: manager-agent
+        image: ghcr.io/seagate/cortx-control:2.0.0-latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - -c
+        - /opt/seagate/cortx/csm/bin/csm_agent start --config $CONFSTORE_URL;
+        command:
+        - /bin/sh
+        env:
+        - name: CONFSTORE_URL
+          value: consul://cortx-consul-server:8500/halo-conf
+        volumeMounts:
+          - name: solution-config
+            mountPath: /etc/cortx/solution
+          - name: data
+            mountPath: /etc/config
+          - name: configuration-secrets
+            mountPath: /etc/cortx/solution/secret
+          - name: ssl-cert
+            mountPath: /etc/cortx/solution/ssl

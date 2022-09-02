@@ -54,14 +54,6 @@ function validation() {
     fi
 }
 
-function generate_rsa_key() {
-    if [ ! -f "$SSH_KEY_FILE" ]; then
-        ssh-keygen -b 2048 -t rsa -f $SSH_KEY_FILE -q -N ""
-     else
-        echo "$SSH_KEY_FILE" already present
-    fi
-}
-
 function k8s_deployment_type() {
     if [ "$(wc -l < $HOST_FILE)" == "1" ]; then
         SINGLE_NODE_DEPLOYMENT="True"
