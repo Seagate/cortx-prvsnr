@@ -23,12 +23,16 @@ cluster:
       path: /opt/seagate/halo/obj_store/cortx
     - name: manager
       path: /opt/seagate/halo/manager
+    - name: monitor
+      path: /opt/seagate/halo/monitor
   - name: manager_node
     components:
     - name: manager
+      path: /opt/seagate/halo/manager
   - name: monitor_node
     components:
     - name: monitor
+      path: /opt/seagate/halo/monitor
   storage_sets:
   - name: storage-set-1
     durability:
@@ -42,7 +46,7 @@ cluster:
     - name: node2
       id: 1115f539f4f770e2a3fe9e2e615c32a8
       hostname: node2
-      type: manager_node
+      type: monitor_node
     - name: node3
       id: bbb340f79047df9bb52fa460615c32a5
       hostname: node3

@@ -79,6 +79,14 @@ def get_halo_manager_files() -> list:
     """returns halo manager setup files"""
     return glob.glob('src/halo/manager/*')
 
+def get_halo_monitor_files() -> list:
+    """returns halo monitor setup files"""
+    return glob.glob('src/halo/monitor/*')
+
+def get_halo_minio_files() -> list:
+    """returns halo minio setup files"""
+    return glob.glob('src/halo/obj_store/minio/*')
+
 setup(name='cortx-provisioner',
     version=get_version(),
     url='https://github.com/Seagate/cortx-provisioner',
@@ -106,7 +114,9 @@ setup(name='cortx-provisioner',
         ('/opt/seagate/halo/k8s', get_halo_k8s_files()),
         ('/opt/seagate/halo/conf', get_halo_conf_files()),
         ('/opt/seagate/halo/obj_store/cortx', get_halo_obj_store_files()),
-        ('/opt/seagate/halo/manager', get_halo_manager_files())
+        ('/opt/seagate/halo/manager', get_halo_manager_files()),
+        ('/opt/seagate/halo/monitor', get_halo_monitor_files()),
+        ('/opt/seagate/halo/obj_store/minio', get_halo_minio_files())
     ],
     long_description=get_description(),
     zip_safe=False,

@@ -47,9 +47,9 @@ class SetupCmdBase(Cmd):
         log_path = conf.get('config>common>storage>log')
         if log_path is None:
             raise Exception('Log path is None.')
-        log_path = os.path.join(log_path, 'k8s', Conf.machine_id)
+        log_path = os.path.join(log_path, 'monitor', Conf.machine_id)
         os.makedirs(log_path, exist_ok=True)
-        Log.init('k8s_setup', log_path, console_output=True)
+        Log.init('monitor_setup', log_path, console_output=True)
 
 
 class PostInstallCmd(SetupCmdBase):
@@ -77,17 +77,6 @@ class PrepareCmd(SetupCmdBase):
 
     def process(self):
         self._initialize_logging(self._conf)
-        conf_hostname_keys = self._conf.search('node', 'hostname')
-
-        # TODO: optimize below code
-        master_node = self._conf.get(f'node>{Conf.machine_id}>hostname')
-        with open('hosts','w') as hosts_file:
-            hosts_file.write(f"hostname={master_node}\n")
-        for hostname_key in conf_hostname_keys:
-            node_hostname = self._conf.get(hostname_key)
-            if node_hostname != socket.getfqdn():
-                with open('hosts','a') as hosts_file:
-                    hosts_file.write(f"hostname={node_hostname}\n")
         Log.info(f'successfully executed prepare phase')
         return 0
 
@@ -102,15 +91,8 @@ class ConfigCmd(SetupCmdBase):
 
     def process(self):
         self._initialize_logging(self._conf)
-        rc = 0
-        # try:
-        #     session = subprocess.Popen(['/opt/seagate/halo/k8s/deploy_k8s.sh', 'true'], stdout=PIPE, stderr=PIPE)
-        #     session.communicate()
-        # except:
-        #     rc = 1
-        #     raise Exception("failed to setup k8s cluster")
         Log.info(f'successfully executed config phase')
-        return rc
+        return 0
 
 
 class InitCmd(SetupCmdBase):
@@ -131,7 +113,7 @@ def main():
     argv = sys.argv
 
     try:
-        desc = "K8s Setup command"
+        desc = "Monitor Setup command"
         command = Cmd.get_command(sys.modules[__name__], desc, argv[1:])
         rc = command.process()
 

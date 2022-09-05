@@ -101,18 +101,16 @@ class CortxProvisioner:
                 **cs_option)
         except ConfError as e:
             Log.error(f'Unable to load {solution_config_url} url, Error:{e}')
-        
-        # Fetch root from solution config
-        CortxProvisioner._root = list(filter(lambda k: (Conf.get(CortxProvisioner._solution_index,k) != None), const.ROOT_VAL))[0]
-        cortx_conf.set('root', CortxProvisioner._root)
-
-        # Secrets path from config file
-        if cortx_conf.get(f'{CortxProvisioner._root}>common>storage>local'):
-            CortxProvisioner._secrets_path = cortx_conf.get(f'{CortxProvisioner._root}>common>storage>local')+CortxProvisioner._rel_secret_path
 
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
+        
+        # Fetch root from solution config
+        root_val = list(filter(lambda k: (Conf.get(CortxProvisioner._solution_index,k) != None), const.ROOT_VAL))
+        if root_val:
+            CortxProvisioner._root = root_val[0]
+            cortx_conf.set('root', CortxProvisioner._root)
 
         machine_id = CortxProvisioner._get_machine_id()
         if not CortxProvisioner._wait_for_lock_to_be_released(cortx_conf, CortxProvisioner._timeout, machine_id):
