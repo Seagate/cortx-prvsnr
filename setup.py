@@ -63,6 +63,7 @@ def get_secret_files() -> list:
     """Returns secret files."""
     return glob.glob('conf/secret/*')
 
+
 setup(name='cortx-provisioner',
     version=get_version(),
     url='https://github.com/Seagate/cortx-provisioner',

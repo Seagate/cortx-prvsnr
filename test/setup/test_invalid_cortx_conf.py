@@ -53,5 +53,6 @@ class TestInvalidCortxConf(unittest.TestCase):
         self.assertEqual(rc, 1)
         os.remove(config_conf_file_path)
 
+
 if __name__ == '__main__':
     unittest.main()

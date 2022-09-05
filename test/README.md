@@ -1,56 +1,69 @@
 ## Preparation
 ***
 
-Prepare input for cortx_setup. There are two files in this folder.  
-a. cluster.yaml  
-b. config.yaml  
-
-Install cortx-utils and cortx-provisioner, cortx-components rpms.Make sure PYTHON_PATH includes src folder, if you are not using rpm.  
+Follow below steps for preparing test enviorment for running provisioner tests
 ```bash
-yum install -y yum-utils
-sudo pip3 install -r https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.txt
-sudo pip3 install -r https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.ext.txt
-# Install cortx py-utilsby follwing below document
-https://github.com/Seagate/cortx-utils/wiki/Build-and-Install-cortx-py-utils
+# Install rpm-build rpm
+$ yum install rpm-build -y
 
-# Build Cortx-provisioner rpm
-yum install rpm-build -y
-rm -rf ./dist
-./jenkins/build.sh # Build RPM
-ls ./dist/
-sudo yum localinstall ./dist/cortx-provisioner-2.0.0-1_c9e8891.noarch.rpm
-cortx_setup --help
+# Build utils RPM
+$ git clone https://github.com/Seagate/cortx-utils -b main
+$ sudo pip3 install -r https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.txt
+$ sudo pip3 install -r https://raw.githubusercontent.com/Seagate/cortx-utils/main/py-utils/python_requirements.ext.txt
+$ sudo yum install -y gcc rpm-build python36 python36-pip python36-devel python36-setuptools openssl-devel libffi-devel python36-dbus
+$ cd cortx-utils/
+$ ./jenkins/build.sh -v 2.0.0 -b 2
+$ cd ./py-utils/dist
+$ sudo yum install -y cortx-py-utils-*.noarch.rpm
 
-# Mock the components to run the bootstrap command
-echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/utils/bin/utils_setup;
-echo -e "#!/bin/bash\necho $*" > /opt/seagate/cortx/csm/bin/csm_setup;
-chmod +x /opt/seagate/cortx/hare/bin/utils_setup;
-chmod +x /opt/seagate/cortx/motr/bin/csm_setup;
+# Build provisioner RPM
+$ git clone https://github.com/Seagate/cortx-prvsnr -b main
+$ cd cortx-prvsnr
+$ rm -rf ./dist
+$ ./jenkins/build.sh
+$ ls ./dist/
+$ sudo yum localinstall -y ./dist/cortx-provisioner-2.0.0-1_abcd056.noarch.rpm
+$ cortx_setup --help
+
+# Create env variable NODE_NAME on node with hostname as value
+$ export NODE_NAME=<node-hostname>
+
+# Prepare cluster.yaml and config.yaml files
+$ cp /opt/seagate/cortx/provisioner/conf/config.yaml.sample /etc/cortx/solution/config.yaml
+$ cp /opt/seagate/cortx/provisioner/conf/cluster.yaml.sample /etc/cortx/solution/cluster.yaml
+# Note: Edit cluster.yaml file by putting vm machine-id and hostname in control-node section
+
+# Mock control node
+$ mkdir /opt/seagate/cortx/csm
+$ mkdir /opt/seagate/cortx/csm/bin
+$ cat <<EOF >> /opt/seagate/cortx/csm/bin/csm_setup
+#!/bin/bash
+
+EOF
+$ chmod +x /opt/seagate/cortx/csm/bin/csm_setup
+
+# Prapare RELEASE.INFO file on vm at location : /opt/seagate/cortx/RELEASE.INFO
+
+# Prepare machine-id symlink
+$ rm -rf /etc/machine-id
+$ ln -s /etc/cortx/config/machine-id /etc/machine-id
+
+# Note : everytime /etc/machine-id will be changed by provisioner so it needs to be updated in cluster.yaml everytime before rerunning provisioner.
 ```
 
 ## Testing Manually
 
 Run apply command
 ```python
-cortx_setup.py config apply -f yaml://`pwd`/config.yaml -c yaml:///tmp/cluster.conf
-cortx_setup.py config apply -f yaml://`pwd`/cluster.yaml -c yaml:///tmp/cluster.conf
+config apply -f yaml://`pwd`/config.yaml -c yaml:///tmp/cluster.conf
+config apply -f yaml://`pwd`/cluster.yaml -c yaml:///tmp/cluster.conf
 ```
 
 Run bootstrap command
 ```python
-cortx_setup.py cluster bootstrap -c yaml:///tmp/cluster.conf
+cluster bootstrap -c yaml:///tmp/cluster.conf
 ```
 
-output will look something like this...
-```bash
-motr_setup post_install --config yaml:/etc/cortx/cortx.conf --services io
-hare_setup post_install --config yaml:/etc/cortx/cortx.conf --services all
-s3_setup post_install --config yaml:/etc/cortx/cortx.conf --services io,auth,bg_consumer
-utils_setup post_install --config yaml:/etc/cortx/cortx.conf --services message_bus
-csm_setup post_install --config yaml:/etc/cortx/cortx.conf --services agent
-motr_setup post_install --config yaml:/etc/cortx/cortx.conf --services fsm
-s3_setup post_install --config yaml:/etc/cortx/cortx.conf --services bg_producer
-```
 
 Run the following command  
 **Running The Tests**
