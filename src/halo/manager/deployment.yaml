@@ -28,8 +28,8 @@ spec:
       - name: data
         emptyDir: {}
       - name: ssl-cert
-        configMap:
-          name: cortx-ssl-cert
+        secret:
+          secretName: cortx-ssl-cert
       initContainers:
       - image: ghcr.io/seagate/cortx-control:2.0.0-latest
         imagePullPolicy: IfNotPresent
