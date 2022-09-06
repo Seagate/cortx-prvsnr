@@ -103,12 +103,12 @@ class ConfigCmd(SetupCmdBase):
     def process(self):
         self._initialize_logging(self._conf)
         rc = 0
-        # try:
-        #     session = subprocess.Popen(['/opt/seagate/halo/k8s/deploy_k8s.sh', 'true'], stdout=PIPE, stderr=PIPE)
-        #     session.communicate()
-        # except:
-        #     rc = 1
-        #     raise Exception("failed to setup k8s cluster")
+        try:
+            session = subprocess.Popen(['/opt/seagate/halo/k8s/deploy_k8s.sh', 'true'], stdout=PIPE, stderr=PIPE)
+            session.communicate()
+        except:
+            rc = 1
+            raise Exception("failed to setup k8s cluster")
         Log.info(f'successfully executed config phase')
         return rc
 
