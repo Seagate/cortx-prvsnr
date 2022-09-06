@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e;
 
 kubectl create secret generic configuration-secrets \
   --from-literal=consul_admin_secret=Seagate@123 \

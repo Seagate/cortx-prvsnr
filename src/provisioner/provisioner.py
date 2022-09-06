@@ -328,10 +328,10 @@ class CortxProvisioner:
                 cortx_conf.set(f'{key_prefix}>version', component_version)
 
                 # TODO: Remove the following code when gconf is completely moved to consul.
-                CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-                Conf.set(CortxProvisioner._cortx_gconf_consul_index,
-                        f'{key_prefix}>version', component_version)
-                Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+                # CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
+                # Conf.set(CortxProvisioner._cortx_gconf_consul_index,
+                #         f'{key_prefix}>version', component_version)
+                # Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _apply_consul_config(cortx_conf: MappedConf):
@@ -375,7 +375,7 @@ class CortxProvisioner:
         cortx_conf = MappedConf(cortx_conf_url)
         CortxProvisioner._root = cortx_conf.get('root')
         # TODO: Remove the following code when gconf is completely moved to consul.
-        CortxProvisioner._apply_consul_config(cortx_conf)
+        # CortxProvisioner._apply_consul_config(cortx_conf)
         node_id = Conf.machine_id
         installed_version = cortx_conf.get(f'node>{node_id}>provisioning>version')
         release_version = CortxProvisioner.cortx_release.get_release_version()
@@ -482,13 +482,13 @@ class CortxProvisioner:
         cortx_conf.set(f'{key_prefix}>time', int(time.time()))
 
         # TODO: Remove the following section once gconf is moved to consul completely.
-        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
-        if phase is ProvisionerStages.DEPLOYMENT.value:
-            cortx_conf.set(f'{key_prefix}>time', int(time.time()))
-            Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>time', int(time.time()))
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+        # CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
+        # Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>phase', phase)
+        # Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>status', status)
+        # if phase is ProvisionerStages.DEPLOYMENT.value:
+        #     cortx_conf.set(f'{key_prefix}>time', int(time.time()))
+        #     Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{key_prefix}>time', int(time.time()))
+        # Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _is_component_updated(component_name: str, deploy_version: str):
@@ -510,10 +510,10 @@ class CortxProvisioner:
         cortx_conf.set(f'node>{node_id}>provisioning>version', version)
 
         # TODO: Remove the following sdection when gconf is completely moved to consul
-        CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{CortxProvisioner._root}>common>release>version', version)
-        Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'node>{node_id}>provisioning>version', version)
-        Conf.save(CortxProvisioner._cortx_gconf_consul_index)
+        # CortxProvisioner._load_consul_conf(CortxProvisioner._cortx_gconf_consul_index)
+        # Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'{CortxProvisioner._root}>common>release>version', version)
+        # Conf.set(CortxProvisioner._cortx_gconf_consul_index, f'node>{node_id}>provisioning>version', version)
+        # Conf.save(CortxProvisioner._cortx_gconf_consul_index)
 
     @staticmethod
     def _validate_provisioning_status(cortx_conf: MappedConf, node_id: str, apply_phase: str):
