@@ -1,5 +1,4 @@
-#!/bin/bash -x
-set -e;
+#!/bin/bash
 
 HOST_FILE=$PWD/hosts
 ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)

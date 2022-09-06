@@ -17,9 +17,7 @@ cortx:
       local: /etc/config
       config: /etc/config
     security:
-      ssl_certificate: /etc/cortx/solution/ssl/s3.seagate.com.pem
-      domain_certificate: /etc/cortx/solution/ssl/stx.pem
-      device_certificate: /etc/cortx/solution/ssl/stx.pem
+      ssl_certificate: /etc/solution/ssl/s3.seagate.com.pem
   utils:
     message_bus_backend: kafka
   csm:

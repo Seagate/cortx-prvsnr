@@ -24,4 +24,7 @@ YQ_VERSION=v4.25.1
 YQ_BINARY=yq_linux_386
 wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY}.tar.gz -O - | tar xz && mv ${YQ_BINARY} /usr/bin/yq
 if [ -f /usr/local/bin/yq ]; then rm -rf /usr/local/bin/yq; fi
+docker pull ghcr.io/seagate/cortx-data:2.0.0-latest
+docker pull ghcr.io/seagate/cortx-rgw:2.0.0-latest
+docker pull ghcr.io/seagate/cortx-control:2.0.0-latest
 cd /root/cortx-k8s/k8_cortx_cloud;./deploy-cortx-cloud.sh
