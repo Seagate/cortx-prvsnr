@@ -113,7 +113,7 @@ class CortxCluster:
             key_prefix = f'node>{node_id}>components[{index}]'
             component_name = component['name']
             if 'path' in component:
-                component_kv_list.append(((f'{key_prefix}>path', component_path)))
+                component_kv_list.append(((f'{key_prefix}>path', component['path'])))
             component_kv_list.append(((f'{key_prefix}>name', component_name)))
 
             service_list = component.get('services')
