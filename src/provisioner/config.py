@@ -29,7 +29,7 @@ class CortxConfig:
             cortx_solution_config = []
         self._cortx_release = cortx_release
         self._cortx_solution_config = cortx_solution_config
-        CortxConfig._validate(self._cortx_solution_config)
+        # CortxConfig._validate(self._cortx_solution_config)
 
     @staticmethod
     def _validate(cortx_solution_config: dict):

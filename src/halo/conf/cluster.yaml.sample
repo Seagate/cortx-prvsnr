@@ -1,11 +1,4 @@
-config:
-  external:
-    consul:
-      admin: admin
-      endpoints:
-      - tcp://cortx-consul-server:8301
-      - http://cortx-consul-server:8500
-      secret: consul_admin_secret                              # Key in the list of secrets  
+config: 
   common:
     storage:
       log: /var/log/

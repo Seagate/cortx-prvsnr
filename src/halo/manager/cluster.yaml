@@ -18,8 +18,8 @@ config:
     agent:
       endpoints:
       - https://:23256
-    email_address: cortx@seagate.com # Optional
-    mgmt_admin: cortxadmin
+    email_address: halo@seagate.com # Optional
+    mgmt_admin: haloadmin
     mgmt_secret: csm_mgmt_admin_secret
     limits:
       services:
@@ -36,8 +36,8 @@ config:
     auth_secret: s3_auth_admin_secret
     public:
       endpoints:
-      - http://cortx-server-0:80
-      - http://cortx-server-0:443
+      - http://cloud-server-0:80
+      - http://cloud-server-0:443
 cluster:
   name: obj-cluster
   id: 0007ec45379e36d9fa089a3d615c32a3

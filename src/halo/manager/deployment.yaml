@@ -16,7 +16,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: halo-manager
-        cortx.io/service-type: halo-manager
     spec:
       hostname: halo-manager
       volumes:
