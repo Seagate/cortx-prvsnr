@@ -1,25 +1,19 @@
-cortx:
+config:
   external:
     consul:
       admin: admin
       endpoints:
-      - tcp://cortx-consul-server:8301
-      - http://cortx-consul-server:8500
+      - tcp://consul-server:8301
+      - http://consul-server:8500
       secret: consul_admin_secret                              # Key in the list of secrets
-    kafka:
-      admin: admin
-      endpoints:
-      - tcp://cortx-kafka:9092
-      secret: kafka_admin_secret                               # Key in the list of secrets
   common:
+    cloud_storage: rgw 
     storage:
       log: /etc/config/log
       local: /etc/config
       config: /etc/config
     security:
       ssl_certificate: /etc/solution/ssl/s3.seagate.com.pem
-  utils:
-    message_bus_backend: kafka
   csm:
     agent:
       endpoints:
@@ -44,20 +38,12 @@ cortx:
       endpoints:
       - http://cortx-server-0:80
       - http://cortx-server-0:443
-  hare:
-    hax:
-      endpoints:
-      - https://cortx-hax:22003
-      - tcp://cortx-data-g0-0.cortx-data-headless.default.svc.cluster.local:22001
-      - tcp://cortx-data-g1-0.cortx-data-headless.default.svc.cluster.local:22001
-      - tcp://cortx-server-0.cortx-server-headless.default.svc.cluster.local:22001
 cluster:
   name: obj-cluster
   id: 0007ec45379e36d9fa089a3d615c32a3
   node_types:
   - name: manager_node
     components:
-    - name: utils
     - name: csm
       services:
       - agent

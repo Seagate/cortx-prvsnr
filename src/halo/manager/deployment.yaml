@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: default
+  namespace: halo
   name: halo-manager
   labels:
     app.kubernetes.io/component: halo-manager
@@ -32,12 +32,12 @@ spec:
         secret:
           secretName: manager-ssl-cert
       initContainers:
-      - image: ghcr.io/seagate/cortx-control:2.0.0-latest
+      - image: cortx-docker.colo.seagate.com/seagate/cortx-control:2.0.0-7787-custom-ci
         imagePullPolicy: IfNotPresent
         name: provisioner
         args:
         - -c
-        - /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/solution -c yaml:///etc/cluster.conf;
+        - /opt/seagate/cortx/provisioner/bin/cortx_deploy -f /etc/solution -c yaml:///etc/config/cluster.conf;
         command:
         - /bin/sh
         env:
@@ -62,11 +62,11 @@ spec:
             mountPath: /etc/solution/ssl
       containers:
       - name: manager-agent
-        image: ghcr.io/seagate/cortx-control:2.0.0-latest
+        image: cortx-docker.colo.seagate.com/seagate/cortx-control:2.0.0-7787-custom-ci
         imagePullPolicy: IfNotPresent
         args:
         - -c
-        - /opt/seagate/cortx/csm/bin/csm_agent start --config yaml:///etc/cluster.conf;
+        - /opt/seagate/cortx/csm/bin/csm_agent start --config yaml:///etc/config/cluster.conf;
           sleep infinity;
         command:
         - /bin/sh

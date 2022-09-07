@@ -1,0 +1,24 @@
+global:
+  name: consul
+  storageClass: local-path
+server:
+  storageClass: local-path
+  resources:
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  storage: 10Gi
+  image: ghcr.io/seagate/consul:1.11.4
+  replicas: 1
+client:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  image: ghcr.io/seagate/consul:1.11.4
