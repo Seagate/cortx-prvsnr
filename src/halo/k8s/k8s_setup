@@ -49,7 +49,7 @@ class SetupCmdBase(Cmd):
             raise Exception('Log path is None.')
         log_path = os.path.join(log_path, 'k8s', Conf.machine_id)
         os.makedirs(log_path, exist_ok=True)
-        Log.init('k8s_setup', log_path, console_output=True)
+        Log.init('k8s_setup', log_path, console_output=True, console_output_level='INFO', level='INFO')
 
 
 class PostInstallCmd(SetupCmdBase):

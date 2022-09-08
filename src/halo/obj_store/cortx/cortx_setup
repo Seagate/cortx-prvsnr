@@ -52,7 +52,7 @@ class SetupCmdBase(Cmd):
             raise Exception('Log path is None.')
         log_path = os.path.join(log_path, 'cortx', Conf.machine_id)
         os.makedirs(log_path, exist_ok=True)
-        Log.init('cortx_setup', log_path, console_output=True)
+        Log.init('cortx_setup', log_path, console_output=True, console_output_level='INFO', level='INFO')
 
 
 class PostInstallCmd(SetupCmdBase):
