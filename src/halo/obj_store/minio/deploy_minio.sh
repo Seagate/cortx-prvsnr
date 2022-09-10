@@ -1,7 +1,7 @@
 #!/bin/bash
 
 HOST_FILE=$PWD/hosts
-ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+ALL_NODES=$(< "$HOST_FILE" awk -F[,] '{print $1}' | cut -d'=' -f2)
 
 (
   set -x; cd "$(mktemp -d)" &&
@@ -34,7 +34,7 @@ kubectl directpv drives ls
 # Select drives that directpv should manage and format
 for node in "$ALL_NODES"
     do
-        kubectl directpv drives format --drives /dev/sd{b...i} --nodes $node
+        kubectl directpv drives format --drives /dev/sd{b...i} --nodes "$node"
     done
 
 # the update the local copy of plugin index.

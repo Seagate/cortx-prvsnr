@@ -55,7 +55,7 @@ function validation() {
 }
 
 function k8s_deployment_type() {
-    if [ "$(wc -l < $HOST_FILE)" == "1" ]; then
+    if [ "$(wc -l < "$HOST_FILE")" == "1" ]; then
         SINGLE_NODE_DEPLOYMENT="True"
         add_secondary_separator Single Node Deployment
     fi
@@ -69,9 +69,12 @@ function k8s_deployment_type() {
             local NODES="$((NODES-PRIMARY_NODE))"
             add_secondary_separator $NODES node deployment
         else
-            local NODES="$(wc -l < $HOST_FILE)"
+            local NODES="$(wc -l < "$HOST_FILE")"
             add_secondary_separator "$NODES" node deployment
         fi
+    fi
+    if [ "$SINGLE_NODE_DEPLOYMENT" == "True"]; then
+        echo "Setting up cluster for Single Node"
     fi
 }
 
@@ -85,7 +88,7 @@ function scp_all_nodes() {
 function scp_primary_node() {
     for primary_nodes in $PRIMARY_NODE
         do
-            scp -q $* "$primary_nodes":/var/tmp/
+            scp -q "$*" "$primary_nodes":/var/tmp/
         done
 }
 

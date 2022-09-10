@@ -105,7 +105,7 @@ class CortxProvisioner:
         # source code for encrypting and storing secret key
         if Conf.get(CortxProvisioner._solution_index, 'cluster') is not None:
             CortxProvisioner.apply_cluster_config(cortx_conf, CortxProvisioner.cortx_release)
-        
+
         # Fetch root from solution config
         root_val = list(filter(lambda k: (Conf.get(CortxProvisioner._solution_index,k) != None), const.ROOT_VAL))
         if root_val:

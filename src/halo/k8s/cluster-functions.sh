@@ -140,7 +140,7 @@ function cleanup_node() {
 
     # Stopping Services.
     for service_name in ${services_to_stop[@]}; do
-        if [ "$(systemctl list-unit-files | grep $service_name.service -c)" != "0" ]; then
+        if [ "$(systemctl list-unit-files | grep "$service_name".service -c)" != "0" ]; then
             echo "Stopping $service_name"
             systemctl stop "$service_name".service
         fi
@@ -328,7 +328,7 @@ function setup_primary_node() {
 function join_worker_nodes() {
     add_secondary_separator "Joining Worker Node $HOSTNAME"
     echo 'y' | kubeadm reset && "${@:2}"
-    check_status "Failed to join "$HOSTNAME" node to cluster"
+    check_status "Failed to join $HOSTNAME node to cluster"
 }
 
 case "$ACTION" in

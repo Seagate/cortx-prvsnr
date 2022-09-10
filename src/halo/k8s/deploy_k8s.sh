@@ -20,9 +20,9 @@ source /opt/seagate/halo/k8s/functions.sh
 HOST_FILE=$PWD/hosts
 validation
 
-ALL_NODES=$(cat "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+ALL_NODES=$(< "$HOST_FILE" awk -F[,] '{print $1}' | cut -d'=' -f2)
 PRIMARY_NODE=$(head -1 "$HOST_FILE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
-WORKER_NODES=$(cat "$HOST_FILE" | grep -v "$PRIMARY_NODE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
+WORKER_NODES=$(< "$HOST_FILE" grep -v "$PRIMARY_NODE" | awk -F[,] '{print $1}' | cut -d'=' -f2)
 UNTAINT="$1"
 
 function setup_cluster() {
@@ -38,7 +38,7 @@ function setup_cluster() {
     scp_all_nodes /opt/seagate/halo/k8s/cluster-functions.sh 
     scp_all_nodes /opt/seagate/halo/k8s/functions.sh
 
-    echo $ALL_NODES > /var/tmp/pdsh-hosts
+    echo "$ALL_NODES" > /var/tmp/pdsh-hosts
 
     # Cleanup nodes:
     pdsh -w ^/var/tmp/pdsh-hosts '/var/tmp/cluster-functions.sh --cleanup'
@@ -54,7 +54,7 @@ function setup_cluster() {
 
     if [ "$SINGLE_NODE_DEPLOYMENT" == "False" ]; then
         add_secondary_separator "Setup Worker Nodes"
-        echo $WORKER_NODES | tee /var/tmp/pdsh-hosts
+        echo "$WORKER_NODES" | tee /var/tmp/pdsh-hosts
         # Join worker nodes.
         JOIN_WORKER="/var/tmp/cluster-functions.sh --join-worker-nodes $JOIN_COMMAND"
         pdsh -w ^/var/tmp/pdsh-hosts "$JOIN_WORKER"
