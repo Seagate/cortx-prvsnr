@@ -78,4 +78,4 @@ do
 done
 
 # Execute Provisioner Entrypoint script
-ansible -m shell -a "/opt/seagate/cortx/provisioner/bin/cortx_deploy -f $SOLUTION_CONFIG -c $CONFIG_URL" all
+ansible-playbook /opt/seagate/halo/ansible/ansible_playbook.yaml --extra-vars "conf_url=$CONFIG_URL solution_url=$SOLUTION_CONFIG"

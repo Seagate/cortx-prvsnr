@@ -1,0 +1,10 @@
+- name: Halo-Provisioner
+  hosts: all
+  serial: 1
+  vars:
+    conf_url: "{conf_url}"
+    solution_url: "{solution_url}"
+  tasks:
+  - name: Run Provisioner Entrypoint script on all nodes
+    shell: "/opt/seagate/cortx/provisioner/bin/cortx_deploy -f {{ solution_url }} -c {{ conf_url }}"
+    become: true
