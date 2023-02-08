@@ -3,7 +3,7 @@ argparse==1.4.0
 boto3==1.10.27
 configparser==4.0.2
 confluent-kafka==1.5.0
-cryptography==3.3.2
+cryptography==39.0.1
 dataclasses==0.7
 dict2xml==1.6.1
 elasticsearch==7.12.0
