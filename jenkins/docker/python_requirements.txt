@@ -23,7 +23,7 @@ python-consul==1.1.0
 python-crontab==2.5.1
 python-daemon==2.2.4
 PyYAML==5.4.1
-requests==2.25.1
+requests==2.31.0
 schematics==2.1.0
 secure==0.2.1
 statsd==3.2.2
