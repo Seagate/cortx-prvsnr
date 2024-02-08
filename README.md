@@ -1,8 +1,8 @@
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/1157d573a36747a1b39e91ffdb439402)](https://www.codacy.com/gh/Seagate/cortx-prvsnr/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Seagate/cortx-prvsnr&amp;utm_campaign=Badge_Grade)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://github.com/Seagate/cortx-prvsnr/blob/main/LICENSE)
 [![Slack](https://img.shields.io/badge/chat-on%20Slack-blue")](https://cortx.link/join-slack)
 [![YouTube](https://img.shields.io/badge/Video-YouTube-red)](https://cortx.link/videos)
 
+# Disclaimer: This project is not maintained anymore
 # CORTX-Provisioner
 
 The process of setting up your IT Infrastructure is called Provisioning. Provisioning involves managing access to data and resources to make these available to users and systems. Resource deployment is a two-step process where you provision and then configure the resource. To set up the CORTX project, you'll need to provision your:
